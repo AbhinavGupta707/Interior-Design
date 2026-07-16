@@ -7,6 +7,8 @@
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design`
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
+- Autonomous programme target: complete C1 through C10 sequentially; the immutable C1–C6 goal is followed immediately by a C7–C10 continuation goal
+- Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
 
