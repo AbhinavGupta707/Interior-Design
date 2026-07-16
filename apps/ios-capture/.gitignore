@@ -1,0 +1,4 @@
+.build/
+*.xcresult
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
