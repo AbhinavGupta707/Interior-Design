@@ -35,7 +35,7 @@ def main() -> int:
         print("[ok] API /health contract")
 
         web_status, web_content_type, web_body = fetch(args.web_url)
-        if web_status != 200 or "Complete Home Design System" not in web_body:
+        if web_status != 200 or "Home Design Studio" not in web_body:
             raise RuntimeError(f"unexpected web response: HTTP {web_status}")
         if web_content_type != "text/html":
             raise RuntimeError(f"web content type is {web_content_type!r}")

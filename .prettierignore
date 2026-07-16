@@ -3,6 +3,8 @@ node_modules/
 .pnpm-store/
 .turbo/
 .next/
+**/.build/
+**/DerivedData/
 dist/
 coverage/
 playwright-report/

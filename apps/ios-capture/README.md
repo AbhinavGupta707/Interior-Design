@@ -77,10 +77,10 @@ xcodebuild \
 
 Non-sensitive build configuration lives in `Configurations/*.xcconfig` and is exposed through these Info.plist keys:
 
-| Build setting | Process override | Purpose |
-|---|---|---|
-| `APP_ENVIRONMENT` | `HOME_DESIGN_ENVIRONMENT` | `local`, `staging`, or `production` |
-| `API_BASE_URL` | `HOME_DESIGN_API_BASE_URL` | Platform API base URL |
+| Build setting     | Process override           | Purpose                             |
+| ----------------- | -------------------------- | ----------------------------------- |
+| `APP_ENVIRONMENT` | `HOME_DESIGN_ENVIRONMENT`  | `local`, `staging`, or `production` |
+| `API_BASE_URL`    | `HOME_DESIGN_API_BASE_URL` | Platform API base URL               |
 
 Debug builds default to the local platform API at `http://127.0.0.1:4100`. Release builds use the deliberately non-resolving `https://api.invalid` placeholder until an integration environment supplies a real endpoint. The loader rejects malformed URLs, embedded credentials, non-HTTPS remote endpoints, and non-loopback plain HTTP.
 

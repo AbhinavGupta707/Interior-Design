@@ -94,9 +94,9 @@ Legal review of upload terms, user authority, processor/controller roles, third-
 
 Choose retention by source/derived/audit/issued class; legal deletion exceptions; governance bypass roles; recovery and customer-visible deletion state. Do not use compliance-mode Object Lock until legal requirements are clear.
 
-### DQ-015 Temporal adoption — before C0 closes
+### DQ-015 Temporal adoption — resolved for M1 substrate 2026-07-17
 
-Run the spike. Adopt only if local/CI workflow replay/versioning, payload minimisation, cancellation and operator recovery are understood. Otherwise use the documented Postgres-backed queue fallback without changing domain/job contracts.
+**Decision:** retain Temporal behind a workflow port as the M1 durable-workflow substrate. C0 proved a pinned local development server, health/operator access, persistent local state and clean bootstrap/shutdown. Workflow checkpoints must still demonstrate deterministic replay/versioning, reference-only large payloads, cancellation and operator recovery before their gates close. Domain/job contracts remain transport-neutral so a Postgres-backed queue can replace Temporal if those evidence gates fail.
 
 ### DQ-016 Geometry library — before C4
 
