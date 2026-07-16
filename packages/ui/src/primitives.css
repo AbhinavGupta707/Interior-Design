@@ -1,0 +1,175 @@
+.ui-container {
+  width: min(calc(100% - 2rem), 72rem);
+  margin-inline: auto;
+}
+
+.ui-skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--ui-radius-small);
+  background: var(--ui-colour-ink);
+  color: var(--ui-colour-surface);
+  font: 700 0.875rem/1 var(--ui-font-sans);
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform var(--ui-motion-fast) var(--ui-ease-standard);
+}
+
+.ui-skip-link:focus {
+  transform: translateY(0);
+}
+
+.ui-action {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  padding: 0.75rem 1.125rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 700 0.9rem/1.1 var(--ui-font-sans);
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ui-motion-fast) var(--ui-ease-standard),
+    border-color var(--ui-motion-fast) var(--ui-ease-standard),
+    color var(--ui-motion-fast) var(--ui-ease-standard),
+    transform var(--ui-motion-fast) var(--ui-ease-standard);
+}
+
+.ui-action[data-tone="primary"] {
+  background: var(--ui-colour-accent);
+  color: var(--ui-colour-surface);
+}
+
+.ui-action[data-tone="primary"]:hover {
+  background: var(--ui-colour-accent-strong);
+}
+
+.ui-action[data-tone="secondary"] {
+  border-color: var(--ui-colour-border);
+  background: transparent;
+  color: var(--ui-colour-ink);
+}
+
+.ui-action[data-tone="secondary"]:hover,
+.ui-action[data-tone="quiet"]:hover {
+  border-color: var(--ui-colour-accent);
+  background: var(--ui-colour-accent-soft);
+  color: var(--ui-colour-accent-strong);
+}
+
+.ui-action[data-tone="quiet"] {
+  min-height: 2.5rem;
+  padding-inline: 0.875rem;
+  background: transparent;
+  color: var(--ui-colour-ink);
+}
+
+.ui-action:active {
+  transform: translateY(1px);
+}
+
+.ui-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ui-state-panel {
+  width: min(100%, 40rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--ui-colour-border);
+  border-radius: var(--ui-radius-large);
+  background: var(--ui-colour-surface);
+  box-shadow: var(--ui-shadow-raised);
+}
+
+.ui-state-panel[data-tone="error"] {
+  border-color: color-mix(in srgb, var(--ui-colour-error) 36%, var(--ui-colour-border));
+  background: linear-gradient(180deg, var(--ui-colour-error-soft), var(--ui-colour-surface) 55%);
+}
+
+.ui-state-panel__status {
+  margin: 0 0 var(--ui-space-3);
+  color: var(--ui-colour-accent);
+  font: 750 0.75rem/1.2 var(--ui-font-sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ui-state-panel[data-tone="error"] .ui-state-panel__status {
+  color: var(--ui-colour-error);
+}
+
+.ui-state-panel__title {
+  max-width: 14ch;
+  margin: 0;
+  color: var(--ui-colour-ink);
+  font: 500 clamp(2rem, 7vw, 3.5rem) / 0.98 var(--ui-font-serif);
+  letter-spacing: -0.035em;
+}
+
+.ui-state-panel__message {
+  max-width: 36rem;
+  margin-top: var(--ui-space-5);
+  color: var(--ui-colour-muted);
+  font: 400 1rem/1.65 var(--ui-font-sans);
+}
+
+.ui-state-panel__message > :first-child {
+  margin-top: 0;
+}
+
+.ui-state-panel__message > :last-child {
+  margin-bottom: 0;
+}
+
+.ui-state-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  margin-top: var(--ui-space-6);
+}
+
+.ui-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-4);
+  color: var(--ui-colour-muted);
+  font: 650 0.95rem/1.4 var(--ui-font-sans);
+}
+
+.ui-loading__indicator {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  border: 2px solid var(--ui-colour-border);
+  border-top-color: var(--ui-colour-accent);
+  border-radius: 50%;
+  animation: ui-spin 750ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-skip-link,
+  .ui-action {
+    transition: none;
+  }
+
+  .ui-loading__indicator {
+    animation: none;
+    border-color: var(--ui-colour-accent);
+  }
+}

@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./primitives.css": "./src/primitives.css",
+    "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
