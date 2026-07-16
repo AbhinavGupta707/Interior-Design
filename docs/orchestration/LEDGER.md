@@ -38,8 +38,15 @@
 
 ### Master activation
 
-- Status: contract prelude in progress; worker tasks not yet opened
+- Status: three isolated worker tasks active
 - Contract: `docs/orchestration/checkpoints/C1_CONTRACT.md`
+- Base commit: `1c9d439`
 - Planned lanes: three
 - Provider policy: local fixture plus disabled provider-neutral OIDC port; no external key required
 - Data policy: deterministic two-tenant synthetic fixtures only
+
+| Lane                     | Task/thread                            | Worktree                                                    | Base SHA  | State  | Exclusive roots                                                                        |
+| ------------------------ | -------------------------------------- | ----------------------------------------------------------- | --------- | ------ | -------------------------------------------------------------------------------------- |
+| C1-L1 backend            | `019f6d5a-efc2-7942-b990-799dce332350` | `/Users/abhinavgupta/.codex/worktrees/c5d3/Interior Design` | `1c9d439` | active | platform identity/projects/intake modules, migration 0001, backend C1 tests/runbook    |
+| C1-L2 authorisation      | `019f6d5a-eff0-7543-9814-88022bd61d82` | `/Users/abhinavgupta/.codex/worktrees/a902/Interior Design` | `1c9d439` | active | `packages/authz/**`, identity security tests and threat model                          |
+| C1-L3 web/iOS onboarding | `019f6d5a-f288-7a53-b581-ff462d00b5d2` | `/Users/abhinavgupta/.codex/worktrees/840c/Interior Design` | `1c9d439` | active | allocated web onboarding/BFF/shell files, iOS project flow files, onboarding E2E tests |
