@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+
+APP_ENVIRONMENT = production
+API_BASE_URL = https:/$()/api.invalid
