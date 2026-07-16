@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "migrations": [
+    {
+      "id": "0001",
+      "checkpoint": "C1",
+      "owner": "C1-L1",
+      "path": "0001_identity_projects_intake.sql"
+    }
+  ]
+}

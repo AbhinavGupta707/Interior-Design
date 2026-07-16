@@ -44,6 +44,9 @@ importers:
       '@interior-design/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@interior-design/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -67,7 +70,19 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.17)
 
+  packages/authz:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/config:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  packages/contracts:
     dependencies:
       zod:
         specifier: ^4.4.3
@@ -84,9 +99,15 @@ importers:
 
   services/platform-api:
     dependencies:
+      '@interior-design/authz':
+        specifier: workspace:*
+        version: link:../../packages/authz
       '@interior-design/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@opentelemetry/api':
         specifier: ^1.9.1
         version: 1.9.1
@@ -96,6 +117,9 @@ importers:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1365,6 +1389,10 @@ packages:
   postcss@8.5.19:
     resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  postgres@3.4.9:
+    resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
+    engines: {node: '>=12'}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -2745,6 +2773,8 @@ snapshots:
       nanoid: 3.3.16
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  postgres@3.4.9: {}
 
   prelude-ls@1.2.1: {}
 

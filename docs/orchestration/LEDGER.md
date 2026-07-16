@@ -33,3 +33,13 @@
 - The merged API and production web processes passed the cross-surface localhost smoke contract. C0-L2 separately verified desktop and mobile browser layouts, navigation/recovery, semantics, overflow and zero console errors.
 - Integration caught and fixed two cross-lane defects: the root formatter now excludes native DerivedData, and the bootstrap smoke uses the rendered `Home Design Studio` identity.
 - No paid provider, cloud resource, public deployment, real customer data, LiDAR claim or GPU claim was activated.
+
+## C1 — Identity, project and home intake
+
+### Master activation
+
+- Status: contract prelude in progress; worker tasks not yet opened
+- Contract: `docs/orchestration/checkpoints/C1_CONTRACT.md`
+- Planned lanes: three
+- Provider policy: local fixture plus disabled provider-neutral OIDC port; no external key required
+- Data policy: deterministic two-tenant synthetic fixtures only

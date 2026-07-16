@@ -1,0 +1,23 @@
+{
+  "name": "@interior-design/authz",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest run --exclude 'dist/**'",
+    "test:security": "vitest run --exclude 'dist/**'"
+  },
+  "dependencies": {
+    "@interior-design/contracts": "workspace:*"
+  }
+}

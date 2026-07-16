@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "tenants": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "Alpha household",
+      "members": [
+        {
+          "displayName": "Alpha homeowner",
+          "persona": "homeowner-alpha",
+          "role": "owner",
+          "subject": "fixture|homeowner-alpha",
+          "userId": "20000000-0000-4000-8000-000000000001"
+        },
+        {
+          "displayName": "Alpha viewer",
+          "persona": "viewer-alpha",
+          "role": "viewer",
+          "subject": "fixture|viewer-alpha",
+          "userId": "20000000-0000-4000-8000-000000000002"
+        }
+      ]
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000002",
+      "name": "Beta household",
+      "members": [
+        {
+          "displayName": "Beta homeowner",
+          "persona": "homeowner-beta",
+          "role": "owner",
+          "subject": "fixture|homeowner-beta",
+          "userId": "20000000-0000-4000-8000-000000000003"
+        }
+      ]
+    }
+  ]
+}
