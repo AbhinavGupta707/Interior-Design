@@ -1,0 +1,41 @@
+{
+  "name": "interior-design",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.22.0 <25",
+    "pnpm": ">=10.33.0 <11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test:unit": "turbo run test:unit",
+    "test:contract": "turbo run test:contract",
+    "test:integration": "turbo run test:integration",
+    "test:geometry": "turbo run test:geometry",
+    "test:security": "turbo run test:security",
+    "test:e2e": "turbo run test:e2e",
+    "api:check": "turbo run api:check",
+    "dependency:boundaries": "turbo run dependency:boundaries",
+    "verify:js": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build",
+    "verify:py": "uv run ruff check . && uv run mypy . && uv run pytest",
+    "verify": "pnpm verify:js && pnpm verify:py"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.7.0",
+    "prettier": "^3.9.5",
+    "turbo": "^2.10.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0",
+    "vitest": "^4.1.10"
+  }
+}

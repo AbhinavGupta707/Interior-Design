@@ -1,0 +1,17 @@
+ai_native_architecture_blue_sky/
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+.venv/
+.cache/
+artifacts/
+renders/
+reconstructions/
+captures/
+pnpm-lock.yaml
+uv.lock

@@ -1,0 +1,63 @@
+.DS_Store
+Thumbs.db
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.mobileprovision
+
+# JavaScript/TypeScript
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Python / ML
+.venv/
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+ml/data/
+ml/artifacts/
+ml/checkpoints/
+*.ckpt
+*.safetensors
+*.onnx
+
+# Native Apple build state
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+.swiftpm/
+
+# Generated spatial/media artifacts
+artifacts/
+renders/
+reconstructions/
+captures/
+*.usdz
+*.glb
+*.mp4
+
+# Infrastructure state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Local tooling
+.idea/
+.vscode/

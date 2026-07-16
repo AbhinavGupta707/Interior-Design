@@ -1,0 +1,197 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Architecture Build Plan",
+    "description": "Decision-first synthesis of the supplied blue-sky dossier, current official-source verification, production architecture, checkpointed worktree execution, validation, risks and stage gates.",
+    "generatedAt": "2026-07-16T12:00:00Z",
+    "cards": [],
+    "charts": [
+      {
+        "id": "checkpoint_sequence",
+        "title": "M1: nineteen checkpoints in five dependency phases",
+        "subtitle": "C0–C18 are inclusive. Bar length is ordinal, not effort, time or cost.",
+        "type": "bar",
+        "dataset": "checkpoint_sequence",
+        "sourceId": "checkpoint_plan",
+        "valueFormat": "number",
+        "encodings": {
+          "x": {
+            "field": "checkpoint",
+            "type": "nominal",
+            "label": "Checkpoint"
+          },
+          "y": {
+            "field": "sequence",
+            "type": "quantitative",
+            "label": "Ordinal sequence"
+          },
+          "tooltip": [
+            {
+              "field": "outcome",
+              "type": "nominal",
+              "label": "Verifiable outcome"
+            }
+          ]
+        }
+      }
+    ],
+    "tables": [],
+    "sources": [
+      {
+        "id": "local_dossier",
+        "label": "Supplied AI-native architecture research dossier and hash manifest",
+        "path": "FULL_RESEARCH_DOSSIER.md"
+      },
+      {
+        "id": "arb_pii",
+        "label": "Architects Registration Board — Professional Indemnity Insurance",
+        "path": "https://arb.org.uk/architect-information/professional-indemnity-insurance/"
+      },
+      {
+        "id": "building_duties",
+        "label": "Building Safety Regulator — Design and building work duties",
+        "path": "https://www.gov.uk/guidance/design-and-building-work-meeting-building-requirements"
+      },
+      {
+        "id": "os_known_issues",
+        "label": "Ordnance Survey NGD — Current known data issues",
+        "path": "https://docs.os.uk/osngd/current-known-data-issues"
+      },
+      {
+        "id": "apple_roomplan",
+        "label": "Apple Developer — RoomPlan overview",
+        "path": "https://developer.apple.com/augmented-reality/roomplan/"
+      },
+      {
+        "id": "node_releases",
+        "label": "Node.js — Release status",
+        "path": "https://nodejs.org/en/about/previous-releases"
+      },
+      {
+        "id": "postgres_release",
+        "label": "PostgreSQL — 18.4 release notes",
+        "path": "https://www.postgresql.org/docs/release/18.4/"
+      },
+      {
+        "id": "playwright_browsers",
+        "label": "Playwright — Browser support",
+        "path": "https://playwright.dev/docs/browsers"
+      },
+      {
+        "id": "checkpoint_plan",
+        "label": "Active M1 blue-sky worktree implementation plan",
+        "path": "08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md",
+        "query": {
+          "engine": "postgresql",
+          "language": "sql",
+          "sql": "WITH phase(checkpoint, sequence, outcome) AS (\n  VALUES\n    ('C0-C3', 1, 'Repository, identity, multimodal evidence and home dossier'),\n    ('C4-C6', 2, 'Canonical model, typed editing and plan understanding'),\n    ('C7-C10', 3, 'Native capture, reconstruction, fusion and deterministic 3D'),\n    ('C11-C13', 4, 'Interior-design brief, variants, products and specifications'),\n    ('C14-C18', 5, 'Photoreal media, decisions, implementation handoff and release')\n)\nSELECT checkpoint, sequence, outcome\nFROM phase\nORDER BY sequence",
+          "description": "Reproduces the five ordinal integration phases summarised from the active C0-C18 M1 checkpoint plan; sequence is not duration, effort or cost.",
+          "executed_at": "2026-07-16T12:00:00Z"
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Architecture Build Plan\n\n**Build:** a complete home-design system: multimodal capture/reconstruction, canonical editable geometry, agency-quality design variants, 3D/stills/video, decisions and implementation handoff.\n\n**Evidence/limits:** dossier and official sources reviewed; repository linked locally; commercial validation, live licences and professional issue remain deferred.\n\n**Next:** execute nineteen checkpoints C0–C18 with predefined adaptive 2/3/4-lane project-scoped worktrees. The active plan is document 08."
+      },
+      {
+        "id": "checkpoint_sequence_visual",
+        "type": "chart",
+        "chartId": "checkpoint_sequence",
+        "layout": "full"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-16T12:00:00Z",
+    "status": "ready",
+    "datasets": {
+      "checkpoint_sequence": [
+        {
+          "checkpoint": "C0-C3",
+          "sequence": 1,
+          "outcome": "Repository, identity, multimodal evidence and home dossier"
+        },
+        {
+          "checkpoint": "C4-C6",
+          "sequence": 2,
+          "outcome": "Canonical model, typed editing and plan understanding"
+        },
+        {
+          "checkpoint": "C7-C10",
+          "sequence": 3,
+          "outcome": "Native capture, reconstruction, fusion and deterministic 3D"
+        },
+        {
+          "checkpoint": "C11-C13",
+          "sequence": 4,
+          "outcome": "Interior-design brief, variants, products and specifications"
+        },
+        {
+          "checkpoint": "C14-C18",
+          "sequence": 5,
+          "outcome": "Photoreal media, decisions, implementation handoff and release"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "local_dossier",
+      "label": "Supplied AI-native architecture research dossier and hash manifest",
+      "path": "FULL_RESEARCH_DOSSIER.md"
+    },
+    {
+      "id": "arb_pii",
+      "label": "Architects Registration Board — Professional Indemnity Insurance",
+      "path": "https://arb.org.uk/architect-information/professional-indemnity-insurance/"
+    },
+    {
+      "id": "building_duties",
+      "label": "Building Safety Regulator — Design and building work duties",
+      "path": "https://www.gov.uk/guidance/design-and-building-work-meeting-building-requirements"
+    },
+    {
+      "id": "os_known_issues",
+      "label": "Ordnance Survey NGD — Current known data issues",
+      "path": "https://docs.os.uk/osngd/current-known-data-issues"
+    },
+    {
+      "id": "apple_roomplan",
+      "label": "Apple Developer — RoomPlan overview",
+      "path": "https://developer.apple.com/augmented-reality/roomplan/"
+    },
+    {
+      "id": "node_releases",
+      "label": "Node.js — Release status",
+      "path": "https://nodejs.org/en/about/previous-releases"
+    },
+    {
+      "id": "postgres_release",
+      "label": "PostgreSQL — 18.4 release notes",
+      "path": "https://www.postgresql.org/docs/release/18.4/"
+    },
+    {
+      "id": "playwright_browsers",
+      "label": "Playwright — Browser support",
+      "path": "https://playwright.dev/docs/browsers"
+    },
+    {
+      "id": "checkpoint_plan",
+      "label": "Active M1 blue-sky worktree implementation plan",
+      "path": "08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md",
+      "query": {
+        "engine": "postgresql",
+        "language": "sql",
+        "sql": "WITH phase(checkpoint, sequence, outcome) AS (\n  VALUES\n    ('C0-C3', 1, 'Repository, identity, multimodal evidence and home dossier'),\n    ('C4-C6', 2, 'Canonical model, typed editing and plan understanding'),\n    ('C7-C10', 3, 'Native capture, reconstruction, fusion and deterministic 3D'),\n    ('C11-C13', 4, 'Interior-design brief, variants, products and specifications'),\n    ('C14-C18', 5, 'Photoreal media, decisions, implementation handoff and release')\n)\nSELECT checkpoint, sequence, outcome\nFROM phase\nORDER BY sequence",
+        "description": "Reproduces the five ordinal integration phases summarised from the active C0-C18 M1 checkpoint plan; sequence is not duration, effort or cost.",
+        "executed_at": "2026-07-16T12:00:00Z"
+      }
+    }
+  ]
+}

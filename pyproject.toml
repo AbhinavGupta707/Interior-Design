@@ -1,0 +1,29 @@
+[project]
+name = "interior-design-ml"
+version = "0.0.0"
+requires-python = ">=3.12,<3.15"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15",
+  "pytest>=8.3",
+  "ruff>=0.11",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["ai_native_architecture_blue_sky"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = ["ai_native_architecture_blue_sky"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+addopts = "--strict-markers --strict-config"

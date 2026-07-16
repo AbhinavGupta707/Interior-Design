@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.swift text eol=lf
+*.xcodeproj/project.pbxproj text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.usdz binary
+*.glb binary
+*.mp4 binary

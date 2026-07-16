@@ -1,0 +1,194 @@
+{
+  "project": "AI-Native Full-Stack Architecture and Residential Transformation Platform",
+  "generated_at": "2026-07-16T00:00:00+01:00",
+  "status": "research_and_product_definition",
+  "primary_market": "United Kingdom",
+  "document_count": 25,
+  "files": [
+    {
+      "path": "00_CONTEXT_AND_NORTH_STAR.md",
+      "title": "00 \u2014 Context and North Star",
+      "bytes": 15731,
+      "word_count": 2055,
+      "sha256": "3ce9aaabd4d0957928d6881f73c30bfcad876c0c3dc6025c1fbaab6bfb950a42"
+    },
+    {
+      "path": "01_EXECUTIVE_THESIS_AND_CRITICAL_VERDICT.md",
+      "title": "01 \u2014 Executive Thesis and Critical Verdict",
+      "bytes": 20369,
+      "word_count": 2600,
+      "sha256": "8c24f9452f248210c2b16a5e27bf5029ac36db65e072eac6dfe42434457ed25f"
+    },
+    {
+      "path": "02_PRODUCT_VISION_AND_USER_JOURNEYS.md",
+      "title": "02 \u2014 Product Vision and User Journeys",
+      "bytes": 19616,
+      "word_count": 2422,
+      "sha256": "e2b5e668215f44c8410a7befe92b710d484fdf6e678646faced8e04a73c9c326"
+    },
+    {
+      "path": "03_MARKET_INCUMBENTS_AND_COMPETITOR_MAP.md",
+      "title": "03 \u2014 Market, Incumbents, and Competitor Map",
+      "bytes": 20520,
+      "word_count": 2565,
+      "sha256": "425f169968bbc6ba1a1b848b8dcc53ddc4534db8326d74c042e21bb5a7f9e4e3"
+    },
+    {
+      "path": "04_UK_PROPERTY_DATA_AND_ADDRESS_TO_3D.md",
+      "title": "04 \u2014 UK Property Data and Address-to-3D",
+      "bytes": 19953,
+      "word_count": 2430,
+      "sha256": "d991c7feecf5371cc89272dbce3fe3a5f03e7b13b52420fbc90f8cc48f57815a"
+    },
+    {
+      "path": "05_REGULATORY_PROFESSIONAL_AND_DATA_GOVERNANCE.md",
+      "title": "05 \u2014 Regulatory, Professional, and Data Governance",
+      "bytes": 21497,
+      "word_count": 2532,
+      "sha256": "8a0108a624f20ce4aea6614b325309aa41c684e18d979ffffbb477f4eea10d26"
+    },
+    {
+      "path": "06_CANONICAL_HOME_MODEL_AND_SYSTEM_ARCHITECTURE.md",
+      "title": "06 \u2014 Canonical Home Model and System Architecture",
+      "bytes": 17134,
+      "word_count": 2010,
+      "sha256": "1e9c4f5de78264f19c86e14e33361e352edce59387c7b7ae910b307e83eb898d"
+    },
+    {
+      "path": "07_AI_3D_RECONSTRUCTION_RENDERING_AND_VIDEO.md",
+      "title": "07 \u2014 AI, 3D Reconstruction, Rendering, and Video",
+      "bytes": 18278,
+      "word_count": 2212,
+      "sha256": "fde231aa8e9d64f1baff46eec6509abdab076008690dd5b739452c446d94b9dc"
+    },
+    {
+      "path": "08_INFRASTRUCTURE_APIS_AND_INTEGRATIONS.md",
+      "title": "08 \u2014 Infrastructure, APIs, and Integrations",
+      "bytes": 18166,
+      "word_count": 2120,
+      "sha256": "ecb823b275cda6c1256e60c691b52382109e32b791e3ef74508cc3cd55520d1a"
+    },
+    {
+      "path": "09_FULL_STACK_OPERATING_MODEL_AND_ACQUISITION_STRATEGY.md",
+      "title": "09 \u2014 Full-Stack Operating Model and Acquisition Strategy",
+      "bytes": 17188,
+      "word_count": 2025,
+      "sha256": "2a9d262398d32b21d6378396685d3f99977ae906270ff1f523cfda7c6d3f2d80"
+    },
+    {
+      "path": "10_BUILD_VS_BUY_VS_PARTNER_AND_IN_HOUSE_STRATEGY.md",
+      "title": "10 \u2014 Build vs Buy vs Partner and In-House Strategy",
+      "bytes": 11942,
+      "word_count": 1429,
+      "sha256": "bcea5ef84973d5a27d71f14842583a4c2bc656d870810f8bac580cf7d9121bec"
+    },
+    {
+      "path": "11_FEASIBILITY_LIMITATIONS_RISK_AND_SAFETY_GATES.md",
+      "title": "11 \u2014 Feasibility, Limitations, Risk, and Safety Gates",
+      "bytes": 17507,
+      "word_count": 2011,
+      "sha256": "caa189987faf2f9265a1427cdb44e3f3388aa43e7ae1230d6f53c69635ad5603"
+    },
+    {
+      "path": "12_EXECUTION_ROADMAP_WORKSTREAMS_AND_STAGE_GATES.md",
+      "title": "12 \u2014 Execution Roadmap, Workstreams, and Stage Gates",
+      "bytes": 15213,
+      "word_count": 1770,
+      "sha256": "296285be892badda60a11f6039ae6f45322e9f20a67c69458665a5079e4c7a92"
+    },
+    {
+      "path": "13_EVALUATION_METRICS_DATA_STRATEGY_AND_EXPERIMENTS.md",
+      "title": "13 \u2014 Evaluation Metrics, Data Strategy, and Experiments",
+      "bytes": 14250,
+      "word_count": 1642,
+      "sha256": "0903c2b053159e403cb7b9cb49d34a94b433aa8704de59cf22c175da81098812"
+    },
+    {
+      "path": "14_BUSINESS_MODEL_UNIT_ECONOMICS_AND_MOAT.md",
+      "title": "14 \u2014 Business Model, Unit Economics, and Moat",
+      "bytes": 14679,
+      "word_count": 1705,
+      "sha256": "c3e67ab518411c3ac390083a818d84a0a497f7dd441ea24417889039fd735e18"
+    },
+    {
+      "path": "15_CODEX_CLAUDE_IMPLEMENTATION_BRIEF.md",
+      "title": "15 \u2014 Codex and Claude Code Implementation Brief",
+      "bytes": 16344,
+      "word_count": 1929,
+      "sha256": "5e20e943c6c17a94367fa75e2c207b0d6c1790ad21c27198e672cc5255a7b728"
+    },
+    {
+      "path": "16_API_AND_DOMAIN_SCHEMA_REFERENCE.md",
+      "title": "16 \u2014 API and Domain Schema Reference",
+      "bytes": 20661,
+      "word_count": 1816,
+      "sha256": "65290413399d0222e287a54a4c6d240494a936e7a6e8ba06442a2293e80300f4"
+    },
+    {
+      "path": "17_RESEARCH_BIBLIOGRAPHY.md",
+      "title": "17 \u2014 Research Bibliography",
+      "bytes": 29286,
+      "word_count": 3088,
+      "sha256": "8fe25495bc0cec503fdd4e363032e9475a12f2cf9e14cd83c00556074a0aaad3"
+    },
+    {
+      "path": "18_BLUE_SKY_FRONTIER_PROGRAM.md",
+      "title": "18 \u2014 Blue-Sky Frontier Program",
+      "bytes": 13694,
+      "word_count": 1590,
+      "sha256": "07ac0fa18b9beda779358d2438c2a52b6f0f739369fbf1f8c5879afc8e36946a"
+    },
+    {
+      "path": "AGENTS.md",
+      "title": "Codex and Implementation-Agent Instructions",
+      "bytes": 3301,
+      "word_count": 397,
+      "sha256": "2dc34dcaca1a82a77de4a546a2277d2767cc3d744dbef342f8e0f706d467ed98"
+    },
+    {
+      "path": "ASSUMPTIONS_AND_OPEN_QUESTIONS.md",
+      "title": "Assumptions and Open Questions",
+      "bytes": 12286,
+      "word_count": 1388,
+      "sha256": "8a458681c6f3dd261ba35f3a54873fadd69aa0b9d4eb1c471f1fca341ea7033e"
+    },
+    {
+      "path": "CLAUDE.md",
+      "title": "Claude Code Project Instructions",
+      "bytes": 3455,
+      "word_count": 423,
+      "sha256": "bd1be0ce5a25812b246fe1e6dd2757e5c5ae50ca111c6ea15202d11690ff6d22"
+    },
+    {
+      "path": "DECISIONS.md",
+      "title": "Decision Register",
+      "bytes": 7838,
+      "word_count": 878,
+      "sha256": "a34375796cd61c8842ca8a2437e098cce6b6304205898e4567313fc912399c3c"
+    },
+    {
+      "path": "FULL_RESEARCH_DOSSIER.md",
+      "title": "Full Research Dossier",
+      "bytes": 361877,
+      "word_count": 42146,
+      "sha256": "a8f14d3cae75c65d3f3dc7c9044cf1004ffa108c12f0ac30200c1e753c49c33d"
+    },
+    {
+      "path": "README.md",
+      "title": "AI-Native Full-Stack Architecture: Research and Execution Repository",
+      "bytes": 13086,
+      "word_count": 1388,
+      "sha256": "2afb09e0e7c22e7cb42a943174766a07468155bd7340d5154888bcf08be65821"
+    }
+  ],
+  "recommended_agent_entrypoints": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "15_CODEX_CLAUDE_IMPLEMENTATION_BRIEF.md"
+  ],
+  "human_entrypoints": [
+    "README.md",
+    "FULL_RESEARCH_DOSSIER.md",
+    "01_EXECUTIVE_THESIS_AND_CRITICAL_VERDICT.md"
+  ]
+}

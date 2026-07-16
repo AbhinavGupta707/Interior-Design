@@ -1,0 +1,24 @@
+{
+  "name": "@interior-design/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run --exclude '.next/**'"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  },
+  "dependencies": {
+    "@interior-design/config": "workspace:*",
+    "@interior-design/ui": "workspace:*",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^4.4.3"
+  }
+}
