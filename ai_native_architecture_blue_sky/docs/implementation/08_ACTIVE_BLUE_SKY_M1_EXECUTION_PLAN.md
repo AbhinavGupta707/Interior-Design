@@ -222,12 +222,12 @@ All four C8 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because concurr
 
 | Lane | Exclusive paths | Output and evidence |
 |---|---|---|
-| C9-L1 registration/fusion kernel | `packages/geometry-kernel/src/{registration,fusion}/**` | robust transforms, constraints, scale/level alignment and conflict representation |
-| C9-L2 semantic fitting | `services/inference-worker/src/scan-to-model/**` | plane/opening/room/stair/object proposals projected into valid parametric geometry |
-| C9-L3 discrepancy backend/UX | `services/platform-api/src/modules/discrepancies/**`, `apps/web/src/features/discrepancy-review/**` | evidence comparison, residual views, accept/correct/unknown workflow |
-| C9-L4 fusion evaluation | `tests/evaluation/model-fusion/**`, `packages/test-fixtures/src/fusion/**` | single-source baselines, multi-floor drift, severe errors, calibration and correction-time tests |
+| C9-L1 registration/fusion kernel | `packages/geometry-kernel/src/{registration,fusion}/**` plus its isolated tests and package export | deterministic robust similarity transforms, constraint graph/components, scale/level alignment, explicit conflicts and abstention |
+| C9-L2 semantic fitting | `services/inference-worker/src/inference_worker/scan_to_model/**` plus isolated tests | strict plane/opening/room/stair/object observations projected into bounded proposal geometry with labelled inference/unknowns |
+| C9-L3 durable fusion/discrepancy product | isolated platform fusion module/composition/migration/tests, spatial fusion orchestration, and web fusion-review routes/features/tests | tenant-safe idempotent jobs, leases/cancel/retry/publication, evidence comparison, residual views, accessible accept/correct/unknown review and exact C5 operation drafts without direct mutation |
+| C9-L4 independent fusion evaluation | `tests/{evaluation,security,e2e}/model-fusion/**`, `packages/test-fixtures/src/fusion/**` and named evaluation/threat-model documents | single-source baselines, multi-floor drift, degenerate/hostile inputs, severe errors, calibration, correction-time instrumentation and browser acceptance |
 
-**Gate:** no averaging hides disagreement; inferred/occluded geometry is labelled; fusion must beat the best single source or remain optional.
+All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust numerical registration, inference/topology validation, tenant-safe asynchronous publication and independent adversarial evaluation are complex. **Gate:** no averaging hides disagreement; inferred/occluded geometry is labelled; fusion emits only a proposal plus exact C5 operation draft; synthetic truth must show improvement over the best single source or the system must abstain. Physical-device and unavailable C8 algorithm/GPU evidence remain named `NOT RUN`, never inferred from fixtures.
 
 ### C10 — Deterministic scene and interactive walkthrough — 3 lanes
 

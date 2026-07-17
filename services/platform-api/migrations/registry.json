@@ -48,6 +48,12 @@
       "checkpoint": "C8",
       "owner": "C8-L1",
       "path": "0008_reconstruction.sql"
+    },
+    {
+      "id": "0009",
+      "checkpoint": "C9",
+      "owner": "C9-L3",
+      "path": "0009_model_fusion.sql"
     }
   ]
 }
