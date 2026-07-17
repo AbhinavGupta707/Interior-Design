@@ -15,13 +15,13 @@ import { applyC1Migration, bootstrapC1Fixtures, createC1Sql } from "../../src/c1
 import { applyC2Migration } from "../../src/c2.js";
 import { applyC3Migration } from "../../src/c3.js";
 import { applyC4Migration } from "../../src/c4.js";
-import { LocalCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
+import { DomainCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
 import { alphaTenantId, canonicalSnapshotFixture } from "./fixtures.js";
 
 const integrationDatabaseUrl = process.env.C4_TEST_DATABASE_URL ?? "";
 const describeWithPostgres = integrationDatabaseUrl === "" ? describe.skip : describe;
 const sessionSecret = "c4-postgres-session-secret-with-at-least-thirty-two-bytes";
-const codec = new LocalCanonicalSnapshotCodec();
+const codec = new DomainCanonicalSnapshotCodec();
 const activeServers = new Set<ReturnType<typeof createServer>>();
 const testConfig = loadPlatformApiConfig({
   NODE_ENV: "test",

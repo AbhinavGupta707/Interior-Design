@@ -75,14 +75,14 @@ export const expectedCanonicalElementOrder = deepFreeze({
 export const canonicalProfileGoldens = deepFreeze({
   "as-built": {
     canonicalByteLength: 69_173,
-    sha256: "78779c4dead266ced6bc0beeb11c478697ef08659c58365201286567ebecc400",
+    sha256: "dc339d56d8a20a7bb4d23a1cc04b760fd1d675c06bf41e3b2dfdb91df6d233cc",
   },
   existing: {
     canonicalByteLength: 68_923,
-    sha256: "cfc2c65ee8c6a13d43f13c9d8a5c58b539604efe5a02bd146898675421feb0b0",
+    sha256: "587ebdfa03235b2dbf0346e7558398636057e735a014fdb9ca08d696ad4dda6f",
   },
   proposed: {
     canonicalByteLength: 69_173,
-    sha256: "e45846a3a0e311443991df0b5210f6d66e059693efb44eae9ef84fbe5810826d",
+    sha256: "c13a92cbc6312dd08ab9dca4f2cd4dea82bdeedc9b5ab50171e7bb1ff69004b1",
   },
 });

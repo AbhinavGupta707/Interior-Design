@@ -18,7 +18,7 @@ import { LocalFixtureTokenProvider } from "../../src/modules/identity/jwt.js";
 import { IdentityService } from "../../src/modules/identity/service.js";
 import type { IdentityStore } from "../../src/modules/identity/store.js";
 import type { IntakeRepository, UpsertIntakeCommand } from "../../src/modules/intake/repository.js";
-import { LocalCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
+import { DomainCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
 import type {
   AvailableModelProfileSummary,
   CanonicalModelRepository,
@@ -42,7 +42,7 @@ import {
 } from "./fixtures.js";
 
 const now = "2026-07-17T12:00:00.000Z";
-const codec = new LocalCanonicalSnapshotCodec();
+const codec = new DomainCanonicalSnapshotCodec();
 const testConfig = loadPlatformApiConfig({
   NODE_ENV: "test",
   PLATFORM_API_LOG_LEVEL: "silent",

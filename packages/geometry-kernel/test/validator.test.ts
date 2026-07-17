@@ -78,6 +78,18 @@ describe("validateCanonicalGeometry", () => {
     }
   });
 
+  it("detects a closed wall loop that disagrees with the authored room polygon", () => {
+    const snapshot = validSnapshot();
+    const space = required(snapshot.elements.spaces[0]);
+    if (space.boundary.knowledge !== "known") throw new Error("Expected a known room boundary.");
+    const second = required(space.boundary.value[1]);
+    space.boundary.value[1] = { xMm: second.xMm - 250, yMm: second.yMm };
+
+    const found = findingCodes(parseSnapshot(snapshot));
+
+    expect(found.has(codes.roomBoundaryInconsistent)).toBe(true);
+  });
+
   it("detects openings outside and above their host and overlapping intervals", () => {
     const snapshot = validSnapshot();
     const first = required(snapshot.elements.openings[0]);

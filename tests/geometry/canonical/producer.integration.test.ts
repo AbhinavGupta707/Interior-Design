@@ -1,6 +1,8 @@
 import { validateCanonicalGeometry } from "../../../packages/geometry-kernel/src/index.js";
+import { canonicalizeHomeSnapshot } from "../../../packages/domain-model/src/index.js";
 import {
   canonicalGeometryEvaluationCases,
+  canonicalProfileGoldens,
   canonicalProfileFixtures,
   type ExpectedGeometryFinding,
 } from "../../../packages/test-fixtures/src/models/index.js";
@@ -21,6 +23,17 @@ const comparable = (finding: {
 });
 
 describe.skipIf(!integrationEnabled)("C4 geometry producer integration", () => {
+  it.each(Object.entries(canonicalProfileFixtures))(
+    "matches the retained domain canonical golden for the %s profile",
+    (profile, snapshot) => {
+      const canonical = canonicalizeHomeSnapshot(snapshot);
+      expect({
+        canonicalByteLength: canonical.canonicalByteLength,
+        sha256: canonical.snapshotSha256,
+      }).toEqual(canonicalProfileGoldens[profile as keyof typeof canonicalProfileGoldens]);
+    },
+  );
+
   it.each(Object.entries(canonicalProfileFixtures))(
     "returns no finding for the valid %s profile",
     (_profile, snapshot) => {

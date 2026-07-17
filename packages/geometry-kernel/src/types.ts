@@ -78,6 +78,7 @@ export const geometryFindingCodes = Object.freeze({
   openingWidthUnknown: "OPENING_WIDTH_UNKNOWN",
   roomBoundaryConnectivityUnknown: "ROOM_BOUNDARY_CONNECTIVITY_UNKNOWN",
   roomBoundaryDisconnected: "ROOM_BOUNDARY_DISCONNECTED",
+  roomBoundaryInconsistent: "ROOM_BOUNDARY_INCONSISTENT",
   roomBoundaryLevelMismatch: "ROOM_BOUNDARY_LEVEL_MISMATCH",
   roomBoundaryNotClosed: "ROOM_BOUNDARY_NOT_CLOSED",
   roomBoundaryReferenceDuplicate: "ROOM_BOUNDARY_REFERENCE_DUPLICATE",

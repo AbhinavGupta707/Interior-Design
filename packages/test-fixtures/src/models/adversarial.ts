@@ -220,12 +220,30 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     "Missing host, target, and level references.",
     missingReferences,
     [
-      finding("HOST_WALL_REFERENCE_MISSING", "error", [ids.openingDoorGround]),
-      finding("TARGET_ELEMENT_REFERENCE_MISSING", "error", [ids.finishGroundFloor]),
-      finding("LEVEL_REFERENCE_MISSING", "error", [ids.fixedKitchenCabinet]),
-      finding("LEVEL_REFERENCE_MISSING", "error", [ids.furnishingSofa]),
-      finding("LEVEL_REFERENCE_MISSING", "error", [ids.lightGround]),
-      finding("LEVEL_REFERENCE_MISSING", "error", [ids.cameraGround]),
+      finding("HOST_WALL_REFERENCE_MISSING", "error", [
+        ids.openingDoorGround,
+        canonicalFixtureIds.missing.hostWall,
+      ]),
+      finding("TARGET_REFERENCE_MISSING", "error", [
+        ids.finishGroundFloor,
+        canonicalFixtureIds.missing.target,
+      ]),
+      finding("LEVEL_REFERENCE_MISSING", "error", [
+        ids.fixedKitchenCabinet,
+        canonicalFixtureIds.missing.level,
+      ]),
+      finding("LEVEL_REFERENCE_MISSING", "error", [
+        ids.furnishingSofa,
+        canonicalFixtureIds.missing.level,
+      ]),
+      finding("LEVEL_REFERENCE_MISSING", "error", [
+        ids.lightGround,
+        canonicalFixtureIds.missing.level,
+      ]),
+      finding("LEVEL_REFERENCE_MISSING", "error", [
+        ids.cameraGround,
+        canonicalFixtureIds.missing.level,
+      ]),
     ],
   ),
   geometryCase(
@@ -253,16 +271,16 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     selfIntersectingPolygons,
     [
       finding(
-        "SPACE_POLYGON_SELF_INTERSECTS",
+        "SPACE_POLYGON_SELF_INTERSECTION",
         "error",
         [ids.spaceLiving],
-        located(ids.levelGround, 2_500, 2_500),
+        located(ids.levelGround, 0, 0),
       ),
       finding(
-        "SURFACE_POLYGON_SELF_INTERSECTS",
+        "SURFACE_POLYGON_SELF_INTERSECTION",
         "error",
         [ids.surfaceGroundFloor],
-        located(ids.levelGround, 2_500, 2_500),
+        located(ids.levelGround, 0, 0),
       ),
     ],
   ),
@@ -272,13 +290,19 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     zeroRepeatedWallSegments,
     [
       finding(
-        "WALL_PATH_SEGMENT_REPEATED",
+        "WALL_PATH_REPEATED_VERTEX",
         "error",
         [ids.wallGroundSouthLiving],
         located(ids.levelGround, 0, 0),
       ),
       finding(
-        "WALL_PATH_ZERO_LENGTH",
+        "WALL_PATH_SELF_INTERSECTION",
+        "error",
+        [ids.wallGroundSouthLiving],
+        located(ids.levelGround, 0, 0),
+      ),
+      finding(
+        "WALL_PATH_ZERO_LENGTH_SEGMENT",
         "error",
         [ids.wallGroundSouthLiving],
         located(ids.levelGround, 0, 0),
@@ -291,10 +315,10 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     selfIntersectingWall,
     [
       finding(
-        "WALL_PATH_SELF_INTERSECTS",
+        "WALL_PATH_SELF_INTERSECTION",
         "error",
         [ids.wallGroundSouthLiving],
-        located(ids.levelGround, 2_500, 2_500),
+        located(ids.levelGround, 0, 0),
       ),
     ],
   ),
@@ -304,22 +328,26 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     invalidOpenings,
     [
       finding(
-        "OPENING_OUTSIDE_HOST",
+        "OPENING_OUTSIDE_HOST_EXTENT",
         "error",
-        [ids.openingDoorGround],
-        located(ids.levelGround, 5_000, 6_000),
+        [ids.wallGroundPartition, ids.openingDoorGround],
+        located(ids.levelGround, 5_000, 0),
       ),
       finding(
-        "OPENINGS_OVERLAP",
+        "OPENING_OVERLAP",
         "error",
-        [ids.openingWindowGroundLiving, canonicalFixtureIds.adversarialElements.openingOverlap],
-        located(ids.levelGround, 2_000, 0),
+        [
+          ids.wallGroundSouthLiving,
+          ids.openingWindowGroundLiving,
+          canonicalFixtureIds.adversarialElements.openingOverlap,
+        ],
+        located(ids.levelGround, 0, 0),
       ),
       finding(
-        "OPENING_VERTICAL_EXTENT_INVALID",
+        "OPENING_ABOVE_HOST_HEIGHT",
         "error",
-        [canonicalFixtureIds.adversarialElements.openingOverlap],
-        located(ids.levelGround, 2_000, 0),
+        [ids.wallGroundSouthLiving, canonicalFixtureIds.adversarialElements.openingOverlap],
+        located(ids.levelGround, 0, 0),
       ),
     ],
   ),
@@ -331,19 +359,37 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
       finding(
         "ROOM_BOUNDARY_DISCONNECTED",
         "error",
-        [ids.spaceLiving],
+        [
+          ids.spaceLiving,
+          ids.wallGroundSouthLiving,
+          ids.wallGroundNorthLiving,
+          ids.wallGroundPartition,
+          ids.wallGroundEast,
+        ],
+        located(ids.levelGround, 0, 0),
+      ),
+      finding(
+        "ROOM_BOUNDARY_NOT_CLOSED",
+        "error",
+        [
+          ids.spaceLiving,
+          ids.wallGroundSouthLiving,
+          ids.wallGroundNorthLiving,
+          ids.wallGroundPartition,
+          ids.wallGroundEast,
+        ],
         located(ids.levelGround, 0, 0),
       ),
       finding(
         "ROOM_BOUNDARY_INCONSISTENT",
         "error",
-        [ids.spaceLiving],
-        located(ids.levelGround, 0, 0),
-      ),
-      finding(
-        "ROOM_BOUNDARY_INCONSISTENT",
-        "error",
-        [ids.spaceKitchen],
+        [
+          ids.spaceKitchen,
+          ids.wallGroundNorthKitchen,
+          ids.wallGroundPartition,
+          ids.wallGroundEast,
+          ids.wallGroundSouthKitchen,
+        ],
         located(ids.levelGround, 5_000, 0),
       ),
     ],
@@ -352,19 +398,23 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     "c4-geo-008-stair-missing-level",
     "A stair points to a missing destination level.",
     stairMissingLevel,
-    [finding("STAIR_LEVEL_REFERENCE_MISSING", "error", [ids.stairMain])],
+    [
+      finding("LEVEL_REFERENCE_MISSING", "error", [
+        ids.stairMain,
+        canonicalFixtureIds.missing.level,
+      ]),
+    ],
   ),
   geometryCase(
     "c4-geo-009-stair-identical-levels",
     "A stair starts and ends on the same level.",
     stairIdenticalLevels,
     [
-      finding("STAIR_LEVELS_IDENTICAL", "error", [ids.stairMain]),
       finding(
-        "STAIR_ELEVATION_MISMATCH",
+        "STAIR_LEVELS_IDENTICAL",
         "error",
-        [ids.stairMain],
-        located(ids.levelGround, 4_200, 5_000),
+        [ids.stairMain, ids.levelGround],
+        located(ids.levelGround, 4_200, 1_000),
       ),
     ],
   ),
@@ -374,16 +424,16 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     stairInvalidRelationship,
     [
       finding(
-        "STAIR_RISE_RUN_RELATION_INVALID",
+        "STAIR_RUN_PATH_MISMATCH",
         "error",
         [ids.stairMain],
         located(ids.levelGround, 4_200, 1_000),
       ),
       finding(
-        "STAIR_ELEVATION_MISMATCH",
+        "STAIR_RISE_LEVEL_MISMATCH",
         "error",
-        [ids.stairMain],
-        located(ids.levelGround, 4_200, 5_000),
+        [ids.stairMain, ids.levelGround, ids.levelFirst],
+        located(ids.levelGround, 4_200, 1_000),
       ),
     ],
   ),
@@ -393,10 +443,10 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     stairElevationMismatch,
     [
       finding(
-        "STAIR_ELEVATION_MISMATCH",
+        "STAIR_RISE_LEVEL_MISMATCH",
         "error",
-        [ids.stairMain],
-        located(ids.levelGround, 4_200, 5_000),
+        [ids.stairMain, ids.levelGround, ids.levelFirst],
+        located(ids.levelGround, 4_200, 1_000),
       ),
     ],
   ),
@@ -407,7 +457,7 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     [
       finding(
         "WALL_HEIGHT_UNKNOWN",
-        "warning",
+        "information",
         [ids.wallGroundPartition],
         located(ids.levelGround, 5_000, 0),
       ),
@@ -426,7 +476,19 @@ export const canonicalGeometryEvaluationCases = deepFreeze([
     unsafeArithmetic,
     [
       finding(
-        "ARITHMETIC_RANGE_UNSAFE",
+        "GEOMETRY_INTEGER_RANGE_EXCEEDED",
+        "error",
+        [ids.spaceLiving],
+        located(ids.levelGround, -10_000_000, -10_000_000),
+      ),
+      finding(
+        "SPACE_POLYGON_REPEATED_VERTEX",
+        "error",
+        [ids.spaceLiving],
+        located(ids.levelGround, -10_000_000, -10_000_000),
+      ),
+      finding(
+        "SPACE_POLYGON_SELF_INTERSECTION",
         "error",
         [ids.spaceLiving],
         located(ids.levelGround, -10_000_000, -10_000_000),

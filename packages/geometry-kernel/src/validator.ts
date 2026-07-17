@@ -238,8 +238,9 @@ function segmentsAreAdjacent(
   );
 }
 
-function validatePointPath(input: ValidatePathInput): void {
+function validatePointPath(input: ValidatePathInput): boolean {
   const { points } = input;
+  let valid = true;
   const segmentCount = input.closed ? points.length : Math.max(0, points.length - 1);
   const zeroLengthPoints: Point2Mm[] = [];
   for (let index = 0; index < segmentCount; index += 1) {
@@ -250,6 +251,7 @@ function validatePointPath(input: ValidatePathInput): void {
     }
   }
   if (zeroLengthPoints.length > 0) {
+    valid = false;
     const point = minimumPoint2(zeroLengthPoints);
     input.collector.add({
       affectedElementIds: [input.elementId],
@@ -273,6 +275,7 @@ function validatePointPath(input: ValidatePathInput): void {
     }
   }
   if (repeatedPoints.length > 0) {
+    valid = false;
     const point = minimumPoint2(repeatedPoints);
     input.collector.add({
       affectedElementIds: [input.elementId],
@@ -295,7 +298,7 @@ function validatePointPath(input: ValidatePathInput): void {
         "The deterministic segment-comparison budget was exhausted before self-intersection validation completed.",
       severity: "error",
     });
-    return;
+    return false;
   }
 
   const intersectingPoints: Point2Mm[] = [];
@@ -322,7 +325,7 @@ function validatePointPath(input: ValidatePathInput): void {
           input.location,
           `${input.noun} intersection arithmetic exceeded the safe-integer range.`,
         );
-        return;
+        return false;
       }
       if (intersection.value !== "none") {
         intersectingPoints.push(firstStart, firstEnd, secondStart, secondEnd);
@@ -330,6 +333,7 @@ function validatePointPath(input: ValidatePathInput): void {
     }
   }
   if (intersectingPoints.length > 0) {
+    valid = false;
     const point = minimumPoint2(intersectingPoints);
     input.collector.add({
       affectedElementIds: [input.elementId],
@@ -341,6 +345,7 @@ function validatePointPath(input: ValidatePathInput): void {
       severity: "error",
     });
   }
+  return valid;
 }
 
 interface PolygonFindingCodes extends PathFindingCodes {
@@ -355,8 +360,9 @@ function validatePolygon2d(input: {
   readonly noun: string;
   readonly points: readonly Point2Mm[];
   readonly resourceBudget: ComparisonBudget;
-}): void {
+}): boolean {
   const area = signedDoubleArea2d(input.points);
+  let valid = area.ok && area.value !== 0;
   if (!area.ok) {
     rangeFinding(
       input.collector,
@@ -373,7 +379,8 @@ function validatePolygon2d(input: {
       severity: "error",
     });
   }
-  validatePointPath({ ...input, closed: true });
+  valid = validatePointPath({ ...input, closed: true }) && valid;
+  return valid;
 }
 
 function allModelElements(elements: Elements): readonly ModelElement[] {
@@ -525,6 +532,7 @@ function validateSpaces(input: {
       boundary === undefined ? undefined : minimumPoint2(boundary),
       input.levelsById,
     );
+    let boundaryValid = false;
     if (boundary === undefined) {
       input.collector.add({
         affectedElementIds: [space.id],
@@ -533,7 +541,7 @@ function validateSpaces(input: {
         severity: "information",
       });
     } else {
-      validatePolygon2d({
+      boundaryValid = validatePolygon2d({
         collector: input.collector,
         elementId: space.id,
         findingCodes: {
@@ -551,6 +559,8 @@ function validateSpaces(input: {
     validateRoomBoundaryReferences({
       ...input,
       baseLocation,
+      boundary,
+      boundaryValid,
       level,
       space,
     });
@@ -559,6 +569,8 @@ function validateSpaces(input: {
 
 function validateRoomBoundaryReferences(input: {
   readonly baseLocation: GeometryLocation | undefined;
+  readonly boundary: readonly Point2Mm[] | undefined;
+  readonly boundaryValid: boolean;
   readonly byId: ReadonlyMap<string, ModelElement>;
   readonly collector: FindingCollector;
   readonly level: Level | undefined;
@@ -689,7 +701,9 @@ function validateRoomBoundaryReferences(input: {
       }
     }
   }
-  if (components > 1) {
+  const disconnected = components > 1;
+  const notClosed = nodes.some((node) => adjacency.get(node)?.size !== 2);
+  if (disconnected) {
     input.collector.add({
       affectedElementIds: [space.id, ...space.boundedByElementIds],
       code: codes.roomBoundaryDisconnected,
@@ -698,7 +712,7 @@ function validateRoomBoundaryReferences(input: {
       severity: "error",
     });
   }
-  if (nodes.some((node) => adjacency.get(node)?.size !== 2)) {
+  if (notClosed) {
     input.collector.add({
       affectedElementIds: [space.id, ...space.boundedByElementIds],
       code: codes.roomBoundaryNotClosed,
@@ -706,6 +720,23 @@ function validateRoomBoundaryReferences(input: {
       message: "Known wall references do not form a closed degree-two boundary loop.",
       severity: "error",
     });
+  }
+  if (!disconnected && !notClosed && input.boundary !== undefined && input.boundaryValid) {
+    const polygonVertices = new Set(input.boundary.map(point2Key));
+    const wallVertices = new Set(nodes);
+    if (
+      polygonVertices.size !== wallVertices.size ||
+      [...polygonVertices].some((vertex) => !wallVertices.has(vertex))
+    ) {
+      input.collector.add({
+        affectedElementIds: [space.id, ...space.boundedByElementIds],
+        code: codes.roomBoundaryInconsistent,
+        ...(input.baseLocation === undefined ? {} : { location: input.baseLocation }),
+        message:
+          "The closed wall-boundary vertices do not match the authored space polygon vertices.",
+        severity: "error",
+      });
+    }
   }
 }
 

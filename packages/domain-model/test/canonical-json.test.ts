@@ -94,5 +94,9 @@ describe("RFC-8785-style I-JSON canonicalization", () => {
   it("bounds hostile input nesting before frozen-schema validation", () => {
     const nested = `${"[".repeat(130)}0${"]".repeat(130)}`;
     expectCanonicalError(() => parseIJson(nested), "RESOURCE_LIMIT");
+
+    let nestedValue: unknown = 0;
+    for (let depth = 0; depth < 130; depth += 1) nestedValue = [nestedValue];
+    expectCanonicalError(() => canonicalizeIJson(nestedValue), "RESOURCE_LIMIT");
   });
 });

@@ -16,7 +16,7 @@ import {
 } from "./modules/identity/jwt.js";
 import { PostgresIdentityStore } from "./modules/identity/postgres.js";
 import { IdentityService } from "./modules/identity/service.js";
-import { LocalCanonicalSnapshotCodec } from "./modules/models/core/canonical.js";
+import { DomainCanonicalSnapshotCodec } from "./modules/models/core/canonical.js";
 import {
   PostgresCanonicalModelRepository,
   type CanonicalModelClock,
@@ -123,7 +123,7 @@ export function registerC4Module(
       options.tokenProvider ?? configuredTokenProvider(runtimeEnvironment, environment),
     );
   const projects = options.projects ?? new PostgresProjectRepository(sql as Sql);
-  const codec = options.codec ?? new LocalCanonicalSnapshotCodec();
+  const codec = options.codec ?? new DomainCanonicalSnapshotCodec();
   const repository =
     options.repository ??
     new PostgresCanonicalModelRepository(sql as Sql, codec, {

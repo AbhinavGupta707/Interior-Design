@@ -6,7 +6,7 @@ import {
 } from "@interior-design/contracts";
 import { describe, expect, it } from "vitest";
 
-import { LocalCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
+import { DomainCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
 import {
   CanonicalGeometryValidationError,
   CanonicalModelService,
@@ -26,7 +26,7 @@ import {
   ownerUserId,
 } from "./fixtures.js";
 
-const codec = new LocalCanonicalSnapshotCodec();
+const codec = new DomainCanonicalSnapshotCodec();
 
 class RecordingRepository implements CanonicalModelRepository {
   readonly commands: PersistCanonicalSnapshotCommand[] = [];
@@ -102,7 +102,7 @@ function createCommand(snapshot = canonicalSnapshotFixture()) {
   };
 }
 
-describe("C4 canonical snapshot fallback codec", () => {
+describe("C4 domain canonical snapshot codec", () => {
   it("sorts entity collections without mutating input and hashes their canonical order", () => {
     const original = canonicalSnapshotFixture();
     const firstLevel = original.elements.levels[0];
@@ -164,7 +164,7 @@ describe("C4 canonical snapshot fallback codec", () => {
     const invalidUnicode = canonicalSnapshotFixture({
       limitationDetail: "Synthetic invalid surrogate \ud800 limitation.",
     });
-    expect(() => codec.encode(invalidUnicode)).toThrow(/unpaired UTF-16 surrogate/u);
+    expect(() => codec.encode(invalidUnicode)).toThrow(/lone surrogates/u);
   });
 });
 

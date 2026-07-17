@@ -77,12 +77,10 @@ the JSONB value and run it through the canonical codec port before comparing SHA
 length. Never hash `jsonb::text`, use database text ordering as canonical bytes, or assume a JSONB
 round-trip retains insertion order.
 
-At this frozen worker base, `@interior-design/domain-model` exposes the schema but is still a
-placeholder for its final canonical byte/hash functions. The API uses the explicit
-`CanonicalSnapshotCodec` port and a narrowly scoped module-local RFC-8785-style fallback. During
-L1/L3 integration, replace that fallback with the L1 public codec at composition and rerun the
-golden and JSONB round-trip suites; do not retain two canonical algorithms as production authority.
-The geometry dependency already calls the frozen `validateCanonicalGeometry` port.
+The API's `CanonicalSnapshotCodec` adapter delegates to the integrated
+`@interior-design/domain-model` canonical byte/hash implementation. It does not retain a second
+serializer. The geometry dependency likewise calls the integrated
+`validateCanonicalGeometry` implementation directly.
 
 ## Frozen HTTP profile
 
@@ -149,8 +147,8 @@ docker compose -f infrastructure/local/compose.yaml down
 
 ## Residual limits
 
-C4 remains TypeScript and 2.5D. The frozen-base local codec must be reconciled with the integrated
-L1 codec. The frozen-base geometry validator is a placeholder until L2 is integrated, so only an
-injected deterministic validator supplied live findings in this lane's isolated evidence. There is
-no plan inference, capture/reconstruction, geometry repair, 3D compiler, GPU/provider work, real
-property/customer data or professional review in this checkpoint.
+C4 remains TypeScript and 2.5D. Its integrated codec and geometry kernel have independent golden,
+adversarial, JSONB round-trip and live API coverage, but they do not establish geometric
+equivalence, survey accuracy or professional truth. There is no plan inference,
+capture/reconstruction, geometry repair, 3D compiler, GPU/provider work, real property/customer
+data or professional review in this checkpoint.

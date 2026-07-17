@@ -27,7 +27,7 @@ const wall = (id: string, levelId: string, name: string, path: readonly Point2[]
   alignment: "centre" as const,
   baseOffsetMm: known(0),
   elementType: "wall" as const,
-  heightMm: known(2_800),
+  heightMm: known(levelId === canonicalFixtureIds.elements.levelFirst ? 2_600 : 2_800),
   id,
   levelId,
   name: known(name),
@@ -315,7 +315,7 @@ const existingSnapshotValue: CanonicalHomeSnapshot = {
         origin: origin(),
         path: known([
           { xMm: 4_200, yMm: 1_000 },
-          { xMm: 4_200, yMm: 5_000 },
+          { xMm: 4_200, yMm: 4_750 },
         ]),
         riseMm: known(175),
         runMm: known(250),
@@ -436,7 +436,7 @@ export const existingHomeSnapshot = deepFreeze(existingSnapshotValue) as Canonic
 const proposedSnapshotValue = structuredClone(existingSnapshotValue);
 proposedSnapshotValue.profile = "proposed";
 proposedSnapshotValue.derivedFromSnapshotSha256 =
-  "cfc2c65ee8c6a13d43f13c9d8a5c58b539604efe5a02bd146898675421feb0b0";
+  "587ebdfa03235b2dbf0346e7558398636057e735a014fdb9ca08d696ad4dda6f";
 proposedSnapshotValue.knownLimitations.push({
   code: "PROPOSED_PROFILE_NOT_ISSUED",
   detail:
@@ -456,7 +456,7 @@ export const proposedHomeSnapshot = deepFreeze(proposedSnapshotValue) as Canonic
 const asBuiltSnapshotValue = structuredClone(proposedSnapshotValue);
 asBuiltSnapshotValue.profile = "as-built";
 asBuiltSnapshotValue.derivedFromSnapshotSha256 =
-  "e45846a3a0e311443991df0b5210f6d66e059693efb44eae9ef84fbe5810826d";
+  "c13a92cbc6312dd08ab9dca4f2cd4dea82bdeedc9b5ab50171e7bb1ff69004b1";
 asBuiltSnapshotValue.knownLimitations = asBuiltSnapshotValue.knownLimitations.filter(
   (limitation) => limitation.code !== "PROPOSED_PROFILE_NOT_ISSUED",
 );

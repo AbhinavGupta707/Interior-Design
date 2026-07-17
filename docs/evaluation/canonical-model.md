@@ -12,9 +12,9 @@ The valid authored fixture has two levels, four rooms, floors and ceilings, four
 
 | Profile  | Derivation          | Canonical UTF-8 bytes | Independent SHA-256                                                |
 | -------- | ------------------- | --------------------: | ------------------------------------------------------------------ |
-| existing | absent, as required |                68,923 | `cfc2c65ee8c6a13d43f13c9d8a5c58b539604efe5a02bd146898675421feb0b0` |
-| proposed | existing hash       |                69,173 | `e45846a3a0e311443991df0b5210f6d66e059693efb44eae9ef84fbe5810826d` |
-| as-built | proposed hash       |                69,173 | `78779c4dead266ced6bc0beeb11c478697ef08659c58365201286567ebecc400` |
+| existing | absent, as required |                68,923 | `587ebdfa03235b2dbf0346e7558398636057e735a014fdb9ca08d696ad4dda6f` |
+| proposed | existing hash       |                69,173 | `c13a92cbc6312dd08ab9dca4f2cd4dea82bdeedc9b5ab50171e7bb1ff69004b1` |
+| as-built | proposed hash       |                69,173 | `dc339d56d8a20a7bb4d23a1cc04b760fd1d675c06bf41e3b2dfdb91df6d233cc` |
 
 The reference oracle validates the snapshot first, recursively sorts JSON object keys, sorts entity collections and reference sets by stable ID, and sorts limitations by `code + detail`. Authored polygon and path point order remains unchanged. Hash input includes the canonical snapshot fields and excludes record timestamps, actors, database sequence, snapshot ID, and transport envelope. It is deliberately independent test code and must not be imported by production packages.
 
@@ -30,21 +30,21 @@ Determinism coverage:
 
 Every entry below is schema-valid so geometry validation cannot avoid it by failing schema parsing. Locations are level-local integer millimetres. The source data records affected ID sets and each exact location; the readable aliases below refer to the stable IDs in `canonicalFixtureIds`.
 
-| Fixture ID                              | Adversarial condition                                                                   | Required finding code — severity — location                                                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `c4-geo-001-missing-references`         | missing opening host, finish target, and fixed/furnishing/light/camera level references | `HOST_WALL_REFERENCE_MISSING` — error; `TARGET_ELEMENT_REFERENCE_MISSING` — error; four `LEVEL_REFERENCE_MISSING` — error; no fabricated location                    |
-| `c4-geo-002-degenerate-polygons`        | collinear space and floor surface                                                       | `SPACE_POLYGON_DEGENERATE` — error — ground `(0,0)`; `SURFACE_POLYGON_DEGENERATE` — error — ground `(0,0)`                                                           |
-| `c4-geo-003-self-intersecting-polygons` | crossing space and floor-surface rings                                                  | `SPACE_POLYGON_SELF_INTERSECTS` — error — ground `(2500,2500)`; `SURFACE_POLYGON_SELF_INTERSECTS` — error — ground `(2500,2500)`                                     |
-| `c4-geo-004-zero-repeated-wall`         | zero-length and repeated wall segments                                                  | `WALL_PATH_ZERO_LENGTH` — error — ground `(0,0)`; `WALL_PATH_SEGMENT_REPEATED` — error — ground `(0,0)`                                                              |
-| `c4-geo-005-self-intersecting-wall`     | crossing multi-segment wall                                                             | `WALL_PATH_SELF_INTERSECTS` — error — ground `(2500,2500)`                                                                                                           |
-| `c4-geo-006-invalid-openings`           | out-of-host door, overlapping windows, sill plus height beyond host                     | `OPENING_OUTSIDE_HOST` — error — ground `(5000,6000)`; `OPENINGS_OVERLAP` — error — ground `(2000,0)`; `OPENING_VERTICAL_EXTENT_INVALID` — error — ground `(2000,0)` |
-| `c4-geo-007-room-boundaries`            | disconnected bounded-by graph and endpoint/boundary disagreement                        | `ROOM_BOUNDARY_DISCONNECTED` — error — living `(0,0)`; two `ROOM_BOUNDARY_INCONSISTENT` — error — living `(0,0)` and kitchen `(5000,0)`                              |
-| `c4-geo-008-stair-missing-level`        | missing destination level                                                               | `STAIR_LEVEL_REFERENCE_MISSING` — error; no fabricated location                                                                                                      |
-| `c4-geo-009-stair-identical-levels`     | identical source and destination                                                        | `STAIR_LEVELS_IDENTICAL` — error; `STAIR_ELEVATION_MISMATCH` — error — ground `(4200,5000)`                                                                          |
-| `c4-geo-010-stair-relationship`         | rise exceeds run and total rise misses destination                                      | `STAIR_RISE_RUN_RELATION_INVALID` — error — ground `(4200,1000)`; `STAIR_ELEVATION_MISMATCH` — error — ground `(4200,5000)`                                          |
-| `c4-geo-011-stair-elevation`            | rise times count differs from level elevation delta                                     | `STAIR_ELEVATION_MISMATCH` — error — ground `(4200,5000)`                                                                                                            |
-| `c4-geo-012-unknown-wall-dimensions`    | attributed unknown wall height and conflicting thickness                                | `WALL_HEIGHT_UNKNOWN` — warning — ground `(5000,0)`; `WALL_THICKNESS_UNKNOWN` — information — ground `(5000,0)`                                                      |
-| `c4-geo-013-unsafe-arithmetic`          | 512-point repeated extreme ring overflows safe integer accumulation                     | `ARITHMETIC_RANGE_UNSAFE` — error — ground `(-10000000,-10000000)`                                                                                                   |
+| Fixture ID                              | Adversarial condition                                                                   | Required finding code — severity — location                                                                                                        |
+| --------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `c4-geo-001-missing-references`         | missing opening host, finish target, and fixed/furnishing/light/camera level references | `HOST_WALL_REFERENCE_MISSING` — error; `TARGET_REFERENCE_MISSING` — error; four `LEVEL_REFERENCE_MISSING` — error; no fabricated location          |
+| `c4-geo-002-degenerate-polygons`        | collinear space and floor surface                                                       | `SPACE_POLYGON_DEGENERATE` — error — ground `(0,0)`; `SURFACE_POLYGON_DEGENERATE` — error — ground `(0,0)`                                         |
+| `c4-geo-003-self-intersecting-polygons` | crossing space and floor-surface rings                                                  | `SPACE_POLYGON_SELF_INTERSECTION` — error — ground `(0,0)`; `SURFACE_POLYGON_SELF_INTERSECTION` — error — ground `(0,0)`                           |
+| `c4-geo-004-zero-repeated-wall`         | zero-length and repeated wall segments                                                  | `WALL_PATH_ZERO_LENGTH_SEGMENT`, `WALL_PATH_REPEATED_VERTEX`, and `WALL_PATH_SELF_INTERSECTION` — error — ground `(0,0)`                           |
+| `c4-geo-005-self-intersecting-wall`     | crossing multi-segment wall                                                             | `WALL_PATH_SELF_INTERSECTION` — error — ground `(0,0)`                                                                                             |
+| `c4-geo-006-invalid-openings`           | out-of-host door, overlapping windows, sill plus height beyond host                     | `OPENING_OUTSIDE_HOST_EXTENT` — error — ground `(5000,0)`; `OPENING_OVERLAP` and `OPENING_ABOVE_HOST_HEIGHT` — error — ground `(0,0)`              |
+| `c4-geo-007-room-boundaries`            | disconnected bounded-by graph and endpoint/boundary disagreement                        | `ROOM_BOUNDARY_DISCONNECTED` and `ROOM_BOUNDARY_NOT_CLOSED` — error — living `(0,0)`; `ROOM_BOUNDARY_INCONSISTENT` — error — kitchen `(5000,0)`    |
+| `c4-geo-008-stair-missing-level`        | missing destination level                                                               | `LEVEL_REFERENCE_MISSING` — error; no fabricated location                                                                                          |
+| `c4-geo-009-stair-identical-levels`     | identical source and destination                                                        | `STAIR_LEVELS_IDENTICAL` — error — ground `(4200,1000)`                                                                                            |
+| `c4-geo-010-stair-relationship`         | rise exceeds run and total rise misses destination                                      | `STAIR_RUN_PATH_MISMATCH` and `STAIR_RISE_LEVEL_MISMATCH` — error — ground `(4200,1000)`                                                           |
+| `c4-geo-011-stair-elevation`            | rise times count differs from level elevation delta                                     | `STAIR_RISE_LEVEL_MISMATCH` — error — ground `(4200,1000)`                                                                                         |
+| `c4-geo-012-unknown-wall-dimensions`    | attributed unknown wall height and conflicting thickness                                | `WALL_HEIGHT_UNKNOWN` and `WALL_THICKNESS_UNKNOWN` — information — ground `(5000,0)`                                                               |
+| `c4-geo-013-unsafe-arithmetic`          | 512-point repeated extreme ring overflows safe integer accumulation                     | `GEOMETRY_INTEGER_RANGE_EXCEEDED`, `SPACE_POLYGON_REPEATED_VERTEX`, and `SPACE_POLYGON_SELF_INTERSECTION` — error — ground `(-10000000,-10000000)` |
 
 The twelve error-bearing fixtures are the severe-error denominator. The unknown-dimension fixture remains in the overall denominator but is not relabelled as severe. A crash, timeout, omitted result, wrong code, wrong severity, wrong affected-ID set, or wrong location is a miss; it is never removed from the denominator.
 
@@ -80,7 +80,10 @@ pnpm --filter @interior-design/test-fixtures test:unit
 pnpm exec vitest run --config tests/geometry/canonical/vitest.config.ts
 ```
 
-The second command reports 16 producer tests as explicitly skipped while `C4_RUN_PRODUCER_INTEGRATION` is absent: three valid-profile checks and thirteen retained adversarial checks. This is a visible unresolved integration state, not passing producer evidence. After C4-L2 is merged, run:
+The second command reports 19 producer tests as explicitly skipped while
+`C4_RUN_PRODUCER_INTEGRATION` is absent: three domain-canonical golden checks, three valid-profile
+geometry checks and thirteen retained adversarial checks. This is a visible unresolved integration
+state, not passing producer evidence. After the domain and geometry producers are merged, run:
 
 ```sh
 C4_RUN_PRODUCER_INTEGRATION=1 pnpm exec vitest run --config tests/geometry/canonical/vitest.config.ts

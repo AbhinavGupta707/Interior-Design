@@ -3,6 +3,7 @@ import {
   c4SchemaVersion,
   createModelSnapshotRequestSchema,
   modelProfileSchema,
+  modelProfilesResponseSchema,
 } from "../src/index.js";
 import { describe, expect, it } from "vitest";
 
@@ -155,5 +156,18 @@ describe("C4 frozen canonical-model contract", () => {
         snapshot: baseSnapshot,
       }).expectedCurrentSnapshotSha256,
     ).toBeNull();
+  });
+
+  it("requires exactly one summary for every canonical model profile", () => {
+    expect(
+      modelProfilesResponseSchema.safeParse({
+        profiles: [
+          { profile: "existing", status: "empty" },
+          { profile: "existing", status: "empty" },
+          { profile: "as-built", status: "empty" },
+        ],
+        projectId: ids.project,
+      }).success,
+    ).toBe(false);
   });
 });

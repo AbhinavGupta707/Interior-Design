@@ -91,6 +91,7 @@ function serializeArray(
   value: readonly unknown[],
   ancestors: WeakSet<object>,
   path: string,
+  depth: number,
 ): string {
   const ownKeys = Reflect.ownKeys(value);
   for (const key of ownKeys) {
@@ -129,12 +130,19 @@ function serializeArray(
         { path: childPath(path, index) },
       );
     }
-    entries.push(serializeIJsonValue(descriptor.value, ancestors, childPath(path, index)));
+    entries.push(
+      serializeIJsonValue(descriptor.value, ancestors, childPath(path, index), depth + 1),
+    );
   }
   return `[${entries.join(",")}]`;
 }
 
-function serializeObject(value: object, ancestors: WeakSet<object>, path: string): string {
+function serializeObject(
+  value: object,
+  ancestors: WeakSet<object>,
+  path: string,
+  depth: number,
+): string {
   const prototype = Object.getPrototypeOf(value) as unknown;
   if (prototype !== Object.prototype && prototype !== null) {
     throw new CanonicalJsonError(
@@ -170,13 +178,26 @@ function serializeObject(value: object, ancestors: WeakSet<object>, path: string
         descriptor.value,
         ancestors,
         childPath(path, key),
+        depth + 1,
       )}`,
     );
   }
   return `{${entries.join(",")}}`;
 }
 
-function serializeIJsonValue(value: unknown, ancestors: WeakSet<object>, path: string): string {
+function serializeIJsonValue(
+  value: unknown,
+  ancestors: WeakSet<object>,
+  path: string,
+  depth: number,
+): string {
+  if (depth > MAX_CANONICAL_IJSON_DEPTH) {
+    throw new CanonicalJsonError(
+      "RESOURCE_LIMIT",
+      "Canonical I-JSON value nesting exceeds the supported limit.",
+      { path },
+    );
+  }
   if (value === null) return "null";
   if (typeof value === "boolean") return value ? "true" : "false";
   if (typeof value === "string") {
@@ -203,8 +224,8 @@ function serializeIJsonValue(value: unknown, ancestors: WeakSet<object>, path: s
   ancestors.add(value);
   try {
     return Array.isArray(value)
-      ? serializeArray(value, ancestors, path)
-      : serializeObject(value, ancestors, path);
+      ? serializeArray(value, ancestors, path, depth)
+      : serializeObject(value, ancestors, path, depth);
   } finally {
     ancestors.delete(value);
   }
@@ -212,7 +233,7 @@ function serializeIJsonValue(value: unknown, ancestors: WeakSet<object>, path: s
 
 /** RFC-8785-style ECMAScript serialisation over the validated I-JSON subset. */
 export function canonicalizeIJson(value: unknown): string {
-  return serializeIJsonValue(value, new WeakSet<object>(), "$");
+  return serializeIJsonValue(value, new WeakSet<object>(), "$", 0);
 }
 
 export function canonicalizeIJsonBytes(value: unknown): Uint8Array {

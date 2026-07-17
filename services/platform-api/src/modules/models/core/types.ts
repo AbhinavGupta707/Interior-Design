@@ -17,10 +17,7 @@ export interface CanonicalSnapshotEncoding {
   readonly snapshotSha256: string;
 }
 
-/**
- * Integration port for the C4-L1 canonicalisation implementation. The frozen
- * worker base exposes only schemas, so C4-L3 supplies a module-local fallback.
- */
+/** Replaceable port whose production adapter delegates to the domain canonical-byte authority. */
 export interface CanonicalSnapshotCodec {
   encode(snapshot: CanonicalHomeSnapshot): CanonicalSnapshotEncoding;
 }

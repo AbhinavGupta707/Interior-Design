@@ -101,6 +101,29 @@ function firstSelfIntersection(points: readonly Point2[], close: boolean): Point
   return undefined;
 }
 
+function minimumPoint(points: readonly Point2[]): Point2 {
+  return (
+    [...points].sort((left, right) => left.xMm - right.xMm || left.yMm - right.yMm)[0] ?? {
+      xMm: 0,
+      yMm: 0,
+    }
+  );
+}
+
+function hasRepeatedVertex(points: readonly Point2[]): boolean {
+  return new Set(points.map(pointKey)).size !== points.length;
+}
+
+function hasRepeatedSegment(points: readonly Point2[], close: boolean): boolean {
+  const seen = new Set<string>();
+  return segments(points, close).some((segment) => {
+    const key = segmentKey(segment);
+    if (seen.has(key)) return true;
+    seen.add(key);
+    return false;
+  });
+}
+
 function located(levelId: string, point: Point2) {
   return { levelId, xMm: point.xMm, yMm: point.yMm };
 }
@@ -127,39 +150,23 @@ function pathLength(points: readonly Point2[]): number {
   );
 }
 
-function pointAlongPath(points: readonly Point2[], distance: number): Point2 {
-  let remaining = distance;
-  for (const segment of segments(points, false)) {
-    const length = Math.hypot(
-      segment.end.xMm - segment.start.xMm,
-      segment.end.yMm - segment.start.yMm,
-    );
-    if (remaining <= length) {
-      const ratio = length === 0 ? 0 : remaining / length;
-      return {
-        xMm: Math.round(segment.start.xMm + (segment.end.xMm - segment.start.xMm) * ratio),
-        yMm: Math.round(segment.start.yMm + (segment.end.yMm - segment.start.yMm) * ratio),
-      };
-    }
-    remaining -= length;
-  }
-  return points.at(-1) ?? { xMm: 0, yMm: 0 };
-}
-
-function isConnectedCycle(paths: readonly (readonly Point2[])[]): boolean {
+function roomTopology(paths: readonly (readonly Point2[])[]): {
+  readonly closed: boolean;
+  readonly connected: boolean;
+} {
   const adjacency = new Map<string, string[]>();
   for (const path of paths) {
     const start = path[0];
     const end = path.at(-1);
-    if (start === undefined || end === undefined) return false;
+    if (start === undefined || end === undefined) return { closed: false, connected: false };
     const startKey = pointKey(start);
     const endKey = pointKey(end);
     adjacency.set(startKey, [...(adjacency.get(startKey) ?? []), endKey]);
     adjacency.set(endKey, [...(adjacency.get(endKey) ?? []), startKey]);
   }
-  if ([...adjacency.values()].some((neighbours) => neighbours.length !== 2)) return false;
+  const closed = [...adjacency.values()].every((neighbours) => neighbours.length === 2);
   const first = adjacency.keys().next().value;
-  if (first === undefined) return false;
+  if (first === undefined) return { closed: false, connected: false };
   const visited = new Set([first]);
   const queue = [first];
   while (queue.length > 0) {
@@ -172,7 +179,7 @@ function isConnectedCycle(paths: readonly (readonly Point2[])[]): boolean {
       }
     }
   }
-  return visited.size === adjacency.size;
+  return { closed, connected: visited.size === adjacency.size };
 }
 
 const findingKey = (value: ExpectedGeometryFinding): string =>
@@ -202,14 +209,16 @@ export function evaluateReferenceGeometry(
   ]) {
     for (const element of collection) {
       if (!levelIds.has(element.levelId)) {
-        findings.push(finding("LEVEL_REFERENCE_MISSING", "error", [element.id]));
+        findings.push(finding("LEVEL_REFERENCE_MISSING", "error", [element.id, element.levelId]));
       }
     }
   }
 
   for (const finish of snapshot.elements.finishes) {
     if (!allElementIds.has(finish.targetElementId)) {
-      findings.push(finding("TARGET_ELEMENT_REFERENCE_MISSING", "error", [finish.id]));
+      findings.push(
+        finding("TARGET_REFERENCE_MISSING", "error", [finish.id, finish.targetElementId]),
+      );
     }
   }
 
@@ -217,29 +226,44 @@ export function evaluateReferenceGeometry(
     const boundary = knownValue<readonly Point2[]>(space.boundary);
     if (boundary === undefined) continue;
     const area = twiceSignedArea(boundary);
-    const first = boundary[0] ?? { xMm: 0, yMm: 0 };
+    const first = minimumPoint(boundary);
     if (area > maximumSafeInteger || area < -maximumSafeInteger) {
       findings.push(
-        finding("ARITHMETIC_RANGE_UNSAFE", "error", [space.id], located(space.levelId, first)),
+        finding(
+          "GEOMETRY_INTEGER_RANGE_EXCEEDED",
+          "error",
+          [space.id],
+          located(space.levelId, first),
+        ),
       );
       invalidSpacePolygonIds.add(space.id);
-      continue;
     }
     if (area === 0n) {
       findings.push(
         finding("SPACE_POLYGON_DEGENERATE", "error", [space.id], located(space.levelId, first)),
       );
       invalidSpacePolygonIds.add(space.id);
-      continue;
     }
     const intersection = firstSelfIntersection(boundary, true);
-    if (intersection !== undefined) {
+    const repeated = hasRepeatedVertex(boundary);
+    if (repeated) {
       findings.push(
         finding(
-          "SPACE_POLYGON_SELF_INTERSECTS",
+          "SPACE_POLYGON_REPEATED_VERTEX",
           "error",
           [space.id],
-          located(space.levelId, intersection),
+          located(space.levelId, first),
+        ),
+      );
+      invalidSpacePolygonIds.add(space.id);
+    }
+    if (intersection !== undefined || hasRepeatedSegment(boundary, true)) {
+      findings.push(
+        finding(
+          "SPACE_POLYGON_SELF_INTERSECTION",
+          "error",
+          [space.id],
+          located(space.levelId, first),
         ),
       );
       invalidSpacePolygonIds.add(space.id);
@@ -252,7 +276,7 @@ export function evaluateReferenceGeometry(
     );
     if (boundary === undefined) continue;
     const area = twiceSignedArea(boundary);
-    const first = boundary[0] ?? { xMm: 0, yMm: 0 };
+    const first = minimumPoint(boundary);
     if (area === 0n) {
       findings.push(
         finding(
@@ -268,10 +292,10 @@ export function evaluateReferenceGeometry(
     if (intersection !== undefined) {
       findings.push(
         finding(
-          "SURFACE_POLYGON_SELF_INTERSECTS",
+          "SURFACE_POLYGON_SELF_INTERSECTION",
           "error",
           [surface.id],
-          located(surface.levelId, intersection),
+          located(surface.levelId, first),
         ),
       );
     }
@@ -284,17 +308,11 @@ export function evaluateReferenceGeometry(
     const zeroSegment = wallSegments.find(
       (segment) => pointKey(segment.start) === pointKey(segment.end),
     );
-    const seenSegments = new Set<string>();
-    const repeatedSegment = wallSegments.find((segment) => {
-      const key = segmentKey(segment);
-      if (seenSegments.has(key)) return true;
-      seenSegments.add(key);
-      return false;
-    });
+    const repeatedVertex = hasRepeatedVertex(path);
     if (zeroSegment !== undefined) {
       findings.push(
         finding(
-          "WALL_PATH_ZERO_LENGTH",
+          "WALL_PATH_ZERO_LENGTH_SEGMENT",
           "error",
           [wall.id],
           located(wall.levelId, zeroSegment.start),
@@ -302,35 +320,33 @@ export function evaluateReferenceGeometry(
       );
       invalidWallIds.add(wall.id);
     }
-    if (repeatedSegment !== undefined) {
+    if (repeatedVertex) {
       findings.push(
         finding(
-          "WALL_PATH_SEGMENT_REPEATED",
+          "WALL_PATH_REPEATED_VERTEX",
           "error",
           [wall.id],
-          located(wall.levelId, path[0] ?? repeatedSegment.start),
+          located(wall.levelId, minimumPoint(path)),
         ),
       );
       invalidWallIds.add(wall.id);
     }
-    if (zeroSegment === undefined && repeatedSegment === undefined) {
-      const intersection = firstSelfIntersection(path, false);
-      if (intersection !== undefined) {
-        findings.push(
-          finding(
-            "WALL_PATH_SELF_INTERSECTS",
-            "error",
-            [wall.id],
-            located(wall.levelId, intersection),
-          ),
-        );
-        invalidWallIds.add(wall.id);
-      }
+    const intersection = firstSelfIntersection(path, false);
+    if (intersection !== undefined || hasRepeatedSegment(path, false)) {
+      findings.push(
+        finding(
+          "WALL_PATH_SELF_INTERSECTION",
+          "error",
+          [wall.id],
+          located(wall.levelId, minimumPoint(path)),
+        ),
+      );
+      invalidWallIds.add(wall.id);
     }
-    const first = path[0] ?? { xMm: 0, yMm: 0 };
+    const first = minimumPoint(path);
     if (wall.heightMm.knowledge === "unknown") {
       findings.push(
-        finding("WALL_HEIGHT_UNKNOWN", "warning", [wall.id], located(wall.levelId, first)),
+        finding("WALL_HEIGHT_UNKNOWN", "information", [wall.id], located(wall.levelId, first)),
       );
     }
     if (wall.thicknessMm.knowledge === "unknown") {
@@ -343,7 +359,9 @@ export function evaluateReferenceGeometry(
   for (const opening of snapshot.elements.openings) {
     const host = walls.get(opening.hostWallId);
     if (host === undefined) {
-      findings.push(finding("HOST_WALL_REFERENCE_MISSING", "error", [opening.id]));
+      findings.push(
+        finding("HOST_WALL_REFERENCE_MISSING", "error", [opening.id, opening.hostWallId]),
+      );
       continue;
     }
     if (invalidWallIds.has(host.id)) continue;
@@ -354,10 +372,10 @@ export function evaluateReferenceGeometry(
       if (offset + width > pathLength(path)) {
         findings.push(
           finding(
-            "OPENING_OUTSIDE_HOST",
+            "OPENING_OUTSIDE_HOST_EXTENT",
             "error",
-            [opening.id],
-            located(host.levelId, path.at(-1) ?? { xMm: 0, yMm: 0 }),
+            [opening.id, host.id],
+            located(host.levelId, minimumPoint(path)),
           ),
         );
       }
@@ -372,10 +390,10 @@ export function evaluateReferenceGeometry(
       ) {
         findings.push(
           finding(
-            "OPENING_VERTICAL_EXTENT_INVALID",
+            sill < 0 ? "OPENING_BELOW_HOST_BASE" : "OPENING_ABOVE_HOST_HEIGHT",
             "error",
-            [opening.id],
-            located(host.levelId, pointAlongPath(path, offset)),
+            [opening.id, host.id],
+            located(host.levelId, minimumPoint(path)),
           ),
         );
       }
@@ -410,10 +428,10 @@ export function evaluateReferenceGeometry(
       ) {
         findings.push(
           finding(
-            "OPENINGS_OVERLAP",
+            "OPENING_OVERLAP",
             "error",
-            [left.id, right.id],
-            located(host.levelId, pointAlongPath(path, Math.max(leftOffset, rightOffset))),
+            [host.id, left.id, right.id],
+            located(host.levelId, minimumPoint(path)),
           ),
         );
       }
@@ -436,9 +454,16 @@ export function evaluateReferenceGeometry(
       return path === undefined ? [] : [path];
     });
     const first = boundary[0] ?? { xMm: 0, yMm: 0 };
-    if (!isConnectedCycle(paths)) {
+    const topology = roomTopology(paths);
+    const affectedIds = [space.id, ...space.boundedByElementIds];
+    if (!topology.connected) {
       findings.push(
-        finding("ROOM_BOUNDARY_DISCONNECTED", "error", [space.id], located(space.levelId, first)),
+        finding("ROOM_BOUNDARY_DISCONNECTED", "error", affectedIds, located(space.levelId, first)),
+      );
+    }
+    if (!topology.closed) {
+      findings.push(
+        finding("ROOM_BOUNDARY_NOT_CLOSED", "error", affectedIds, located(space.levelId, first)),
       );
     }
     const boundaryKeys = new Set(boundary.map(pointKey));
@@ -448,11 +473,13 @@ export function evaluateReferenceGeometry(
         .flatMap((point) => (point === undefined ? [] : [pointKey(point)])),
     );
     if (
-      boundaryKeys.size !== endpointKeys.size ||
-      [...boundaryKeys].some((key) => !endpointKeys.has(key))
+      topology.connected &&
+      topology.closed &&
+      (boundaryKeys.size !== endpointKeys.size ||
+        [...boundaryKeys].some((key) => !endpointKeys.has(key)))
     ) {
       findings.push(
-        finding("ROOM_BOUNDARY_INCONSISTENT", "error", [space.id], located(space.levelId, first)),
+        finding("ROOM_BOUNDARY_INCONSISTENT", "error", affectedIds, located(space.levelId, first)),
       );
     }
   }
@@ -462,31 +489,29 @@ export function evaluateReferenceGeometry(
     const from = levels.get(stair.fromLevelId);
     const to = levels.get(stair.toLevelId);
     if (from === undefined || to === undefined) {
-      findings.push(finding("STAIR_LEVEL_REFERENCE_MISSING", "error", [stair.id]));
+      const missingLevelId = from === undefined ? stair.fromLevelId : stair.toLevelId;
+      findings.push(finding("LEVEL_REFERENCE_MISSING", "error", [stair.id, missingLevelId]));
       continue;
     }
     const path = knownValue<readonly Point2[]>(stair.path);
-    const first = path?.[0] ?? { xMm: 0, yMm: 0 };
-    const last = path?.at(-1) ?? first;
+    const first = path === undefined ? { xMm: 0, yMm: 0 } : minimumPoint(path);
     if (stair.fromLevelId === stair.toLevelId) {
-      findings.push(finding("STAIR_LEVELS_IDENTICAL", "error", [stair.id]));
-    }
-    const rise = knownValue<number>(stair.riseMm);
-    const run = knownValue<number>(stair.runMm);
-    const count = knownValue<number>(stair.stepCount);
-    if (rise !== undefined && run !== undefined && rise > run) {
       findings.push(
         finding(
-          "STAIR_RISE_RUN_RELATION_INVALID",
+          "STAIR_LEVELS_IDENTICAL",
           "error",
-          [stair.id],
+          [stair.id, stair.fromLevelId],
           located(stair.fromLevelId, first),
         ),
       );
     }
+    const rise = knownValue<number>(stair.riseMm);
+    const run = knownValue<number>(stair.runMm);
+    const count = knownValue<number>(stair.stepCount);
     const fromElevation = knownValue<number>(from.elevationMm);
     const toElevation = knownValue<number>(to.elevationMm);
     if (
+      stair.fromLevelId !== stair.toLevelId &&
       rise !== undefined &&
       count !== undefined &&
       fromElevation !== undefined &&
@@ -494,7 +519,23 @@ export function evaluateReferenceGeometry(
       rise * count !== Math.abs(toElevation - fromElevation)
     ) {
       findings.push(
-        finding("STAIR_ELEVATION_MISMATCH", "error", [stair.id], located(stair.fromLevelId, last)),
+        finding(
+          "STAIR_RISE_LEVEL_MISMATCH",
+          "error",
+          [stair.id, stair.fromLevelId, stair.toLevelId],
+          located(stair.fromLevelId, first),
+        ),
+      );
+    }
+    if (
+      path !== undefined &&
+      run !== undefined &&
+      count !== undefined &&
+      count > 0 &&
+      run * (count - 1) !== pathLength(path)
+    ) {
+      findings.push(
+        finding("STAIR_RUN_PATH_MISMATCH", "error", [stair.id], located(stair.fromLevelId, first)),
       );
     }
   }

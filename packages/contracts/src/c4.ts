@@ -449,7 +449,18 @@ export const modelProfilesResponseSchema = z
     profiles: z.array(modelProfileSummarySchema).length(3),
     projectId: projectIdSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((response, context) => {
+    for (const profile of modelProfileSchema.options) {
+      if (response.profiles.filter((summary) => summary.profile === profile).length !== 1) {
+        context.addIssue({
+          code: "custom",
+          message: `Profile summaries must contain exactly one ${profile} entry.`,
+          path: ["profiles"],
+        });
+      }
+    }
+  });
 
 export const c4RouteContract = Object.freeze({
   createSnapshot: "/v1/projects/:projectId/models/:profile/snapshots",
