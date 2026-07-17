@@ -64,3 +64,26 @@
 - A production web BFF was exercised against the real API in the in-app browser at desktop and 390×844 mobile sizes. The saved intake survived navigation/reload, canonical fixture identities remained consistent, there was no horizontal overflow and the console contained no warnings/errors. The primary browser-use connector had a local bootstrap incompatibility, so the installed in-app Browser controller supplied the visible evidence.
 - XcodeGen added the C1 test source to the checked project deterministically. The iPhone Air iOS 26.4 Simulator passed 17 tests, then Computer Use verified the live SwiftUI project list, explicit Simulator limitation, capture-eligibility route and manual-evidence fallback. This is not physical RoomPlan evidence.
 - Integration review caught and fixed the API `tsx watch` command ordering, complete stale-form locking, mismatched fixture aliases, evidence-label CSS specificity and the missing generated Xcode test reference. No provider key, real address, bearer-token output, localStorage credential, physical-capture claim or cloud deployment was introduced.
+
+## C2 — Immutable multimodal evidence ingestion
+
+### Master activation and integration
+
+- Status: contract prelude verified; workers not yet launched
+- Contract: `docs/orchestration/checkpoints/C2_CONTRACT.md` (`c2-ingest-v1`)
+- Starting integration commit: `660086a`
+- Planned lanes: four
+- Provider policy: provider-free PostGIS plus loopback-only SeaweedFS; production storage is an inactive S3-compatible adapter
+- Privacy policy: synthetic evidence only; processing consent required; training use defaults to denied
+
+| Lane                            | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                |
+| ------------------------------- | ----------- | ----------------------- | ---------- | --------- | ------- | ------------------------------------------------------------------------------ |
+| C2-L1 asset/storage backend     | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | platform asset/storage modules, C2 composition/migration/tests and API runbook |
+| C2-L2 hostile-media worker      | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | spatial-worker source/tests and worker runbook                                 |
+| C2-L3 cross-surface evidence UX | pending     | `gpt-5.6-sol` / `high`  | —          | —         | planned | allocated web evidence/BFF/project/CSS and iOS evidence/flow/test paths        |
+| C2-L4 adversarial QA            | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | evidence security/integration/adversarial E2E fixtures and upload threat model |
+
+### Integrated gate evidence
+
+- The frozen prelude passed `UV_CACHE_DIR=.cache/uv pnpm verify`: formatting, seven-package lint/typecheck, 60 JavaScript unit tests, all production builds, Ruff, strict mypy and pytest. Shared C2 contracts added five focused rights, filename, multipart and internal-locator cases; the new spatial-worker workspace also built and passed its registration test.
+- Pending lane activation.

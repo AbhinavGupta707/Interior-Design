@@ -1,15 +1,14 @@
 {
-  "name": "@interior-design/platform-api",
+  "name": "@interior-design/spatial-worker",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch --conditions=development src/server.ts",
+    "dev": "tsx watch --conditions=development src/index.ts",
     "lint": "eslint src test",
-    "start": "node dist/src/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:unit": "vitest run --exclude 'dist/**'",
+    "test:unit": "vitest run --passWithNoTests --exclude 'dist/**'",
     "test:contract": "vitest run --passWithNoTests --exclude 'dist/**'",
     "test:integration": "vitest run --passWithNoTests --exclude 'dist/**'"
   },
@@ -19,14 +18,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1089.0",
-    "@aws-sdk/s3-request-presigner": "^3.1089.0",
-    "@interior-design/authz": "workspace:*",
-    "@interior-design/config": "workspace:*",
     "@interior-design/contracts": "workspace:*",
-    "@opentelemetry/api": "^1.9.1",
-    "fastify": "^5.10.0",
-    "pino": "^10.3.1",
+    "file-type": "^22.0.1",
     "postgres": "^3.4.9",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   }
 }

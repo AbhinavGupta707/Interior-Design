@@ -6,6 +6,12 @@
       "checkpoint": "C1",
       "owner": "C1-L1",
       "path": "0001_identity_projects_intake.sql"
+    },
+    {
+      "id": "0002",
+      "checkpoint": "C2",
+      "owner": "C2-L1",
+      "path": "0002_assets_evidence.sql"
     }
   ]
 }
