@@ -14,6 +14,14 @@ import {
 } from "./plan-processing/index.js";
 import { MediaProcessor } from "./processor.js";
 import { MediaPreparationPipeline } from "./media-prep/index.js";
+import {
+  BoundedFusionProducerProtocol,
+  FusionProcessingRunner,
+  PostgresFusionProcessingQueue,
+  PostgresFusionSourceAcquisition,
+  UnavailableRegistrationProducer,
+  UnavailableSemanticProducer,
+} from "./model-fusion/index.js";
 import { PostgresRoomPlanProcessingQueue, RoomPlanProcessingRunner } from "./roomplan/index.js";
 import {
   PostgresReconstructionSourceLoader,
@@ -41,8 +49,9 @@ export * from "./plan-processing/index.js";
 export * from "./roomplan/index.js";
 export * from "./media-prep/index.js";
 export * from "./reconstruction/index.js";
+export * from "./model-fusion/index.js";
 
-export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8"] as const);
+export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8", "C9"] as const);
 
 export async function runSpatialWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
@@ -127,6 +136,22 @@ export async function runSpatialWorker(
           workerId: `c8-${config.workerId}`.slice(0, 100),
         })
       : undefined;
+  const fusionRunner =
+    environment.C9_FUSION_WORKER_ENABLED === "true"
+      ? new FusionProcessingRunner({
+          heartbeatMilliseconds: Math.min(config.heartbeatMs, 15_000),
+          leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
+          logger,
+          pollMilliseconds: config.pollMs,
+          producers: new BoundedFusionProducerProtocol({
+            registration: new UnavailableRegistrationProducer(),
+            semantic: new UnavailableSemanticProducer(),
+          }),
+          queue: new PostgresFusionProcessingQueue(sql),
+          sources: new PostgresFusionSourceAcquisition(sql),
+          workerId: `c9-${config.workerId}`.slice(0, 100),
+        })
+      : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -139,6 +164,7 @@ export async function runSpatialWorker(
       ...(planRunner === undefined ? [] : [planRunner.run(shutdown.signal)]),
       ...(roomPlanRunner === undefined ? [] : [roomPlanRunner.run(shutdown.signal)]),
       ...(reconstructionRunner === undefined ? [] : [reconstructionRunner.run(shutdown.signal)]),
+      ...(fusionRunner === undefined ? [] : [fusionRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);

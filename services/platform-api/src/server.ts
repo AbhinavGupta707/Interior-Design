@@ -9,6 +9,7 @@ import { pathToFileURL } from "node:url";
 import { createServer, type CreateServerOptions } from "./app.js";
 
 export { createServer } from "./app.js";
+export { applyC9Migration, registerC9Module } from "./c9.js";
 export { ApiError, type ProblemDetails } from "./errors.js";
 export type { ReadinessCheck, ReadinessResponse } from "./health.js";
 

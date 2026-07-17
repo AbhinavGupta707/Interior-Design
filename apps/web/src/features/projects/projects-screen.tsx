@@ -253,6 +253,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/reconstruction/${project.id}`}>
                     Reconstruct media
                   </Link>
+                  <Link className="project-row__action" href={`/fusion/${project.id}`}>
+                    Reconcile sources
+                  </Link>
                 </div>
               </article>
             ))}

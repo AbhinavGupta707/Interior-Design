@@ -7,6 +7,8 @@ import type { SafeLogger } from "./logger.js";
 import type { PreparedProcessing, ProcessJobInput } from "./processor.js";
 import type { ObjectStorage } from "./storage.js";
 
+export { FusionProcessingRunner } from "./model-fusion/runner.js";
+
 export interface RunOneOutcome {
   readonly claimed: boolean;
   readonly outcome?: "completed" | "exhausted" | "lease-lost" | "retrying";
