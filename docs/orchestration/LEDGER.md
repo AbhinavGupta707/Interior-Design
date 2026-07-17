@@ -218,7 +218,7 @@
 
 ### Master activation
 
-- Status: active; lanes frozen and pending launch
+- Status: active; all four isolated worktrees launched from `25721c5`
 - Contract: `docs/orchestration/checkpoints/C6_CONTRACT.md` (`c6-plan-job-v1`, `c6-plan-parser-input-v1`, `c6-plan-proposal-v1`, `c6-plan-operation-draft-v1`)
 - Prelude commit: `0baf74a`
 - Planned lanes: four, retained adaptively because durable workflow/persistence, isolated parser execution, correction UX and independent rights/benchmark/security evaluation have clean exclusive ownership boundaries
@@ -226,12 +226,12 @@
 - Mutation policy: parser output is an immutable proposal only; calibrated reviewed candidates become exact public C5 operations, and only C5 preview/commit may mutate canonical state
 - Safety policy: unsupported, unsafe, source/rights mismatched, severe-invalid or low-confidence evidence abstains visibly; failures remain in benchmark denominators
 
-| Lane                        | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                             |
-| --------------------------- | ----------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| C6-L1 processing workflow   | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | platform API plan-processing module/migration/tests; spatial-worker normalization/processing; development runbook and allocated composition |
-| C6-L2 inference adapter     | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | Python inference worker; provider-adapters plan-parser boundary/tests; inference runbook                                                    |
-| C6-L3 correction UX         | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | frozen | web plan-import/overlay/BFF/component paths and narrowly allocated project/evidence/CSS integrations                                        |
-| C6-L4 benchmark/security QA | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | independent plan fixtures/rights splits, evaluation/security/E2E suites, parser evaluation and threat-model documents                       |
+| Lane                        | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                             |
+| --------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| C6-L1 processing workflow   | `019f6ef1-9e60-72b2-a3e3-c31c3499702c` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | platform API plan-processing module/migration/tests; spatial-worker normalization/processing; development runbook and allocated composition |
+| C6-L2 inference adapter     | `019f6ef1-9e63-7032-acbf-881986331a9e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | Python inference worker; provider-adapters plan-parser boundary/tests; inference runbook                                                    |
+| C6-L3 correction UX         | `019f6ef1-9ff6-7853-8606-3d49295a5ba4` | `gpt-5.6-sol` / `high`  | pending    | pending   | active | web plan-import/overlay/BFF/component paths and narrowly allocated project/evidence/CSS integrations                                        |
+| C6-L4 benchmark/security QA | `019f6ef1-a258-7ea3-8d1b-22a6c66364f7` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | independent plan fixtures/rights splits, evaluation/security/E2E suites, parser evaluation and threat-model documents                       |
 
 ### Prelude gate evidence
 
