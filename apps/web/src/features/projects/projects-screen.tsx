@@ -241,6 +241,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/evidence/${project.id}`}>
                     Evidence
                   </Link>
+                  <Link className="project-row__action" href={`/property/${project.id}`}>
+                    Property dossier
+                  </Link>
                 </div>
               </article>
             ))}
