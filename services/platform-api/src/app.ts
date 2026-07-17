@@ -8,6 +8,7 @@ import type { LoggerOptions as PinoLoggerOptions } from "pino";
 
 import { registerC1Module, type C1ModuleOptions } from "./c1.js";
 import { registerC2Module, type C2ModuleOptions } from "./c2.js";
+import { registerC3Module, type C3ModuleOptions } from "./c3.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -23,6 +24,7 @@ type LoggerSetting = boolean | (FastifyLoggerOptions & PinoLoggerOptions);
 export interface CreateServerOptions {
   readonly c1?: C1ModuleOptions;
   readonly c2?: C2ModuleOptions;
+  readonly c3?: C3ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -57,6 +59,18 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "object_key",
         "url",
         "signedUrl",
+        "query",
+        "address",
+        "displayAddress",
+        "body.query",
+        "body.address",
+        "body.displayAddress",
+        "req.body.query",
+        "req.body.address",
+        "req.body.displayAddress",
+        "request.body.query",
+        "request.body.address",
+        "request.body.displayAddress",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -65,6 +79,12 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.object_key",
         "*.url",
         "*.signedUrl",
+        "*.query",
+        "*.address",
+        "*.displayAddress",
+        "*.body.query",
+        "*.body.address",
+        "*.body.displayAddress",
       ],
     },
   };
@@ -101,9 +121,22 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c2,
         )
       : undefined;
+  const c3 =
+    options.c3 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC3Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c3,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
-    options.readinessChecks ?? [...c1.readinessChecks, ...(c2?.readinessChecks ?? [])],
+    options.readinessChecks ?? [
+      ...c1.readinessChecks,
+      ...(c2?.readinessChecks ?? []),
+      ...(c3?.readinessChecks ?? []),
+    ],
     config.readinessTimeoutMs,
   );
 

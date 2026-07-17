@@ -4,7 +4,8 @@ Typed Fastify platform API for the Home Design Studio modular monolith. C1 adds 
 session verification, tenant-owned projects, structured intake, idempotent mutations, optimistic
 concurrency, and safe audit events on PostgreSQL. C2 adds rights-aware immutable evidence sessions,
 checksum-bound multipart uploads, durable processing jobs and short-lived ready-asset access through
-a fail-closed S3-compatible adapter. No paid or cloud provider is required locally.
+a fail-closed S3-compatible adapter. C3 adds tenant-safe synthetic/manual property resolution and an
+immutable source-aware dossier with explicit unknowns. No paid or cloud provider is required locally.
 
 ## Local commands
 
@@ -14,8 +15,10 @@ From the repository root:
 pnpm --filter @interior-design/config build
 pnpm --filter @interior-design/contracts build
 pnpm --filter @interior-design/authz build
+pnpm --filter @interior-design/provider-adapters build
 pnpm --filter @interior-design/platform-api exec tsx src/c1.ts migrate-and-bootstrap
 pnpm --filter @interior-design/platform-api exec tsx src/c2.ts migrate
+pnpm --filter @interior-design/platform-api exec tsx src/c3.ts migrate
 pnpm --filter @interior-design/platform-api dev
 ```
 
@@ -48,6 +51,8 @@ listens. The service reads these settings and never logs credential values:
 | `C2_STORAGE_ACCESS_KEY_ID`          | conspicuous local fixture value                                       | Explicit storage access key                     |
 | `C2_STORAGE_SECRET_ACCESS_KEY`      | conspicuous local fixture value                                       | Explicit storage secret                         |
 | `C2_STORAGE_FORCE_PATH_STYLE`       | `true` locally                                                        | Path-style S3 switch                            |
+| `C3_DATABASE_URL`                   | C1/loopback database                                                  | Optional C3 database override                   |
+| `C3_PROPERTY_PROVIDER_MODE`         | `fixture` outside production; `disabled` in production                | Synthetic, explicit unavailable, or manual-only |
 
 ## Operational contracts
 
@@ -60,6 +65,8 @@ listens. The service reads these settings and never logs credential values:
 - C2 readiness requires migration `0002_assets_evidence` plus the distinct source, derived and
   quarantine buckets. Production storage configuration requires explicit credentials and a
   non-loopback HTTPS endpoint; no SDK credential-chain fallback is used.
+- C3 readiness requires migration `0003_property_dossier`. Production property resolution remains
+  disabled/manual-only; fixture and injected-unavailable modes cannot be activated in production.
 - Every response includes validated/generated `x-request-id`, W3C `traceparent`, and
   `x-trace-id` headers.
 - Errors use `application/problem+json` and include stable code, status, request ID, and trace ID.
@@ -78,3 +85,10 @@ set. Every tenant-owned query includes tenant and project predicates, public DTO
 upload IDs and object keys, and complete versus abort is serialized. See
 `docs/runbooks/development/c2-evidence-api.md` for storage, lifecycle, cleanup, worker-job and
 verification procedures.
+
+The C3 HTTP surface is the frozen resolution, selection, dossier, refresh and source-record route
+set. Opaque candidates expire after 15 minutes; manual selection invents no UPRN or coordinate;
+source records retain normalized SHA-256 rather than raw provider payload; and dossier versions keep
+planning/current-interior/structure/boundary limitations explicit. Address/query fields are redacted
+from structured logging. See `docs/runbooks/development/c3-property-api.md` for provider modes,
+disposable database setup, route semantics and live transaction verification.

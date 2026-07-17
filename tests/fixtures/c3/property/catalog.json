@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "acceptedIdentity": {
+    "displayAddress": "14 Example Mews, Testford, ZZ1 1ZZ",
+    "uprn": "000000000014"
+  },
+  "ambiguousSharedPoint": [
+    {
+      "displayAddress": "Flat 1, 20 Shared Point Court, Testford, ZZ1 2ZZ",
+      "location": { "coordinates": [530100, 180100], "crs": "EPSG:27700" },
+      "uprn": "000000000021"
+    },
+    {
+      "displayAddress": "Flat 2, 20 Shared Point Court, Testford, ZZ1 2ZZ",
+      "location": { "coordinates": [530100, 180100], "crs": "EPSG:27700" },
+      "uprn": "000000000022"
+    }
+  ],
+  "queries": {
+    "ambiguous": "20 Shared Point Court",
+    "exact": "14 Example Mews, Testford, ZZ1 1ZZ",
+    "noMatch": "99 Missing Fixture Road, Testford, ZZ9 9ZZ"
+  }
+}
