@@ -395,7 +395,7 @@
 
 ### Master activation
 
-- Status: contract preflight open; workers not yet launched
+- Status: three frozen implementation worktrees active from prelude commit `85714d9`
 - Contract: `docs/orchestration/checkpoints/C10_CONTRACT.md` (`c10-scene-job-v1`, `c10-scene-manifest-v1`, `c10-scene-artifact-v1`)
 - Immutable predecessor/C9 ledger-close: `77854a1726b40ba7ac7a05d26a39d881b7e38509`
 - Planned lanes: three, retained adaptively because deterministic scene compilation, tenant-safe durable storage/workflow and browser 3D/performance acceptance are substantial independent risks with exclusive write boundaries
@@ -404,11 +404,14 @@
 - Mutation policy: C10 reads one exact committed C4 snapshot and publishes a content-addressed derived visualisation only. It cannot write C4 snapshots, call C5 preview/commit, resolve C9 discrepancies or raise the model's evidence/professional status.
 - Hardware/runtime status at activation: physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA, representative-home accuracy and cloud delivery remain `NOT RUN`; these are upstream fidelity/release gates, not missing C10 architecture.
 
-| Lane                                 | Task/thread                                              | Model / reasoning       | Worker SHA | Merge SHA | State        | Exclusive roots                                                                                  |
-| ------------------------------------ | -------------------------------------------------------- | ----------------------- | ---------- | --------- | ------------ | ------------------------------------------------------------------------------------------------ |
-| C10-L1 scene compiler/runtime        | `client-new-thread:ebee5379-2616-4028-aad9-f65e9516ad06` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
-| C10-L2 durable scene backend/storage | `client-new-thread:4469a026-6868-4fc1-b171-2a17e61bed7e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
-| C10-L3 viewer/independent acceptance | `client-new-thread:2d59bf64-7d9a-4703-8fdd-deb51c7977ae` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
+| Lane                                 | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                  |
+| ------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------ |
+| C10-L1 scene compiler/runtime        | `019f723e-93ec-79d2-9b8d-d7c704ce49c6` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
+| C10-L2 durable scene backend/storage | `019f723e-93ed-7dd0-9e69-873e38544e74` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
+| C10-L3 viewer/independent acceptance | `019f723e-93ed-7dd0-9e69-87165c5840e5` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
+
+- Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/9ca3/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/505a/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/0f60/Interior Design`.
+- Provisioning client IDs: L1 `client-new-thread:ebee5379-2616-4028-aad9-f65e9516ad06`; L2 `client-new-thread:4469a026-6868-4fc1-b171-2a17e61bed7e`; L3 `client-new-thread:2d59bf64-7d9a-4703-8fdd-deb51c7977ae`.
 
 ### Prelude decisions and gate evidence
 
