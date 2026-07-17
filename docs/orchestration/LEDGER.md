@@ -181,18 +181,18 @@
 - Status: active; lanes frozen and pending launch
 - Contract: `docs/orchestration/checkpoints/C5_CONTRACT.md` (`c5-model-operation-v1`)
 - Prelude commit: `2ab2dfc`
-- Frozen worker base commit: pending activation commit
+- Frozen worker base commit: `c5223e5`
 - Planned lanes: four, retained adaptively because reducer/persistence, policy/audit, interactive editor and independent replay/concurrency evaluation are all substantial and have exclusive write boundaries
 - Mutation policy: the integrated product accepts canonical amendments only through the exact versioned registry; initialise and restore are internal typed operations, preview is non-mutating and committed history is append-only
 - Concurrency policy: every preview/commit pins both branch revision and head SHA-256; no implicit geometry merge or history rewrite
 - Editor policy: canonical-SVG projection, integer-millimetre commands, bounded local undo/redo, structured keyboard inspector and responsive conflict recovery
 
-| Lane                        | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                                             |
-| --------------------------- | ----------- | ----------------------- | ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| C5-L1 operation producer    | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | model-operations package; operation API/composition/migration/tests/runbook; allocated C4 initialise bridge |
-| C5-L2 model policy/audit    | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | model policy/audit packages/modules/tests and threat model                                                  |
-| C5-L3 editor core/UI        | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | pending | editor-core, allocated web editor/BFF/project/CSS/component-test paths                                      |
-| C5-L4 replay/concurrency QA | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | independent operation integration/geometry/E2E suites and invariant evaluation                              |
+| Lane                        | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                             |
+| --------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| C5-L1 operation producer    | `019f6e94-bf93-7073-a293-f52b9532d61f` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | model-operations package; operation API/composition/migration/tests/runbook; allocated C4 initialise bridge |
+| C5-L2 model policy/audit    | `019f6e94-bf94-7fa0-8b52-5aab7bb8148e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | model policy/audit packages/modules/tests and threat model                                                  |
+| C5-L3 editor core/UI        | `019f6e94-c07f-75b1-928d-096764545b21` | `gpt-5.6-sol` / `high`  | pending    | pending   | active | editor-core, allocated web editor/BFF/project/CSS/component-test paths                                      |
+| C5-L4 replay/concurrency QA | `019f6e94-c3da-7020-a58a-f39cf3825787` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | independent operation integration/geometry/E2E suites and invariant evaluation                              |
 
 ### Prelude gate evidence
 
