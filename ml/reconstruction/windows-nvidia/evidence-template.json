@@ -1,0 +1,34 @@
+{
+  "artifacts": [],
+  "dataset": {
+    "customerData": false,
+    "identifier": "UNSET_RIGHTS_CLEARED_HOLDOUT",
+    "rights": "UNSET",
+    "split": "holdout",
+    "trainingUseConsent": "denied"
+  },
+  "hardware": {
+    "cudaRuntime": "11.8",
+    "driver": "572.83",
+    "gpu": "UNSET",
+    "memoryBytes": null,
+    "operatingSystem": "Windows 11 24H2 build 26100"
+  },
+  "metrics": {
+    "failureRateMillionths": null,
+    "latencyMilliseconds": null,
+    "peakGpuMemoryBytes": null,
+    "registeredFrameCoverageMillionths": null,
+    "severeErrorRateMillionths": null
+  },
+  "packageManifestSha256": "UNSET",
+  "schemaVersion": "c8-windows-nvidia-evidence-v1",
+  "status": "NOT_RUN",
+  "tool": {
+    "colmap": "3.9.1",
+    "gsplat": "1.4.0",
+    "nerfstudio": "1.1.5",
+    "python": "3.10.13",
+    "pytorch": "2.1.2+cu118"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "attempt": 1,
+  "cameras": {
+    "coordinateSystem": "right-handed-local",
+    "frames": [
+      {
+        "basisNanounits": [1000000000, 0, 0, 0, 1000000000, 0, 0, 0, 1000000000],
+        "cameraId": "44444444-4444-4444-8444-444444444444",
+        "cameraModel": "PINHOLE",
+        "distortionMillionths": [0, 0, 0, 0],
+        "focalXMillionths": 1200000000,
+        "focalYMillionths": 1200000000,
+        "frameId": "33333333-3333-4333-8333-333333333333",
+        "principalXMillionths": 320000000,
+        "principalYMillionths": 240000000,
+        "sourceFrameSha256": "bc11406df8a28bab6b6830c9a16d7f5d96ef1296d6ec1b74069a2812a0eb039d",
+        "translationMicroUnits": [0, 0, 0]
+      }
+    ],
+    "jobId": "22222222-2222-4222-8222-222222222222",
+    "manifestSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "projectId": "11111111-1111-4111-8111-111111111111",
+    "schemaVersion": "c8-calibrated-cameras-v1",
+    "sourceManifestSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "tool": {
+      "adapterId": "c8.fixture",
+      "adapterVersion": "synthetic-1.0.0",
+      "configSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "executableVersion": "visibly-synthetic-fixture"
+    },
+    "translationUnit": "arbitrary-units"
+  },
+  "geometry": {
+    "alignment": { "anchorCount": 0 },
+    "artifacts": [
+      {
+        "artifactId": "66666666-6666-4666-8666-666666666666",
+        "byteSize": 1024,
+        "contentSha256": "6666666666666666666666666666666666666666666666666666666666666666",
+        "dimensionalAuthority": "proposal-only",
+        "kind": "calibrated-cameras",
+        "mediaType": "application/json",
+        "sourceManifestSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "toolManifestSha256": "7777777777777777777777777777777777777777777777777777777777777777"
+      },
+      {
+        "artifactId": "77777777-7777-4777-8777-777777777777",
+        "byteSize": 2048,
+        "contentSha256": "8888888888888888888888888888888888888888888888888888888888888888",
+        "dimensionalAuthority": "proposal-only",
+        "kind": "sparse-point-cloud",
+        "mediaType": "application/octet-stream",
+        "sourceManifestSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "toolManifestSha256": "7777777777777777777777777777777777777777777777777777777777777777"
+      }
+    ],
+    "componentCount": 1,
+    "coordinateSystem": "right-handed-local",
+    "inputFrameCount": 1,
+    "manifestSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+    "registeredFrameCount": 1,
+    "scaleStatus": "unknown",
+    "schemaVersion": "c8-geometry-result-v1",
+    "tool": {
+      "adapterId": "c8.fixture",
+      "adapterVersion": "synthetic-1.0.0",
+      "configSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "executableVersion": "visibly-synthetic-fixture"
+    },
+    "unit": "arbitrary-units"
+  },
+  "jobId": "22222222-2222-4222-8222-222222222222",
+  "method": "gsplat",
+  "prepared": {
+    "frames": [
+      {
+        "blurScoreMillionths": 900000,
+        "exposureScoreMillionths": 850000,
+        "frameId": "33333333-3333-4333-8333-333333333333",
+        "heightPixels": 480,
+        "metadataStripped": true,
+        "overlapScoreMillionths": 800000,
+        "redactionStatus": "applied",
+        "sanitizedSha256": "bc11406df8a28bab6b6830c9a16d7f5d96ef1296d6ec1b74069a2812a0eb039d",
+        "sourceAssetId": "55555555-5555-4555-8555-555555555555",
+        "timestampMicroseconds": 0,
+        "widthPixels": 640
+      }
+    ],
+    "jobId": "22222222-2222-4222-8222-222222222222",
+    "manifestSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "privacyStatus": "accepted",
+    "projectId": "11111111-1111-4111-8111-111111111111",
+    "schemaVersion": "c8-media-preparation-v1",
+    "sourceManifestSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "tool": {
+      "adapterId": "c8.fixture",
+      "adapterVersion": "synthetic-1.0.0",
+      "configSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "executableVersion": "visibly-synthetic-fixture"
+    }
+  },
+  "projectId": "11111111-1111-4111-8111-111111111111",
+  "rights": {
+    "basis": "public-domain",
+    "serviceProcessingConsent": true,
+    "trainingUseConsent": "denied"
+  },
+  "schemaVersion": "c8-neural-appearance-input-v1"
+}
