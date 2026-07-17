@@ -22,8 +22,10 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+mypy_path = "services/inference-worker/src"
 exclude = ["ai_native_architecture_blue_sky"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/python"]
+testpaths = ["tests/python", "services/inference-worker/test"]
+pythonpath = ["services/inference-worker/src"]
 addopts = "--strict-markers --strict-config"
