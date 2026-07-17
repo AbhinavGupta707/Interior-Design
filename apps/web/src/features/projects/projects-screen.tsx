@@ -244,6 +244,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/property/${project.id}`}>
                     Property dossier
                   </Link>
+                  <Link className="project-row__action" href={`/editor/${project.id}`}>
+                    2D editor
+                  </Link>
                 </div>
               </article>
             ))}
