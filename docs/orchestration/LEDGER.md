@@ -213,3 +213,31 @@
 - The independent mock Playwright pack passed 4/4 desktop, 390×844 mobile, keyboard-only/viewer and two-session conflict journeys with no unexpected console/network failures or horizontal overflow. It covered branch creation, wall translation, opening insertion, space rename, pending undo/redo, preview, commit, viewer read-only behavior, compare/restore and conflict recovery. Representative reference/editor runs remained below their deliberately loose five-second local regression ceiling; this is not a production-scale latency claim.
 - Required gate exception: the in-app Browser first exposed the Next development-source resolution defect. After the packaging repair and successful production build, its runtime rejected further localhost navigation under its security policy and explicitly prohibited attempting the same outcome through another browser surface. Therefore the production-shaped visible BFF-to-real-API/database journey is recorded as **NOT RUN**, not a pass; the already completed mock Playwright and real API/PostGIS gates are separate evidence. Replay this single gate when a permitted in-app localhost Browser session is available.
 - Repository tooling debt remains explicit: root aliases `pnpm dependency:boundaries` and `pnpm api:check` currently execute zero package tasks and are not counted as evidence. C5 has no iOS or GPU surface, so no simulator or GPU run was manufactured. C5 remains a deterministic typed 2.5D editor, not plan inference, physical capture/reconstruction, 3D rendering, structural/regulatory approval or professional certification; C6-C10 own those later capabilities.
+
+## C6 — Floor-plan proposal, calibration and correction
+
+### Master activation
+
+- Status: active; lanes frozen and pending launch
+- Contract: `docs/orchestration/checkpoints/C6_CONTRACT.md` (`c6-plan-job-v1`, `c6-plan-parser-input-v1`, `c6-plan-proposal-v1`, `c6-plan-operation-draft-v1`)
+- Prelude commit: `0baf74a`
+- Planned lanes: four, retained adaptively because durable workflow/persistence, isolated parser execution, correction UX and independent rights/benchmark/security evaluation have clean exclusive ownership boundaries
+- Parser policy: no paid provider, key, outbound inference call or GPU; securely normalized deterministic vector first, deterministic CPU raster fallback, stable adapter boundary for later evaluated models
+- Mutation policy: parser output is an immutable proposal only; calibrated reviewed candidates become exact public C5 operations, and only C5 preview/commit may mutate canonical state
+- Safety policy: unsupported, unsafe, source/rights mismatched, severe-invalid or low-confidence evidence abstains visibly; failures remain in benchmark denominators
+
+| Lane                        | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                             |
+| --------------------------- | ----------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| C6-L1 processing workflow   | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | platform API plan-processing module/migration/tests; spatial-worker normalization/processing; development runbook and allocated composition |
+| C6-L2 inference adapter     | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | Python inference worker; provider-adapters plan-parser boundary/tests; inference runbook                                                    |
+| C6-L3 correction UX         | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | frozen | web plan-import/overlay/BFF/component paths and narrowly allocated project/evidence/CSS integrations                                        |
+| C6-L4 benchmark/security QA | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen | independent plan fixtures/rights splits, evaluation/security/E2E suites, parser evaluation and threat-model documents                       |
+
+### Prelude gate evidence
+
+- DQ-018 is resolved for v1: one C2-ready, rights-cleared plan page from vector PDF/SVG or raster PNG/JPEG, maximum 25 MiB/20 pages/20 megapixels, one straight-edged level, no external model/provider. PDF/SVG/raster normalization stays in the credential-free spatial boundary and text is untrusted label data, never tool policy.
+- Shared C6 schemas freeze job/result states, exact route inventory, source/parser manifests, strict proposal/abstention union, integer candidate coordinates, source regions, 30-second/5 MiB parser limits, rational affine calibration with half-away-from-zero rounding, candidate decisions and 1-50 exact C5 operation drafts. Seven focused contract cases pass.
+- Provisional failure-inclusive thresholds are frozen before implementation: at least 90% accepted coverage on declared in-box fixtures, 100% hard-negative abstention, zero severe errors, wall-endpoint/opening-centre/calibration P90 at 50/75/25 mm, and ECE at most 0.15 only with at least 20 samples. The 8/15-minute correction target remains `not-measured` until a rights-approved human study and cannot pass from automated timing.
+- The explicit project action matrix now passes 255 authz unit cases and 321 standalone security cases. Owner/editor may create/read/cancel/retry/calibrate/draft; viewer can read jobs/proposals only; all foreign-tenant actions deny before disclosure. Machine confirmation remains forbidden by the C5 model policy.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, 14-package ESLint and strict TypeScript, 540 JavaScript unit tests, every production build, Ruff, strict mypy and pytest. Python discovery is pre-registered for the isolated inference worker without adding a runtime dependency or provider.
+- Migration `0006_plan_processing.sql` is allocated exclusively to C6-L1 before launch. Package/root manifests, lockfiles, shared contracts/core authz registry, accepted checkpoint contract and ledger remain orchestrator-owned. Reasoning is adaptive and fixed before launch: L1/L2/L4 receive `xhigh`; bounded frozen-contract consumer L3 receives `high`.
