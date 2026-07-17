@@ -306,22 +306,22 @@
 
 ### Master activation
 
-- Status: prelude complete on `main`; four isolated worktrees are ready to launch from the ledger activation commit containing this record
+- Status: four isolated project worktrees active from frozen base `707ad0b`
 - Contract: `docs/orchestration/checkpoints/C8_CONTRACT.md` (`c8-reconstruction-job-v1`, `c8-media-preparation-v1`, `c8-geometry-result-v1`, `c8-appearance-result-v1`, `c8-reconstruction-result-v1`)
 - Immutable predecessor: `20f6c5f`
 - Prelude commit: `bad15ee`
-- Frozen worker base: the ledger activation commit containing this record; its exact SHA and task IDs are recorded immediately after launch
+- Frozen worker base: `707ad0b`
 - Planned lanes: four, retained adaptively because the durable API/status journey, native and hostile-media boundary, numerical geometry adapters and optional neural/GPU/adversarial evidence are substantial independent risks with exclusive write boundaries
 - Provider policy: no paid provider, cloud key, customer media or training use is required; deterministic synthetic inputs, local PostGIS/S3-compatible storage and FFmpeg support the base gates
 - Mutation policy: C8 preserves immutable media, publishes proposal-only geometry and optional non-dimensional appearance, and cannot call C5 or mutate canonical state; C9 owns fusion and discrepancy resolution
 - Hardware status at activation: physical iOS camera/RGB-D and NVIDIA/CUDA dense/neural evidence are `NOT RUN`; this Apple M1 host has FFmpeg/ffprobe 8.1 but no COLMAP, Open3D, PyTorch, Blender or CUDA runtime
 
-| Lane                             | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State | Exclusive roots                                                                                                                            |
-| -------------------------------- | -------------- | ----------------------- | ---------- | --------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| C8-L1 durable workflow/status UX | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | platform reconstruction module/C8 composition/migration/tests, isolated web reconstruction page/BFF/features/tests and development runbook |
-| C8-L2 native capture/media prep  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native MediaCapture/Camera features and tests, spatial-worker media-prep source/tests and named composition files                          |
-| C8-L3 geometric reconstruction   | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | inference-worker common/COLMAP/Open3D reconstruction source and tests                                                                      |
-| C8-L4 neural/GPU/independent QA  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | Nerfstudio/gsplat adapters, GPU package, reconstruction evaluation/security/E2E/XCUITest evidence and documents                            |
+| Lane                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                            |
+| -------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| C8-L1 durable workflow/status UX | `019f700a-6630-76b1-a437-03bb6b32c341` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | platform reconstruction module/C8 composition/migration/tests, isolated web reconstruction page/BFF/features/tests and development runbook |
+| C8-L2 native capture/media prep  | `019f700a-667e-74c1-adb3-b7178db5fb80` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | native MediaCapture/Camera features and tests, spatial-worker media-prep source/tests and named composition files                          |
+| C8-L3 geometric reconstruction   | `019f700a-6633-7ce3-a9fb-6ac719c5750e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | inference-worker common/COLMAP/Open3D reconstruction source and tests                                                                      |
+| C8-L4 neural/GPU/independent QA  | `019f700a-662f-7ce1-9357-12d31ff644a6` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | Nerfstudio/gsplat adapters, GPU package, reconstruction evaluation/security/E2E/XCUITest evidence and documents                            |
 
 ### Prelude gate evidence
 
