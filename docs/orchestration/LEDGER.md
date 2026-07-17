@@ -69,7 +69,7 @@
 
 ### Master activation and integration
 
-- Status: three workers active from the verified prelude; the fourth Codex worktree setup is queued for host capacity
+- Status: all four isolated workers active from the verified prelude
 - Contract: `docs/orchestration/checkpoints/C2_CONTRACT.md` (`c2-ingest-v1`)
 - Starting integration commit: `660086a`
 - Frozen worker base commit: `e56dbd2`
@@ -77,14 +77,14 @@
 - Provider policy: provider-free PostGIS plus loopback-only SeaweedFS; production storage is an inactive S3-compatible adapter
 - Privacy policy: synthetic evidence only; processing consent required; training use defaults to denied
 
-| Lane                            | Task/thread                                              | Model / reasoning       | Worker SHA | Merge SHA | State        | Exclusive roots                                                                |
-| ------------------------------- | -------------------------------------------------------- | ----------------------- | ---------- | --------- | ------------ | ------------------------------------------------------------------------------ |
-| C2-L1 asset/storage backend     | `019f6da8-7a0f-7dc2-9daa-adf15ad07c9e`                   | `gpt-5.6-sol` / `xhigh` | —          | —         | active       | platform asset/storage modules, C2 composition/migration/tests and API runbook |
-| C2-L2 hostile-media worker      | `019f6da8-79f1-7703-93ec-593ae0888872`                   | `gpt-5.6-sol` / `xhigh` | —          | —         | active       | spatial-worker source/tests and worker runbook                                 |
-| C2-L3 cross-surface evidence UX | `019f6da8-7a09-7752-8eca-dc85651440ae`                   | `gpt-5.6-sol` / `high`  | —          | —         | active       | allocated web evidence/BFF/project/CSS and iOS evidence/flow/test paths        |
-| C2-L4 adversarial QA            | `client-new-thread:2d0475a6-4d8e-4434-825e-74960ae4fc5d` | `gpt-5.6-sol` / `xhigh` | —          | —         | setup queued | evidence security/integration/adversarial E2E fixtures and upload threat model |
+| Lane                            | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                |
+| ------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------ |
+| C2-L1 asset/storage backend     | `019f6da8-7a0f-7dc2-9daa-adf15ad07c9e` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | platform asset/storage modules, C2 composition/migration/tests and API runbook |
+| C2-L2 hostile-media worker      | `019f6da8-79f1-7703-93ec-593ae0888872` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | spatial-worker source/tests and worker runbook                                 |
+| C2-L3 cross-surface evidence UX | `019f6da8-7a09-7752-8eca-dc85651440ae` | `gpt-5.6-sol` / `high`  | —          | —         | active | allocated web evidence/BFF/project/CSS and iOS evidence/flow/test paths        |
+| C2-L4 adversarial QA            | `019f6da8-79f1-7703-93ec-595f674fca65` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | evidence security/integration/adversarial E2E fixtures and upload threat model |
 
 ### Integrated gate evidence
 
 - The frozen prelude passed `UV_CACHE_DIR=.cache/uv pnpm verify`: formatting, seven-package lint/typecheck, 60 JavaScript unit tests, all production builds, Ruff, strict mypy and pytest. Shared C2 contracts added five focused rights, filename, multipart and internal-locator cases; the new spatial-worker workspace also built and passed its registration test.
-- L1, L2 and L3 worktrees were verified clean at `e56dbd2`. L4 was submitted with the same explicit model/reasoning and base but remains in Codex worktree setup until host capacity becomes available; it must resolve to a real task/worktree before its results can be accepted.
+- All four worktrees were verified clean at `e56dbd2`; each is a real project-scoped Codex task with the model/reasoning predeclared above.
