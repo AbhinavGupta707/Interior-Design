@@ -56,7 +56,7 @@ export default function HomePage() {
               editable directions and leave with a clearer implementation handoff.
             </p>
             <div className="hero__actions">
-              <ActionLink href="#journey">See how the journey works</ActionLink>
+              <ActionLink href="/sign-in">Start with a local fixture</ActionLink>
               <ActionLink href="#principles" tone="quiet">
                 Read our principles
               </ActionLink>

@@ -8,16 +8,29 @@ struct CaptureProject: Identifiable, Hashable, Sendable {
 
   static let localFixtures: [CaptureProject] = [
     CaptureProject(
-      id: "fixture-victorian-terrace",
-      name: "Victorian terrace",
-      locationSummary: "Synthetic London project",
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      name: "Sample terrace refresh",
+      locationSummary: "Synthetic local project",
       isFixture: true
     ),
     CaptureProject(
-      id: "fixture-city-flat",
-      name: "City flat",
-      locationSummary: "Synthetic Manchester project",
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      name: "Sample city flat",
+      locationSummary: "Synthetic local project",
       isFixture: true
     ),
   ]
+
+  static func projectService(
+    id: String,
+    name: String,
+    status: String
+  ) -> CaptureProject {
+    CaptureProject(
+      id: id,
+      name: name,
+      locationSummary: "\(status.capitalized) · Project service",
+      isFixture: false
+    )
+  }
 }

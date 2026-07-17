@@ -4,14 +4,21 @@ struct AppRootView: View {
   let configuration: AppConfiguration
 
   @State private var flow: CaptureFlowModel
+  @State private var projectRepository: ProjectRepository
 
   @MainActor
   init(
     configuration: AppConfiguration,
-    capabilityChecker: any CaptureCapabilityChecking = SystemCaptureCapabilityChecker()
+    capabilityChecker: any CaptureCapabilityChecking = SystemCaptureCapabilityChecker(),
+    projectService: (any ProjectServing)? = nil
   ) {
     self.configuration = configuration
     _flow = State(initialValue: CaptureFlowModel(capabilityChecker: capabilityChecker))
+    let service = projectService ?? C1ProjectAPIClient(
+      baseURL: configuration.apiBaseURL,
+      transport: URLSessionTransport()
+    )
+    _projectRepository = State(initialValue: ProjectRepository(service: service))
   }
 
   var body: some View {
@@ -19,7 +26,7 @@ struct AppRootView: View {
 
     NavigationStack(path: $flow.path) {
       ProjectSelectionView(
-        projects: CaptureProject.localFixtures,
+        repository: projectRepository,
         environmentLabel: configuration.environment.displayName,
         onSelect: flow.selectProject
       )
