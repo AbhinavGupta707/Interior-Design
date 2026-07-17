@@ -98,3 +98,27 @@
 - XcodeGen deterministically added the C2 sources/tests to the checked project. The iPhone Air iOS 26.4 Simulator passed 25 XCTest cases. Computer Use then verified the rendered SwiftUI project selection, explicit no-camera/LiDAR Simulator boundary, manual fallback, C2 source/rights/consent controls, default-denied training use, the real ready evidence inventory and opening its short-lived image preview in Simulator Safari.
 - Integration review reconciled shared/API resume DTOs, worker/job states (`queued`/`leased`/`retryable`/`succeeded`/`failed`), lease-token fencing, rich append-only audit rows, technical metadata, exact local S3 credentials, bounded error codes, adversarial fixtures/harnesses, generated Xcode membership and the popup-safe preview interaction. Runbooks now describe the integrated contract and reproducible live harnesses.
 - Honest residual limits: no malware-scanner daemon, physical iPhone/RoomPlan/background-relaunch evidence, production cloud/IAM/lifecycle proof, customer media or public deployment exists in C2. Expired-session cleanup, isolated log scanning and stale-lease reclamation remain separately seedable live probes; a skip is not counted as evidence. C2 validates and safely prepares evidence but does not infer geometry, reconstruct rooms or establish professional truth.
+
+## C3 — Honest property and home dossier
+
+### Master activation
+
+- Status: active; lanes frozen and pending launch
+- Contract: `docs/orchestration/checkpoints/C3_CONTRACT.md` (`c3-property-v1`)
+- Prelude commit: `f26179b`
+- Frozen worker base commit: this activation commit; exact SHA is recorded with the created task IDs
+- Planned lanes: two, selected adaptively for one producing backend and one consuming UX
+- Provider policy: deterministic synthetic fixture plus manual entry; live address, EPC and planning providers remain disabled
+- Data policy: no real address/query fixture, no raw provider payload, no inferred interior, model training denied
+
+| Lane                           | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State          | Exclusive roots                                                                                       |
+| ------------------------------ | ----------- | ----------------------- | ---------- | --------- | -------------- | ----------------------------------------------------------------------------------------------------- |
+| C3-L1 dossier backend/adapters | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued  | property adapter, platform property module/C3 composition, migration, fixture, backend tests/runbook |
+| C3-L2 dossier UX/comprehension | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | frozen/queued  | allocated web property/BFF/project/CSS, contract/E2E tests and comprehension evaluation              |
+
+### Prelude gate evidence
+
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, eight-package lint/typecheck, 144 JavaScript unit tests, all production builds, Ruff, strict mypy and pytest before activation.
+- Focused hardening after review passed all 14 contract tests, 51 authorisation tests, contracts/adapter typechecks and `git diff --check`.
+- Shared contracts preserve UPRNs as strings, keep provider-disabled/failure/no-match states distinct, require immutable source metadata and deny training use, constrain every non-unknown dossier item to a source, and reject cross-project/property source records.
+- The two lane assignments and their exact `gpt-5.6-sol` reasoning levels were frozen before launch. L1 receives `xhigh` because it owns privacy, tenant isolation, idempotency, concurrency and immutable persistence; L2 receives `high` because it is a bounded consumer of the frozen contract with no provider or persistence authority.
