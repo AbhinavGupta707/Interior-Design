@@ -10,9 +10,11 @@ import { registerC1Module, type C1ModuleOptions } from "./c1.js";
 import { registerC2Module, type C2ModuleOptions } from "./c2.js";
 import { registerC3Module, type C3ModuleOptions } from "./c3.js";
 import { registerC4Module, type C4ModuleOptions } from "./c4.js";
+import { registerC5Module, type C5ModuleOptions } from "./c5.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
+import { disableRawCanonicalSnapshotMutationRoute } from "./modules/models/core/routes.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -27,6 +29,7 @@ export interface CreateServerOptions {
   readonly c2?: C2ModuleOptions;
   readonly c3?: C3ModuleOptions;
   readonly c4?: C4ModuleOptions;
+  readonly c5?: C5ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -50,10 +53,12 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "req.headers.authorization",
         "req.headers.cookie",
         "req.headers['x-api-key']",
+        "req.headers['idempotency-key']",
         "req.url",
         "request.headers.authorization",
         "request.headers.cookie",
         "request.headers['x-api-key']",
+        "request.headers['idempotency-key']",
         "request.url",
         "providerUploadId",
         "provider_upload_id",
@@ -70,14 +75,20 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "body.address",
         "body.displayAddress",
         "body.snapshot",
+        "body.operations",
+        "body.previewId",
         "req.body.query",
         "req.body.address",
         "req.body.displayAddress",
         "req.body.snapshot",
+        "req.body.operations",
+        "req.body.previewId",
         "request.body.query",
         "request.body.address",
         "request.body.displayAddress",
         "request.body.snapshot",
+        "request.body.operations",
+        "request.body.previewId",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -94,6 +105,8 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.body.address",
         "*.body.displayAddress",
         "*.body.snapshot",
+        "*.body.operations",
+        "*.body.previewId",
       ],
     },
   };
@@ -139,8 +152,13 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c3,
         )
       : undefined;
+  const composeC5 =
+    options.c5 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test");
+  if (composeC5) disableRawCanonicalSnapshotMutationRoute(server);
   const c4 =
-    options.c4 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+    options.c4 !== undefined ||
+    composeC5 ||
+    (options.c1 === undefined && config.runtimeEnvironment !== "test")
       ? registerC4Module(
           server,
           config.runtimeEnvironment,
@@ -148,6 +166,14 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c4,
         )
       : undefined;
+  const c5 = composeC5
+    ? registerC5Module(
+        server,
+        config.runtimeEnvironment,
+        options.environment ?? process.env,
+        options.c5,
+      )
+    : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
@@ -155,6 +181,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
       ...(c2?.readinessChecks ?? []),
       ...(c3?.readinessChecks ?? []),
       ...(c4?.readinessChecks ?? []),
+      ...(c5?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );

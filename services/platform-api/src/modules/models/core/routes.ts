@@ -23,6 +23,12 @@ import type { CanonicalModelService } from "./service.js";
 // The transport envelope needs a small allowance beyond the frozen 10 MiB
 // canonical-record ceiling. The service separately enforces that exact ceiling.
 export const c4CreateSnapshotBodyLimitBytes = 10_486_784;
+const typedMutationCompositions = new WeakSet<FastifyInstance>();
+
+/** App-composition seam: integrated C5 owns the one-time initialization route. */
+export function disableRawCanonicalSnapshotMutationRoute(server: FastifyInstance): void {
+  typedMutationCompositions.add(server);
+}
 
 const projectParamsSchema = z.object({ projectId: projectIdSchema }).strict();
 const profileParamsSchema = z
@@ -106,6 +112,7 @@ export function registerCanonicalModelRoutes(
   identity: IdentityService,
   projects: ProjectRepository,
   models: CanonicalModelService,
+  options: { readonly registerCreateRoute?: boolean } = {},
 ): void {
   server.get<{ Params: { readonly projectId: string } }>(
     c4RouteContract.listProfiles,
@@ -167,6 +174,8 @@ export function registerCanonicalModelRoutes(
     }
     return reply.send(record);
   });
+
+  if (options.registerCreateRoute === false || typedMutationCompositions.has(server)) return;
 
   server.post<{
     Params: { readonly profile: string; readonly projectId: string };
