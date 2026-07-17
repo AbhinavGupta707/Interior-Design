@@ -137,23 +137,24 @@
 
 ## C4 — Canonical multi-level home model
 
-### Master activation
+### Master activation and integration
 
-- Status: active; lanes frozen and pending launch
+- Status: complete on `main`; C5 may open from the ledger-close commit
 - Contract: `docs/orchestration/checkpoints/C4_CONTRACT.md` (`c4-canonical-home-v1`)
 - Prelude commit: `0ade952`
 - Frozen worker base commit: `918f393`
+- Product completion SHA: `e1a7a60`
 - Planned lanes: four, retained adaptively because provenance/canonicalisation, geometry/topology, persistence/concurrency and adversarial fixtures are independent substantial risks
 - Coordinate policy: right-handed project-local `+X east`, `+Y north`, `+Z up`; authoritative local lengths are integer millimetres and angles integer milli-degrees
 - Hash policy: RFC-8785-style UTF-8 canonical JSON and SHA-256; entity/reference collections sort deterministically while geometric point order is preserved
 - State policy: existing, proposed and as-built are separate model profiles; unknowns remain explicit and no renderer fallback becomes a fact
 
-| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                               |
-| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ----------------------------------------------------------------------------- |
-| C4-L1 domain/provenance        | `019f6e4e-38c1-7ad3-8b85-5b2947835230` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | domain-model/provenance source/tests and allocated coordinate/provenance ADRs |
-| C4-L2 geometry/topology kernel | `019f6e4e-393d-7270-af7c-150b36a3a5cf` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | geometry-kernel source/tests and allocated kernel ADR                         |
-| C4-L3 persistence/API          | `019f6e4e-3a78-7d32-a215-f874d0535f8d` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | canonical model API/module/C4 composition, migration, tests and runbook       |
-| C4-L4 fixtures/evaluation      | `019f6e4e-3bea-79d2-ad7b-1e5b4701da63` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | model fixtures, independent geometry/canonical tests and evaluation document  |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                               |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ----------------------------------------------------------------------------- |
+| C4-L1 domain/provenance        | `019f6e4e-38c1-7ad3-8b85-5b2947835230` | `gpt-5.6-sol` / `xhigh` | `ad377a2`  | `f012a9c` | integrated | domain-model/provenance source/tests and allocated coordinate/provenance ADRs |
+| C4-L2 geometry/topology kernel | `019f6e4e-393d-7270-af7c-150b36a3a5cf` | `gpt-5.6-sol` / `xhigh` | `303b820`  | `eef7680` | integrated | geometry-kernel source/tests and allocated kernel ADR                         |
+| C4-L3 persistence/API          | `019f6e4e-3a78-7d32-a215-f874d0535f8d` | `gpt-5.6-sol` / `xhigh` | `f3399e8`  | `376b01b` | integrated | canonical model API/module/C4 composition, migration, tests and runbook       |
+| C4-L4 fixtures/evaluation      | `019f6e4e-3bea-79d2-ad7b-1e5b4701da63` | `gpt-5.6-sol` / `xhigh` | `578c275`  | `ea9dc7d` | integrated | model fixtures, independent geometry/canonical tests and evaluation document  |
 
 ### Prelude gate evidence
 
@@ -161,3 +162,14 @@
 - Shared C4 contracts added five focused cases for explicit unknown values, profile separation, confidence/evidence requirements, cross-collection ID uniqueness and optimistic first-snapshot state. The explicit role/action matrix now passes 63 authorisation cases: owner/editor may create snapshots, viewer is read-only and every foreign-tenant action remains denied.
 - Migration `0004_canonical_models.sql` is allocated exclusively to C4-L3 before launch. Package manifests, the lockfile, shared DTOs, authz, migration registry and this contract are frozen orchestrator-owned inputs.
 - All four tasks receive `xhigh`: L1 owns cryptographic canonicalisation and provenance invariants; L2 owns adversarial integer geometry; L3 owns tenant isolation, idempotency and concurrent immutable persistence; L4 owns property/adversarial geometry and cross-process hash evaluation.
+
+### Integrated gate evidence
+
+- All four project-scoped worktrees completed cleanly from frozen base `918f393` and were merged in the declared L1, L2, L3, L4 order. Every worker used exact `gpt-5.6-sol` with `xhigh`; the lane manifests stayed within their exclusive roots and the orchestrator alone reconciled shared contracts and cross-lane behavior.
+- The first integrated producer gate deliberately exposed 16/16 cross-lane incompatibilities: storey-relative wall heights, the stair run endpoint, independently named findings/locations, room-boundary topology and duplicate canonical encoders. The completion commit `e1a7a60` reconciles one domain codec, exact structured findings, closed-loop room comparison, fixtures, reference oracle, runbook and retained hashes rather than weakening the gate.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed on the repaired integration: formatting, 12-package ESLint and strict TypeScript checks, 289 JavaScript tests, every production build, Ruff, strict mypy and pytest. Focused results include 20 shared-contract, 20 domain, 10 provenance, 17 geometry, 41 fixture, 63 authorisation and 49 API tests; nine API provider/environment cases remain explicit skips in the provider-free invocation.
+- The mandatory independent canonical/geometry run with `C4_RUN_PRODUCER_INTEGRATION=1` passed 42/42 checks. It recomputed all three domain golden byte streams and SHA-256 values, validated three production geometry profiles and matched 13 adversarial fixtures against an independently maintained reference implementation. The retained existing/proposed/as-built hashes are `587ebdfa03235b2dbf0346e7558398636057e735a014fdb9ca08d696ad4dda6f`, `c13a92cbc6312dd08ab9dca4f2cd4dea82bdeedc9b5ab50171e7bb1ff69004b1` and `dc339d56d8a20a7bb4d23a1cc04b760fd1d675c06bf41e3b2dfdb91df6d233cc`.
+- A disposable loopback PostGIS database applied migrations C1 through C4 in sequence. The live C4 database suite passed 2/2, proving same-key replay, different-body conflicts, optimistic concurrency, immutable historical rows/current pointers, exact JSONB hash/byte recomputation, trigger enforcement, profile separation and tenant/role isolation.
+- A real loopback HTTP listener then passed an 18-assertion authenticated client journey: three local personas signed in, an owner created a project, invalid geometry returned a located `WALL_PATH_SELF_INTERSECTION` without persistence, valid creation and same-key replay returned one version-one record, all three lifecycle states appeared exactly once, a viewer read current/history but received `403` on mutation, the foreign tenant received `404`, and an unauthenticated request received `401`.
+- Structured API logs showed only bounded codes, status, correlation IDs and the allowed finding code. Every request URL was `[REDACTED]`; no access token, idempotency key, snapshot body, project/model identifier, address, provider locator or credential appeared. C4 has no rendered user surface, so the contractually correct user gate is the public authenticated API journey rather than a fabricated browser or simulator check.
+- Honest residual limits: C4 is a deterministic TypeScript 2.5D information/validation kernel, not a survey-grade solid model, mesh reconstruction, GPU renderer, structural analysis, regulatory approval, IFC authoring tool or professional certification. It stores synthetic fixtures only; typed editing begins in C5, inference in C6, physical capture/reconstruction in C7-C9 and glTF delivery in C10.
