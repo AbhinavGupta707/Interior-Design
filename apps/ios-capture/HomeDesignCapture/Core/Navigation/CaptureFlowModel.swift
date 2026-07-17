@@ -1,6 +1,7 @@
 import Observation
 
 enum CaptureRoute: Hashable, Sendable {
+  case evidenceWorkspace
   case eligibility
   case capturePreparation
   case unsupportedCapture
@@ -25,6 +26,11 @@ final class CaptureFlowModel {
     selectedProject = project
     eligibility = capabilityChecker.currentEligibility()
     path = [.eligibility]
+  }
+
+  func openEvidenceWorkspace() {
+    guard selectedProject != nil else { return }
+    path.append(.evidenceWorkspace)
   }
 
   func continueFromEligibility() {

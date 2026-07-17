@@ -5,6 +5,7 @@ struct AppRootView: View {
 
   @State private var flow: CaptureFlowModel
   @State private var projectRepository: ProjectRepository
+  @State private var evidenceRepository: EvidenceRepository
 
   @MainActor
   init(
@@ -19,6 +20,11 @@ struct AppRootView: View {
       transport: URLSessionTransport()
     )
     _projectRepository = State(initialValue: ProjectRepository(service: service))
+    _evidenceRepository = State(
+      initialValue: EvidenceRepository(
+        service: C2EvidenceAPIClient(baseURL: configuration.apiBaseURL)
+      )
+    )
   }
 
   var body: some View {
@@ -40,6 +46,13 @@ struct AppRootView: View {
   private func destination(for route: CaptureRoute) -> some View {
     if let project = flow.selectedProject, let eligibility = flow.eligibility {
       switch route {
+      case .evidenceWorkspace:
+        EvidenceWorkspaceView(
+          repository: evidenceRepository,
+          project: project,
+          onCheckCapture: flow.continueFromEligibility,
+          onDone: flow.reset
+        )
       case .eligibility:
         CaptureEligibilityView(
           project: project,
@@ -47,6 +60,11 @@ struct AppRootView: View {
           onContinue: flow.continueFromEligibility,
           onChooseAnotherProject: flow.reset
         )
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Evidence") { flow.openEvidenceWorkspace() }
+          }
+        }
       case .capturePreparation:
         CapturePreparationView(
           project: project,
