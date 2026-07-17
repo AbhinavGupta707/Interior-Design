@@ -46,6 +46,13 @@ const expectedSameTenantAccess: Readonly<
   Record<MemberRole, Readonly<Record<ProjectAction, boolean>>>
 > = {
   editor: {
+    "capture:artifact:upload": true,
+    "capture:package:finalize": true,
+    "capture:proposal:read": true,
+    "capture:proposal:retry": true,
+    "capture:session:cancel": true,
+    "capture:session:create": true,
+    "capture:session:read": true,
     "intake:read": true,
     "intake:update": true,
     "model:read": true,
@@ -73,6 +80,13 @@ const expectedSameTenantAccess: Readonly<
     "project:read": true,
   },
   owner: {
+    "capture:artifact:upload": true,
+    "capture:package:finalize": true,
+    "capture:proposal:read": true,
+    "capture:proposal:retry": true,
+    "capture:session:cancel": true,
+    "capture:session:create": true,
+    "capture:session:read": true,
     "intake:read": true,
     "intake:update": true,
     "model:read": true,
@@ -100,6 +114,13 @@ const expectedSameTenantAccess: Readonly<
     "project:read": true,
   },
   viewer: {
+    "capture:artifact:upload": false,
+    "capture:package:finalize": false,
+    "capture:proposal:read": true,
+    "capture:proposal:retry": false,
+    "capture:session:cancel": false,
+    "capture:session:create": false,
+    "capture:session:read": true,
     "intake:read": true,
     "intake:update": false,
     "model:read": true,

@@ -65,6 +65,17 @@
                ReferencedContainer = "container:HomeDesignCapture.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "7F5E701251C537F0B95CE070"
+               BuildableName = "HomeDesignCaptureUITests.xctest"
+               BlueprintName = "HomeDesignCaptureUITests"
+               ReferencedContainer = "container:HomeDesignCapture.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

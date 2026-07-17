@@ -11,14 +11,17 @@
 		1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */; };
 		21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC63546001772B6B43829640 /* RoomPlan.framework */; };
 		3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */; };
+		3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */; };
 		44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A59599EAEA6781787237269 /* CaptureFlowModel.swift */; };
 		5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */; };
 		701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */; };
 		72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */; };
 		78590673BBA441661F2BEF49 /* EvidenceWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */; };
 		7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCD513E21B995439356829E /* ManualEvidenceView.swift */; };
+		7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */; };
 		80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DE930A75C9651B86254FEB /* EvidenceModels.swift */; };
 		8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */; };
+		9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */; };
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
@@ -32,6 +35,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		68084AA36B1168801995CCF4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1312DB3DCB3F6550D5DC6610 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 96CA0B15242BB8A6BB070B6B;
+			remoteInfo = HomeDesignCapture;
+		};
 		ADCE90EF3CBF3AB76EAED5BD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 1312DB3DCB3F6550D5DC6610 /* Project object */;
@@ -46,6 +56,7 @@
 		11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSelectionView.swift; sourceTree = "<group>"; };
 		12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapability.swift; sourceTree = "<group>"; };
 		172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDesignCaptureApp.swift; sourceTree = "<group>"; };
+		1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContracts.swift; sourceTree = "<group>"; };
 		48EB186AC67396E926C3F733 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeDesignCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
@@ -55,6 +66,8 @@
 		68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6A59599EAEA6781787237269 /* CaptureFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModel.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
+		723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContractTests.swift; sourceTree = "<group>"; };
 		746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkspaceView.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
 		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
@@ -63,6 +76,7 @@
 		BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceService.swift; sourceTree = "<group>"; };
 		C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreparationView.swift; sourceTree = "<group>"; };
 		CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnsupportedCaptureView.swift; sourceTree = "<group>"; };
+		D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchUITests.swift; sourceTree = "<group>"; };
 		D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModelTests.swift; sourceTree = "<group>"; };
 		EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapabilityTests.swift; sourceTree = "<group>"; };
 		EBB12C1C614BACC3644EBBDF /* HomeDesignCaptureTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -156,6 +170,14 @@
 			path = Evidence;
 			sourceTree = "<group>";
 		};
+		76DB48CAB98CF9A82C034775 /* Contract */ = {
+			isa = PBXGroup;
+			children = (
+				743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */,
+			);
+			path = Contract;
+			sourceTree = "<group>";
+		};
 		8092AACCFB015054F9B542F3 /* Platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -169,6 +191,7 @@
 			children = (
 				4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */,
 				EBB12C1C614BACC3644EBBDF /* HomeDesignCaptureTests.xctest */,
+				723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -179,12 +202,21 @@
 				46D39148B1AAFA8F2CCB0BAC /* Configurations */,
 				3AEE4307F6C074A804449AFD /* HomeDesignCapture */,
 				B4CD5AB503A04870C474EBDA /* HomeDesignCaptureTests */,
+				F96E2278E5F993197F981738 /* HomeDesignCaptureUITests */,
 				F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */,
 				97C93C92619CB4ADF8A6C554 /* Products */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
 			tabWidth = 2;
+		};
+		A17A72B1D6D6C4CAB6298CD2 /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
 		};
 		A742D48DFB320D495E321DA8 /* AR */ = {
 			isa = PBXGroup;
@@ -199,6 +231,7 @@
 			children = (
 				2D42209B58C3CE9C34260C53 /* C1 */,
 				CD04126CC756A6BE91371EF8 /* C2 */,
+				F41E8907C4D4DFD613C250C4 /* C7 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -237,6 +270,7 @@
 		D88E00BC4F6ED12AC47A941B /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A17A72B1D6D6C4CAB6298CD2 /* Capture */,
 				DF9ABA439C3A6C9E6B7E79F0 /* Configuration */,
 				BB3077E03A74853DDD8D7A0B /* Models */,
 				297D04DE6983928FCBD07C68 /* Navigation */,
@@ -260,12 +294,28 @@
 			path = ManualEvidence;
 			sourceTree = "<group>";
 		};
+		F41E8907C4D4DFD613C250C4 /* C7 */ = {
+			isa = PBXGroup;
+			children = (
+				76DB48CAB98CF9A82C034775 /* Contract */,
+			);
+			path = C7;
+			sourceTree = "<group>";
+		};
 		F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				BC63546001772B6B43829640 /* RoomPlan.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F96E2278E5F993197F981738 /* HomeDesignCaptureUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */,
+			);
+			path = HomeDesignCaptureUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -288,6 +338,24 @@
 			productName = HomeDesignCaptureTests;
 			productReference = EBB12C1C614BACC3644EBBDF /* HomeDesignCaptureTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7F5E701251C537F0B95CE070 /* HomeDesignCaptureUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 170B2E3C42967C9E6A063A5D /* Build configuration list for PBXNativeTarget "HomeDesignCaptureUITests" */;
+			buildPhases = (
+				1A7B21014E6C4F17583E2519 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BE4C308211259CF0A4714DB4 /* PBXTargetDependency */,
+			);
+			name = HomeDesignCaptureUITests;
+			packageProductDependencies = (
+			);
+			productName = HomeDesignCaptureUITests;
+			productReference = 723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		96CA0B15242BB8A6BB070B6B /* HomeDesignCapture */ = {
 			isa = PBXNativeTarget;
@@ -316,6 +384,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					7F5E701251C537F0B95CE070 = {
+						TestTargetID = 96CA0B15242BB8A6BB070B6B;
+					};
 					96CA0B15242BB8A6BB070B6B = {
 						ProvisioningStyle = Automatic;
 					};
@@ -337,17 +408,27 @@
 			targets = (
 				96CA0B15242BB8A6BB070B6B /* HomeDesignCapture */,
 				4108D1B987FCD9462729317E /* HomeDesignCaptureTests */,
+				7F5E701251C537F0B95CE070 /* HomeDesignCaptureUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1A7B21014E6C4F17583E2519 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		862932DEEA04E38588FE98F5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */,
 				E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */,
+				3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */,
 				E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */,
 				95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */,
 				44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */,
@@ -369,6 +450,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */,
+				7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */,
 				140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */,
 				B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */,
 				8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */,
@@ -380,6 +462,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BE4C308211259CF0A4714DB4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 96CA0B15242BB8A6BB070B6B /* HomeDesignCapture */;
+			targetProxy = 68084AA36B1168801995CCF4 /* PBXContainerItemProxy */;
+		};
 		D7D3869A5792882803EB1AD1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 96CA0B15242BB8A6BB070B6B /* HomeDesignCapture */;
@@ -530,6 +617,23 @@
 			};
 			name = Debug;
 		};
+		810E785FB1A4AEB79F88C529 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.homedesignstudio.capture.ui-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HomeDesignCapture;
+			};
+			name = Debug;
+		};
 		8F5A5589DAC01CF5C5C8D5BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0C7C417F96BFE83119FC4501 /* Debug.xcconfig */;
@@ -581,9 +685,35 @@
 			};
 			name = Release;
 		};
+		E5220F690D9323EBDF1BD91E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.homedesignstudio.capture.ui-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HomeDesignCapture;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		170B2E3C42967C9E6A063A5D /* Build configuration list for PBXNativeTarget "HomeDesignCaptureUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				810E785FB1A4AEB79F88C529 /* Debug */,
+				E5220F690D9323EBDF1BD91E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		3A1677F3AA44688463AAF845 /* Build configuration list for PBXNativeTarget "HomeDesignCaptureTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

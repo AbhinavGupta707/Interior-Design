@@ -70,6 +70,19 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.homedesignstudio.capture.tests
 
+  HomeDesignCaptureUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: HomeDesignCaptureUITests
+    dependencies:
+      - target: HomeDesignCapture
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.homedesignstudio.capture.ui-tests
+        TEST_TARGET_NAME: HomeDesignCapture
+
 schemes:
   HomeDesignCapture:
     build:
@@ -84,6 +97,7 @@ schemes:
       gatherCoverageData: true
       targets:
         - name: HomeDesignCaptureTests
+        - name: HomeDesignCaptureUITests
     profile:
       config: Release
     analyze:

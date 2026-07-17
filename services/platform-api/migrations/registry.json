@@ -36,6 +36,12 @@
       "checkpoint": "C6",
       "owner": "C6-L1",
       "path": "0006_plan_processing.sql"
+    },
+    {
+      "id": "0007",
+      "checkpoint": "C7",
+      "owner": "C7-L3",
+      "path": "0007_native_capture.sql"
     }
   ]
 }
