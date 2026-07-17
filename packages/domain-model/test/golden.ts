@@ -1,0 +1,3 @@
+export const GOLDEN_SNAPSHOT_SHA256 =
+  "bdbae0e0f3858f44e34bbefb87853d7ebbe85dadd1bd7aef58a0586c1d30a199";
+export const GOLDEN_SNAPSHOT_BYTE_LENGTH = 9_429;
