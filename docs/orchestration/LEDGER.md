@@ -39,17 +39,28 @@
 
 ## C1 — Identity, project and home intake
 
-### Master activation
+### Master activation and integration
 
-- Status: three isolated worker tasks active
+- Status: complete on `main`; C2 may open from the ledger-close commit
 - Contract: `docs/orchestration/checkpoints/C1_CONTRACT.md`
 - Base commit: `1c9d439`
+- Product completion SHA: `46ab9f3`
 - Planned lanes: three
 - Provider policy: local fixture plus disabled provider-neutral OIDC port; no external key required
 - Data policy: deterministic two-tenant synthetic fixtures only
 
-| Lane                     | Task/thread                            | Worktree                                                    | Base SHA  | State  | Exclusive roots                                                                        |
-| ------------------------ | -------------------------------------- | ----------------------------------------------------------- | --------- | ------ | -------------------------------------------------------------------------------------- |
-| C1-L1 backend            | `019f6d5a-efc2-7942-b990-799dce332350` | `/Users/abhinavgupta/.codex/worktrees/c5d3/Interior Design` | `1c9d439` | active | platform identity/projects/intake modules, migration 0001, backend C1 tests/runbook    |
-| C1-L2 authorisation      | `019f6d5a-eff0-7543-9814-88022bd61d82` | `/Users/abhinavgupta/.codex/worktrees/a902/Interior Design` | `1c9d439` | active | `packages/authz/**`, identity security tests and threat model                          |
-| C1-L3 web/iOS onboarding | `019f6d5a-f288-7a53-b581-ff462d00b5d2` | `/Users/abhinavgupta/.codex/worktrees/840c/Interior Design` | `1c9d439` | active | allocated web onboarding/BFF/shell files, iOS project flow files, onboarding E2E tests |
+| Lane                     | Task/thread                            | Worker SHA | Merge SHA | State      | Exclusive roots                                                                        |
+| ------------------------ | -------------------------------------- | ---------- | --------- | ---------- | -------------------------------------------------------------------------------------- |
+| C1-L1 backend            | `019f6d5a-efc2-7942-b990-799dce332350` | `1c8ae98`  | `ee1a67c` | integrated | platform identity/projects/intake modules, migration 0001, backend C1 tests/runbook    |
+| C1-L2 authorisation      | `019f6d5a-eff0-7543-9814-88022bd61d82` | `5bf25a3`  | `af5f4da` | integrated | `packages/authz/**`, identity security tests and threat model                          |
+| C1-L3 web/iOS onboarding | `019f6d5a-f288-7a53-b581-ff462d00b5d2` | `b705fd5`  | `fbed556` | integrated | allocated web onboarding/BFF/shell files, iOS project flow files, onboarding E2E tests |
+
+### Integrated gate evidence
+
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed twice on the integrated branch: formatting, six-package lint/typecheck, 59 JavaScript unit tests, production API/web builds, Ruff, strict mypy and pytest.
+- The deny-by-default identity policy passed 69 security cases. Contract/API suites passed 13 non-database cases, and the real PostGIS migration/persistence/isolation/concurrency suite passed all 15 tests after the live browser run.
+- The live database ended with exactly three synthetic memberships and zero project, intake or idempotency rows; the Compose service was stopped without deleting the reusable volume.
+- Playwright passed six desktop/mobile journeys covering sign-in, project creation, structured save/edit/resume, stale-write protection, expired/forbidden/offline/retry states, keyboard navigation, overflow and console/network failures.
+- A production web BFF was exercised against the real API in the in-app browser at desktop and 390×844 mobile sizes. The saved intake survived navigation/reload, canonical fixture identities remained consistent, there was no horizontal overflow and the console contained no warnings/errors. The primary browser-use connector had a local bootstrap incompatibility, so the installed in-app Browser controller supplied the visible evidence.
+- XcodeGen added the C1 test source to the checked project deterministically. The iPhone Air iOS 26.4 Simulator passed 17 tests, then Computer Use verified the live SwiftUI project list, explicit Simulator limitation, capture-eligibility route and manual-evidence fallback. This is not physical RoomPlan evidence.
+- Integration review caught and fixed the API `tsx watch` command ordering, complete stale-form locking, mismatched fixture aliases, evidence-label CSS specificity and the missing generated Xcode test reference. No provider key, real address, bearer-token output, localStorage credential, physical-capture claim or cloud deployment was introduced.
