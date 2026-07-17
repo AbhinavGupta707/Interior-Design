@@ -364,7 +364,230 @@ enum EvidenceFileSupport {
   }
 
   static func checksumBase64(fileURL: URL) throws -> String {
-    let data = try Data(contentsOf: fileURL, options: .mappedIfSafe)
-    return Data(SHA256.hash(data: data)).base64EncodedString()
+    let handle = try FileHandle(forReadingFrom: fileURL)
+    defer { try? handle.close() }
+    var hasher = SHA256()
+    while let data = try handle.read(upToCount: 4 * 1_024 * 1_024), !data.isEmpty {
+      if Task.isCancelled { throw CancellationError() }
+      hasher.update(data: data)
+    }
+    return Data(hasher.finalize()).base64EncodedString()
+  }
+}
+
+/// C8 capture composes with the C2 immutable source boundary. Recovery contains
+/// only opaque identifiers, checksums and completed-part receipts; bearer tokens
+/// and signed URLs are never persisted.
+actor C8ImmutableEvidenceUploader: C8ImmutableEvidenceUploading {
+  private let recoveryStore: any EvidenceRecoveryStoring
+  private let service: any EvidenceServing
+
+  init(
+    service: any EvidenceServing,
+    recoveryStore: (any EvidenceRecoveryStoring)? = nil
+  ) {
+    self.service = service
+    if let recoveryStore {
+      self.recoveryStore = recoveryStore
+    } else {
+      let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("C8EvidenceRecovery", isDirectory: true)
+      try? FileManager.default.createDirectory(
+        at: root,
+        withIntermediateDirectories: true,
+        attributes: [.protectionKey: FileProtectionType.complete]
+      )
+      var protectedRoot = root
+      var values = URLResourceValues()
+      values.isExcludedFromBackup = true
+      try? protectedRoot.setResourceValues(values)
+      self.recoveryStore = EvidenceRecoveryStore(root: root)
+    }
+  }
+
+  func upload(
+    _ request: C8ImmutableEvidenceUpload,
+    progress: @escaping @Sendable (Double) async -> Void
+  ) async throws -> C8ImmutableEvidenceReceipt {
+    try C8ReconstructionContractValidator.validate(upload: request)
+    let sourceValues = try request.fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+    guard sourceValues.isRegularFile == true,
+      Int64(sourceValues.fileSize ?? 0) == request.handle.byteSize,
+      try await EvidenceFileSupport.hash(fileURL: request.fileURL, progress: { _ in })
+        == request.handle.sha256
+    else { throw EvidenceServiceError.invalidResponse }
+    let selection = EvidenceSelection(
+      fileName:
+        "capture-\(request.handle.localIdentifier.uuidString.lowercased()).\(extensionFor(request.handle.mimeType))",
+      fileURL: request.fileURL,
+      kind: request.handle.mimeType.evidenceKind,
+      mimeType: request.handle.mimeType.rawValue,
+      size: request.handle.byteSize
+    )
+    try EvidenceFileSupport.validate(
+      fileName: selection.fileName,
+      size: selection.size,
+      mimeType: selection.mimeType,
+      kind: selection.kind
+    )
+    let rights = EvidenceRightsAssertion(
+      attribution: request.handle.origin == .syntheticSimulatorFixture
+        ? "Visibly synthetic, rights-cleared simulator fixture"
+        : nil,
+      basis: request.rights.basis,
+      licenceUrl: nil,
+      serviceProcessingConsent: request.rights.serviceProcessingConsent,
+      trainingUseConsent: .denied
+    )
+    let projectId = request.projectId.uuidString.lowercased()
+    var recovery: EvidenceRecoveryRecord
+    let savedRecovery = try await recoveryStore.load(projectId: projectId)
+    if let saved = savedRecovery,
+      saved.sha256 == request.handle.sha256,
+      saved.fileURL == request.fileURL
+    {
+      let session = try await service.session(projectId: projectId, sessionId: saved.sessionId)
+      if session.state == .completed {
+        try await recoveryStore.clear(projectId: projectId)
+        return try receipt(from: session.asset, request: request)
+      }
+      guard session.state == .initiated || session.state == .uploading else {
+        try await recoveryStore.clear(projectId: projectId)
+        throw EvidenceServiceError.unavailable
+      }
+      recovery = EvidenceResumeReconciler.reconcile(
+        saved,
+        recordedPartNumbers: session.recordedPartNumbers
+      )
+    } else {
+      if let saved = savedRecovery {
+        try await service.abort(
+          projectId: projectId,
+          sessionId: saved.sessionId,
+          idempotencyKey: "c8-replace-\(saved.sessionId)"
+        )
+        try await recoveryStore.clear(projectId: projectId)
+      }
+      let createKey =
+        "c8-create-\(request.handle.localIdentifier.uuidString.lowercased())-\(request.handle.sha256.prefix(16))"
+      let session = try await service.createSession(
+        projectId: projectId,
+        selection: selection,
+        sha256: request.handle.sha256,
+        rights: rights,
+        idempotencyKey: createKey
+      )
+      recovery = EvidenceRecoveryRecord(
+        assetId: session.asset.id,
+        completedParts: [],
+        completionKey: "c8-complete-\(session.sessionId)",
+        fileName: selection.fileName,
+        fileURL: request.fileURL,
+        kind: selection.kind,
+        partSize: session.partSize,
+        projectId: projectId,
+        sessionId: session.sessionId,
+        sha256: request.handle.sha256,
+        updatedAt: Date()
+      )
+    }
+    guard recovery.partSize > 0,
+      recovery.partSize <= 64 * 1_024 * 1_024
+    else {
+      throw EvidenceServiceError.invalidResponse
+    }
+    try await recoveryStore.save(recovery)
+    let totalParts = Int(ceil(Double(request.handle.byteSize) / Double(recovery.partSize)))
+    guard totalParts > 0, totalParts <= 10_000 else {
+      throw EvidenceServiceError.unsupported("Captured media exceeds the immutable upload part budget.")
+    }
+    var completed = Set(recovery.completedParts.map(\.partNumber))
+    await progress(Double(completed.count) / Double(totalParts))
+    for partNumber in 1...totalParts where !completed.contains(partNumber) {
+      try Task.checkCancellation()
+      let offset = UInt64((partNumber - 1) * recovery.partSize)
+      let length = min(
+        recovery.partSize,
+        Int(request.handle.byteSize) - Int(offset)
+      )
+      let partURL = try await recoveryStore.partFile(
+        sourceURL: request.fileURL,
+        offset: offset,
+        length: length,
+        partNumber: partNumber
+      )
+      defer { try? FileManager.default.removeItem(at: partURL) }
+      try FileManager.default.setAttributes(
+        [.protectionKey: FileProtectionType.complete],
+        ofItemAtPath: partURL.path
+      )
+      let checksum = try EvidenceFileSupport.checksumBase64(fileURL: partURL)
+      let signed = try await service.signPart(
+        projectId: projectId,
+        sessionId: recovery.sessionId,
+        partNumber: partNumber,
+        byteSize: length,
+        checksumSha256: checksum,
+        idempotencyKey:
+          "c8-part-\(recovery.sessionId)-\(partNumber)-\(request.handle.sha256.prefix(12))"
+      )
+      guard signed.requiredHeaders.contains(where: {
+        $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
+      }) else { throw EvidenceServiceError.checksumBindingMissing }
+      let etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+      recovery.completedParts.append(
+        CompletedEvidencePart(checksumSha256: checksum, etag: etag, partNumber: partNumber)
+      )
+      recovery.completedParts.sort { $0.partNumber < $1.partNumber }
+      recovery.updatedAt = Date()
+      completed.insert(partNumber)
+      try await recoveryStore.save(recovery)
+      await progress(Double(completed.count) / Double(totalParts))
+    }
+    let asset = try await service.complete(
+      projectId: projectId,
+      sessionId: recovery.sessionId,
+      sha256: request.handle.sha256,
+      parts: recovery.completedParts,
+      idempotencyKey: recovery.completionKey
+    )
+    try await recoveryStore.clear(projectId: projectId)
+    return try receipt(from: asset, request: request)
+  }
+
+  private func receipt(
+    from asset: EvidenceAsset,
+    request: C8ImmutableEvidenceUpload
+  ) throws -> C8ImmutableEvidenceReceipt {
+    guard let assetId = UUID(uuidString: asset.id),
+      asset.projectId.lowercased() == request.projectId.uuidString.lowercased(),
+      asset.declaredMimeType == request.handle.mimeType.rawValue,
+      asset.kind == request.handle.mimeType.evidenceKind,
+      asset.source.sha256 == request.handle.sha256,
+      asset.source.byteSize == request.handle.byteSize,
+      asset.rights.basis == request.rights.basis,
+      asset.rights.serviceProcessingConsent == request.rights.serviceProcessingConsent,
+      asset.rights.trainingUseConsent == .denied,
+      [.uploaded, .processing, .ready, .quarantined, .rejected].contains(asset.status)
+    else { throw EvidenceServiceError.invalidResponse }
+    return C8ImmutableEvidenceReceipt(
+      assetId: assetId,
+      byteSize: asset.source.byteSize,
+      declaredMimeType: request.handle.mimeType,
+      projectId: request.projectId,
+      sha256: asset.source.sha256,
+      status: asset.status,
+      trainingUseConsent: .denied
+    )
+  }
+
+  private func extensionFor(_ mimeType: C8MediaMIMEType) -> String {
+    switch mimeType {
+    case .heic: "heic"
+    case .jpeg: "jpg"
+    case .mp4: "mp4"
+    case .png: "png"
+    case .quickTime: "mov"
+    }
   }
 }
