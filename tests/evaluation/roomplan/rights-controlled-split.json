@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "c7-roomplan-evaluation-split-v1",
+  "createdAt": "2026-07-17T00:00:00.000Z",
+  "dataPolicy": {
+    "customerDataPresent": false,
+    "rawRoomPlanEncodingInGit": false,
+    "trainingUseConsent": "denied"
+  },
+  "splits": [
+    {
+      "access": "repository-visible",
+      "evidenceClass": "synthetic-conformance",
+      "fixtureIds": [
+        "synthetic-single-basic",
+        "synthetic-single-polygon",
+        "synthetic-single-curve",
+        "synthetic-structure-two-room",
+        "synthetic-interruption-relocalised",
+        "synthetic-offline-resume",
+        "synthetic-incompatible-world-space",
+        "synthetic-extreme-transform",
+        "synthetic-duplicate-identifier",
+        "synthetic-missing-parent",
+        "synthetic-rights-withdrawn",
+        "synthetic-oversized-count"
+      ],
+      "name": "synthetic-conformance",
+      "rights": {
+        "basis": "generated-by-project",
+        "evaluationUseAllowed": true,
+        "serviceProcessingConsent": true,
+        "trainingUseConsent": "denied"
+      },
+      "status": "available"
+    },
+    {
+      "access": "restricted-evaluation-only",
+      "evidenceClass": "physical-field",
+      "fixtureIds": [],
+      "name": "physical-development",
+      "rights": {
+        "basis": "rights-record-required-per-capture",
+        "evaluationUseAllowed": false,
+        "serviceProcessingConsent": false,
+        "trainingUseConsent": "denied"
+      },
+      "status": "not-acquired"
+    },
+    {
+      "access": "restricted-holdout-custodian-only",
+      "evidenceClass": "physical-field",
+      "fixtureIds": [],
+      "name": "physical-holdout",
+      "rights": {
+        "basis": "rights-record-required-per-capture",
+        "evaluationUseAllowed": false,
+        "serviceProcessingConsent": false,
+        "trainingUseConsent": "denied"
+      },
+      "status": "not-acquired"
+    }
+  ]
+}
