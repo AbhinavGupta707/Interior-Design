@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C8 are complete; the user explicitly resumed the programme through C9 and C10. Stop after C10 is integrated, exhaustively verified, documented and pushed.
+- Autonomous execution boundary: C0-C9 are complete. The user explicitly instructed the orchestrator to pause after C9; C10 is not open and no C10 worker has been launched.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -176,7 +176,7 @@
 
 ## C5 — Typed operations, branches, replay and 2D editor
 
-### Master activation
+### Master activation and closure
 
 - Status: complete on `main` with one recorded external Browser-runtime gate exception; C6 may open from the ledger-close commit
 - Contract: `docs/orchestration/checkpoints/C5_CONTRACT.md` (`c5-model-operation-v1`)
@@ -350,23 +350,25 @@
 
 ### Master activation
 
-- Status: active; four implementation lanes launched from one frozen base
+- Status: complete on `main`; pause before C10 by explicit user instruction
 - Contract: `docs/orchestration/checkpoints/C9_CONTRACT.md` (`c9-fusion-job-v1`, `c9-registration-result-v1`, `c9-full-house-proposal-v1`, `c9-discrepancy-v1`, `c9-operation-draft-v1`)
 - Immutable predecessor/C8 ledger-close: `3e0bd2b06cc2a504076f93cc21f75062543f3ef4`
 - Prelude commit: `8f27b17`
 - Frozen worker base: `d2b4ba1bbef929bdc7255a4324ac34fd0aa409ef`
+- Cross-lane producer integration SHA: `f778b15`
+- Product completion SHA: `e0aa7c0`
 - Planned lanes: four, retained adaptively because deterministic robust registration, semantic fitting, durable tenant-safe cross-surface orchestration and independent adversarial evaluation are substantial independent risks with exclusive write boundaries
 - Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because numerical geometry, inference/topology, durable concurrency/security and failure-inclusive evaluation are all complex; no C9 lane is merely bounded/mechanical.
 - Provider/data policy: no paid provider, cloud key, customer data or training use is required. Deterministic synthetic proposal fixtures, local PostGIS and existing local services supply the base gate.
 - Mutation policy: C9 emits proposal-only geometry, explicit discrepancies, attributable decisions and a branch/revision/head-hash-pinned C5 operation draft. It cannot call C5 preview/commit, advance a branch or mutate a canonical snapshot.
 - Hardware/runtime status at activation: no physical iPhone/iPad, COLMAP, Open3D, PyTorch, Blender, NVIDIA or CUDA is available. C7 physical RoomPlan and C8 real algorithm/GPU evidence remain `NOT RUN`; C9 fixtures cannot promote them.
 
-| Lane                                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                       |
-| ------------------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| C9-L1 registration/fusion kernel                 | `019f7194-9cdf-7593-8858-4c3e05e9fdb1` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | geometry-kernel registration/fusion source/tests and allocated package export                         |
-| C9-L2 semantic fitting                           | `019f7194-9ce0-7d71-9580-81e57bd3518b` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | inference-worker scan-to-model source/tests                                                           |
-| C9-L3 durable fusion/discrepancy product         | `019f7194-9ce0-7d71-9580-820951d80ade` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated platform/spatial/web fusion paths, migration 0009, tests/runbook and named composition files |
-| C9-L4 independent evaluation/security/acceptance | `019f7194-9ce3-7c83-a8d3-d032c30bbe3d` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | fusion fixtures, evaluation/security/E2E packs and evaluation/threat-model documents                  |
+| Lane                                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                       |
+| ------------------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| C9-L1 registration/fusion kernel                 | `019f7194-9cdf-7593-8858-4c3e05e9fdb1` | `gpt-5.6-sol` / `xhigh` | `911432c`  | `3001427` | integrated | geometry-kernel registration/fusion source/tests and allocated package export                         |
+| C9-L2 semantic fitting                           | `019f7194-9ce0-7d71-9580-81e57bd3518b` | `gpt-5.6-sol` / `xhigh` | `db9d900`  | `e5be7e5` | integrated | inference-worker scan-to-model source/tests                                                           |
+| C9-L3 durable fusion/discrepancy product         | `019f7194-9ce0-7d71-9580-820951d80ade` | `gpt-5.6-sol` / `xhigh` | `caca6e4`  | `f53834e` | integrated | isolated platform/spatial/web fusion paths, migration 0009, tests/runbook and named composition files |
+| C9-L4 independent evaluation/security/acceptance | `019f7194-9ce3-7c83-a8d3-d032c30bbe3d` | `gpt-5.6-sol` / `xhigh` | `a0fa61e`  | `523ec4b` | integrated | fusion fixtures, evaluation/security/E2E packs and evaluation/threat-model documents                  |
 
 ### Prelude gate evidence
 
@@ -377,3 +379,14 @@
 - Central authorization and the independent identity policy now include seven C9 actions. The package suite passes 369/369 and the independent policy file passes 529/529: owner/editor may create/read/cancel/retry/review/draft, viewer is job/proposal read-only and foreign-tenant access fails closed.
 - `UV_CACHE_DIR=.cache/uv pnpm verify` passes formatting, all 14 package lint/typecheck/unit/build suites, Ruff, strict mypy and 86 Python tests; two real COLMAP/Open3D runtime tests remain explicitly skipped because those runtimes are unavailable. `git diff --check` is clean.
 - Migration `0009_model_fusion.sql` is reserved exclusively for C9-L3 in the orchestrator-owned migration registry. Shared contracts/core authz, manifests/lockfiles, accepted contract, registry, `.github`, `.codex`, `AGENTS.md` and this ledger remain read-only to workers except for exact transferred composition/export paths.
+
+### Integration and closure evidence
+
+- The four frozen worktrees merged in L1 → L2 → L3 → L4 order. Integration then composed `GeometryKernelRegistrationProducer` and the bounded real Python scan-to-model producer into the default C9 spatial-worker path. Exact C6 plan and C7 RoomPlan payloads now reach the production producers; C8 remains registered evidence but honestly abstains when its immutable result has no inline parametric semantic observations.
+- Root review found and fixed two defects before closure. Real BFF-created plan and RoomPlan sources were source-local but the UI emitted no anchors, so production jobs could only abstain; the final workspace now requires three measured, integer, non-collinear source-to-project correspondences per source-local input and refuses guessed/invalid/collinear values. The semantic adapter now compares the exact base with the fused candidate and emits deterministic attributed `wall.translate.v1` operations for real wall-position conflicts without creating a false discrepancy for an aligned base.
+- A disposable PostgreSQL 16 database applied C1-C9. The C9 schema suite passed 3/3. A separate production-path harness used the real C1/C4/C5/C6/C7/C8/C9 API composition, real Postgres repositories, real Next BFF, real C9 spatial worker, geometry kernel and bounded Python subprocess. Visibly synthetic C6+C7 inputs plus an exact base wall offset of 25 mm produced a seven-discrepancy partial proposal and an exact 25 mm `wall.translate.v1` draft.
+- Final live Playwright passed 2/2 at 1440×960 and 390×844. The owner selected both immutable sources, supplied measured identity correspondences, created the durable job, reviewed the 25 mm conflict and created the branch-pinned draft. The viewer saw the proposal read-only. Both viewports had no horizontal overflow, secret-shaped output, console/page error or C9 request failure. Database assertions reported one canonical snapshot, branch revision zero, five terminal jobs/proposals accumulated across repeated diagnostic runs and three drafts: no C5 preview/commit or canonical mutation occurred.
+- The focused C9 gates pass: web model-fusion 14/14, spatial-worker model-fusion 24/24 including real Python subprocess integration, independent evaluation 6/6, security 28/28, E2E TypeScript no-emit, synthetic Playwright 9/9 and production-path Playwright 2/2. The synthetic browser suite covers cancel/retry, full/partial/disconnected/abstained, every decision, stale/offline/error, viewer, keyboard and mobile states; it remains presentation evidence rather than producer-live evidence.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, every one of 14 package lint/typecheck/build pipelines, platform API 117 passed / 25 declared live-provider skips, spatial worker 96 passed / three declared live-database skips, web 74 passed, geometry kernel 43 passed, and Python 117 passed / two unavailable COLMAP/Open3D runtime skips. Ruff and strict mypy pass.
+- Durable evidence: `docs/evaluation/model-fusion/c9-evidence-record-2026-07-17.md`. Physical RoomPlan accuracy, real C8 COLMAP/Open3D reconstruction, neural/GPU/CUDA execution, representative-home accuracy, cloud/provider behavior and human correction time remain explicitly `NOT RUN`. No key, paid service, customer data or training permission was used.
+- C10 is not activated. No C10 contract, lane, task or code has been opened after the user's pause instruction.

@@ -104,6 +104,18 @@ producer call. Candidate snapshots are schema-validated and canonically re-hashe
 publication. The protocol bounds output size, discrepancy count and runtime, and cancellation or
 lease loss fences every stage.
 
+Source-local inputs are never auto-aligned from appearance or assumed origins. The web workspace
+requires three measured source-to-project correspondences for every selected source-local input.
+Every coordinate is an exact integer millimetre within the shared bound; blank, fractional,
+out-of-range, duplicate or collinear control points fail closed and keep job creation disabled.
+The correspondences are evidence, not a prompt to guess. Project-local sources use the explicit
+identity registration.
+
+After fitting, the production adapter compares the exact base and candidate walls. A defensible
+uniform position difference becomes an attributed discrepancy with exact magnitude and a
+deterministic C5 `wall.translate.v1` suggestion. An aligned wall produces no discrepancy. These
+operations remain proposal/draft material only and cannot mutate the base.
+
 ## Web workspace
 
 Run the API and web app on loopback after migrations:
@@ -130,6 +142,57 @@ export C9_SEMANTIC_PRODUCER_STATUS='available'
 The flags do not install a producer, run preflight, grant rights, create credentials or bypass
 durable fences. The standalone browser acceptance fixture always labels itself synthetic and
 `No live C9 producer`; it is presentation evidence only, not producer-live evidence.
+
+## Disposable production-path acceptance
+
+`tests/e2e/model-fusion/live-api.mjs` is the local, visibly synthetic C9 acceptance harness. It
+applies C1-C9, seeds exact C6 plan and C7 RoomPlan proposals plus one existing snapshot whose first
+wall is offset by 25 mm, and starts the real C1/C4/C5/C6/C7/C8/C9 API composition. It uses an
+object-storage adapter that fails if the journey unexpectedly requests storage; no cloud service
+or provider key is involved.
+
+Start a disposable PostgreSQL database, then run the API harness from the repository root:
+
+```sh
+export C9_LIVE_DATABASE_URL='postgresql://local-user@127.0.0.1:55449/interior_design_c9_live'
+export C9_LIVE_API_PORT='4119'
+pnpm --filter @interior-design/platform-api exec tsx --conditions=development \
+  "$PWD/tests/e2e/model-fusion/live-api.mjs"
+```
+
+In separate terminals, run the real worker and web app:
+
+```sh
+export C2_DATABASE_URL="$C9_LIVE_DATABASE_URL"
+export C2_POLL_MS='100'
+export C2_HEARTBEAT_MS='5000'
+export C2_LEASE_MS='60000'
+export C2_WORKER_ID='c9-live-acceptance'
+export C9_FUSION_WORKER_ENABLED='true'
+export C9_INFERENCE_PYTHON_COMMAND='python3'
+export C9_INFERENCE_PYTHONPATH="$PWD/services/inference-worker/src"
+pnpm --filter @interior-design/spatial-worker exec tsx --conditions=development src/index.ts
+
+HOME_DESIGN_API_BASE_URL='http://127.0.0.1:4119' \
+C9_GEOMETRY_PRODUCER_STATUS='available' \
+C9_SEMANTIC_PRODUCER_STATUS='available' \
+pnpm --filter @interior-design/web dev --hostname 127.0.0.1 --port 3019
+```
+
+Run desktop-owner and mobile-viewer browser acceptance, then assert the no-mutation database
+boundary:
+
+```sh
+C9_LIVE_FUSION_URL='http://localhost:3019' \
+  pnpm exec playwright test --config tests/e2e/model-fusion/playwright.live.config.ts
+
+pnpm --filter @interior-design/platform-api exec tsx --conditions=development \
+  "$PWD/tests/e2e/model-fusion/live-api.mjs" assert
+```
+
+The final assertion requires at least one terminal job, proposal and draft while the canonical
+snapshot count remains one and the branch revision remains zero. Stop and delete the disposable
+database after the run; its repeated-run counts are diagnostic data, not product metrics.
 
 ## Focused verification
 
@@ -178,16 +241,18 @@ idempotency, optimistic conflicts, redacted telemetry and the no-C5-write bounda
    plus at least two eligible proposal/result kinds.
 2. Confirm source kind, evidence label, scale status, element count and hash are visible. Confirm
    training remains denied and producer availability is honest.
-3. Create a job, then exercise queued/registering/fitting/comparing, cancel, retry, full, partial,
+3. For every source-local input, enter three measured, non-collinear source/project control-point
+   pairs. Confirm blank, non-integer, out-of-range and collinear values prevent submission.
+4. Create a job, then exercise queued/registering/fitting/comparing, cancel, retry, full, partial,
    disconnected, abstained and stale-version recovery states with deterministic test producers
    only.
-4. Confirm registrations expose method, confidence, residual counts/millimetres and findings;
+5. Confirm registrations expose method, confidence, residual counts/millimetres and findings;
    discrepancies expose source claims, base/candidate claims, unknown and inferred labels.
-5. Record each decision type: accept candidate, keep base, correct, mark unknown and defer. Reload
+6. Record each decision type: accept candidate, keep base, correct, mark unknown and defer. Reload
    stale state and verify optimistic conflict recovery.
-6. Build an exact operation draft and verify branch ID, revision, head hash, proposal and operations.
+7. Build an exact operation draft and verify branch ID, revision, head hash, proposal and operations.
    Confirm no C5 preview/commit request occurs and the branch/head remains unchanged.
-7. Repeat as a viewer, keyboard-only, offline and at 390×844. Check visible focus, meaningful live
+8. Repeat as a viewer, keyboard-only, offline and at 390×844. Check visible focus, meaningful live
    status, no horizontal overflow, no framework overlay, no unexpected console errors and no
    failed requests beyond intentionally simulated recovery cases.
 

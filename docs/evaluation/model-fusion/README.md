@@ -85,3 +85,7 @@ Human correction time is **NOT MEASURED** because no rights-approved human study
 Physical iPhone/iPad, RoomPlan accuracy, real C8 COLMAP/Open3D, neural/GPU/CUDA, representative properties, providers and human evidence remain **NOT RUN**. Synthetic fixtures cannot promote those gates.
 
 See [metrics-and-promotion.md](./metrics-and-promotion.md) for exact formulas and [reference-result-2026-07-17.md](./reference-result-2026-07-17.md) for the current deterministic result.
+
+The separate [C9 closure evidence record](./c9-evidence-record-2026-07-17.md) documents the
+post-merge producer-live local BFF/API/PostgreSQL/worker/browser journey. It does not change the
+producer-independent status or interpretation of this reference pack.
