@@ -1,0 +1,18 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": "../../..",
+    "ignoreDeprecations": "6.0",
+    "noEmit": true,
+    "paths": {
+      "@interior-design/contracts": ["packages/contracts/src/index.ts"]
+    },
+    "rootDir": "../../..",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "./**/*.ts",
+    "../../../apps/web/src/features/viewer-3d/scene-verification.ts"
+  ]
+}

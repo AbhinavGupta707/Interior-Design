@@ -256,6 +256,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/fusion/${project.id}`}>
                     Reconcile sources
                   </Link>
+                  <Link className="project-row__action" href={`/viewer/${project.id}`}>
+                    3D walkthrough
+                  </Link>
                 </div>
               </article>
             ))}
