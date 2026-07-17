@@ -142,18 +142,18 @@
 - Status: active; lanes frozen and pending launch
 - Contract: `docs/orchestration/checkpoints/C4_CONTRACT.md` (`c4-canonical-home-v1`)
 - Prelude commit: `0ade952`
-- Frozen worker base commit: this activation commit; exact SHA is recorded with the created task IDs
+- Frozen worker base commit: `918f393`
 - Planned lanes: four, retained adaptively because provenance/canonicalisation, geometry/topology, persistence/concurrency and adversarial fixtures are independent substantial risks
 - Coordinate policy: right-handed project-local `+X east`, `+Y north`, `+Z up`; authoritative local lengths are integer millimetres and angles integer milli-degrees
 - Hash policy: RFC-8785-style UTF-8 canonical JSON and SHA-256; entity/reference collections sort deterministically while geometric point order is preserved
 - State policy: existing, proposed and as-built are separate model profiles; unknowns remain explicit and no renderer fallback becomes a fact
 
-| Lane                           | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State         | Exclusive roots                                                               |
-| ------------------------------ | ----------- | ----------------------- | ---------- | --------- | ------------- | ----------------------------------------------------------------------------- |
-| C4-L1 domain/provenance        | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | domain-model/provenance source/tests and allocated coordinate/provenance ADRs |
-| C4-L2 geometry/topology kernel | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | geometry-kernel source/tests and allocated kernel ADR                         |
-| C4-L3 persistence/API          | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | canonical model API/module/C4 composition, migration, tests and runbook       |
-| C4-L4 fixtures/evaluation      | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | model fixtures, independent geometry/canonical tests and evaluation document  |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                               |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ----------------------------------------------------------------------------- |
+| C4-L1 domain/provenance        | `019f6e4e-38c1-7ad3-8b85-5b2947835230` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | domain-model/provenance source/tests and allocated coordinate/provenance ADRs |
+| C4-L2 geometry/topology kernel | `019f6e4e-393d-7270-af7c-150b36a3a5cf` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | geometry-kernel source/tests and allocated kernel ADR                         |
+| C4-L3 persistence/API          | `019f6e4e-3a78-7d32-a215-f874d0535f8d` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | canonical model API/module/C4 composition, migration, tests and runbook       |
+| C4-L4 fixtures/evaluation      | `019f6e4e-3bea-79d2-ad7b-1e5b4701da63` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | model fixtures, independent geometry/canonical tests and evaluation document  |
 
 ### Prelude gate evidence
 
