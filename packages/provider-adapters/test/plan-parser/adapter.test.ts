@@ -59,6 +59,7 @@ function request(normalized: Readonly<Record<string, unknown>>) {
       maximumOutputBytes: 5_242_880,
       timeoutMilliseconds: 30_000,
     },
+    normalizers: [{ name: "fixture-normalizer", version: "1.0.0" }],
     normalizedInputSha256: hashNormalizedPlanInput(normalized),
     parserMode: "deterministic-fixture" as const,
     schemaVersion: "c6-plan-parser-input-v1" as const,

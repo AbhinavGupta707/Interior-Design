@@ -34,6 +34,7 @@ The CLI accepts no arguments. Stdin is capped at 32 MiB and must contain exactly
       "maximumOutputBytes": 5242880,
       "timeoutMilliseconds": 30000
     },
+    "normalizers": [{ "name": "c6-fixture-normalizer", "version": "1.0.0" }],
     "normalizedInputSha256": "64-lower-case-hex-characters",
     "parserMode": "deterministic-fixture",
     "schemaVersion": "c6-plan-parser-input-v1",
@@ -43,7 +44,7 @@ The CLI accepts no arguments. Stdin is capped at 32 MiB and must contain exactly
 ```
 
 `request` is validated against the frozen request boundary, including exact fields, UUIDs, source
-identity, rights, dimensions, page, SHA-256, mode, and literal limits. A malformed request is too
+identity, rights, dimensions, page, SHA-256, mode, exact normalizer/version chain, and literal limits. A malformed request is too
 unscoped to form a schema-valid result, so the process exits `64`, emits no stdout, and writes only a
 constant safe code such as `C6_PARSER_INPUT_INVALID` to stderr. Once a valid request is available, all
 supported input, geometry, confidence, deadline, and resource failures produce a strict abstention.
@@ -132,7 +133,7 @@ Additional line bands, tiny or dominating gaps, and ambiguous topology abstain r
 - Candidate UUIDv5 values derive from source SHA, candidate kind, and canonical geometry, so label text
   and job retries cannot move candidate identity.
 - Proposal UUIDv5 values pin the job, normalized hash, adapter ID, and adapter version.
-- Parser manifests name the exact deterministic mode/normalizer and hash their canonical manifest.
+- Parser manifests echo the exact pinned normalizer/version chain and hash their canonical manifest.
 - The deterministic `createdAt` value is `1970-01-01T00:00:00.000Z`; workflow/audit persistence owns
   real processing timestamps. This keeps byte-for-byte fixture evidence reproducible.
 - Candidate count is capped at 200. Proposal publication requires every emitted candidate and the
@@ -172,9 +173,8 @@ Failures are represented by bounded adapter codes (`INVALID_REQUEST`, `INVALID_N
 `PARSER_SOURCE_MISMATCH`, `PARSER_STDERR_TOO_LARGE`, or `PARSER_EXITED`) with only availability,
 timeout, and non-zero exit marked retryable.
 
-The provider package barrel and package export map remain orchestrator-owned. Integration must add the
-`./plan-parser` export and connect this adapter to the spatial-worker lane after merge; this worker does
-not make either shared edit.
+The provider package exposes `./plan-parser`, and the spatial worker's production `PlanParserPort`
+connects this adapter to the normalized artifact. `LocalPlanParserFake` remains test-only.
 
 ## Verification
 

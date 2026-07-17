@@ -160,6 +160,7 @@ export class PlanProcessingRunner {
           maximumOutputBytes: c6PlanPolicy.maximumParserOutputBytes,
           timeoutMilliseconds: c6PlanPolicy.parserTimeoutMilliseconds,
         },
+        normalizers: normalized.normalizers,
         normalizedInputSha256: normalized.sha256,
         parserMode: normalized.mode,
         schemaVersion: c6PlanParserInputSchemaVersion,

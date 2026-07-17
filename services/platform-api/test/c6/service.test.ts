@@ -242,8 +242,53 @@ describe("C6 service and strict C5 draft mapping", () => {
       },
     };
     expect(() => {
-      validateOperationDraft(proposal, calibration, request, branchTarget);
+      validateOperationDraft(proposal, calibration, request, branchTarget, ownerUserId);
     }).not.toThrow();
+    const correctedAttribution = {
+      actorUserId: ownerUserId,
+      claimId: "88000000-0000-4000-8000-000000000011",
+      evidenceIds: [planAssetId],
+      method: { kind: "manual" as const, name: "C6 corrected fixture", version: "1" },
+      state: "user-asserted" as const,
+      verification: { status: "not-reviewed" as const },
+    };
+    const correctedOperation: ModelOperationRequest = {
+      ...operation,
+      level: {
+        ...operation.level,
+        elevationMm: { attribution: correctedAttribution, knowledge: "known", value: 3_000 },
+        name: {
+          attribution: correctedAttribution,
+          knowledge: "known",
+          value: "Imported upper level",
+        },
+        origin: correctedAttribution,
+      },
+      reason: "Correct the calibrated fixture level as a current-user assertion.",
+    };
+    const correctedRequest = {
+      ...request,
+      decisions: [
+        {
+          candidateId,
+          decision: "corrected" as const,
+          resultingClientOperationIds: [clientOperationId],
+        },
+      ],
+      operations: [correctedOperation],
+    };
+    expect(() => {
+      validateOperationDraft(proposal, calibration, correctedRequest, branchTarget, ownerUserId);
+    }).not.toThrow();
+    expect(() => {
+      validateOperationDraft(
+        proposal,
+        calibration,
+        correctedRequest,
+        branchTarget,
+        "88000000-0000-4000-8000-000000000099",
+      );
+    }).toThrow(/current user/u);
     expect(() => {
       validateOperationDraft(
         proposal,
@@ -258,6 +303,7 @@ describe("C6 service and strict C5 draft mapping", () => {
           ],
         },
         branchTarget,
+        ownerUserId,
       );
     }).toThrow(/retain the candidate UUID/u);
     expect(() => {
@@ -277,6 +323,7 @@ describe("C6 service and strict C5 draft mapping", () => {
         calibration,
         request,
         branchTarget,
+        ownerUserId,
       );
     }).toThrow(/Unresolved regions/u);
   });

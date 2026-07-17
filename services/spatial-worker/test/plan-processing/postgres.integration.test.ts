@@ -48,6 +48,7 @@ async function fixtureResult(job: LeasedPlanProcessingJob) {
       maximumOutputBytes: 5_242_880,
       timeoutMilliseconds: 30_000,
     },
+    normalizers,
     normalizedInputSha256,
     parserMode: "deterministic-fixture",
     schemaVersion: "c6-plan-parser-input-v1",
@@ -207,20 +208,26 @@ describeWithPostgres("C6 live Postgres worker fencing", () => {
     ).toBe(false);
     expect(await queue.acknowledgeCancellation(cancelledLease, "c6-live-worker-c")).toBe(true);
 
+    const rightsAssetId = randomUUID();
+    await sql`
+      INSERT INTO assets (
+        id, tenant_id, project_id, kind, file_name, declared_mime_type,
+        detected_mime_type, source_byte_size, source_sha256, source_object_key, status
+      ) VALUES (
+        ${rightsAssetId}::uuid, ${tenantId}::uuid, ${projectId}::uuid, 'plan', 'denied.svg',
+        'image/svg+xml', 'image/svg+xml', 1024, ${sourceSha256}, ${`sources/${randomUUID()}`},
+        'ready'
+      )
+    `;
     const rightsJobId = randomUUID();
     await insertQueuedJob(sql, {
-      assetId,
+      assetId: rightsAssetId,
       createdBy: ownerUserId,
       jobId: rightsJobId,
       projectId,
       sourceSha256,
       tenantId,
     });
-    await sql`
-      UPDATE asset_rights_assertions SET service_processing_consent = false
-      WHERE tenant_id = ${tenantId}::uuid AND project_id = ${projectId}::uuid
-        AND asset_id = ${assetId}::uuid
-    `;
     expect(await queue.claimNext("c6-live-worker-d", 60_000)).toBeUndefined();
     const rejected = await sql<{ readonly safe_code: string; readonly state: string }[]>`
       SELECT state, safe_code FROM plan_processing_jobs

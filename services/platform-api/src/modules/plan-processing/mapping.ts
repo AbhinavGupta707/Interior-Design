@@ -47,17 +47,70 @@ function assertSourceDerived(value: unknown, assetId: string): void {
   }
 }
 
-function assertElementCore(
+function assertElementIdentity(
   element: { readonly id: string; readonly origin: unknown },
   candidate: PlanCandidate,
-  proposal: PlanProposal,
 ): void {
   if (element.id !== candidate.candidateId) {
     throw invalidPlanDraft(
       "A candidate operation must retain the candidate UUID as its canonical element UUID.",
     );
   }
+}
+
+function assertAcceptedElementCore(
+  element: { readonly id: string; readonly origin: unknown },
+  candidate: PlanCandidate,
+  proposal: PlanProposal,
+): void {
+  assertElementIdentity(element, candidate);
   assertSourceDerived(element.origin, proposal.source.assetId);
+}
+
+function assertCorrectedElementCore(
+  element: { readonly id: string; readonly origin: unknown },
+  candidate: PlanCandidate,
+  proposal: PlanProposal,
+  actorUserId: string,
+): void {
+  assertElementIdentity(element, candidate);
+  if (typeof element.origin !== "object" || element.origin === null) {
+    throw invalidPlanDraft("Corrected plan geometry must retain user-attributed provenance.");
+  }
+  const origin = element.origin as {
+    readonly actorUserId?: unknown;
+    readonly evidenceIds?: unknown;
+    readonly method?: { readonly kind?: unknown };
+    readonly state?: unknown;
+    readonly verification?: { readonly status?: unknown };
+  };
+  if (
+    origin.state !== "user-asserted" ||
+    origin.actorUserId !== actorUserId ||
+    origin.method?.kind !== "manual" ||
+    origin.verification?.status !== "not-reviewed" ||
+    !Array.isArray(origin.evidenceIds) ||
+    !origin.evidenceIds.includes(proposal.source.assetId)
+  ) {
+    throw invalidPlanDraft(
+      "Corrected plan geometry must be an unreviewed assertion by the current user and remain linked to the exact asset.",
+    );
+  }
+  for (const value of Object.values(element)) {
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "knowledge" in value &&
+      (value as { readonly knowledge?: unknown }).knowledge === "known"
+    ) {
+      const attribution = (value as { readonly attribution?: unknown }).attribution;
+      if (JSON.stringify(attribution) !== JSON.stringify(element.origin)) {
+        throw invalidPlanDraft(
+          "Every known corrected field must retain the corrected element's user attribution.",
+        );
+      }
+    }
+  }
 }
 
 function assertAttributedKnown(
@@ -163,7 +216,7 @@ function assertAcceptedOperation(
     case "level": {
       if (operation.type !== "level.create.v1")
         throw invalidPlanDraft("A level candidate must map to level.create.v1.");
-      assertElementCore(operation.level, candidate, proposal);
+      assertAcceptedElementCore(operation.level, candidate, proposal);
       assertAttributedKnown(
         operation.level.elevationMm,
         candidate.elevationMillimetres,
@@ -177,7 +230,7 @@ function assertAcceptedOperation(
     case "wall": {
       if (operation.type !== "wall.create.v1")
         throw invalidPlanDraft("A wall candidate must map to wall.create.v1.");
-      assertElementCore(operation.wall, candidate, proposal);
+      assertAcceptedElementCore(operation.wall, candidate, proposal);
       if (
         operation.wall.levelId !== candidate.levelCandidateId ||
         operation.wall.alignment !== "centre"
@@ -219,7 +272,7 @@ function assertAcceptedOperation(
     case "opening": {
       if (operation.type !== "opening.insert.v1")
         throw invalidPlanDraft("An opening candidate must map to opening.insert.v1.");
-      assertElementCore(operation.opening, candidate, proposal);
+      assertAcceptedElementCore(operation.opening, candidate, proposal);
       if (
         operation.opening.hostWallId !== candidate.hostWallCandidateId ||
         operation.opening.kind !==
@@ -291,7 +344,7 @@ function assertAcceptedOperation(
     case "space": {
       if (operation.type !== "space.create.v1")
         throw invalidPlanDraft("A space candidate must map to space.create.v1.");
-      assertElementCore(operation.space, candidate, proposal);
+      assertAcceptedElementCore(operation.space, candidate, proposal);
       if (
         operation.space.levelId !== candidate.levelCandidateId ||
         JSON.stringify(operation.space.boundedByElementIds) !==
@@ -315,6 +368,7 @@ function assertCorrectedOperation(
   candidate: PlanCandidate,
   operation: ModelOperationRequest,
   proposal: PlanProposal,
+  actorUserId: string,
 ): void {
   if (operation.type !== candidateOperationType(candidate)) {
     throw invalidPlanDraft(
@@ -333,7 +387,7 @@ function assertCorrectedOperation(
             : undefined;
   if (element === undefined)
     throw invalidPlanDraft("A corrected candidate has an unsupported operation type.");
-  assertElementCore(element, candidate, proposal);
+  assertCorrectedElementCore(element, candidate, proposal, actorUserId);
 }
 
 export function validateOperationDraft(
@@ -341,6 +395,7 @@ export function validateOperationDraft(
   calibration: PlanCalibration,
   request: DraftRequest,
   branchTarget: BranchTarget,
+  actorUserId: string,
 ): void {
   if (
     proposal.unresolvedRegions.length > 0 ||
@@ -402,7 +457,7 @@ export function validateOperationDraft(
       if (decision.decision === "accepted")
         assertAcceptedOperation(candidate, operation, proposal, calibration, candidates);
       else if (decision.decision === "corrected")
-        assertCorrectedOperation(candidate, operation, proposal);
+        assertCorrectedOperation(candidate, operation, proposal, actorUserId);
     }
   }
   if (assigned.size !== request.operations.length)

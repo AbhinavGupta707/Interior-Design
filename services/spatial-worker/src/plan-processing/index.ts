@@ -1,5 +1,6 @@
 export { PlanNormalizer } from "./normalizer.js";
 export type { PlanProcessPort } from "./normalizer.js";
+export { IsolatedPlanParserPort } from "./isolated-parser.js";
 export { LocalPlanParserFake } from "./parser.js";
 export { PostgresPlanProcessingQueue } from "./postgres.js";
 export { PlanProcessingRunner } from "./runner.js";

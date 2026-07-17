@@ -30,6 +30,12 @@
       "checkpoint": "C5",
       "owner": "C5-L1",
       "path": "0005_model_operations.sql"
+    },
+    {
+      "id": "0006",
+      "checkpoint": "C6",
+      "owner": "C6-L1",
+      "path": "0006_plan_processing.sql"
     }
   ]
 }

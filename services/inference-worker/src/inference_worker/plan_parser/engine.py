@@ -87,16 +87,13 @@ def _proposal_id(request: ParserRequest, normalized_sha256: str) -> str:
 
 
 def _parser_manifest(request: ParserRequest) -> JsonObject:
-    normalizer_name = {
-        "deterministic-vector": "vector-normalizer",
-        "deterministic-raster": "raster-gray8-normalizer",
-        "deterministic-fixture": "fixture-normalizer",
-    }[request.parser_mode]
     core: JsonObject = {
         "adapterId": ADAPTER_ID,
         "adapterVersion": ADAPTER_VERSION,
         "mode": request.parser_mode,
-        "normalizers": [{"name": normalizer_name, "version": "1.0.0"}],
+        "normalizers": [
+            {"name": name, "version": version} for name, version in request.normalizers
+        ],
     }
     manifest_sha256 = hashlib.sha256(canonical_json_bytes(core)).hexdigest()
     return {**core, "manifestSha256": manifest_sha256}

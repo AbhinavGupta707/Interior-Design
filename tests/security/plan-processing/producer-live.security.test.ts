@@ -7,7 +7,7 @@ it.skipIf(liveSecurityUrl === undefined)(
   async () => {
     if (liveSecurityUrl === undefined) throw new Error("unreachable");
     const response = await fetch(
-      `${liveSecurityUrl.replace(/\/$/u, "")}/v1/projects/foreign/plan-processing-jobs`,
+      `${liveSecurityUrl.replace(/\/$/u, "")}/v1/projects/00000000-0000-4000-8000-000000000099/plan-processing-jobs`,
     );
     expect([401, 404]).toContain(response.status);
     const text = await response.text();

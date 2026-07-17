@@ -58,6 +58,7 @@ class ParserRequest:
     """Validated frozen c6-plan-parser-input-v1 request."""
 
     job_id: str
+    normalizers: tuple[tuple[str, str], ...]
     normalized_input_sha256: str
     parser_mode: ParserMode
     source: JsonObject

@@ -1246,8 +1246,8 @@ function ReviewAndHandoff({
       {severe.length > 0 ? (
         <div className="plan-blocker" role="alert">
           <strong>Severe proposal findings block preview</strong>
-          {severe.map((finding) => (
-            <p key={finding.code}>
+          {severe.map((finding, index) => (
+            <p key={`${finding.code}-${finding.affectedCandidateIds.join("-")}-${String(index)}`}>
               {finding.code}: {finding.message}
             </p>
           ))}
@@ -1256,8 +1256,10 @@ function ReviewAndHandoff({
       {warnings.length > 0 ? (
         <fieldset className="plan-warning-acknowledgements">
           <legend>Acknowledge proposal warnings</legend>
-          {warnings.map((finding) => (
-            <label key={finding.code}>
+          {warnings.map((finding, index) => (
+            <label
+              key={`${finding.code}-${finding.affectedCandidateIds.join("-")}-${String(index)}`}
+            >
               <input
                 checked={acknowledgedFindingCodes.includes(finding.code)}
                 onChange={(event) => {
@@ -1416,8 +1418,11 @@ function ReviewAndHandoff({
           </dl>
           {preview.findings.length > 0 ? (
             <ul>
-              {preview.findings.map((finding) => (
-                <li data-severity={finding.severity} key={`${finding.code}-${finding.message}`}>
+              {preview.findings.map((finding, index) => (
+                <li
+                  data-severity={finding.severity}
+                  key={`${finding.code}-${finding.affectedElementIds.join("-")}-${String(index)}`}
+                >
                   <strong>{finding.code}</strong>
                   <span>{finding.message}</span>
                 </li>

@@ -1,4 +1,8 @@
 import { c6PlanPolicy } from "@interior-design/contracts";
+import {
+  canonicalPlanParserJson,
+  hashNormalizedPlanInput,
+} from "@interior-design/provider-adapters/plan-parser";
 import { createHash } from "node:crypto";
 import { lstat, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -28,7 +32,30 @@ export interface PlanProcessPort {
 
 const defaultProcessPort: PlanProcessPort = { run: runBoundedProcess };
 const maximumVectorElements = 10_000;
-const maximumVectorManifestBytes = c6PlanPolicy.maximumParserOutputBytes;
+
+interface CanonicalVectorElement {
+  readonly attributes: Readonly<Record<string, string>>;
+  readonly labelSha256?: string;
+  readonly tag: string;
+}
+
+interface SvgCoordinateSystem {
+  readonly height: number;
+  readonly originX: number;
+  readonly originY: number;
+  readonly width: number;
+}
+
+interface ParserPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+interface ParserWall {
+  readonly confidence: number;
+  readonly end: ParserPoint;
+  readonly start: ParserPoint;
+}
 
 function safeWorkspacePath(workspaceDirectory: string, fileName: string): string {
   if (!/^[a-z0-9][a-z0-9.-]{0,99}$/u.test(fileName))
@@ -68,7 +95,7 @@ function parseDecimalToMicrounits(value: string): number {
   return scaled;
 }
 
-function svgDimensions(svg: string): { readonly height: number; readonly width: number } {
+function svgCoordinateSystem(svg: string): SvgCoordinateSystem {
   const root = /<svg\b([^>]*)>/iu.exec(svg)?.[1];
   if (root === undefined) throw new PlanNormalizationError("unsupported-input");
   const viewBox =
@@ -78,6 +105,8 @@ function svgDimensions(svg: string): { readonly height: number; readonly width: 
   if (viewBox?.[3] !== undefined && viewBox[4] !== undefined) {
     return {
       height: parseDecimalToMicrounits(viewBox[4]),
+      originX: Number(viewBox[1]),
+      originY: Number(viewBox[2]),
       width: parseDecimalToMicrounits(viewBox[3]),
     };
   }
@@ -91,7 +120,12 @@ function svgDimensions(svg: string): { readonly height: number; readonly width: 
     )?.[1];
   if (width === undefined || height === undefined)
     throw new PlanNormalizationError("unsupported-input");
-  return { height: parseDecimalToMicrounits(height), width: parseDecimalToMicrounits(width) };
+  return {
+    height: parseDecimalToMicrounits(height),
+    originX: 0,
+    originY: 0,
+    width: parseDecimalToMicrounits(width),
+  };
 }
 
 function assertSafeSvg(svg: string): void {
@@ -116,10 +150,10 @@ function decodeSvg(source: Uint8Array): string {
   }
 }
 
-function canonicalVectorElements(svg: string): readonly object[] {
+function canonicalVectorElements(svg: string): readonly CanonicalVectorElement[] {
   const allowed =
     /<(path|line|polyline|polygon|rect|circle|ellipse|text)\b([^>]*)>(?:([^<]{0,500})<\/text\s*>)?|<(path|line|polyline|polygon|rect|circle|ellipse)\b([^>]*)\/?\s*>/giu;
-  const elements: object[] = [];
+  const elements: CanonicalVectorElement[] = [];
   for (const match of svg.matchAll(allowed)) {
     const tag = (match[1] ?? match[4])?.toLowerCase();
     const rawAttributes = match[2] ?? match[5] ?? "";
@@ -154,35 +188,183 @@ function canonicalVectorElements(svg: string): readonly object[] {
   return elements;
 }
 
+function finiteSvgNumber(value: string | undefined): number | undefined {
+  if (value === undefined || !/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value)) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parserPoint(
+  x: number,
+  y: number,
+  dimensions: SvgCoordinateSystem,
+): ParserPoint | undefined {
+  const scaledX = Math.round((x - dimensions.originX) * 1_000_000);
+  const scaledY = Math.round((y - dimensions.originY) * 1_000_000);
+  if (
+    !Number.isSafeInteger(scaledX) ||
+    !Number.isSafeInteger(scaledY) ||
+    scaledX < 0 ||
+    scaledY < 0 ||
+    scaledX > dimensions.width ||
+    scaledY > dimensions.height
+  )
+    return undefined;
+  return {
+    x: Math.min(scaledX, dimensions.width - 1),
+    y: Math.min(scaledY, dimensions.height - 1),
+  };
+}
+
+function wall(
+  start: ParserPoint | undefined,
+  end: ParserPoint | undefined,
+): ParserWall | undefined {
+  if (start === undefined || end === undefined || (start.x === end.x && start.y === end.y))
+    return undefined;
+  return { confidence: 92, end, start };
+}
+
+function pointsAttribute(
+  value: string | undefined,
+  dimensions: SvgCoordinateSystem,
+): readonly ParserPoint[] | undefined {
+  if (value === undefined) return undefined;
+  const values = value
+    .trim()
+    .split(/[\s,]+/u)
+    .filter((entry) => entry.length > 0)
+    .map(finiteSvgNumber);
+  if (values.length < 4 || values.length % 2 !== 0 || values.some((entry) => entry === undefined))
+    return undefined;
+  const points: ParserPoint[] = [];
+  for (let index = 0; index < values.length; index += 2) {
+    const point = parserPoint(values[index] as number, values[index + 1] as number, dimensions);
+    if (point === undefined) return undefined;
+    points.push(point);
+  }
+  return points;
+}
+
+function wallsForElement(
+  element: CanonicalVectorElement,
+  dimensions: SvgCoordinateSystem,
+): readonly ParserWall[] {
+  const attributes = element.attributes;
+  if (attributes.transform !== undefined) return [];
+  if (element.tag === "line") {
+    const values = [attributes.x1, attributes.y1, attributes.x2, attributes.y2].map(
+      finiteSvgNumber,
+    );
+    if (values.some((entry) => entry === undefined)) return [];
+    const parsed = wall(
+      parserPoint(values[0] as number, values[1] as number, dimensions),
+      parserPoint(values[2] as number, values[3] as number, dimensions),
+    );
+    return parsed === undefined ? [] : [parsed];
+  }
+  if (element.tag === "rect") {
+    const values = [
+      attributes.x ?? "0",
+      attributes.y ?? "0",
+      attributes.width,
+      attributes.height,
+    ].map(finiteSvgNumber);
+    if (values.some((entry) => entry === undefined)) return [];
+    const [x, y, width, height] = values as [number, number, number, number];
+    if (width <= 0 || height <= 0) return [];
+    const points = [
+      parserPoint(x, y, dimensions),
+      parserPoint(x + width, y, dimensions),
+      parserPoint(x + width, y + height, dimensions),
+      parserPoint(x, y + height, dimensions),
+    ];
+    const walls = points.map((start, index) => wall(start, points[(index + 1) % points.length]));
+    return walls.every((entry) => entry !== undefined) ? walls : [];
+  }
+  if (element.tag === "polyline" || element.tag === "polygon") {
+    const points = pointsAttribute(attributes.points, dimensions);
+    if (points === undefined) return [];
+    const pairCount = element.tag === "polygon" ? points.length : points.length - 1;
+    const walls: ParserWall[] = [];
+    for (let index = 0; index < pairCount; index += 1) {
+      const parsed = wall(points[index], points[(index + 1) % points.length]);
+      if (parsed === undefined) return [];
+      walls.push(parsed);
+    }
+    return walls;
+  }
+  return [];
+}
+
+function normalizedVectorInput(
+  sourceSha256: string,
+  dimensions: SvgCoordinateSystem,
+  elements: readonly CanonicalVectorElement[],
+): object {
+  const walls = elements.flatMap((element) => wallsForElement(element, dimensions));
+  if (walls.length === 0) throw new PlanNormalizationError("no-plan-geometry");
+  if (walls.length > c6PlanPolicy.maximumCandidates)
+    throw new PlanNormalizationError("resource-limit");
+  return {
+    height: dimensions.height,
+    kind: "vector",
+    labels: elements
+      .filter((element) => element.labelSha256 !== undefined)
+      .slice(0, 1_000)
+      .map((element) => ({
+        region: {
+          maximum: { x: dimensions.width - 1, y: dimensions.height - 1 },
+          minimum: { x: 0, y: 0 },
+        },
+        text: `sha256:${element.labelSha256 as string}`,
+      })),
+    openings: [],
+    schemaVersion: "c6-normalized-plan-v1",
+    sourceSha256,
+    walls,
+    width: dimensions.width,
+  };
+}
+
+async function writeNormalizedInput(filePath: string, normalizedInput: object): Promise<string> {
+  const content = canonicalPlanParserJson(normalizedInput);
+  if (Buffer.byteLength(content, "utf8") > 32 * 1_024 * 1_024)
+    throw new PlanNormalizationError("resource-limit");
+  await writeFile(filePath, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  return hashNormalizedPlanInput(normalizedInput);
+}
+
 async function normalizeSvgVector(
   sourcePath: string,
   workspace: string,
   fileName: string,
+  originalSourceSha256?: string,
 ): Promise<NormalizedPlanInput> {
   const source = await readBoundedFile(sourcePath);
   const svg = decodeSvg(source);
   assertSafeSvg(svg);
-  const dimensions = svgDimensions(svg);
+  if (/<g\b|\b(?:style|transform)\s*=/iu.test(svg))
+    throw new PlanNormalizationError("unsupported-input");
+  const dimensions = svgCoordinateSystem(svg);
+  if (dimensions.width < 2 || dimensions.height < 2)
+    throw new PlanNormalizationError("unsupported-input");
   const elements = canonicalVectorElements(svg);
   if (elements.length === 0) throw new PlanNormalizationError("no-plan-geometry");
-  const manifest = JSON.stringify({
-    coordinateSpace: "svg-microunits",
+  const normalizedInput = normalizedVectorInput(
+    originalSourceSha256 ?? createHash("sha256").update(source).digest("hex"),
+    dimensions,
     elements,
-    heightSourceUnits: dimensions.height,
-    schemaVersion: "c6-vector-manifest-v1",
-    widthSourceUnits: dimensions.width,
-  });
-  if (Buffer.byteLength(manifest) > maximumVectorManifestBytes)
-    throw new PlanNormalizationError("resource-limit");
+  );
   const filePath = safeWorkspacePath(workspace, fileName);
-  await writeFile(filePath, manifest, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  const sha256 = await writeNormalizedInput(filePath, normalizedInput);
   return {
     coordinateSpace: "svg-microunits",
     filePath,
     heightSourceUnits: dimensions.height,
     mode: "deterministic-vector",
     normalizers: [{ name: "c6-svg-vector-manifest", version: "1.0.0" }],
-    sha256: createHash("sha256").update(manifest).digest("hex"),
+    sha256,
     widthSourceUnits: dimensions.width,
   };
 }
@@ -191,6 +373,7 @@ async function normalizeRaster(
   sourcePath: string,
   workspace: string,
   fileName: string,
+  originalSourceSha256?: string,
 ): Promise<NormalizedPlanInput> {
   await assertBoundedRegularFile(sourcePath);
   let metadata: Metadata;
@@ -207,7 +390,7 @@ async function normalizeRaster(
   if (width <= 0 || height <= 0 || width * height > c6PlanPolicy.maximumRasterPixels) {
     throw new PlanNormalizationError("resource-limit");
   }
-  const filePath = safeWorkspacePath(workspace, fileName);
+  const rasterPath = safeWorkspacePath(workspace, fileName);
   try {
     await sharp(sourcePath, { failOn: "error", limitInputPixels: c6PlanPolicy.maximumRasterPixels })
       .rotate()
@@ -215,21 +398,42 @@ async function normalizeRaster(
       .greyscale()
       .toColourspace("b-w")
       .png({ adaptiveFiltering: false, compressionLevel: 9, palette: false })
-      .toFile(filePath);
+      .toFile(rasterPath);
   } catch (error) {
     throw new PlanNormalizationError("unsupported-input", false, { cause: error });
   }
-  const normalizedMetadata = await sharp(filePath).metadata();
+  const normalizedMetadata = await sharp(rasterPath).metadata();
   const normalizedWidth = normalizedMetadata.width;
   const normalizedHeight = normalizedMetadata.height;
-  const result = await fingerprint(filePath);
+  const { data, info } = await sharp(rasterPath)
+    .greyscale()
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (info.channels !== 1 || data.byteLength !== normalizedWidth * normalizedHeight)
+    throw new PlanNormalizationError("unsupported-input");
+  const normalizedInput = {
+    encoding: "gray8-base64",
+    height: normalizedHeight,
+    kind: "raster-gray8",
+    pixelsBase64: data.toString("base64"),
+    schemaVersion: "c6-normalized-plan-v1",
+    sourceSha256:
+      originalSourceSha256 ??
+      createHash("sha256")
+        .update(await readBoundedFile(sourcePath))
+        .digest("hex"),
+    width: normalizedWidth,
+  };
+  const filePath = safeWorkspacePath(workspace, "normalized-raster.json");
+  const sha256 = await writeNormalizedInput(filePath, normalizedInput);
   return {
     coordinateSpace: "pixels",
     filePath,
     heightSourceUnits: normalizedHeight,
     mode: "deterministic-raster",
     normalizers: [{ name: "sharp-grayscale-png", version: sharp.versions.sharp }],
-    sha256: result.sha256,
+    sha256,
     widthSourceUnits: normalizedWidth,
   };
 }
@@ -299,18 +503,52 @@ export class PlanNormalizer {
       throw new PlanNormalizationError("resource-limit");
     if (request.parserPreference === "fixture") {
       const filePath = safeWorkspacePath(request.workspaceDirectory, "fixture-input.json");
-      const content = JSON.stringify({
-        schemaVersion: "c6-fixture-input-v1",
+      const normalizedInput = {
+        height: 1_000_000,
+        kind: "fixture",
+        labels: [],
+        openings: [
+          {
+            confidence: 95,
+            end: { x: 550_000, y: 100_000 },
+            openingKind: "door",
+            start: { x: 450_000, y: 100_000 },
+          },
+        ],
+        schemaVersion: "c6-normalized-plan-v1",
         sourceSha256: source.sha256,
-      });
-      await writeFile(filePath, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+        walls: [
+          {
+            confidence: 95,
+            end: { x: 900_000, y: 100_000 },
+            start: { x: 100_000, y: 100_000 },
+          },
+          {
+            confidence: 95,
+            end: { x: 900_000, y: 900_000 },
+            start: { x: 900_000, y: 100_000 },
+          },
+          {
+            confidence: 95,
+            end: { x: 100_000, y: 900_000 },
+            start: { x: 900_000, y: 900_000 },
+          },
+          {
+            confidence: 95,
+            end: { x: 100_000, y: 100_000 },
+            start: { x: 100_000, y: 900_000 },
+          },
+        ],
+        width: 1_000_000,
+      };
+      const sha256 = await writeNormalizedInput(filePath, normalizedInput);
       return {
         coordinateSpace: "fixture-microunits",
         filePath,
         heightSourceUnits: 1_000_000,
         mode: "deterministic-fixture",
         normalizers: [{ name: "c6-fixture-normalizer", version: "1.0.0" }],
-        sha256: createHash("sha256").update(content).digest("hex"),
+        sha256,
         widthSourceUnits: 1_000_000,
       };
     }
@@ -334,11 +572,27 @@ export class PlanNormalizer {
           "normalized-raster.png",
         );
       }
-      return normalizeSvgVector(
-        request.sourcePath,
-        request.workspaceDirectory,
-        "normalized-vector.json",
-      );
+      try {
+        return await normalizeSvgVector(
+          request.sourcePath,
+          request.workspaceDirectory,
+          "normalized-vector.json",
+        );
+      } catch (error) {
+        const mapped = mapProcessError(error);
+        if (
+          request.parserPreference === "vector" ||
+          mapped.code === "resource-limit" ||
+          mapped.code === "parser-timeout" ||
+          mapped.code === "unsafe-content"
+        )
+          throw mapped;
+        return normalizeRaster(
+          request.sourcePath,
+          request.workspaceDirectory,
+          "normalized-raster.png",
+        );
+      }
     }
     const limits = {
       maximumOutputBytes: 1_048_576,
@@ -380,6 +634,7 @@ export class PlanNormalizer {
             vectorSvg,
             request.workspaceDirectory,
             "normalized-vector.json",
+            source.sha256,
           );
           return {
             ...normalized,
@@ -422,6 +677,7 @@ export class PlanNormalizer {
         `${rasterPrefix}.png`,
         request.workspaceDirectory,
         "normalized-raster.png",
+        source.sha256,
       );
       return {
         ...normalized,

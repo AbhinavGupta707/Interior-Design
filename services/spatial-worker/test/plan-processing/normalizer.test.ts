@@ -91,7 +91,7 @@ describe("C6 isolated plan normalization", () => {
     ).rejects.toMatchObject({ code: "unsafe-content" } satisfies Partial<PlanNormalizationError>);
   });
 
-  it("rewrites raster input to metadata-free grayscale PNG with a stable fingerprint", async () => {
+  it("rewrites raster input to a metadata-free grayscale parser envelope", async () => {
     const root = await temporaryDirectory();
     const sourcePath = path.join(root, "source.jpg");
     await sharp({
@@ -103,17 +103,28 @@ describe("C6 isolated plan normalization", () => {
     const result = await new PlanNormalizer(tools).normalize(
       await requestFor(sourcePath, await temporaryDirectory(), "image/jpeg"),
     );
-    const metadata = await sharp(result.filePath).metadata();
+    const normalized = JSON.parse(await readFile(result.filePath, "utf8")) as {
+      readonly encoding: string;
+      readonly height: number;
+      readonly kind: string;
+      readonly pixelsBase64: string;
+      readonly sourceSha256: string;
+      readonly width: number;
+    };
     expect(result).toMatchObject({
       coordinateSpace: "pixels",
       heightSourceUnits: 8,
       mode: "deterministic-raster",
       widthSourceUnits: 10,
     });
-    expect(metadata.channels).toBe(1);
-    expect(metadata.exif).toBeUndefined();
-    expect(metadata.icc).toBeUndefined();
-    expect(metadata.xmp).toBeUndefined();
+    expect(normalized).toMatchObject({
+      encoding: "gray8-base64",
+      height: 8,
+      kind: "raster-gray8",
+      width: 10,
+    });
+    expect(Buffer.from(normalized.pixelsBase64, "base64")).toHaveLength(80);
+    expect(await readFile(result.filePath, "utf8")).not.toContain("Exif");
   });
 
   it("selects PDF vector extraction before raster fallback and enforces the page ceiling", async () => {

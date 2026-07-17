@@ -123,6 +123,7 @@ def parse_request(value: JsonValue) -> ParserRequest:
         {
             "jobId",
             "limits",
+            "normalizers",
             "normalizedInputSha256",
             "parserMode",
             "schemaVersion",
@@ -167,6 +168,23 @@ def parse_request(value: JsonValue) -> ParserRequest:
         or timeout_milliseconds != PARSER_TIMEOUT_MILLISECONDS
     ):
         raise RequestSchemaError("request limits do not match c6-plan-parser-input-v1")
+
+    normalizers_value = request.get("normalizers")
+    if not isinstance(normalizers_value, list) or not 1 <= len(normalizers_value) <= 10:
+        raise RequestSchemaError("request.normalizers must be a bounded non-empty array")
+    normalizers: list[tuple[str, str]] = []
+    for index, item in enumerate(normalizers_value):
+        normalizer = _object(item, f"request.normalizers[{index}]")
+        _exact_keys(normalizer, {"name", "version"}, f"request.normalizers[{index}]")
+        name = _string(normalizer.get("name"), f"request.normalizers[{index}].name")
+        version = _string(normalizer.get("version"), f"request.normalizers[{index}].version")
+        if (
+            re.fullmatch(r"^[a-z][a-z0-9.-]{2,79}$", name) is None
+            or version != version.strip()
+            or not 1 <= len(version) <= 100
+        ):
+            raise RequestSchemaError("request.normalizers contains an invalid manifest entry")
+        normalizers.append((name, version))
 
     source = _object(request.get("source"), "request.source")
     _exact_keys(
@@ -236,6 +254,7 @@ def parse_request(value: JsonValue) -> ParserRequest:
 
     return ParserRequest(
         job_id=_uuid(request.get("jobId"), "request.jobId"),
+        normalizers=tuple(normalizers),
         normalized_input_sha256=_sha256(
             request.get("normalizedInputSha256"), "request.normalizedInputSha256"
         ),

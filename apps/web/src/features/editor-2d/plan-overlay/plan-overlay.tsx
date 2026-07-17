@@ -60,7 +60,9 @@ export function PlanOverlay({
           <button
             aria-label="Zoom out"
             disabled={zoomIndex === 0}
-            onClick={() => { setZoomIndex((current) => Math.max(0, current - 1)); }}
+            onClick={() => {
+              setZoomIndex((current) => Math.max(0, current - 1));
+            }}
             type="button"
           >
             Zoom −
@@ -69,31 +71,41 @@ export function PlanOverlay({
           <button
             aria-label="Zoom in"
             disabled={zoomIndex === zoomSteps.length - 1}
-            onClick={() => { setZoomIndex((current) => Math.min(zoomSteps.length - 1, current + 1)); }}
+            onClick={() => {
+              setZoomIndex((current) => Math.min(zoomSteps.length - 1, current + 1));
+            }}
             type="button"
           >
             Zoom +
           </button>
           <button
-            onClick={() => { setPan((current) => ({ ...current, x: current.x + 250 })); }}
+            onClick={() => {
+              setPan((current) => ({ ...current, x: current.x + 250 }));
+            }}
             type="button"
           >
             Pan left
           </button>
           <button
-            onClick={() => { setPan((current) => ({ ...current, x: current.x - 250 })); }}
+            onClick={() => {
+              setPan((current) => ({ ...current, x: current.x - 250 }));
+            }}
             type="button"
           >
             Pan right
           </button>
           <button
-            onClick={() => { setPan((current) => ({ ...current, y: current.y + 250 })); }}
+            onClick={() => {
+              setPan((current) => ({ ...current, y: current.y + 250 }));
+            }}
             type="button"
           >
             Pan up
           </button>
           <button
-            onClick={() => { setPan((current) => ({ ...current, y: current.y - 250 })); }}
+            onClick={() => {
+              setPan((current) => ({ ...current, y: current.y - 250 }));
+            }}
             type="button"
           >
             Pan down
@@ -113,7 +125,9 @@ export function PlanOverlay({
         <label>
           <input
             checked={sourceVisible}
-            onChange={(event) => { setSourceVisible(event.target.checked); }}
+            onChange={(event) => {
+              setSourceVisible(event.target.checked);
+            }}
             type="checkbox"
           />
           Derived source
@@ -121,7 +135,9 @@ export function PlanOverlay({
         <label>
           <input
             checked={proposalVisible}
-            onChange={(event) => { setProposalVisible(event.target.checked); }}
+            onChange={(event) => {
+              setProposalVisible(event.target.checked);
+            }}
             type="checkbox"
           />
           Proposal
@@ -132,7 +148,9 @@ export function PlanOverlay({
             aria-label="Source opacity"
             max={100}
             min={0}
-            onChange={(event) => { setSourceOpacity(Number(event.target.value)); }}
+            onChange={(event) => {
+              setSourceOpacity(Number(event.target.value));
+            }}
             type="range"
             value={sourceOpacity}
           />
@@ -162,7 +180,7 @@ export function PlanOverlay({
           role="img"
           viewBox={`0 0 ${String(source.widthSourceUnits)} ${String(source.heightSourceUnits)}`}
         >
-          <title>Derived source and C6 proposal for page {source.pageIndex + 1}</title>
+          <title>{`Derived source and C6 proposal for page ${String(source.pageIndex + 1)}`}</title>
           <defs>
             <pattern height="500" id="plan-source-grid" patternUnits="userSpaceOnUse" width="500">
               <path className="plan-overlay__grid" d="M 500 0 L 0 0 0 500" fill="none" />
@@ -212,7 +230,9 @@ export function PlanOverlay({
                         aria-label={`${candidateLabel(candidate)}, confidence ${String(candidate.confidence)} percent`}
                         data-selected={selected}
                         key={candidate.candidateId}
-                        onClick={() => { select(candidate.candidateId); }}
+                        onClick={() => {
+                          select(candidate.candidateId);
+                        }}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ")
                             select(candidate.candidateId);
@@ -229,7 +249,9 @@ export function PlanOverlay({
                       aria-label={`${candidateLabel(candidate)}, confidence ${String(candidate.confidence)} percent`}
                       data-selected={selected}
                       key={candidate.candidateId}
-                      onClick={() => { select(candidate.candidateId); }}
+                      onClick={() => {
+                        select(candidate.candidateId);
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ")
                           select(candidate.candidateId);

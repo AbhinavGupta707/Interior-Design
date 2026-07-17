@@ -324,6 +324,10 @@ export const planParserRequestSchema = z
         timeoutMilliseconds: z.literal(c6PlanPolicy.parserTimeoutMilliseconds),
       })
       .strict(),
+    normalizers: z
+      .array(z.object({ name: safeAdapterIdSchema, version: boundedVersionSchema }).strict())
+      .min(1)
+      .max(10),
     normalizedInputSha256: sha256HexSchema,
     parserMode: planParserModeSchema,
     schemaVersion: z.literal(c6PlanParserInputSchemaVersion),

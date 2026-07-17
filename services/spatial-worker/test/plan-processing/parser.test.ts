@@ -6,6 +6,7 @@ import { LocalPlanParserFake, validatePlanParserOutput } from "../../src/plan-pr
 const request = planParserRequestSchema.parse({
   jobId: "90000000-0000-4000-8000-000000000001",
   limits: { maximumCandidates: 200, maximumOutputBytes: 5_242_880, timeoutMilliseconds: 30_000 },
+  normalizers: [{ name: "fixture-normalizer", version: "1.0.0" }],
   normalizedInputSha256: "d".repeat(64),
   parserMode: "deterministic-fixture",
   schemaVersion: "c6-plan-parser-input-v1",

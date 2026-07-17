@@ -79,6 +79,7 @@ def _request(normalized: JsonObject, *, mode: str = "deterministic-fixture") -> 
                 "maximumOutputBytes": 5_242_880,
                 "timeoutMilliseconds": 30_000,
             },
+            "normalizers": [{"name": "fixture-normalizer", "version": "1.0.0"}],
             "normalizedInputSha256": sha256_json(normalized),
             "parserMode": mode,
             "schemaVersion": "c6-plan-parser-input-v1",

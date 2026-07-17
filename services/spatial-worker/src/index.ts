@@ -1,11 +1,12 @@
 import { pathToFileURL } from "node:url";
+import path from "node:path";
 import postgres from "postgres";
 
 import { parseWorkerConfig } from "./config.js";
 import { PostgresProcessingJobRepository } from "./jobs.js";
 import { createJsonLogger } from "./logger.js";
 import {
-  LocalPlanParserFake,
+  IsolatedPlanParserPort,
   PlanNormalizer,
   PlanProcessingRunner,
   PostgresPlanProcessingQueue,
@@ -60,7 +61,13 @@ export async function runSpatialWorker(
             pdfToPpm: config.executables.pdftoppm,
             popplerVersion: environment.C6_POPPLER_VERSION ?? "local-poppler",
           }),
-          parser: new LocalPlanParserFake(),
+          parser: new IsolatedPlanParserPort({
+            arguments: ["-m", "inference_worker.plan_parser"],
+            command: environment.C6_PLAN_PARSER_COMMAND ?? "python3",
+            pythonPath:
+              environment.C6_PLAN_PARSER_PYTHONPATH ??
+              path.resolve(process.cwd(), "services/inference-worker/src"),
+          }),
           pollMilliseconds: config.pollMs,
           queue: new PostgresPlanProcessingQueue(sql),
           storage,

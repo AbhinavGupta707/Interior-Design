@@ -78,6 +78,55 @@ describe("C6 exact calibration and operation mapping", () => {
       result.decisions.find(({ candidateId }) => candidateId === correctedWall.candidateId)
         ?.resultingClientOperationIds,
     ).toHaveLength(1);
+    const correctedOperation = result.operations.find((operation) =>
+      operation.type === "wall.create.v1" ? operation.wall.id === correctedWall.candidateId : false,
+    );
+    expect(correctedOperation?.type).toBe("wall.create.v1");
+    if (correctedOperation?.type !== "wall.create.v1") throw new Error("Missing corrected wall.");
+    expect(correctedOperation.wall.origin).toMatchObject({
+      actorUserId: session.actor.userId,
+      evidenceIds: [proposal.source.assetId],
+      state: "user-asserted",
+    });
+    expect(correctedOperation.wall.baseOffsetMm.knowledge).toBe("unknown");
+    expect(
+      result.operations
+        .filter((operation) => operation.type === "wall.create.v1")
+        .every((operation) => operation.wall.baseOffsetMm.knowledge === "unknown"),
+    ).toBe(true);
     expect(corrected.correction).toBeDefined();
+  });
+
+  it("matches the server's projected opening offset and ordered space boundary", () => {
+    const reviews: CandidateReviewMap = Object.fromEntries(
+      proposal.candidates.map((candidate) => [
+        candidate.candidateId,
+        { ...defaultReview(candidate), decision: "accepted" },
+      ]),
+    );
+    const result = buildOperationDraftInput({
+      actorUserId: session.actor.userId,
+      calibration,
+      proposal,
+      reviews,
+    });
+    const opening = result.operations.find((operation) => operation.type === "opening.insert.v1");
+    const space = result.operations.find((operation) => operation.type === "space.create.v1");
+    if (opening?.type !== "opening.insert.v1" || space?.type !== "space.create.v1") {
+      throw new Error("Missing opening or space operation.");
+    }
+    expect(opening.opening.offsetAlongHostMm).toMatchObject({
+      knowledge: "known",
+      value: 1_500,
+    });
+    expect(space.space.boundary).toMatchObject({
+      knowledge: "known",
+      value: [
+        { xMm: 1_000, yMm: 1_000 },
+        { xMm: 8_000, yMm: 1_000 },
+        { xMm: 8_000, yMm: 6_000 },
+        { xMm: 1_000, yMm: 6_000 },
+      ],
+    });
   });
 });

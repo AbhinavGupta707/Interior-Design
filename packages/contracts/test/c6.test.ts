@@ -80,6 +80,7 @@ describe("C6 plan processing contracts", () => {
         maximumOutputBytes: 5_242_880,
         timeoutMilliseconds: 30_000,
       },
+      normalizers: [{ name: "c6-svg-vector-manifest", version: "1.0.0" }],
       normalizedInputSha256: "c".repeat(64),
       parserMode: "deterministic-vector",
       schemaVersion: "c6-plan-parser-input-v1",

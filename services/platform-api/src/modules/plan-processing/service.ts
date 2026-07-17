@@ -161,7 +161,7 @@ export class PlanProcessingService {
       command.request.target.branchId,
     );
     if (target === undefined) throw notFound();
-    validateOperationDraft(result, calibration, command.request, target);
+    validateOperationDraft(result, calibration, command.request, target, command.actor.userId);
     return this.#repository.createOperationDraft(command);
   }
 }

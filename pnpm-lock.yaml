@@ -220,6 +220,9 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
       file-type:
         specifier: ^22.0.1
         version: 22.0.1

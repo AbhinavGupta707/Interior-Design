@@ -218,7 +218,7 @@
 
 ### Master activation
 
-- Status: active; all four isolated worktrees launched from `25721c5`
+- Status: integration complete; product commit pending from merged base `3803016`
 - Contract: `docs/orchestration/checkpoints/C6_CONTRACT.md` (`c6-plan-job-v1`, `c6-plan-parser-input-v1`, `c6-plan-proposal-v1`, `c6-plan-operation-draft-v1`)
 - Prelude commit: `0baf74a`
 - Planned lanes: four, retained adaptively because durable workflow/persistence, isolated parser execution, correction UX and independent rights/benchmark/security evaluation have clean exclusive ownership boundaries
@@ -226,12 +226,12 @@
 - Mutation policy: parser output is an immutable proposal only; calibrated reviewed candidates become exact public C5 operations, and only C5 preview/commit may mutate canonical state
 - Safety policy: unsupported, unsafe, source/rights mismatched, severe-invalid or low-confidence evidence abstains visibly; failures remain in benchmark denominators
 
-| Lane                        | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                             |
-| --------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| C6-L1 processing workflow   | `019f6ef1-9e60-72b2-a3e3-c31c3499702c` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | platform API plan-processing module/migration/tests; spatial-worker normalization/processing; development runbook and allocated composition |
-| C6-L2 inference adapter     | `019f6ef1-9e63-7032-acbf-881986331a9e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | Python inference worker; provider-adapters plan-parser boundary/tests; inference runbook                                                    |
-| C6-L3 correction UX         | `019f6ef1-9ff6-7853-8606-3d49295a5ba4` | `gpt-5.6-sol` / `high`  | pending    | pending   | active | web plan-import/overlay/BFF/component paths and narrowly allocated project/evidence/CSS integrations                                        |
-| C6-L4 benchmark/security QA | `019f6ef1-a258-7ea3-8d1b-22a6c66364f7` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | independent plan fixtures/rights splits, evaluation/security/E2E suites, parser evaluation and threat-model documents                       |
+| Lane                        | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                                                             |
+| --------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| C6-L1 processing workflow   | `019f6ef1-9e60-72b2-a3e3-c31c3499702c` | `gpt-5.6-sol` / `xhigh` | `f895289`  | `7c1e049` | integrated | platform API plan-processing module/migration/tests; spatial-worker normalization/processing; development runbook and allocated composition |
+| C6-L2 inference adapter     | `019f6ef1-9e63-7032-acbf-881986331a9e` | `gpt-5.6-sol` / `xhigh` | `4b8eafa`  | `081f4af` | integrated | Python inference worker; provider-adapters plan-parser boundary/tests; inference runbook                                                    |
+| C6-L3 correction UX         | `019f6ef1-9ff6-7853-8606-3d49295a5ba4` | `gpt-5.6-sol` / `high`  | `f405c04`  | `4d9dd51` | integrated | web plan-import/overlay/BFF/component paths and narrowly allocated project/evidence/CSS integrations                                        |
+| C6-L4 benchmark/security QA | `019f6ef1-a258-7ea3-8d1b-22a6c66364f7` | `gpt-5.6-sol` / `xhigh` | `a1131db`  | `3803016` | integrated | independent plan fixtures/rights splits, evaluation/security/E2E suites, parser evaluation and threat-model documents                       |
 
 ### Prelude gate evidence
 
@@ -241,3 +241,20 @@
 - The explicit project action matrix now passes 255 authz unit cases and 321 standalone security cases. Owner/editor may create/read/cancel/retry/calibrate/draft; viewer can read jobs/proposals only; all foreign-tenant actions deny before disclosure. Machine confirmation remains forbidden by the C5 model policy.
 - `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, 14-package ESLint and strict TypeScript, 540 JavaScript unit tests, every production build, Ruff, strict mypy and pytest. Python discovery is pre-registered for the isolated inference worker without adding a runtime dependency or provider.
 - Migration `0006_plan_processing.sql` is allocated exclusively to C6-L1 before launch. Package/root manifests, lockfiles, shared contracts/core authz registry, accepted checkpoint contract and ledger remain orchestrator-owned. Reasoning is adaptive and fixed before launch: L1/L2/L4 receive `xhigh`; bounded frozen-contract consumer L3 receives `high`.
+
+### Integration and acceptance evidence
+
+- All four isolated project worktrees completed from the frozen base and merged in the declared L2, L1, L3, L4 integration order. Every task used exact `gpt-5.6-sol`; complex workflow, inference and security lanes used `xhigh`, while the bounded correction-UI consumer used `high`. Shared manifests, contract reconciliation and cross-lane repairs remained orchestrator-owned.
+- Integration replaced the test fake in the production runner with the shell-free isolated Python adapter; exported the provider subpath; made the normalizer/version chain a required, exact parser input/output pin; aligned vector/raster normalized envelopes; registered migration `0006`; and made a missing rights record fail a live queue lease closed rather than leave work silently queued.
+- The C5 handoff now preserves epistemic truth: accepted geometry is `source-derived`; corrected geometry is a current-user, `not-reviewed`, `user-asserted` claim linked to the exact asset; all fields changed by one correction share that attribution; unobserved wall base offsets stay unknown. Opening offsets use the server's midpoint projection and space boundaries are built as an ordered closed wall chain. The API rejects immutable drafts that violate any of those rules.
+- UI integration removed repeated React keys and a mixed SVG title child that produced console warnings. The integrated workspace was inspected through the in-app Browser on desktop and at 390x844. The mobile document had `clientWidth=375` and `scrollWidth=375`; neither the clean page nor the completed commit emitted a browser warning/error.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, all 14 package lint/typecheck suites, every JavaScript unit suite and production build, Ruff, strict mypy and 12 Python tests. Focused evidence additionally passed 33 contract tests, 52 web tests, 75 platform API tests and 40 spatial-worker tests in the full run; environment-guarded suites were separately executed live instead of being counted from their default skips.
+- The independent C6 evaluation pack passed five tests with one explicit producer-observation skip; the plan-processing security pack passed 51/51 including the live unauthenticated-disclosure probe. Live Postgres passed the platform API suite 1/1 and spatial-worker queue suite 1/1. Reference Playwright passed 7/7 across desktop, mobile, keyboard, viewer, abstention, recovery and conflict cases; integrated live Playwright passed 2/2 at 1440x960 and 390x844.
+- The production-shaped synthetic harness passed twice against local PostGIS, S3-compatible storage, the live API, real vector normalization and the isolated Python process. The first mixed-decision run created and committed a seven-operation draft after accept/correct/exclude review. A fresh second project accepted all seven candidates, created a valid seven-operation C5 preview and committed revision 2, proving the accepted-opening offset path as well as full proposal-to-canonical integration.
+
+### Evaluation, limitations and closure
+
+- The retained reference evaluation reports 90% accepted coverage, 100% hard-negative abstention, zero severe or scope errors, wall-endpoint P90 35 mm, opening-centre P90 42 mm, calibration P90 14 mm, ECE 0.12 over 45 samples, wall-clock P90 57 ms, CPU peak 38% and memory peak 39%. These are deterministic synthetic/reference measurements, not customer-plan or production-capacity claims.
+- Human correction time remains `NOT MEASURED`; the automated pack cannot satisfy the 8/15-minute human target. The baseline is promotion-ineligible until a rights-approved human study and representative plan set exist.
+- No paid provider, API key, outbound inference call, GPU, customer plan, physical capture, survey-grade geometry, structure/fire/regulatory conclusion or training use is present. C6 handles one deliberately narrow straight-edged page and visibly abstains outside that box. Physical capture/reconstruction/fusion and 3D delivery remain owned by C7-C10.
+- Integrated product SHA: pending. Ledger-close SHA: pending.

@@ -16,21 +16,21 @@ import type {
 interface ClaimRow {
   readonly asset_id: string;
   readonly attempt: number;
-  readonly basis: string;
+  readonly basis: string | null;
   readonly detected_mime_type: string | null;
   readonly id: string;
   readonly kind: string;
   readonly page_index: number;
   readonly parser_preference: string;
   readonly project_id: string;
-  readonly service_processing_consent: boolean;
+  readonly service_processing_consent: boolean | null;
   readonly source_byte_size: number | string;
   readonly source_object_key: string;
   readonly source_sha256: string;
   readonly state: string;
   readonly stored_source_sha256: string;
   readonly tenant_id: string;
-  readonly training_use_consent: string;
+  readonly training_use_consent: string | null;
 }
 
 interface LeaseStateRow {
@@ -114,6 +114,7 @@ function invalidSourceCode(row: ClaimRow): "rights-not-permitted" | "source-mism
   if (
     !row.service_processing_consent ||
     row.training_use_consent !== "denied" ||
+    row.basis === null ||
     !["owned-by-user", "permission-granted", "public-domain", "licensed"].includes(row.basis)
   ) {
     return "rights-not-permitted";
@@ -183,7 +184,7 @@ export class PostgresPlanProcessingQueue implements PlanProcessingQueue {
           FROM plan_processing_jobs j
           JOIN assets a
             ON a.tenant_id = j.tenant_id AND a.project_id = j.project_id AND a.id = j.asset_id
-          JOIN asset_rights_assertions r
+          LEFT JOIN asset_rights_assertions r
             ON r.tenant_id = a.tenant_id AND r.project_id = a.project_id AND r.asset_id = a.id
           WHERE j.state = 'queued'
              OR (j.state = 'processing' AND j.lease_expires_at <= clock_timestamp())

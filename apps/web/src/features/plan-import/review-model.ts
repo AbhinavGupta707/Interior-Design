@@ -190,11 +190,11 @@ function sourceAttribution(proposal: PlanProposal): KnownAttribution {
   };
 }
 
-function userAttribution(actorUserId: string): KnownAttribution {
+function userAttribution(actorUserId: string, proposal: PlanProposal): KnownAttribution {
   return {
     actorUserId,
     claimId: crypto.randomUUID(),
-    evidenceIds: [],
+    evidenceIds: [proposal.source.assetId],
     method: { kind: "manual", name: "C6 structured correction", version: "1" },
     state: "user-asserted",
     verification: { status: "not-reviewed" },
@@ -248,6 +248,70 @@ function distanceMillimetres(
   );
 }
 
+function openingOffsetAlongHostMillimetres(
+  hostStart: PlanSourcePoint,
+  hostEnd: PlanSourcePoint,
+  openingStart: PlanSourcePoint,
+  openingEnd: PlanSourcePoint,
+  calibration: PlanCalibration,
+): number {
+  const mappedHostStart = sourcePointToMillimetres(hostStart, calibration);
+  const mappedHostEnd = sourcePointToMillimetres(hostEnd, calibration);
+  const mappedOpeningStart = sourcePointToMillimetres(openingStart, calibration);
+  const mappedOpeningEnd = sourcePointToMillimetres(openingEnd, calibration);
+  const midpoint = {
+    xMm: (mappedOpeningStart.xMm + mappedOpeningEnd.xMm) / 2,
+    yMm: (mappedOpeningStart.yMm + mappedOpeningEnd.yMm) / 2,
+  };
+  const hostDx = mappedHostEnd.xMm - mappedHostStart.xMm;
+  const hostDy = mappedHostEnd.yMm - mappedHostStart.yMm;
+  const hostLength = Math.hypot(hostDx, hostDy);
+  if (hostLength === 0) throw new Error("An opening cannot use a zero-length host wall.");
+  return Math.max(
+    1,
+    Math.round(
+      ((midpoint.xMm - mappedHostStart.xMm) * hostDx +
+        (midpoint.yMm - mappedHostStart.yMm) * hostDy) /
+        hostLength,
+    ),
+  );
+}
+
+function orderedWallBoundary(
+  walls: readonly { readonly end: PlanSourcePoint; readonly start: PlanSourcePoint }[],
+): readonly PlanSourcePoint[] {
+  const first = walls[0];
+  const second = walls[1];
+  if (!first || !second) throw new Error("A space boundary is incomplete.");
+  let currentStart = first.start;
+  let currentEnd = first.end;
+  const samePoint = (left: PlanSourcePoint, right: PlanSourcePoint) =>
+    left.x === right.x && left.y === right.y;
+  if (!samePoint(currentEnd, second.start) && !samePoint(currentEnd, second.end)) {
+    if (samePoint(currentStart, second.start) || samePoint(currentStart, second.end)) {
+      [currentStart, currentEnd] = [currentEnd, currentStart];
+    } else {
+      throw new Error("A space boundary wall chain is disconnected.");
+    }
+  }
+  const boundary = [currentStart];
+  for (const wall of walls.slice(1)) {
+    if (samePoint(wall.start, currentEnd)) {
+      boundary.push(wall.start);
+      currentEnd = wall.end;
+    } else if (samePoint(wall.end, currentEnd)) {
+      boundary.push(wall.end);
+      currentEnd = wall.start;
+    } else {
+      throw new Error("A space boundary wall chain is disconnected.");
+    }
+  }
+  if (!samePoint(currentEnd, boundary[0] as PlanSourcePoint)) {
+    throw new Error("A space boundary wall chain must close exactly.");
+  }
+  return boundary;
+}
+
 export function buildOperationDraftInput(options: {
   readonly actorUserId: string;
   readonly calibration: PlanCalibration;
@@ -272,7 +336,9 @@ export function buildOperationDraftInput(options: {
     const review = reviews[candidate.candidateId] ?? defaultReview(candidate);
     if (review.decision !== "accepted" && review.decision !== "corrected") continue;
     const corrected = review.decision === "corrected";
-    const attribution = corrected ? userAttribution(actorUserId) : sourceAttribution(proposal);
+    const attribution = corrected
+      ? userAttribution(actorUserId, proposal)
+      : sourceAttribution(proposal);
     const clientOperationId = crypto.randomUUID();
     const reason = operationReason(candidate, review.decision);
     let operation: ModelOperationRequest;
@@ -311,7 +377,7 @@ export function buildOperationDraftInput(options: {
         type: "wall.create.v1",
         wall: {
           alignment: "centre",
-          baseOffsetMm: knownValue(0, attribution),
+          baseOffsetMm: unknownValue("not-provided"),
           elementType: "wall",
           heightMm:
             correction?.heightMillimetres !== undefined
@@ -348,7 +414,13 @@ export function buildOperationDraftInput(options: {
       if (!host || host.kind !== "wall")
         throw new Error("An opening must retain a valid host wall.");
       const sourceWidth = distanceMillimetres(candidate.start, candidate.end, calibration);
-      const sourceOffset = distanceMillimetres(host.start, candidate.start, calibration);
+      const sourceOffset = openingOffsetAlongHostMillimetres(
+        host.start,
+        host.end,
+        candidate.start,
+        candidate.end,
+        calibration,
+      );
       const sourceHeight =
         candidate.headHeightMillimetres !== undefined &&
         candidate.sillHeightMillimetres !== undefined
@@ -396,14 +468,18 @@ export function buildOperationDraftInput(options: {
           : undefined;
       const boundaryIds =
         correction?.boundaryWallCandidateIds ?? candidate.boundaryWallCandidateIds;
-      const boundary = boundaryIds.map((wallId) => {
+      const boundaryWalls = boundaryIds.map((wallId) => {
         const wall = candidatesById.get(wallId);
         if (!wall || wall.kind !== "wall") {
           throw new Error("A space boundary must reference only proposal wall candidates.");
         }
-        const wallReview = reviews[wall.candidateId] ?? defaultReview(wall);
-        return sourcePointToMillimetres(acceptedWallPoints(wall, wallReview).start, calibration);
+        return corrected
+          ? acceptedWallPoints(wall, reviews[wall.candidateId] ?? defaultReview(wall))
+          : { end: wall.end, start: wall.start };
       });
+      const boundary = orderedWallBoundary(boundaryWalls).map((point) =>
+        sourcePointToMillimetres(point, calibration),
+      );
       operation = {
         clientOperationId,
         reason,

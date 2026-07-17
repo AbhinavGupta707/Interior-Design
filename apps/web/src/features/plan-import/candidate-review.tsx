@@ -51,7 +51,9 @@ export function CandidateList({
               <button
                 aria-pressed={candidate.candidateId === selectedCandidateId}
                 data-selected={candidate.candidateId === selectedCandidateId}
-                onClick={() => { onSelect(candidate.candidateId); }}
+                onClick={() => {
+                  onSelect(candidate.candidateId);
+                }}
                 type="button"
               >
                 <span>
@@ -176,7 +178,9 @@ export function CandidateInspector({
                 <input
                   checked={current.decision === decision}
                   name={`decision-${candidate.candidateId}`}
-                  onChange={() => { decide(decision); }}
+                  onChange={() => {
+                    decide(decision);
+                  }}
                   type="radio"
                 />
                 {decision}
@@ -186,7 +190,9 @@ export function CandidateInspector({
           {current.decision === "corrected" ? (
             <CorrectionFields
               candidate={candidate}
-              onChange={(correction) => { onReview({ correction, decision: "corrected" }); }}
+              onChange={(correction) => {
+                onReview({ correction, decision: "corrected" });
+              }}
               proposal={proposal}
               review={current}
             />
@@ -234,34 +240,46 @@ function CorrectionFields({
         <div className="plan-integer-grid">
           <IntegerField
             label="Start X · source integer"
-            onChange={(x) => { onChange({ ...correction, start: { ...correction.start, x } }); }}
+            onChange={(x) => {
+              onChange({ ...correction, start: { ...correction.start, x } });
+            }}
             value={correction.start.x}
           />
           <IntegerField
             label="Start Y · source integer"
-            onChange={(y) => { onChange({ ...correction, start: { ...correction.start, y } }); }}
+            onChange={(y) => {
+              onChange({ ...correction, start: { ...correction.start, y } });
+            }}
             value={correction.start.y}
           />
           <IntegerField
             label="End X · source integer"
-            onChange={(x) => { onChange({ ...correction, end: { ...correction.end, x } }); }}
+            onChange={(x) => {
+              onChange({ ...correction, end: { ...correction.end, x } });
+            }}
             value={correction.end.x}
           />
           <IntegerField
             label="End Y · source integer"
-            onChange={(y) => { onChange({ ...correction, end: { ...correction.end, y } }); }}
+            onChange={(y) => {
+              onChange({ ...correction, end: { ...correction.end, y } });
+            }}
             value={correction.end.y}
           />
           <IntegerField
             label="Thickness · integer mm"
             min={1}
-            onChange={(thicknessMillimetres) => { onChange({ ...correction, thicknessMillimetres }); }}
+            onChange={(thicknessMillimetres) => {
+              onChange({ ...correction, thicknessMillimetres });
+            }}
             value={correction.thicknessMillimetres}
           />
           <IntegerField
             label="Height · integer mm"
             min={1}
-            onChange={(heightMillimetres) => { onChange({ ...correction, heightMillimetres }); }}
+            onChange={(heightMillimetres) => {
+              onChange({ ...correction, heightMillimetres });
+            }}
             value={correction.heightMillimetres}
           />
         </div>
@@ -278,9 +296,9 @@ function CorrectionFields({
         <label>
           <span>Host wall candidate</span>
           <select
-            onChange={(event) =>
-              { onChange({ ...correction, hostWallCandidateId: event.target.value }); }
-            }
+            onChange={(event) => {
+              onChange({ ...correction, hostWallCandidateId: event.target.value });
+            }}
             value={correction.hostWallCandidateId}
           >
             {walls.map((wall) => (
@@ -293,12 +311,12 @@ function CorrectionFields({
         <label>
           <span>Opening kind</span>
           <select
-            onChange={(event) =>
-              { onChange({
+            onChange={(event) => {
+              onChange({
                 ...correction,
                 openingKind: event.target.value as OpeningCorrection["openingKind"],
-              }); }
-            }
+              });
+            }}
             value={correction.openingKind}
           >
             <option value="door">door</option>
@@ -310,27 +328,33 @@ function CorrectionFields({
           <IntegerField
             label="Position along host · integer mm"
             min={1}
-            onChange={(offsetAlongHostMillimetres) =>
-              { onChange({ ...correction, offsetAlongHostMillimetres }); }
-            }
+            onChange={(offsetAlongHostMillimetres) => {
+              onChange({ ...correction, offsetAlongHostMillimetres });
+            }}
             value={correction.offsetAlongHostMillimetres}
           />
           <IntegerField
             label="Width · integer mm"
             min={1}
-            onChange={(widthMillimetres) => { onChange({ ...correction, widthMillimetres }); }}
+            onChange={(widthMillimetres) => {
+              onChange({ ...correction, widthMillimetres });
+            }}
             value={correction.widthMillimetres}
           />
           <IntegerField
             label="Height · integer mm"
             min={1}
-            onChange={(heightMillimetres) => { onChange({ ...correction, heightMillimetres }); }}
+            onChange={(heightMillimetres) => {
+              onChange({ ...correction, heightMillimetres });
+            }}
             value={correction.heightMillimetres}
           />
           <IntegerField
             label="Sill · integer mm"
             min={0}
-            onChange={(sillHeightMillimetres) => { onChange({ ...correction, sillHeightMillimetres }); }}
+            onChange={(sillHeightMillimetres) => {
+              onChange({ ...correction, sillHeightMillimetres });
+            }}
             value={correction.sillHeightMillimetres}
           />
         </div>
@@ -348,7 +372,9 @@ function CorrectionFields({
           <span>Space name</span>
           <input
             maxLength={160}
-            onChange={(event) => { onChange({ ...correction, name: event.target.value }); }}
+            onChange={(event) => {
+              onChange({ ...correction, name: event.target.value });
+            }}
             required
             value={correction.name}
           />
@@ -359,14 +385,14 @@ function CorrectionFields({
             <label key={wall.candidateId}>
               <input
                 checked={correction.boundaryWallCandidateIds.includes(wall.candidateId)}
-                onChange={(event) =>
-                  { onChange({
+                onChange={(event) => {
+                  onChange({
                     ...correction,
                     boundaryWallCandidateIds: event.target.checked
                       ? [...correction.boundaryWallCandidateIds, wall.candidateId]
                       : correction.boundaryWallCandidateIds.filter((id) => id !== wall.candidateId),
-                  }); }
-                }
+                  });
+                }}
                 type="checkbox"
               />
               {wall.candidateId}
@@ -384,14 +410,18 @@ function CorrectionFields({
         <span>Level name</span>
         <input
           maxLength={160}
-          onChange={(event) => { onChange({ ...correction, name: event.target.value }); }}
+          onChange={(event) => {
+            onChange({ ...correction, name: event.target.value });
+          }}
           required
           value={correction.name}
         />
       </label>
       <IntegerField
         label="Elevation · integer mm"
-        onChange={(elevationMillimetres) => { onChange({ ...correction, elevationMillimetres }); }}
+        onChange={(elevationMillimetres) => {
+          onChange({ ...correction, elevationMillimetres });
+        }}
         value={correction.elevationMillimetres}
       />
     </fieldset>

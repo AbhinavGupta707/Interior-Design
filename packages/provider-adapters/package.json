@@ -13,6 +13,11 @@
       "types": "./src/property/index.ts",
       "development": "./src/property/index.ts",
       "default": "./dist/src/property/index.js"
+    },
+    "./plan-parser": {
+      "types": "./src/plan-parser/index.ts",
+      "development": "./src/plan-parser/index.ts",
+      "default": "./dist/src/plan-parser/index.js"
     }
   },
   "scripts": {
