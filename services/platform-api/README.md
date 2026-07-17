@@ -2,7 +2,9 @@
 
 Typed Fastify platform API for the Home Design Studio modular monolith. C1 adds provider-neutral
 session verification, tenant-owned projects, structured intake, idempotent mutations, optimistic
-concurrency, and safe audit events on PostgreSQL. No paid or cloud provider is required locally.
+concurrency, and safe audit events on PostgreSQL. C2 adds rights-aware immutable evidence sessions,
+checksum-bound multipart uploads, durable processing jobs and short-lived ready-asset access through
+a fail-closed S3-compatible adapter. No paid or cloud provider is required locally.
 
 ## Local commands
 
@@ -13,6 +15,7 @@ pnpm --filter @interior-design/config build
 pnpm --filter @interior-design/contracts build
 pnpm --filter @interior-design/authz build
 pnpm --filter @interior-design/platform-api exec tsx src/c1.ts migrate-and-bootstrap
+pnpm --filter @interior-design/platform-api exec tsx src/c2.ts migrate
 pnpm --filter @interior-design/platform-api dev
 ```
 
@@ -39,6 +42,12 @@ listens. The service reads these settings and never logs credential values:
 | `C1_OIDC_ISSUER`                    | none                                                                  | Exact OIDC JWT issuer                           |
 | `C1_OIDC_AUDIENCE`                  | none                                                                  | Required OIDC JWT audience                      |
 | `C1_OIDC_PUBLIC_KEY_BASE64`         | none                                                                  | Base64 PEM key for RS256 signature verification |
+| `C2_DATABASE_URL`                   | C1/loopback database                                                  | Optional C2 database override                   |
+| `C2_STORAGE_ENDPOINT`               | `http://127.0.0.1:8333`                                               | S3-compatible endpoint; HTTPS in production     |
+| `C2_STORAGE_REGION`                 | `local`                                                               | S3 signing region                               |
+| `C2_STORAGE_ACCESS_KEY_ID`          | conspicuous local fixture value                                       | Explicit storage access key                     |
+| `C2_STORAGE_SECRET_ACCESS_KEY`      | conspicuous local fixture value                                       | Explicit storage secret                         |
+| `C2_STORAGE_FORCE_PATH_STYLE`       | `true` locally                                                        | Path-style S3 switch                            |
 
 ## Operational contracts
 
@@ -48,6 +57,9 @@ listens. The service reads these settings and never logs credential values:
   messages are never returned to callers.
 - C1 readiness requires PostgreSQL and the selected identity provider. Unconfigured OIDC is
   reported as unavailable and never falls back to local fixtures.
+- C2 readiness requires migration `0002_assets_evidence` plus the distinct source, derived and
+  quarantine buckets. Production storage configuration requires explicit credentials and a
+  non-loopback HTTPS endpoint; no SDK credential-chain fallback is used.
 - Every response includes validated/generated `x-request-id`, W3C `traceparent`, and
   `x-trace-id` headers.
 - Errors use `application/problem+json` and include stable code, status, request ID, and trace ID.
@@ -60,3 +72,9 @@ detail, and project intake surfaces. Mutations require `Idempotency-Key`; intake
 `expectedVersion`. Unknown and foreign project IDs return the same non-disclosing `404` response.
 See `docs/runbooks/development/c1-local-identity.md` for migration, fixture, authentication, test,
 and shutdown procedures.
+
+The C2 HTTP surface is the frozen `c2-ingest-v1` session/part/complete/abort/inventory/access route
+set. Every tenant-owned query includes tenant and project predicates, public DTOs exclude provider
+upload IDs and object keys, and complete versus abort is serialized. See
+`docs/runbooks/development/c2-evidence-api.md` for storage, lifecycle, cleanup, worker-job and
+verification procedures.
