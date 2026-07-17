@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "c8-windows-nvidia-package-manifest-v1",
+  "evidenceLabel": "NOT_RUN",
+  "hashAlgorithm": "sha256",
+  "files": {
+    "Dockerfile": "396bad4b7cc5075582f85570e35dcaa273c9f1e1fe244f4ace426b0dc4e6c43f",
+    "evidence-template.json": "f5e815b0f20154397e9a150a4af969cc2c127c50b720099f72eb8db4bdf1e957",
+    "requirements.in": "d90f4ae976e99943522cf06ee62b77feab05262ce8626d18653f8ce8a8cc5b0c",
+    "requirements.lock": "694d7e9f409b8f845411098321789a3d003ac7718842bbf367b75ed86963f9c6",
+    "run-acceptance.ps1": "61008fe8874275e38cbeb509c1bf3c8e6f728dbd91dcf46f128ed17e75a5e5a4",
+    "run_fixed_adapter.py": "6ab6628339b417c154a05ea2cae239f9609a037817de111d56d912e45fc51e10",
+    "versions.json": "5b3684a6ee8cc39c519039372583b7b0ce9ecc6a6a14354378a10e84948c9de6"
+  },
+  "notice": "Hashes attest package inputs only. They are not Windows, NVIDIA, CUDA, tool, or product execution evidence."
+}

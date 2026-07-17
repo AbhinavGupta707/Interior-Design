@@ -1,0 +1,46 @@
+{
+  "container": {
+    "architecture": "linux/amd64",
+    "cudaBaseImage": "docker.io/nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04@sha256:bd746eb3b9953805ebe644847a227e218b5da775f47007c69930569a75c9ad7d",
+    "cudaManifestListSha256": "8f9dd0d09d3ad3900357a1cf7f887888b5b74056636cd6ef03c160c3cd4b1d95",
+    "os": "Ubuntu 22.04",
+    "pythonBaseImage": "docker.io/library/python:3.10.13-slim-bullseye@sha256:b1c82dbf6dfb5e52cf8f595c9b6881696e4a5e996e5146cb99e19c2228592b6a",
+    "pythonManifestListSha256": "e89739e9b11753ace337116c9086c4ba780c0c3daff118a7c680783cf7afada1"
+  },
+  "host": {
+    "minimumCudaCompatibleDriver": "522.06",
+    "nvidiaWindowsDriver": "572.83",
+    "operatingSystem": "Windows 11 24H2",
+    "operatingSystemBuild": "26100",
+    "runtime": "Docker Desktop with WSL 2 Linux containers"
+  },
+  "policy": {
+    "appearanceAuthority": "non-dimensional",
+    "customerDataAllowedInRepository": false,
+    "geometryMutationAllowed": false,
+    "networkDuringRun": "denied",
+    "serviceProcessingConsentRequired": true,
+    "trainingUseConsent": "denied"
+  },
+  "runtime": {
+    "colmap": {
+      "commit": "e99036415ec0cf0f75c1d0b8d60fdd91af0d6c68",
+      "version": "3.9.1"
+    },
+    "cuda": "11.8.0",
+    "gsplat": {
+      "commit": "4d3a3b69db4de0326f983ccf7b7b255271a17b01",
+      "version": "1.4.0"
+    },
+    "nerfstudio": {
+      "commit": "6b60855003011b2ca23c2fe3f8e2ca6314c69924",
+      "version": "1.1.5"
+    },
+    "numpy": "1.26.4",
+    "python": "3.10.13",
+    "pytorch": "2.1.2+cu118",
+    "torchvision": "0.16.2+cu118"
+  },
+  "schemaVersion": "c8-windows-nvidia-package-v1",
+  "verificationState": "NOT_RUN"
+}
