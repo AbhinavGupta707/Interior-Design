@@ -7,6 +7,7 @@ import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastif
 import type { LoggerOptions as PinoLoggerOptions } from "pino";
 
 import { registerC1Module, type C1ModuleOptions } from "./c1.js";
+import { registerC2Module, type C2ModuleOptions } from "./c2.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -21,6 +22,7 @@ type LoggerSetting = boolean | (FastifyLoggerOptions & PinoLoggerOptions);
 
 export interface CreateServerOptions {
   readonly c1?: C1ModuleOptions;
+  readonly c2?: C2ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -47,6 +49,22 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "request.headers.authorization",
         "request.headers.cookie",
         "request.headers['x-api-key']",
+        "providerUploadId",
+        "provider_upload_id",
+        "sourceObjectKey",
+        "source_object_key",
+        "objectKey",
+        "object_key",
+        "url",
+        "signedUrl",
+        "*.providerUploadId",
+        "*.provider_upload_id",
+        "*.sourceObjectKey",
+        "*.source_object_key",
+        "*.objectKey",
+        "*.object_key",
+        "*.url",
+        "*.signedUrl",
       ],
     },
   };
@@ -71,9 +89,21 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
     options.environment ?? process.env,
     options.c1,
   );
+  // Tests and composition harnesses with injected C1 boundaries opt in to C2 explicitly.
+  // Executable development/production processes pass neither override and therefore always
+  // compose C2 and validate storage configuration before listening.
+  const c2 =
+    options.c2 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC2Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c2,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
-    options.readinessChecks ?? c1.readinessChecks,
+    options.readinessChecks ?? [...c1.readinessChecks, ...(c2?.readinessChecks ?? [])],
     config.readinessTimeoutMs,
   );
 
