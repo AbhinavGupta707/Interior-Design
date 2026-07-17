@@ -27,10 +27,10 @@ command intentionally removes only that named disposable database so repeated ru
 empty schema:
 
 ```sh
-docker compose -f infrastructure/local/compose.yaml exec -T postgres \
-  dropdb --username localdev --if-exists interior_design_c3_test
-docker compose -f infrastructure/local/compose.yaml exec -T postgres \
-  createdb --username localdev --owner localdev interior_design_c3_test
+docker compose -f infrastructure/local/compose.yaml exec -T -e PGPASSWORD=local-development-only postgres \
+  dropdb --host 127.0.0.1 --username localdev --if-exists interior_design_c3_test
+docker compose -f infrastructure/local/compose.yaml exec -T -e PGPASSWORD=local-development-only postgres \
+  createdb --host 127.0.0.1 --username localdev --owner localdev interior_design_c3_test
 ```
 
 Build the workspace packages used through their compiled export condition, then apply C1, C2 and
@@ -110,7 +110,8 @@ response. Reusing it differently returns `409 IDEMPOTENCY_CONFLICT`; a stale ver
 4. `POST /v1/projects/:projectId/property/dossier/refresh` creates exactly one version for an
    idempotent request. The project property row serializes concurrent selection/refresh effects.
 5. `GET /v1/projects/:projectId/property/source-records` returns normalized source metadata, fields
-   and SHA-256 only.
+   and SHA-256 only. An authorised project with no selected property returns `{ "sources": [] }`;
+   it is a valid pre-selection state, not a missing project.
 
 Every generated dossier contains source observations, user assertions, bounded estimates,
 inferences and explicit unknowns. Confidence is present only on estimates/inferences. Current room
@@ -152,8 +153,8 @@ After the test, remove only the disposable database and stop the local stack wit
 shared volumes:
 
 ```sh
-docker compose -f infrastructure/local/compose.yaml exec -T postgres \
-  dropdb --username localdev --if-exists interior_design_c3_test
+docker compose -f infrastructure/local/compose.yaml exec -T -e PGPASSWORD=local-development-only postgres \
+  dropdb --host 127.0.0.1 --username localdev --if-exists interior_design_c3_test
 docker compose -f infrastructure/local/compose.yaml down
 ```
 

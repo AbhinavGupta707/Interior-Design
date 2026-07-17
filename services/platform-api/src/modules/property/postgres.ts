@@ -883,7 +883,10 @@ export class PostgresPropertyBackend implements PropertyBackend {
     `;
     const propertyId = propertyRows[0]?.property_id;
     if (propertyId === undefined) {
-      return undefined;
+      // The route has already established that the project exists inside the
+      // caller's tenant. A project that has not selected a property yet has a
+      // valid, empty source-record collection rather than a missing resource.
+      return [];
     }
     const rows = await this.#sql<SourceRecordRow[]>`
       SELECT id, project_id, property_id, source, fields, normalized_payload_sha256

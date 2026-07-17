@@ -35,6 +35,7 @@ const alphaTenantId = "10000000-0000-4000-8000-000000000001";
 const betaTenantId = "10000000-0000-4000-8000-000000000002";
 const alphaProjectId = "30000000-0000-4000-8000-000000000001";
 const betaProjectId = "30000000-0000-4000-8000-000000000002";
+const emptyAlphaProjectId = "30000000-0000-4000-8000-000000000003";
 const propertyId = "40000000-0000-4000-8000-000000000001";
 const sourceId = "50000000-0000-4000-8000-000000000001";
 const workflowSourceId = "50000000-0000-4000-8000-000000000002";
@@ -195,6 +196,18 @@ class MemoryBoundaries implements IdentityStore, ProjectRepository, IntakeReposi
         version: 1,
       }),
     ],
+    [
+      emptyAlphaProjectId,
+      projectSchema.parse({
+        createdAt: now,
+        id: emptyAlphaProjectId,
+        name: "Alpha synthetic home without property selection",
+        status: "draft",
+        tenantId: alphaTenantId,
+        updatedAt: now,
+        version: 1,
+      }),
+    ],
   ]);
 
   findFixtureActor(persona: LocalPersona): Promise<Actor | undefined> {
@@ -249,6 +262,9 @@ class RecordingPropertyBackend implements PropertyBackend {
   }
 
   listSourceRecords(tenantId: string, projectIdToFind: string) {
+    if (tenantId === alphaTenantId && projectIdToFind === emptyAlphaProjectId) {
+      return Promise.resolve([]);
+    }
     return Promise.resolve(
       tenantId === alphaTenantId && projectIdToFind === alphaProjectId ? sources : undefined,
     );
@@ -339,6 +355,19 @@ function authorization(token: string): { readonly authorization: string } {
 }
 
 describe("C3 property routes", () => {
+  it("returns an empty source collection for an authorised project before property selection", async () => {
+    const { server } = testServer();
+    const owner = await signIn(server, "homeowner-alpha");
+    const response = await server.inject({
+      headers: authorization(owner),
+      method: "GET",
+      url: `/v1/projects/${emptyAlphaProjectId}/property/source-records`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ sources: [] });
+  });
+
   it("serves all five frozen routes with role authority and validated mutation headers", async () => {
     const { backend, server } = testServer();
     const owner = await signIn(server, "homeowner-alpha");

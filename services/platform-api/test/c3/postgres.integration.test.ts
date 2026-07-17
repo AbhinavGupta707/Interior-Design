@@ -162,6 +162,14 @@ describeWithPostgres("C3 real Postgres integration", () => {
     const viewerToken = await signIn(server, "viewer-alpha");
     const project = await createProject(server, alphaToken, `C3 states ${randomUUID()}`);
 
+    const unselectedSources = await server.inject({
+      headers: authorization(alphaToken),
+      method: "GET",
+      url: `/v1/projects/${project.id}/property/source-records`,
+    });
+    expect(unselectedSources.statusCode).toBe(200);
+    expect(unselectedSources.json()).toEqual({ sources: [] });
+
     const exactRequest = {
       headers: { ...authorization(alphaToken), "idempotency-key": "pg-exact-replay-001" },
       method: "POST" as const,
