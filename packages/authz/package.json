@@ -12,10 +12,10 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint src test",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:unit": "vitest run --exclude 'dist/**'",
-    "test:security": "vitest run --exclude 'dist/**'"
+    "lint": "eslint src test ../../tests/security/identity",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p ../../tests/security/identity/tsconfig.json --noEmit",
+    "test:unit": "vitest run test --exclude 'dist/**'",
+    "test:security": "vitest --root ../.. run tests/security/identity"
   },
   "dependencies": {
     "@interior-design/contracts": "workspace:*"

@@ -1,0 +1,122 @@
+import { describe, expect, it } from "vitest";
+
+import tenantFixtures from "../../fixtures/c1/tenants.json" with { type: "json" };
+import {
+  authoriseProjectAction,
+  projectActions,
+  type ProjectAction,
+} from "../../../packages/authz/src/index.js";
+import { actorSchema } from "../../../packages/contracts/src/index.js";
+import type { Actor, MemberRole } from "../../../packages/contracts/src/index.js";
+
+const roles = ["owner", "editor", "viewer"] as const satisfies readonly MemberRole[];
+const fixtureActors = tenantFixtures.tenants.flatMap((tenant) =>
+  tenant.members.map((member) =>
+    actorSchema.parse({
+      displayName: member.displayName,
+      role: member.role,
+      subject: member.subject,
+      tenantId: tenant.id,
+      userId: member.userId,
+    }),
+  ),
+);
+
+const editor = actorSchema.parse({
+  displayName: "Synthetic Alpha editor",
+  role: "editor",
+  subject: "fixture|editor-alpha",
+  tenantId: "10000000-0000-4000-8000-000000000001",
+  userId: "20000000-0000-4000-8000-000000000004",
+});
+
+function fixtureActorFor(role: MemberRole): Actor {
+  if (role === "editor") {
+    return editor;
+  }
+
+  const actor = fixtureActors.find((candidate) => candidate.role === role);
+  if (actor === undefined) {
+    throw new Error(`Synthetic C1 fixture is missing the ${role} role`);
+  }
+  return actor;
+}
+
+const expectedSameTenantAccess: Readonly<
+  Record<MemberRole, Readonly<Record<ProjectAction, boolean>>>
+> = {
+  editor: {
+    "intake:read": true,
+    "intake:update": true,
+    "project:create": true,
+    "project:read": true,
+  },
+  owner: {
+    "intake:read": true,
+    "intake:update": true,
+    "project:create": true,
+    "project:read": true,
+  },
+  viewer: {
+    "intake:read": true,
+    "intake:update": false,
+    "project:create": false,
+    "project:read": true,
+  },
+};
+
+const foreignResourceVariants = [
+  { tenantId: "10000000-0000-4000-8000-000000000002" },
+  {
+    projectId: "30000000-0000-4000-8000-000000000001",
+    tenantId: "10000000-0000-4000-8000-000000000002",
+  },
+  {
+    projectId: "30000000-0000-4000-8000-000000000099",
+    tenantId: "10000000-0000-4000-8000-000000000002",
+  },
+] as const;
+
+describe("C1 project role/action matrix", () => {
+  it("uses only visibly synthetic two-tenant fixture identities", () => {
+    expect(tenantFixtures.tenants).toHaveLength(2);
+    expect(fixtureActors).not.toHaveLength(0);
+    for (const actor of fixtureActors) {
+      expect(actor.subject).toMatch(/^fixture\|/);
+      expect(actor.tenantId).toMatch(/^10000000-0000-4000-8000-/);
+      expect(actor.userId).toMatch(/^20000000-0000-4000-8000-/);
+    }
+  });
+
+  describe.each(roles)("%s", (role) => {
+    const actor = fixtureActorFor(role);
+
+    it.each(projectActions)(
+      "applies the explicit same-tenant rule for %s",
+      (action: ProjectAction) => {
+        const allowed = expectedSameTenantAccess[role][action];
+        expect(
+          authoriseProjectAction(actor, action, {
+            projectId: "30000000-0000-4000-8000-000000000001",
+            tenantId: actor.tenantId,
+          }),
+        ).toEqual({
+          allowed,
+          reason: allowed ? "allowed" : "insufficient-role",
+        });
+      },
+    );
+
+    describe.each(foreignResourceVariants)("foreign resource %#", (resource) => {
+      it.each(projectActions)(
+        "denies %s without a resource-existence distinction",
+        (action: ProjectAction) => {
+          expect(authoriseProjectAction(actor, action, resource)).toEqual({
+            allowed: false,
+            reason: "cross-tenant",
+          });
+        },
+      );
+    });
+  });
+});

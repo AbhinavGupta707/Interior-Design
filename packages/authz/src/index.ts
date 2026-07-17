@@ -1,11 +1,12 @@
+import { actorSchema, tenantIdSchema } from "@interior-design/contracts";
 import type { Actor, MemberRole } from "@interior-design/contracts";
 
-export const projectActions = [
+export const projectActions = Object.freeze([
   "project:create",
   "project:read",
   "intake:read",
   "intake:update",
-] as const;
+] as const);
 export type ProjectAction = (typeof projectActions)[number];
 
 export interface ProjectResource {
@@ -18,30 +19,78 @@ export interface AuthorisationDecision {
   readonly reason: "allowed" | "cross-tenant" | "insufficient-role" | "unknown-action";
 }
 
-const permissions: Readonly<Record<MemberRole, ReadonlySet<ProjectAction>>> = Object.freeze({
-  editor: new Set<ProjectAction>([
-    "project:create",
-    "project:read",
-    "intake:read",
-    "intake:update",
-  ]),
-  owner: new Set<ProjectAction>(["project:create", "project:read", "intake:read", "intake:update"]),
-  viewer: new Set<ProjectAction>(["project:read", "intake:read"]),
+type RoleActionMatrix = Readonly<Record<MemberRole, Readonly<Record<ProjectAction, boolean>>>>;
+
+const permissions: RoleActionMatrix = Object.freeze({
+  editor: Object.freeze({
+    "intake:read": true,
+    "intake:update": true,
+    "project:create": true,
+    "project:read": true,
+  }),
+  owner: Object.freeze({
+    "intake:read": true,
+    "intake:update": true,
+    "project:create": true,
+    "project:read": true,
+  }),
+  viewer: Object.freeze({
+    "intake:read": true,
+    "intake:update": false,
+    "project:create": false,
+    "project:read": true,
+  }),
 });
+
+function isProjectAction(action: unknown): action is ProjectAction {
+  return typeof action === "string" && (projectActions as readonly string[]).includes(action);
+}
+
+function parseActor(actor: unknown): Actor | undefined {
+  try {
+    const result = actorSchema.safeParse(actor);
+    return result.success ? result.data : undefined;
+  } catch {
+    // Proxies and accessors are untrusted at the runtime boundary too.
+    return undefined;
+  }
+}
+
+function parseResourceTenantId(resource: unknown): string | undefined {
+  try {
+    if (typeof resource !== "object" || resource === null) {
+      return undefined;
+    }
+
+    const result = tenantIdSchema.safeParse(Reflect.get(resource, "tenantId"));
+    return result.success ? result.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function authoriseProjectAction(
   actor: Actor,
   action: ProjectAction,
   resource: ProjectResource,
 ): AuthorisationDecision {
-  if (actor.tenantId !== resource.tenantId) {
-    return { allowed: false, reason: "cross-tenant" };
-  }
-  if (!projectActions.includes(action)) {
+  if (!isProjectAction(action)) {
     return { allowed: false, reason: "unknown-action" };
   }
-  if (!permissions[actor.role].has(action)) {
+
+  const validatedActor = parseActor(actor);
+  if (validatedActor === undefined) {
     return { allowed: false, reason: "insufficient-role" };
   }
+
+  const resourceTenantId = parseResourceTenantId(resource);
+  if (resourceTenantId === undefined || validatedActor.tenantId !== resourceTenantId) {
+    return { allowed: false, reason: "cross-tenant" };
+  }
+
+  if (!permissions[validatedActor.role][action]) {
+    return { allowed: false, reason: "insufficient-role" };
+  }
+
   return { allowed: true, reason: "allowed" };
 }
