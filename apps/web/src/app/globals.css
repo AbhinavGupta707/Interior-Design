@@ -5,6 +5,1215 @@
   box-sizing: border-box;
 }
 
+/* C6 floor-plan proposal, calibration and correction */
+.plan-import-workspace.ui-container {
+  width: min(calc(100% - 1.5rem), 100rem);
+}
+
+.plan-import-workspace {
+  min-width: 0;
+  padding-block: var(--ui-space-6) var(--ui-space-8);
+}
+
+.plan-import-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.plan-import-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--ui-space-6);
+}
+
+.plan-import-heading h1 {
+  margin: var(--ui-space-3) 0 0;
+  font: 500 clamp(2.4rem, 5vw, 4rem) / 0.98 var(--ui-font-serif);
+  letter-spacing: -0.045em;
+}
+
+.plan-import-heading p {
+  max-width: 52rem;
+  margin: var(--ui-space-3) 0 0;
+  color: var(--ui-colour-muted);
+  line-height: 1.55;
+}
+
+.plan-import-role {
+  display: grid;
+  min-width: 14rem;
+  gap: 0.2rem;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-left: 3px solid var(--ui-colour-accent);
+  background: var(--ui-colour-accent-soft);
+  font-size: 0.82rem;
+}
+
+.plan-import-role[data-readonly="true"] {
+  border-left-color: var(--ui-colour-muted);
+  background: var(--ui-colour-surface-subtle);
+}
+
+.plan-import-role span {
+  color: var(--ui-colour-muted);
+  text-transform: capitalize;
+}
+
+.plan-import-alert {
+  margin: var(--ui-space-4) 0 0;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-left: 3px solid var(--ui-colour-error);
+  background: var(--ui-colour-error-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.plan-import-source,
+.plan-calibration,
+.plan-handoff {
+  min-width: 0;
+  margin-top: var(--ui-space-5);
+  border: 1px solid var(--ui-colour-border);
+  background: var(--ui-colour-surface);
+}
+
+.plan-import-source > header,
+.plan-calibration > header,
+.plan-handoff > header,
+.plan-job-list > header,
+.plan-job-status > header,
+.plan-candidates > header,
+.plan-overlay__header,
+.plan-candidate-inspector > header,
+.plan-draft > header,
+.plan-c5-preview > header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-colour-border);
+}
+
+.plan-import-source > header > div,
+.plan-calibration > header > div,
+.plan-handoff > header > div,
+.plan-job-list > header > div,
+.plan-job-status > header > div,
+.plan-candidates > header > div,
+.plan-overlay__header > div:first-child,
+.plan-draft > header > div,
+.plan-c5-preview > header > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.plan-import-source h2,
+.plan-calibration h2,
+.plan-handoff h2,
+.plan-job-list h2,
+.plan-job-status h2,
+.plan-candidates h2,
+.plan-overlay h2,
+.plan-candidate-inspector h2,
+.plan-draft h3,
+.plan-c5-preview h3 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.plan-import-source header span,
+.plan-calibration header span,
+.plan-handoff header span,
+.plan-job-list header span,
+.plan-job-status header span,
+.plan-candidate-inspector > header > span,
+.plan-draft header span,
+.plan-c5-preview header span {
+  color: var(--ui-colour-accent-strong);
+  font-size: 0.66rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-import-source header p,
+.plan-calibration header p,
+.plan-handoff header p,
+.plan-candidates header p,
+.plan-overlay__header p {
+  margin: 0;
+  color: var(--ui-colour-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.plan-start-form {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(7rem, 0.2fr) minmax(12rem, 0.35fr) auto;
+  align-items: end;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+}
+
+.plan-start-form label,
+.plan-calibration label,
+.plan-calibration fieldset,
+.plan-candidate-decision label,
+.plan-correction-fields label,
+.plan-handoff-actions label,
+.plan-c5-preview form label {
+  display: grid;
+  min-width: 0;
+  gap: var(--ui-space-1);
+  color: var(--ui-colour-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.plan-start-form input,
+.plan-start-form select,
+.plan-calibration input,
+.plan-candidate-decision input,
+.plan-correction-fields input,
+.plan-correction-fields select,
+.plan-handoff-actions select,
+.plan-c5-preview form input {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.58rem 0.68rem;
+  border: 1px solid var(--ui-colour-border);
+  border-radius: 0.3rem;
+  background: white;
+  color: var(--ui-colour-ink);
+  font-size: 0.8rem;
+}
+
+.plan-source-context,
+.plan-proposal-metadata dl,
+.plan-job-status dl,
+.plan-calibration-result,
+.plan-draft dl,
+.plan-c5-preview dl {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--ui-colour-border);
+}
+
+.plan-source-context > div,
+.plan-proposal-metadata dl > div,
+.plan-job-status dl > div,
+.plan-calibration-result > div,
+.plan-draft dl > div,
+.plan-c5-preview dl > div {
+  min-width: 0;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-right: 1px solid var(--ui-colour-border);
+}
+
+.plan-source-context > div:last-child,
+.plan-proposal-metadata dl > div:last-child,
+.plan-job-status dl > div:last-child,
+.plan-calibration-result > div:last-child,
+.plan-draft dl > div:last-child,
+.plan-c5-preview dl > div:last-child {
+  border-right: 0;
+}
+
+.plan-source-context dt,
+.plan-proposal-metadata dt,
+.plan-job-status dt,
+.plan-candidate-metadata dt,
+.plan-calibration-result dt,
+.plan-draft dt,
+.plan-c5-preview dt,
+.plan-conflict dt {
+  color: var(--ui-colour-muted);
+  font-size: 0.66rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plan-source-context dd,
+.plan-proposal-metadata dd,
+.plan-job-status dd,
+.plan-candidate-metadata dd,
+.plan-calibration-result dd,
+.plan-draft dd,
+.plan-c5-preview dd,
+.plan-conflict dd {
+  min-width: 0;
+  margin: var(--ui-space-1) 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.74rem;
+}
+
+.plan-source-context code,
+.plan-proposal-metadata code,
+.plan-job-status code,
+.plan-candidate-inspector code,
+.plan-calibration-result code,
+.plan-draft code,
+.plan-c5-preview code,
+.plan-conflict code {
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+
+.plan-recovery-panel,
+.plan-viewer-note {
+  display: grid;
+  gap: var(--ui-space-2);
+  margin: var(--ui-space-4);
+  padding: var(--ui-space-4);
+  border-left: 3px solid var(--ui-colour-muted);
+  background: var(--ui-colour-surface-subtle);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.plan-recovery-panel h3,
+.plan-recovery-panel p,
+.plan-viewer-note p {
+  margin: 0;
+}
+
+.plan-viewer-note span,
+.plan-recovery-panel p {
+  color: var(--ui-colour-muted);
+}
+
+.plan-job-layout {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(15rem, 0.3fr) minmax(0, 1fr);
+  margin-top: var(--ui-space-5);
+  border: 1px solid var(--ui-colour-border);
+  background: var(--ui-colour-surface);
+}
+
+.plan-job-list {
+  min-width: 0;
+  border-right: 1px solid var(--ui-colour-border);
+}
+
+.plan-job-list > p,
+.plan-job-status > p {
+  margin: 0;
+  padding: var(--ui-space-4);
+  color: var(--ui-colour-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.plan-job-list ul,
+.plan-candidates ul,
+.plan-abstention ul,
+.plan-blocker ul,
+.plan-c5-preview ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-job-list button,
+.plan-candidates button {
+  display: grid;
+  width: 100%;
+  min-height: 3.75rem;
+  gap: 0.25rem;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--ui-colour-border);
+  background: transparent;
+  color: var(--ui-colour-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-job-list button:hover,
+.plan-job-list button[data-selected="true"],
+.plan-candidates button:hover,
+.plan-candidates button[data-selected="true"] {
+  background: var(--ui-colour-accent-soft);
+}
+
+.plan-job-list button[data-selected="true"],
+.plan-candidates button[data-selected="true"] {
+  box-shadow: inset 3px 0 0 var(--ui-colour-accent);
+}
+
+.plan-job-list button span {
+  font-size: 0.75rem;
+  font-weight: 760;
+  text-transform: capitalize;
+}
+
+.plan-job-list button small,
+.plan-job-list button code {
+  color: var(--ui-colour-muted);
+  font-size: 0.66rem;
+}
+
+.plan-job-status {
+  min-width: 0;
+}
+
+.plan-job-status > header code {
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+  font-size: 0.68rem;
+}
+
+.plan-job-status dl {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.plan-abstention,
+.plan-blocker,
+.plan-conflict {
+  margin: var(--ui-space-4);
+  padding: var(--ui-space-4);
+  border-left: 3px solid #9b6816;
+  background: #fff5dc;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.plan-abstention p,
+.plan-conflict p {
+  margin: var(--ui-space-2) 0 0;
+}
+
+.plan-abstention li,
+.plan-blocker li {
+  padding-top: var(--ui-space-2);
+  color: var(--ui-colour-muted);
+}
+
+.plan-job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-4);
+  border-top: 1px solid var(--ui-colour-border);
+}
+
+.plan-proposal-metadata {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-top: var(--ui-space-5);
+  border: 1px solid var(--ui-colour-border);
+  background: var(--ui-colour-surface);
+}
+
+.plan-proposal-metadata dl {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 0;
+}
+
+.plan-proposal-metadata > button {
+  margin-right: var(--ui-space-4);
+}
+
+.plan-review-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-areas: "candidates overlay inspector";
+  grid-template-columns: 15rem minmax(24rem, 1fr) minmax(21rem, 24rem);
+  margin-top: var(--ui-space-3);
+  border: 1px solid var(--ui-colour-border);
+  background: var(--ui-colour-surface);
+}
+
+.plan-candidates {
+  min-width: 0;
+  grid-area: candidates;
+  border-right: 1px solid var(--ui-colour-border);
+}
+
+.plan-candidates > header > strong,
+.plan-job-list > header > strong {
+  display: grid;
+  min-width: 1.65rem;
+  min-height: 1.65rem;
+  place-items: center;
+  border: 1px solid var(--ui-colour-border);
+  border-radius: 50%;
+  color: var(--ui-colour-muted);
+  font-size: 0.68rem;
+}
+
+.plan-candidates button {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.plan-candidates button > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.plan-candidates button > span:last-child {
+  justify-items: end;
+}
+
+.plan-candidates button strong {
+  overflow: hidden;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-candidates button small {
+  color: var(--ui-colour-muted);
+  font-size: 0.64rem;
+}
+
+.plan-candidates button em {
+  color: var(--ui-colour-accent-strong);
+  font-size: 0.63rem;
+  font-style: normal;
+  font-weight: 760;
+  text-transform: capitalize;
+}
+
+.plan-candidates button em[data-decision="unresolved"] {
+  color: var(--ui-colour-error);
+}
+
+.plan-overlay {
+  display: grid;
+  min-width: 0;
+  grid-area: overlay;
+  grid-template-rows: auto auto auto minmax(30rem, 1fr);
+}
+
+.plan-overlay__header {
+  align-items: flex-start;
+}
+
+.plan-overlay__tools {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-space-1);
+}
+
+.plan-overlay__tools button,
+.plan-structured-action {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--ui-colour-border);
+  border-radius: 0.25rem;
+  background: white;
+  color: var(--ui-colour-ink);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.plan-overlay__tools button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.plan-overlay__tools output {
+  display: grid;
+  min-width: 3rem;
+  place-items: center;
+  color: var(--ui-colour-muted);
+  font-size: 0.68rem;
+}
+
+.plan-overlay__layers {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-colour-border);
+  font-size: 0.7rem;
+}
+
+.plan-overlay__layers label {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  font-weight: 700;
+}
+
+.plan-overlay__layers input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.plan-overlay__opacity {
+  min-width: min(100%, 15rem);
+  margin-left: auto;
+}
+
+.plan-overlay__opacity input {
+  min-width: 6rem;
+}
+
+.plan-overlay__pick {
+  margin: 0;
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid #ad771f;
+  background: #fff5dc;
+  font-size: 0.72rem;
+}
+
+.plan-overlay__surface {
+  min-width: 0;
+  min-height: 30rem;
+  padding: var(--ui-space-3);
+  overflow: hidden;
+  background: #f8f8f5;
+}
+
+.plan-overlay__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 30rem;
+  border: 1px solid var(--ui-colour-border);
+  background: white;
+  touch-action: none;
+}
+
+.plan-overlay__source-fallback {
+  fill: #fff;
+}
+
+.plan-overlay__grid {
+  stroke: #dfe3dc;
+  stroke-width: 12;
+}
+
+.plan-overlay__wall,
+.plan-overlay__opening {
+  fill: none;
+  stroke: #26372d;
+  stroke-linecap: square;
+  stroke-width: 70;
+}
+
+.plan-overlay__opening {
+  stroke: #2f624b;
+  stroke-width: 45;
+}
+
+.plan-overlay__space {
+  fill: rgb(47 98 75 / 7%);
+  stroke: #9ea9a0;
+  stroke-width: 24;
+}
+
+.plan-overlay__svg g[role="button"] {
+  cursor: pointer;
+}
+
+.plan-overlay__svg g[role="button"]:focus {
+  outline: none;
+}
+
+.plan-overlay__svg g[role="button"]:focus-visible > :first-child,
+.plan-overlay__svg g[data-selected="true"] > :first-child {
+  filter: drop-shadow(0 0 30px rgb(47 98 75 / 38%));
+  stroke: var(--ui-colour-focus);
+}
+
+.plan-overlay__source-region {
+  fill: none;
+  stroke: #ad771f;
+  stroke-dasharray: 80 45;
+  stroke-width: 20;
+  pointer-events: none;
+}
+
+.plan-candidate-inspector {
+  min-width: 0;
+  grid-area: inspector;
+  border-left: 1px solid var(--ui-colour-border);
+}
+
+.plan-candidate-inspector > header {
+  display: grid;
+  justify-content: stretch;
+}
+
+.plan-candidate-inspector > header code {
+  overflow-wrap: anywhere;
+  color: var(--ui-colour-muted);
+}
+
+.plan-candidate-metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-3);
+  margin: 0;
+  padding: var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-colour-border);
+}
+
+.plan-candidate-decision {
+  padding: var(--ui-space-4);
+}
+
+.plan-candidate-decision > fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plan-candidate-decision legend,
+.plan-correction-fields > legend,
+.plan-boundary-walls legend,
+.plan-warning-acknowledgements legend,
+.plan-calibration fieldset legend {
+  margin-bottom: var(--ui-space-2);
+  color: var(--ui-colour-ink);
+  font-size: 0.74rem;
+  font-weight: 760;
+}
+
+.plan-candidate-decision > fieldset label,
+.plan-boundary-walls label,
+.plan-warning-acknowledgements label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
+  color: var(--ui-colour-ink);
+  text-transform: capitalize;
+}
+
+.plan-candidate-decision input[type="radio"],
+.plan-boundary-walls input[type="checkbox"],
+.plan-warning-acknowledgements input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  min-height: 0;
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.plan-candidate-decision > p {
+  margin: var(--ui-space-3) 0 0;
+  color: var(--ui-colour-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.plan-correction-fields {
+  display: grid;
+  gap: var(--ui-space-3);
+  margin: var(--ui-space-4) 0 0;
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-colour-border);
+}
+
+.plan-integer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-3);
+}
+
+.plan-boundary-walls {
+  display: grid;
+  max-height: 14rem;
+  gap: var(--ui-space-2);
+  margin: 0;
+  padding: var(--ui-space-3);
+  overflow-y: auto;
+  border: 1px solid var(--ui-colour-border);
+}
+
+.plan-boundary-walls label {
+  overflow-wrap: anywhere;
+  font-family: monospace;
+  font-size: 0.66rem;
+  text-transform: none;
+}
+
+.plan-calibration > header > strong {
+  color: var(--ui-colour-accent-strong);
+  font-size: 0.72rem;
+}
+
+.plan-calibration > form {
+  display: grid;
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-4);
+}
+
+.plan-calibration-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ui-space-4);
+}
+
+.plan-calibration-grid fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-2);
+  margin: 0;
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-colour-border);
+}
+
+.plan-calibration-grid fieldset legend {
+  grid-column: 1 / -1;
+}
+
+.plan-calibration-grid fieldset button {
+  grid-column: 1 / -1;
+}
+
+.plan-confirmation {
+  display: flex !important;
+  align-items: flex-start;
+  gap: var(--ui-space-3) !important;
+  padding: var(--ui-space-3);
+  background: var(--ui-colour-accent-soft);
+}
+
+.plan-confirmation input {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.plan-confirmation span {
+  display: grid;
+  gap: var(--ui-space-1);
+  color: var(--ui-colour-ink);
+}
+
+.plan-confirmation small {
+  color: var(--ui-colour-muted);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.plan-calibration-result {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.plan-review-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--ui-colour-border);
+}
+
+.plan-review-summary > div {
+  display: grid;
+  gap: 0.15rem;
+  padding: var(--ui-space-4);
+  border-right: 1px solid var(--ui-colour-border);
+}
+
+.plan-review-summary > div:last-child {
+  border-right: 0;
+}
+
+.plan-review-summary strong {
+  font: 500 1.6rem/1 var(--ui-font-serif);
+}
+
+.plan-review-summary span {
+  color: var(--ui-colour-muted);
+  font-size: 0.68rem;
+}
+
+.plan-review-summary [data-blocked="true"] {
+  background: var(--ui-colour-error-soft);
+}
+
+.plan-blocker {
+  border-left-color: var(--ui-colour-error);
+  background: var(--ui-colour-error-soft);
+}
+
+.plan-blocker p {
+  margin: var(--ui-space-2) 0 0;
+}
+
+.plan-blocker li {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.plan-warning-acknowledgements {
+  display: grid;
+  gap: var(--ui-space-3);
+  margin: var(--ui-space-4);
+  padding: var(--ui-space-4);
+  border: 1px solid #ad771f;
+  background: #fffaf0;
+}
+
+.plan-warning-acknowledgements label span {
+  display: grid;
+  gap: 0.1rem;
+  text-transform: none;
+}
+
+.plan-warning-acknowledgements small {
+  color: var(--ui-colour-muted);
+  font-weight: 500;
+}
+
+.plan-no-warnings {
+  margin: 0;
+  padding: var(--ui-space-4);
+  color: var(--ui-colour-muted);
+  font-size: 0.74rem;
+}
+
+.plan-handoff-actions {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) auto;
+  align-items: end;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  border-top: 1px solid var(--ui-colour-border);
+}
+
+.plan-handoff-actions > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ui-colour-muted);
+  font-size: 0.74rem;
+}
+
+.plan-draft,
+.plan-c5-preview {
+  margin: var(--ui-space-4);
+  border: 1px solid var(--ui-colour-border);
+  background: var(--ui-colour-surface-subtle);
+}
+
+.plan-draft > p {
+  margin: 0;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  color: var(--ui-colour-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.plan-draft > button {
+  margin: 0 var(--ui-space-4) var(--ui-space-4);
+}
+
+.plan-draft dl,
+.plan-c5-preview dl {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.plan-conflict dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-4);
+  margin: var(--ui-space-3) 0;
+}
+
+.plan-conflict button {
+  margin-top: var(--ui-space-3);
+}
+
+.plan-c5-preview > header > strong[data-blocked="true"] {
+  color: var(--ui-colour-error);
+}
+
+.plan-c5-preview ul {
+  padding: var(--ui-space-4);
+}
+
+.plan-c5-preview li {
+  display: grid;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-3);
+  border-left: 3px solid var(--ui-colour-muted);
+  background: white;
+  font-size: 0.72rem;
+}
+
+.plan-c5-preview li + li {
+  margin-top: var(--ui-space-2);
+}
+
+.plan-c5-preview li[data-severity="error"] {
+  border-left-color: var(--ui-colour-error);
+  background: var(--ui-colour-error-soft);
+}
+
+.plan-c5-preview li[data-severity="warning"] {
+  border-left-color: #ad771f;
+  background: #fff5dc;
+}
+
+.plan-c5-preview form {
+  display: flex;
+  align-items: end;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  border-top: 1px solid var(--ui-colour-border);
+}
+
+.plan-c5-preview form label {
+  flex: 1 1 auto;
+}
+
+.plan-commit-success {
+  margin: var(--ui-space-4);
+  padding: var(--ui-space-4);
+  border-left: 3px solid var(--ui-colour-accent);
+  background: var(--ui-colour-accent-soft);
+  font-size: 0.76rem;
+}
+
+.plan-commit-success p {
+  margin: var(--ui-space-2) 0 var(--ui-space-3);
+}
+
+.plan-import-state {
+  display: grid;
+  min-height: clamp(34rem, calc(100svh - 11rem), 54rem);
+  place-items: center;
+  padding-block: var(--ui-space-7);
+}
+
+@media (max-width: 78rem) {
+  .plan-source-context,
+  .plan-proposal-metadata dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .plan-source-context > div:nth-child(3),
+  .plan-proposal-metadata dl > div:nth-child(3) {
+    border-right: 0;
+  }
+
+  .plan-source-context > div:nth-child(-n + 3),
+  .plan-proposal-metadata dl > div:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--ui-colour-border);
+  }
+
+  .plan-review-grid {
+    grid-template-areas:
+      "candidates overlay"
+      "inspector inspector";
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
+
+  .plan-candidate-inspector {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.35fr) minmax(0, 1fr);
+    border-top: 1px solid var(--ui-colour-border);
+    border-left: 0;
+  }
+
+  .plan-candidate-inspector > header {
+    grid-column: 1 / -1;
+  }
+
+  .plan-candidate-metadata {
+    border-right: 1px solid var(--ui-colour-border);
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 60rem) {
+  .plan-start-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-proposal-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-proposal-metadata > button {
+    justify-self: start;
+    margin: 0 0 var(--ui-space-4) var(--ui-space-4);
+  }
+
+  .plan-calibration-grid,
+  .plan-handoff-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-c5-preview form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 48rem) {
+  .plan-import-workspace.ui-container {
+    width: min(calc(100% - 1rem), 100rem);
+  }
+
+  .plan-import-heading,
+  .plan-import-source > header,
+  .plan-calibration > header,
+  .plan-job-status > header,
+  .plan-overlay__header,
+  .plan-draft > header,
+  .plan-c5-preview > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .plan-import-role {
+    min-width: 0;
+  }
+
+  .plan-start-form,
+  .plan-job-layout,
+  .plan-proposal-metadata,
+  .plan-review-grid,
+  .plan-candidate-inspector,
+  .plan-calibration-grid,
+  .plan-handoff-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-job-layout {
+    grid-template-areas: none;
+  }
+
+  .plan-job-list {
+    border-right: 0;
+    border-bottom: 1px solid var(--ui-colour-border);
+  }
+
+  .plan-job-status dl,
+  .plan-source-context,
+  .plan-proposal-metadata dl,
+  .plan-calibration-result,
+  .plan-draft dl,
+  .plan-c5-preview dl,
+  .plan-review-summary,
+  .plan-candidate-metadata {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-source-context > div,
+  .plan-proposal-metadata dl > div,
+  .plan-source-context > div:nth-child(3),
+  .plan-proposal-metadata dl > div:nth-child(3),
+  .plan-job-status dl > div,
+  .plan-calibration-result > div,
+  .plan-draft dl > div,
+  .plan-c5-preview dl > div,
+  .plan-review-summary > div {
+    border-right: 1px solid var(--ui-colour-border);
+    border-bottom: 1px solid var(--ui-colour-border);
+  }
+
+  .plan-source-context > div:nth-child(even),
+  .plan-proposal-metadata dl > div:nth-child(even),
+  .plan-job-status dl > div:nth-child(even),
+  .plan-calibration-result > div:nth-child(even),
+  .plan-draft dl > div:nth-child(even),
+  .plan-c5-preview dl > div:nth-child(even),
+  .plan-review-summary > div:nth-child(even) {
+    border-right: 0;
+  }
+
+  .plan-review-grid {
+    grid-template-areas:
+      "overlay"
+      "candidates"
+      "inspector";
+  }
+
+  .plan-overlay {
+    grid-template-rows: auto auto auto minmax(24rem, 58svh);
+  }
+
+  .plan-overlay__tools {
+    justify-content: flex-start;
+  }
+
+  .plan-overlay__tools button {
+    min-height: 2.75rem;
+  }
+
+  .plan-overlay__opacity {
+    margin-left: 0;
+  }
+
+  .plan-overlay__surface,
+  .plan-overlay__svg {
+    min-height: 24rem;
+  }
+
+  .plan-candidates {
+    border-top: 1px solid var(--ui-colour-border);
+    border-right: 0;
+  }
+
+  .plan-candidates button {
+    min-height: 3.9rem;
+  }
+
+  .plan-candidate-inspector {
+    display: block;
+  }
+
+  .plan-candidate-metadata {
+    border-right: 0;
+    border-bottom: 1px solid var(--ui-colour-border);
+  }
+
+  .plan-integer-grid,
+  .plan-calibration-grid fieldset {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-calibration-grid fieldset legend,
+  .plan-calibration-grid fieldset button {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-import-workspace *,
+  .plan-import-workspace *::before,
+  .plan-import-workspace *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 body {
   margin: 0;
   background: var(--ui-colour-canvas);

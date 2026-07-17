@@ -247,6 +247,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/editor/${project.id}`}>
                     2D editor
                   </Link>
+                  <Link className="project-row__action" href={`/plan-import/${project.id}`}>
+                    Correct floor plan
+                  </Link>
                 </div>
               </article>
             ))}

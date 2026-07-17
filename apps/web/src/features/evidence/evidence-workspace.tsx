@@ -733,6 +733,15 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
                       </dl>
                     </div>
                     <div className="asset-actions">
+                      {asset.kind === "plan" && asset.status === "ready" ? (
+                        <Link
+                          className="ui-action"
+                          data-tone="secondary"
+                          href={`/plan-import/${projectId}`}
+                        >
+                          Use in floor-plan correction
+                        </Link>
+                      ) : null}
                       {asset.status === "ready" ? (
                         previewAccess?.assetId === asset.id ? (
                           <a
