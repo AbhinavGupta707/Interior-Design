@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: complete C1 through C8. The user explicitly stopped the run after C8; C9 and C10 remain planned but are not opened, scaffolded or launched in this run.
+- Autonomous execution boundary: C0-C8 are complete; the user explicitly resumed the programme through C9 and C10. Stop after C10 is integrated, exhaustively verified, documented and pushed.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -345,3 +345,35 @@
 - An unsigned generic `arm64` Release build succeeds with the AVFoundation camera/depth paths. Binary inspection finds none of the C8 fixture environment keys or presentation copy, proving the acceptance protocol is compiled out of production.
 - Physical camera/RGB-D, usable native depth/calibration/pose extraction, COLMAP/Open3D algorithms, CUDA dense reconstruction, Nerfstudio/gsplat runtime, Windows/NVIDIA capacity and representative geometric accuracy remain `NOT RUN`. The implementations and safe unavailable behavior are present, but synthetic executors and Simulator states are not relabelled as hardware/runtime evidence.
 - Durable evidence: `docs/evaluation/reconstruction/c8-evidence-record-2026-07-17.md`. C9 was neither activated nor scaffolded; execution stops at the C8 ledger-close commit by explicit user instruction.
+
+## C9 — Autonomous multi-source full-house fusion
+
+### Master activation
+
+- Status: active; implementation lanes not yet launched
+- Contract: `docs/orchestration/checkpoints/C9_CONTRACT.md` (`c9-fusion-job-v1`, `c9-registration-result-v1`, `c9-full-house-proposal-v1`, `c9-discrepancy-v1`, `c9-operation-draft-v1`)
+- Immutable predecessor/C8 ledger-close: `3e0bd2b06cc2a504076f93cc21f75062543f3ef4`
+- Prelude commit: `8f27b17`
+- Frozen worker base: the commit containing this activation record
+- Planned lanes: four, retained adaptively because deterministic robust registration, semantic fitting, durable tenant-safe cross-surface orchestration and independent adversarial evaluation are substantial independent risks with exclusive write boundaries
+- Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because numerical geometry, inference/topology, durable concurrency/security and failure-inclusive evaluation are all complex; no C9 lane is merely bounded/mechanical.
+- Provider/data policy: no paid provider, cloud key, customer data or training use is required. Deterministic synthetic proposal fixtures, local PostGIS and existing local services supply the base gate.
+- Mutation policy: C9 emits proposal-only geometry, explicit discrepancies, attributable decisions and a branch/revision/head-hash-pinned C5 operation draft. It cannot call C5 preview/commit, advance a branch or mutate a canonical snapshot.
+- Hardware/runtime status at activation: no physical iPhone/iPad, COLMAP, Open3D, PyTorch, Blender, NVIDIA or CUDA is available. C7 physical RoomPlan and C8 real algorithm/GPU evidence remain `NOT RUN`; C9 fixtures cannot promote them.
+
+| Lane                                             | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                                       |
+| ------------------------------------------------ | -------------- | ----------------------- | ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| C9-L1 registration/fusion kernel                 | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | geometry-kernel registration/fusion source/tests and allocated package export                         |
+| C9-L2 semantic fitting                           | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | inference-worker scan-to-model source/tests                                                           |
+| C9-L3 durable fusion/discrepancy product         | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | isolated platform/spatial/web fusion paths, migration 0009, tests/runbook and named composition files |
+| C9-L4 independent evaluation/security/acceptance | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | fusion fixtures, evaluation/security/E2E packs and evaluation/threat-model documents                  |
+
+### Prelude gate evidence
+
+- The preflight verified exact repository/project discovery, a clean/pushed C8 base, current toolchain/hardware/provider state and 28 GiB free after archiving 16 already-integrated C5-C8 worktree tasks. Only the primary worktree remains before C9 launch.
+- Official Codex documentation confirmed project-scoped worktrees are detached, isolated task environments and thread heartbeat is the correct current-task continuity mechanism. The active 20-minute `interior-design-c9-c10-orchestration-guardrail` heartbeat prevents overlap/skips and must be deleted after C10 closure.
+- Current Open3D multiway-registration guidance informed the explicit node/edge/uncertain-constraint/residual/pruning boundary. Registration is a deterministic constraint graph; it does not pairwise-average claims or silently discard disconnected sources.
+- Shared schemas freeze five C9 versions, exact routes, source/anchor/discrepancy/decision/operation budgets, denied training use, immutable evidence/base references, terminal-state invariants, fixed-point transforms, residuals, explicit abstention and the proposal-only/C5-draft-only boundary. The contract package passes 54/54.
+- Central authorization and the independent identity policy now include seven C9 actions. The package suite passes 369/369 and the independent policy file passes 529/529: owner/editor may create/read/cancel/retry/review/draft, viewer is job/proposal read-only and foreign-tenant access fails closed.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passes formatting, all 14 package lint/typecheck/unit/build suites, Ruff, strict mypy and 86 Python tests; two real COLMAP/Open3D runtime tests remain explicitly skipped because those runtimes are unavailable. `git diff --check` is clean.
+- Migration `0009_model_fusion.sql` is reserved exclusively for C9-L3 in the orchestrator-owned migration registry. Shared contracts/core authz, manifests/lockfiles, accepted contract, registry, `.github`, `.codex`, `AGENTS.md` and this ledger remain read-only to workers except for exact transferred composition/export paths.
