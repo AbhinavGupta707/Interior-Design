@@ -71,8 +71,6 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
 }
 
 actor C2EvidenceAPIClient: EvidenceServing {
-  private struct LocalSessionRequest: Encodable { let persona: String }
-  private struct LocalSessionResponse: Decodable { let accessToken: String }
   private struct CreateRequest: Encodable {
     let byteSize: Int64
     let declaredMimeType: String
@@ -94,12 +92,17 @@ actor C2EvidenceAPIClient: EvidenceServing {
 
   private let baseURL: URL
   private let transport: any EvidenceHTTPTransport
-  private var accessToken: String?
+  private let tokenProvider: any C7CaptureTokenProviding
   private let encoder = JSONEncoder()
   private let decoder = JSONDecoder()
 
-  init(baseURL: URL, transport: any EvidenceHTTPTransport = URLSessionEvidenceTransport()) {
+  init(
+    baseURL: URL,
+    tokenProvider: any C7CaptureTokenProviding,
+    transport: any EvidenceHTTPTransport = URLSessionEvidenceTransport()
+  ) {
     self.baseURL = baseURL
+    self.tokenProvider = tokenProvider
     self.transport = transport
   }
 
@@ -210,22 +213,6 @@ actor C2EvidenceAPIClient: EvidenceServing {
     )
   }
 
-  private func authenticate() async throws -> String {
-    if let accessToken { return accessToken }
-    var request = URLRequest(url: endpoint("/v1/auth/local/session"))
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try encoder.encode(LocalSessionRequest(persona: "homeowner-alpha"))
-    let (data, response) = try await perform(request)
-    guard (200..<300).contains(response.statusCode),
-          let session = try? decoder.decode(LocalSessionResponse.self, from: data),
-          session.accessToken.count >= 32 else {
-      throw EvidenceServiceError.invalidResponse
-    }
-    accessToken = session.accessToken
-    return session.accessToken
-  }
-
   private func send<Response: Decodable>(
     path: String,
     method: String = "GET",
@@ -258,24 +245,36 @@ actor C2EvidenceAPIClient: EvidenceServing {
     idempotencyKey: String?,
     response: Response.Type
   ) async throws -> Response {
-    let token = try await authenticate()
-    var request = URLRequest(url: endpoint(path))
-    request.httpMethod = method
-    request.setValue("application/json", forHTTPHeaderField: "Accept")
-    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    if let bodyData {
-      request.httpBody = bodyData
-      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    for attempt in 0...1 {
+      let token: String
+      do {
+        token = try await tokenProvider.accessToken()
+      } catch {
+        throw EvidenceServiceError.expired
+      }
+      var request = URLRequest(url: endpoint(path))
+      request.httpMethod = method
+      request.setValue("application/json", forHTTPHeaderField: "Accept")
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+      if let bodyData {
+        request.httpBody = bodyData
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      }
+      if let idempotencyKey {
+        request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
+      }
+      let (data, httpResponse) = try await perform(request)
+      if httpResponse.statusCode == 401, attempt == 0 {
+        await tokenProvider.invalidate()
+        continue
+      }
+      try validate(httpResponse)
+      guard let result = try? decoder.decode(response, from: data) else {
+        throw EvidenceServiceError.invalidResponse
+      }
+      return result
     }
-    if let idempotencyKey {
-      request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
-    }
-    let (data, httpResponse) = try await perform(request)
-    try validate(httpResponse)
-    guard let result = try? decoder.decode(response, from: data) else {
-      throw EvidenceServiceError.invalidResponse
-    }
-    return result
+    throw EvidenceServiceError.expired
   }
 
   private func endpoint(_ path: String) -> URL {
@@ -310,7 +309,6 @@ actor C2EvidenceAPIClient: EvidenceServing {
     switch response.statusCode {
     case 200..<300: return
     case 401:
-      accessToken = nil
       throw EvidenceServiceError.expired
     case 403, 404: throw EvidenceServiceError.forbidden
     case 500..<600: throw EvidenceServiceError.unavailable
