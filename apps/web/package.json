@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.1"
   },
   "dependencies": {
     "@interior-design/config": "workspace:*",
@@ -20,9 +21,11 @@
     "@interior-design/editor-core": "workspace:*",
     "@interior-design/model-operations": "workspace:*",
     "@interior-design/ui": "workspace:*",
+    "@react-three/fiber": "^9.6.1",
     "next": "^16.2.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "three": "^0.185.1",
     "zod": "^4.4.3"
   }
 }

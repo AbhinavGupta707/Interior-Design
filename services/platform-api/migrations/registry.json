@@ -54,6 +54,12 @@
       "checkpoint": "C9",
       "owner": "C9-L3",
       "path": "0009_model_fusion.sql"
+    },
+    {
+      "id": "0010",
+      "checkpoint": "C10",
+      "owner": "C10-L2",
+      "path": "0010_scenes.sql"
     }
   ]
 }

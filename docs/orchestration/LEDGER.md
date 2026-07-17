@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C9 are complete. The user explicitly instructed the orchestrator to pause after C9; C10 is not open and no C10 worker has been launched.
+- Autonomous execution boundary: C0-C9 are complete. The user subsequently authorised C10; C10 contract preflight is open and no C11 work may begin.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -389,4 +389,30 @@
 - The focused C9 gates pass: web model-fusion 14/14, spatial-worker model-fusion 24/24 including real Python subprocess integration, independent evaluation 6/6, security 28/28, E2E TypeScript no-emit, synthetic Playwright 9/9 and production-path Playwright 2/2. The synthetic browser suite covers cancel/retry, full/partial/disconnected/abstained, every decision, stale/offline/error, viewer, keyboard and mobile states; it remains presentation evidence rather than producer-live evidence.
 - `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, every one of 14 package lint/typecheck/build pipelines, platform API 117 passed / 25 declared live-provider skips, spatial worker 96 passed / three declared live-database skips, web 74 passed, geometry kernel 43 passed, and Python 117 passed / two unavailable COLMAP/Open3D runtime skips. Ruff and strict mypy pass.
 - Durable evidence: `docs/evaluation/model-fusion/c9-evidence-record-2026-07-17.md`. Physical RoomPlan accuracy, real C8 COLMAP/Open3D reconstruction, neural/GPU/CUDA execution, representative-home accuracy, cloud/provider behavior and human correction time remain explicitly `NOT RUN`. No key, paid service, customer data or training permission was used.
-- C10 is not activated. No C10 contract, lane, task or code has been opened after the user's pause instruction.
+- At the time C9 closed, C10 was not activated and no C10 task or implementation code had been opened. The later C10 section records the user's subsequent continuation instruction.
+
+## C10 — Deterministic scene and interactive walkthrough
+
+### Master activation
+
+- Status: contract preflight open; workers not yet launched
+- Contract: `docs/orchestration/checkpoints/C10_CONTRACT.md` (`c10-scene-job-v1`, `c10-scene-manifest-v1`, `c10-scene-artifact-v1`)
+- Immutable predecessor/C9 ledger-close: `77854a1726b40ba7ac7a05d26a39d881b7e38509`
+- Planned lanes: three, retained adaptively because deterministic scene compilation, tenant-safe durable storage/workflow and browser 3D/performance acceptance are substantial independent risks with exclusive write boundaries
+- Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning. Numerical geometry/specification, durable concurrency/security and cross-browser 3D/performance are complex; no C10 implementation lane is bounded enough for lower reasoning.
+- Provider/data policy: no paid provider, cloud key, customer data, RoomPlan device, reconstruction runtime or GPU is required. Exact committed synthetic canonical homes, local Postgres/S3-compatible storage and browser software rendering provide the base gate.
+- Mutation policy: C10 reads one exact committed C4 snapshot and publishes a content-addressed derived visualisation only. It cannot write C4 snapshots, call C5 preview/commit, resolve C9 discrepancies or raise the model's evidence/professional status.
+- Hardware/runtime status at activation: physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA, representative-home accuracy and cloud delivery remain `NOT RUN`; these are upstream fidelity/release gates, not missing C10 architecture.
+
+| Lane                                 | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State       | Exclusive roots                                                                                  |
+| ------------------------------------ | ----------- | ----------------------- | ---------- | --------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| C10-L1 scene compiler/runtime        | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
+| C10-L2 durable scene backend/storage | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
+| C10-L3 viewer/independent acceptance | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
+
+### Prelude decisions and gate evidence
+
+- Current Khronos glTF 2.0.1, official validator and React Three Fiber performance guidance freeze GLB 2.0, finite aligned little-endian buffers, right-handed metre output, explicit `[Xmm/1000, Zmm/1000, -Ymm/1000]` conversion, validator-clean publication, demand-driven rendering and bounded draw-call/resource behavior.
+- Shared C10 contracts freeze exact-snapshot jobs, deterministic compiler configuration, derived-only authority, integer-millimetre bounds, stable one-owner element mappings, explicit omissions/findings, bounded artifact/count ceilings and loopback-only HTTP signed access. Five deny-by-default C10 actions are added before worker launch.
+- Migration `0010_scenes.sql` is reserved exclusively for C10-L2. Root/package manifests, lockfile, shared contracts/core authz, registry, accepted contract and ledger remain orchestrator-owned after the prelude.
+- Dependency versions were resolved from the current npm registry before freezing: Three.js `0.185.1`, React Three Fiber `9.6.1`, `@types/three` `0.185.1`, Earcut `3.2.3` and Khronos glTF Validator npm `2.0.0-dev.3.10`.
