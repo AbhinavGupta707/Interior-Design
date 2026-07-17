@@ -134,3 +134,30 @@
 - That real journey caught a cross-lane integration defect missed by mocked browser tests: the Postgres backend returned `404` for source records before a first property selection. The product completion commit `432f2fd` now returns the contractually valid empty collection, adds unit/live regressions and fixes the disposable-database runbook to use explicit loopback password authentication.
 - API logs redacted every request URL throughout the live journey and emitted no address query, token or raw provider payload. Production still fails closed to the disabled adapter; fixture and injected-unavailable modes are rejected in production.
 - Honest residual limits: C3 has no activated live address, UPRN, EPC, mapping or planning provider, no provider licence/privacy/retention approval, no customer data and no professional interior, structure, boundary or planning claim. Those are deliberate later-provider decisions, not C3 completion evidence.
+
+## C4 — Canonical multi-level home model
+
+### Master activation
+
+- Status: active; lanes frozen and pending launch
+- Contract: `docs/orchestration/checkpoints/C4_CONTRACT.md` (`c4-canonical-home-v1`)
+- Prelude commit: `0ade952`
+- Frozen worker base commit: this activation commit; exact SHA is recorded with the created task IDs
+- Planned lanes: four, retained adaptively because provenance/canonicalisation, geometry/topology, persistence/concurrency and adversarial fixtures are independent substantial risks
+- Coordinate policy: right-handed project-local `+X east`, `+Y north`, `+Z up`; authoritative local lengths are integer millimetres and angles integer milli-degrees
+- Hash policy: RFC-8785-style UTF-8 canonical JSON and SHA-256; entity/reference collections sort deterministically while geometric point order is preserved
+- State policy: existing, proposed and as-built are separate model profiles; unknowns remain explicit and no renderer fallback becomes a fact
+
+| Lane                           | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State         | Exclusive roots                                                               |
+| ------------------------------ | ----------- | ----------------------- | ---------- | --------- | ------------- | ----------------------------------------------------------------------------- |
+| C4-L1 domain/provenance        | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | domain-model/provenance source/tests and allocated coordinate/provenance ADRs |
+| C4-L2 geometry/topology kernel | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | geometry-kernel source/tests and allocated kernel ADR                         |
+| C4-L3 persistence/API          | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | canonical model API/module/C4 composition, migration, tests and runbook       |
+| C4-L4 fixtures/evaluation      | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued | model fixtures, independent geometry/canonical tests and evaluation document  |
+
+### Prelude gate evidence
+
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, 12-package lint/typecheck, 189 JavaScript unit tests, every production build, Ruff, strict mypy and pytest after adding the four C4 package registrations.
+- Shared C4 contracts added five focused cases for explicit unknown values, profile separation, confidence/evidence requirements, cross-collection ID uniqueness and optimistic first-snapshot state. The explicit role/action matrix now passes 63 authorisation cases: owner/editor may create snapshots, viewer is read-only and every foreign-tenant action remains denied.
+- Migration `0004_canonical_models.sql` is allocated exclusively to C4-L3 before launch. Package manifests, the lockfile, shared DTOs, authz, migration registry and this contract are frozen orchestrator-owned inputs.
+- All four tasks receive `xhigh`: L1 owns cryptographic canonicalisation and provenance invariants; L2 owns adversarial integer geometry; L3 owns tenant isolation, idempotency and concurrent immutable persistence; L4 owns property/adversarial geometry and cross-process hash evaluation.
