@@ -9,6 +9,7 @@ import type { LoggerOptions as PinoLoggerOptions } from "pino";
 import { registerC1Module, type C1ModuleOptions } from "./c1.js";
 import { registerC2Module, type C2ModuleOptions } from "./c2.js";
 import { registerC3Module, type C3ModuleOptions } from "./c3.js";
+import { registerC4Module, type C4ModuleOptions } from "./c4.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -25,13 +26,14 @@ export interface CreateServerOptions {
   readonly c1?: C1ModuleOptions;
   readonly c2?: C2ModuleOptions;
   readonly c3?: C3ModuleOptions;
+  readonly c4?: C4ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
   readonly readinessChecks?: readonly ReadinessCheck[];
 }
 
-function defaultLogger(config: PlatformApiConfig): LoggerSetting {
+export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
   if (config.logLevel === "silent") {
     return false;
   }
@@ -48,9 +50,11 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "req.headers.authorization",
         "req.headers.cookie",
         "req.headers['x-api-key']",
+        "req.url",
         "request.headers.authorization",
         "request.headers.cookie",
         "request.headers['x-api-key']",
+        "request.url",
         "providerUploadId",
         "provider_upload_id",
         "sourceObjectKey",
@@ -65,12 +69,15 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "body.query",
         "body.address",
         "body.displayAddress",
+        "body.snapshot",
         "req.body.query",
         "req.body.address",
         "req.body.displayAddress",
+        "req.body.snapshot",
         "request.body.query",
         "request.body.address",
         "request.body.displayAddress",
+        "request.body.snapshot",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -82,9 +89,11 @@ function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.query",
         "*.address",
         "*.displayAddress",
+        "*.canonical_snapshot",
         "*.body.query",
         "*.body.address",
         "*.body.displayAddress",
+        "*.body.snapshot",
       ],
     },
   };
@@ -130,12 +139,22 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c3,
         )
       : undefined;
+  const c4 =
+    options.c4 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC4Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c4,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
       ...c1.readinessChecks,
       ...(c2?.readinessChecks ?? []),
       ...(c3?.readinessChecks ?? []),
+      ...(c4?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );
