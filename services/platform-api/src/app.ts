@@ -11,6 +11,7 @@ import { registerC2Module, type C2ModuleOptions } from "./c2.js";
 import { registerC3Module, type C3ModuleOptions } from "./c3.js";
 import { registerC4Module, type C4ModuleOptions } from "./c4.js";
 import { registerC5Module, type C5ModuleOptions } from "./c5.js";
+import { registerC6Module, type C6ModuleOptions } from "./c6.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -30,6 +31,7 @@ export interface CreateServerOptions {
   readonly c3?: C3ModuleOptions;
   readonly c4?: C4ModuleOptions;
   readonly c5?: C5ModuleOptions;
+  readonly c6?: C6ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -174,6 +176,15 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
         options.c5,
       )
     : undefined;
+  const c6 =
+    options.c6 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC6Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c6,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
@@ -182,6 +193,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
       ...(c3?.readinessChecks ?? []),
       ...(c4?.readinessChecks ?? []),
       ...(c5?.readinessChecks ?? []),
+      ...(c6?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );

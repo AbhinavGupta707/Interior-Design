@@ -4,6 +4,12 @@ import postgres from "postgres";
 import { parseWorkerConfig } from "./config.js";
 import { PostgresProcessingJobRepository } from "./jobs.js";
 import { createJsonLogger } from "./logger.js";
+import {
+  LocalPlanParserFake,
+  PlanNormalizer,
+  PlanProcessingRunner,
+  PostgresPlanProcessingQueue,
+} from "./plan-processing/index.js";
 import { MediaProcessor } from "./processor.js";
 import { SpatialWorkerRunner } from "./runner.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
@@ -22,6 +28,7 @@ export { S3ObjectStorage } from "./storage.js";
 export type { DerivedWrite, ObjectStorage } from "./storage.js";
 export { ProcessExecutionError, runBoundedProcess } from "./subprocess.js";
 export { IsolatedWorkspace } from "./workspace.js";
+export * from "./plan-processing/index.js";
 
 export async function runSpatialWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
@@ -41,6 +48,27 @@ export async function runSpatialWorker(
   const jobs = new PostgresProcessingJobRepository(sql);
   const processor = new MediaProcessor(config, storage);
   const runner = new SpatialWorkerRunner({ config, jobs, logger, processor, storage });
+  const planRunner =
+    environment.C6_PLAN_WORKER_ENABLED === "true"
+      ? new PlanProcessingRunner({
+          heartbeatMilliseconds: Math.min(config.heartbeatMs, 15_000),
+          leaseMilliseconds: Math.max(config.leaseMs, 60_000),
+          logger,
+          normalizer: new PlanNormalizer({
+            pdfInfo: config.executables.pdfinfo,
+            pdfToCairo: environment.C6_PDFTOCAIRO_PATH ?? "pdftocairo",
+            pdfToPpm: config.executables.pdftoppm,
+            popplerVersion: environment.C6_POPPLER_VERSION ?? "local-poppler",
+          }),
+          parser: new LocalPlanParserFake(),
+          pollMilliseconds: config.pollMs,
+          queue: new PostgresPlanProcessingQueue(sql),
+          storage,
+          temporaryMaximumBytes: Math.min(config.temporaryDirectory.maximumBytes, 268_435_456),
+          temporaryRoot: config.temporaryDirectory.root,
+          workerId: `c6-${config.workerId}`.slice(0, 100),
+        })
+      : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -48,7 +76,10 @@ export async function runSpatialWorker(
   process.once("SIGINT", requestShutdown);
   process.once("SIGTERM", requestShutdown);
   try {
-    await runner.run(shutdown.signal);
+    await Promise.all([
+      runner.run(shutdown.signal),
+      ...(planRunner === undefined ? [] : [planRunner.run(shutdown.signal)]),
+    ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);
     process.removeListener("SIGTERM", requestShutdown);
