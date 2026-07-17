@@ -32,6 +32,9 @@ export { ProcessExecutionError, runBoundedProcess } from "./subprocess.js";
 export { IsolatedWorkspace } from "./workspace.js";
 export * from "./plan-processing/index.js";
 export * from "./roomplan/index.js";
+export * from "./media-prep/index.js";
+
+export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8"] as const);
 
 export async function runSpatialWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,

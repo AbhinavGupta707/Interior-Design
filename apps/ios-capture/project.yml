@@ -32,6 +32,7 @@ targets:
         excludes:
           - Resources/Info.plist
     dependencies:
+      - sdk: AVFoundation.framework
       - sdk: RoomPlan.framework
     configFiles:
       Debug: Configurations/Debug.xcconfig
@@ -44,7 +45,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         HomeDesignAPIBaseURL: $(API_BASE_URL)
         HomeDesignEnvironment: $(APP_ENVIRONMENT)
-        NSCameraUsageDescription: Capture photos and room geometry as evidence for your selected home design project.
+        NSCameraUsageDescription: Capture rights-cleared photos, silent video, and supported depth as immutable evidence for your selected home design project.
         UIApplicationSupportsIndirectInputEvents: true
         UILaunchScreen:
           UIColorName: ""

@@ -7,6 +7,7 @@ struct AppRootView: View {
   @State private var projectRepository: ProjectRepository
   @State private var evidenceRepository: EvidenceRepository
   @State private var captureWorkspaceModel: C7CaptureWorkspaceModel
+  @State private var mediaCaptureModel: C8MediaCaptureWorkspaceModel
 
   @MainActor
   init(
@@ -15,7 +16,10 @@ struct AppRootView: View {
     projectService: (any ProjectServing)? = nil,
     captureTokenProvider: (any C7CaptureTokenProviding)? = nil,
     captureLauncher: any C7CaptureLaunching = C7UnavailableCaptureLauncher(),
-    captureRole: C7WorkspaceRole = .owner
+    captureRole: C7WorkspaceRole = .owner,
+    mediaCamera: (any C8CameraCaptureServing)? = nil,
+    mediaCapabilityProvider: any C8CameraCapabilityProviding = C8SystemCameraCapabilityProvider(),
+    mediaPermissionProvider: any C8CameraPermissionProviding = C8SystemCameraPermissionProvider()
   ) {
     self.configuration = configuration
     _flow = State(initialValue: CaptureFlowModel(capabilityChecker: capabilityChecker))
@@ -38,14 +42,11 @@ struct AppRootView: View {
         refresher: refresher
       )
     _projectRepository = State(initialValue: ProjectRepository(service: service))
-    _evidenceRepository = State(
-      initialValue: EvidenceRepository(
-        service: C2EvidenceAPIClient(
-          baseURL: configuration.apiBaseURL,
-          tokenProvider: tokenProvider
-        )
-      )
+    let evidenceService = C2EvidenceAPIClient(
+      baseURL: configuration.apiBaseURL,
+      tokenProvider: tokenProvider
     )
+    _evidenceRepository = State(initialValue: EvidenceRepository(service: evidenceService))
     let captureService = C7CaptureAPIClient(
       baseURL: configuration.apiBaseURL,
       tokenProvider: tokenProvider
@@ -62,6 +63,24 @@ struct AppRootView: View {
         journal: captureJournal,
         syncEngine: captureSync,
         captureLauncher: captureLauncher
+      )
+    )
+    let resolvedMediaCamera: any C8CameraCaptureServing
+    if let mediaCamera {
+      resolvedMediaCamera = mediaCamera
+    } else {
+      #if targetEnvironment(simulator)
+        resolvedMediaCamera = C8SyntheticCameraEngine()
+      #else
+        resolvedMediaCamera = C8AVFoundationCameraEngine()
+      #endif
+    }
+    _mediaCaptureModel = State(
+      initialValue: C8MediaCaptureWorkspaceModel(
+        camera: resolvedMediaCamera,
+        capabilityProvider: mediaCapabilityProvider,
+        permissionProvider: mediaPermissionProvider,
+        uploader: C8ImmutableEvidenceUploader(service: evidenceService)
       )
     )
   }
@@ -100,10 +119,18 @@ struct AppRootView: View {
           onChooseAnotherProject: flow.reset
         )
         .toolbar {
-          ToolbarItem(placement: .topBarTrailing) {
+          ToolbarItemGroup(placement: .topBarTrailing) {
+            Button("Photo/video") { flow.openMediaCapture() }
             Button("Evidence") { flow.openEvidenceWorkspace() }
           }
         }
+      case .mediaCapture:
+        C8MediaCaptureWorkspaceView(
+          model: mediaCaptureModel,
+          project: project,
+          onOpenEvidence: flow.openEvidenceWorkspace,
+          onDone: flow.reset
+        )
       case .capturePreparation:
         C7CaptureWorkspaceView(
           model: captureWorkspaceModel,
@@ -111,6 +138,11 @@ struct AppRootView: View {
           onUseManualEvidence: flow.useManualEvidence,
           onChooseAnotherProject: flow.reset
         )
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Photo/video") { flow.openMediaCapture() }
+          }
+        }
       case .unsupportedCapture:
         UnsupportedCaptureView(
           project: project,
@@ -118,6 +150,11 @@ struct AppRootView: View {
           onUseManualEvidence: flow.useManualEvidence,
           onChooseAnotherProject: flow.reset
         )
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Photo/video") { flow.openMediaCapture() }
+          }
+        }
       case .manualEvidence:
         ManualEvidenceView(project: project, onDone: flow.reset)
       }

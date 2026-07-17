@@ -3,6 +3,7 @@ import Observation
 enum CaptureRoute: Hashable, Sendable {
   case evidenceWorkspace
   case eligibility
+  case mediaCapture
   case capturePreparation
   case unsupportedCapture
   case manualEvidence
@@ -31,6 +32,11 @@ final class CaptureFlowModel {
   func openEvidenceWorkspace() {
     guard selectedProject != nil else { return }
     path.append(.evidenceWorkspace)
+  }
+
+  func openMediaCapture() {
+    guard selectedProject != nil else { return }
+    path.append(.mediaCapture)
   }
 
   func continueFromEligibility() {
