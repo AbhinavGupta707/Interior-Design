@@ -87,7 +87,12 @@ export class MediaPreparationPipeline {
         },
         sampling: "ffmpeg-fps-start-zero-round-down-v1",
       });
-      const sourceManifestSha256 = canonicalSha256(sources.map(({ descriptor }) => descriptor));
+      const sourceManifestSha256 =
+        request.sourceManifestSha256 ??
+        canonicalSha256(sources.map(({ descriptor }) => descriptor));
+      if (!/^[a-f0-9]{64}$/u.test(sourceManifestSha256)) {
+        throw new MediaPreparationError("HASH_MISMATCH");
+      }
       const prepared: MutableFrame[] = [];
       let privacyStatus: MediaPreparationManifest["privacyStatus"] = "accepted";
       for (const [sourceIndex, source] of sources.entries()) {

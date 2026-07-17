@@ -9,10 +9,15 @@
 /* Begin PBXBuildFile section */
 		011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */; };
 		09D7CC666216C7D345613160 /* RoomCaptureDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009594AC33EE380D224ADCBF /* RoomCaptureDomain.swift */; };
+		10250F9A5A217E5B0C852F7B /* C8CapabilityAndStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CAB53465834E55ED289D3E7 /* C8CapabilityAndStorageTests.swift */; };
 		109FDDB62242C5C36CE7B984 /* RoomPlanNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FA313D6A2491915A01B4DE /* RoomPlanNormalizer.swift */; };
 		140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */; };
+		18846D4A6E1BA9E9FEDCA3F1 /* C8CameraCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605F8BA350D6E2417667C0D8 /* C8CameraCaptureEngine.swift */; };
 		1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */; };
 		21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC63546001772B6B43829640 /* RoomPlan.framework */; };
+		235BA8F422CD86FC06CA3160 /* C8EvidenceUploaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF544AF5CD07338CEBBB1EBB /* C8EvidenceUploaderTests.swift */; };
+		2499978C9C09493643249CC5 /* C8MediaCaptureWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BA1D6F8AAF626ECA4BDEF2 /* C8MediaCaptureWorkspaceModel.swift */; };
+		2A331873B4D3D342C23BE430 /* C8ReconstructionContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */; };
 		35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */; };
 		360C3C5191E23DDBB4CB29B6 /* FixtureRoomCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */; };
 		3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */; };
@@ -30,6 +35,7 @@
 		585F380C28C113C4F94FAC64 /* C7GoldenContractUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4FD66A87EAC9C4B168A6106 /* C7GoldenContractUITests.swift */; };
 		5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */; };
 		5CABFD84489281540124CD59 /* FixtureRoomCaptureEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1939F54E12D0EDFF5168492 /* FixtureRoomCaptureEngineTests.swift */; };
+		6B4F08C7267A1681E1DA687A /* C8MediaCaptureWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879E165983B7BF350C32A8B1 /* C8MediaCaptureWorkspaceView.swift */; };
 		6EB81D6C603A83FB962C34B0 /* CaptureSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */; };
 		701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */; };
 		72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */; };
@@ -42,19 +48,27 @@
 		80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DE930A75C9651B86254FEB /* EvidenceModels.swift */; };
 		83AD74D9950485839F495388 /* RoomCaptureStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F444C68A6BA603F3648FEF /* RoomCaptureStateMachine.swift */; };
 		88D234068099691EC57E82FE /* CaptureSecurityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84E0D41C2BB42D745CFAAD /* CaptureSecurityServiceTests.swift */; };
+		893867B17EAFC9398FC88B6F /* C8CameraCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB146E16E0FE857399290A36 /* C8CameraCapability.swift */; };
 		8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */; };
+		8BF78FA2833FE954AC6F7CED /* C8WorkspaceAndHandoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6247780E2C890CB6B12E1BA /* C8WorkspaceAndHandoffTests.swift */; };
 		9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */; };
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
 		940FDBB79B930C589F848D9E /* RoomCaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
 		A1C1339F90E84B6043AA5933 /* RoomCaptureStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */; };
+		A7855EECEEF453B5E44159EE /* C8UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770844001F2FE6982F857329 /* C8UITestFixtureView.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
 		B1A528CF35351323D878F3D1 /* CaptureWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */; };
 		B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */; };
+		B9969B731C492DDA092C4A4C /* C8CaptureQuality.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */; };
 		BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */; };
 		C94532183AEDB4F45F9DA729 /* CaptureSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0947CB0F939A786E6C0DE386 /* CaptureSyncService.swift */; };
+		CD904CE1D341A213F844D942 /* C8AcceptanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30E406C190E5C4BEBB424EC /* C8AcceptanceUITests.swift */; };
 		CFB3A197CC5EFF652CF85A22 /* CaptureSyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */; };
 		D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */; };
+		D3825C56B4F4C84C312CE397 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C338BE72776A66E8E31FAFB /* AVFoundation.framework */; };
+		D454210FE4F5B8CCBC57615D /* C8UITestFixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33AC1DD603CE6B233F16FC22 /* C8UITestFixtureScenarioTests.swift */; };
+		D5BE264D063D8C96245404C5 /* C8ProtectedMediaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8047368D704422A88B4D7370 /* C8ProtectedMediaStore.swift */; };
 		D5C0DF62C5BA57FEA572CC32 /* RoomPlanCaptureSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */; };
 		DB7563707C9F91699769D317 /* RoomCaptureSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D615B7544349E395E07640 /* RoomCaptureSessionView.swift */; };
 		DB91FEBD12707F2253613DBA /* RoomPlanCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */; };
@@ -66,6 +80,7 @@
 		EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */; };
 		F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */; };
 		F5C1551AF49B951F1F148A4C /* CaptureSyncModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */; };
+		F8AC4400D1DF1A1AE77B519F /* C8ContractAndQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF257CFE0A4B85F48680B21D /* C8ContractAndQualityTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,7 +115,10 @@
 		1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContracts.swift; sourceTree = "<group>"; };
 		1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreflightAndMappingTests.swift; sourceTree = "<group>"; };
 		21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7UITestFixtureScenarioTests.swift; sourceTree = "<group>"; };
+		2C338BE72776A66E8E31FAFB /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		2CAB53465834E55ED289D3E7 /* C8CapabilityAndStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CapabilityAndStorageTests.swift; sourceTree = "<group>"; };
 		32E591A8E99A20C7A4A6DA3D /* ProtectedCaptureJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectedCaptureJournalTests.swift; sourceTree = "<group>"; };
+		33AC1DD603CE6B233F16FC22 /* C8UITestFixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8UITestFixtureScenarioTests.swift; sourceTree = "<group>"; };
 		355194F068616831A4B117DC /* CaptureWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModel.swift; sourceTree = "<group>"; };
 		35802FA6AE1B015F3F3CAC44 /* CaptureWorkspaceModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModelTests.swift; sourceTree = "<group>"; };
 		3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceView.swift; sourceTree = "<group>"; };
@@ -112,20 +130,27 @@
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
 		5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncModels.swift; sourceTree = "<group>"; };
 		575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRepositoryTests.swift; sourceTree = "<group>"; };
+		582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CaptureQuality.swift; sourceTree = "<group>"; };
 		5DB98D116726F900D369D054 /* ProtectedCaptureJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectedCaptureJournal.swift; sourceTree = "<group>"; };
+		605F8BA350D6E2417667C0D8 /* C8CameraCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CameraCaptureEngine.swift; sourceTree = "<group>"; };
 		638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceFlowTests.swift; sourceTree = "<group>"; };
 		686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepository.swift; sourceTree = "<group>"; };
 		68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6A59599EAEA6781787237269 /* CaptureFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModel.swift; sourceTree = "<group>"; };
+		70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8ReconstructionContracts.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
 		723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7AcceptanceUITests.swift; sourceTree = "<group>"; };
 		743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContractTests.swift; sourceTree = "<group>"; };
 		746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkspaceView.swift; sourceTree = "<group>"; };
 		75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureSurface.swift; sourceTree = "<group>"; };
+		770844001F2FE6982F857329 /* C8UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8UITestFixtureView.swift; sourceTree = "<group>"; };
+		8047368D704422A88B4D7370 /* C8ProtectedMediaStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8ProtectedMediaStore.swift; sourceTree = "<group>"; };
 		838A0254ED72823AE11B121D /* CaptureQualityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityView.swift; sourceTree = "<group>"; };
+		879E165983B7BF350C32A8B1 /* C8MediaCaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8MediaCaptureWorkspaceView.swift; sourceTree = "<group>"; };
 		8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureCoordinator.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
+		93BA1D6F8AAF626ECA4BDEF2 /* C8MediaCaptureWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8MediaCaptureWorkspaceModel.swift; sourceTree = "<group>"; };
 		9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifacts.swift; sourceTree = "<group>"; };
 		9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticRoomCaptureFixtures.swift; sourceTree = "<group>"; };
 		A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7SyntheticFixtures.swift; sourceTree = "<group>"; };
@@ -135,11 +160,16 @@
 		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
 		B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncEngine.swift; sourceTree = "<group>"; };
+		BB146E16E0FE857399290A36 /* C8CameraCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CameraCapability.swift; sourceTree = "<group>"; };
 		BC63546001772B6B43829640 /* RoomPlan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RoomPlan.framework; path = System/Library/Frameworks/RoomPlan.framework; sourceTree = SDKROOT; };
 		BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceService.swift; sourceTree = "<group>"; };
+		C30E406C190E5C4BEBB424EC /* C8AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8AcceptanceUITests.swift; sourceTree = "<group>"; };
 		C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureStateMachineTests.swift; sourceTree = "<group>"; };
+		C6247780E2C890CB6B12E1BA /* C8WorkspaceAndHandoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8WorkspaceAndHandoffTests.swift; sourceTree = "<group>"; };
 		C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreparationView.swift; sourceTree = "<group>"; };
 		CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnsupportedCaptureView.swift; sourceTree = "<group>"; };
+		CF257CFE0A4B85F48680B21D /* C8ContractAndQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8ContractAndQualityTests.swift; sourceTree = "<group>"; };
+		CF544AF5CD07338CEBBB1EBB /* C8EvidenceUploaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8EvidenceUploaderTests.swift; sourceTree = "<group>"; };
 		D1939F54E12D0EDFF5168492 /* FixtureRoomCaptureEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureRoomCaptureEngineTests.swift; sourceTree = "<group>"; };
 		D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchUITests.swift; sourceTree = "<group>"; };
 		D2D615B7544349E395E07640 /* RoomCaptureSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureSessionView.swift; sourceTree = "<group>"; };
@@ -157,6 +187,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3825C56B4F4C84C312CE397 /* AVFoundation.framework in Frameworks */,
 				21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -179,6 +210,7 @@
 			children = (
 				68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */,
 				46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */,
+				770844001F2FE6982F857329 /* C8UITestFixtureView.swift */,
 				172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */,
 			);
 			path = App;
@@ -285,8 +317,30 @@
 			isa = PBXGroup;
 			children = (
 				A742D48DFB320D495E321DA8 /* AR */,
+				8B20C7E9F1AE2DD9B4304234 /* Camera */,
 			);
 			path = Platform;
+			sourceTree = "<group>";
+		};
+		8B20C7E9F1AE2DD9B4304234 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				BB146E16E0FE857399290A36 /* C8CameraCapability.swift */,
+				605F8BA350D6E2417667C0D8 /* C8CameraCaptureEngine.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		91EC52CE1992C1EFE32DBB82 /* MediaCapture */ = {
+			isa = PBXGroup;
+			children = (
+				2CAB53465834E55ED289D3E7 /* C8CapabilityAndStorageTests.swift */,
+				CF257CFE0A4B85F48680B21D /* C8ContractAndQualityTests.swift */,
+				CF544AF5CD07338CEBBB1EBB /* C8EvidenceUploaderTests.swift */,
+				33AC1DD603CE6B233F16FC22 /* C8UITestFixtureScenarioTests.swift */,
+				C6247780E2C890CB6B12E1BA /* C8WorkspaceAndHandoffTests.swift */,
+			);
+			path = MediaCapture;
 			sourceTree = "<group>";
 		};
 		97C93C92619CB4ADF8A6C554 /* Products */ = {
@@ -317,6 +371,7 @@
 			isa = PBXGroup;
 			children = (
 				1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */,
+				70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */,
 			);
 			path = Capture;
 			sourceTree = "<group>";
@@ -345,12 +400,21 @@
 			path = QualitySync;
 			sourceTree = "<group>";
 		};
+		B3CFBB0333ED1513794F715C /* C8 */ = {
+			isa = PBXGroup;
+			children = (
+				C30E406C190E5C4BEBB424EC /* C8AcceptanceUITests.swift */,
+			);
+			path = C8;
+			sourceTree = "<group>";
+		};
 		B4CD5AB503A04870C474EBDA /* HomeDesignCaptureTests */ = {
 			isa = PBXGroup;
 			children = (
 				2D42209B58C3CE9C34260C53 /* C1 */,
 				CD04126CC756A6BE91371EF8 /* C2 */,
 				F41E8907C4D4DFD613C250C4 /* C7 */,
+				D835E93821BFFD734CB4EA19 /* C8 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -388,6 +452,7 @@
 				F5262870A95256265601DCD9 /* CaptureWorkspace */,
 				61D79269D6AF0E2D590E7817 /* Evidence */,
 				EC59D210FDEEE0C3C53466C3 /* ManualEvidence */,
+				FFE85E1C640D5063CBB73FE5 /* MediaCapture */,
 				4EFF2CE2DE1F7BBC06912644 /* Projects */,
 				3C431264FFC6013842066185 /* RoomCapture */,
 			);
@@ -401,6 +466,14 @@
 				B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */,
 			);
 			path = C2;
+			sourceTree = "<group>";
+		};
+		D835E93821BFFD734CB4EA19 /* C8 */ = {
+			isa = PBXGroup;
+			children = (
+				91EC52CE1992C1EFE32DBB82 /* MediaCapture */,
+			);
+			path = C8;
 			sourceTree = "<group>";
 		};
 		D88E00BC4F6ED12AC47A941B /* Core */ = {
@@ -462,6 +535,7 @@
 		F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2C338BE72776A66E8E31FAFB /* AVFoundation.framework */,
 				BC63546001772B6B43829640 /* RoomPlan.framework */,
 			);
 			name = Frameworks;
@@ -471,9 +545,21 @@
 			isa = PBXGroup;
 			children = (
 				EC4630328F20A36D620EAE05 /* C7 */,
+				B3CFBB0333ED1513794F715C /* C8 */,
 				D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */,
 			);
 			path = HomeDesignCaptureUITests;
+			sourceTree = "<group>";
+		};
+		FFE85E1C640D5063CBB73FE5 /* MediaCapture */ = {
+			isa = PBXGroup;
+			children = (
+				582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */,
+				93BA1D6F8AAF626ECA4BDEF2 /* C8MediaCaptureWorkspaceModel.swift */,
+				879E165983B7BF350C32A8B1 /* C8MediaCaptureWorkspaceView.swift */,
+				8047368D704422A88B4D7370 /* C8ProtectedMediaStore.swift */,
+			);
+			path = MediaCapture;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -579,6 +665,7 @@
 				9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */,
 				EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */,
 				585F380C28C113C4F94FAC64 /* C7GoldenContractUITests.swift in Sources */,
+				CD904CE1D341A213F844D942 /* C8AcceptanceUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,6 +677,14 @@
 				E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */,
 				3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */,
 				011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */,
+				893867B17EAFC9398FC88B6F /* C8CameraCapability.swift in Sources */,
+				18846D4A6E1BA9E9FEDCA3F1 /* C8CameraCaptureEngine.swift in Sources */,
+				B9969B731C492DDA092C4A4C /* C8CaptureQuality.swift in Sources */,
+				2499978C9C09493643249CC5 /* C8MediaCaptureWorkspaceModel.swift in Sources */,
+				6B4F08C7267A1681E1DA687A /* C8MediaCaptureWorkspaceView.swift in Sources */,
+				D5BE264D063D8C96245404C5 /* C8ProtectedMediaStore.swift in Sources */,
+				2A331873B4D3D342C23BE430 /* C8ReconstructionContracts.swift in Sources */,
+				A7855EECEEF453B5E44159EE /* C8UITestFixtureView.swift in Sources */,
 				E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */,
 				95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */,
 				44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */,
@@ -632,6 +727,11 @@
 				7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */,
 				D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */,
 				35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */,
+				10250F9A5A217E5B0C852F7B /* C8CapabilityAndStorageTests.swift in Sources */,
+				F8AC4400D1DF1A1AE77B519F /* C8ContractAndQualityTests.swift in Sources */,
+				235BA8F422CD86FC06CA3160 /* C8EvidenceUploaderTests.swift in Sources */,
+				D454210FE4F5B8CCBC57615D /* C8UITestFixtureScenarioTests.swift in Sources */,
+				8BF78FA2833FE954AC6F7CED /* C8WorkspaceAndHandoffTests.swift in Sources */,
 				140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */,
 				B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */,
 				3DB1883D0119E7BF7B74240F /* CapturePreflightAndMappingTests.swift in Sources */,

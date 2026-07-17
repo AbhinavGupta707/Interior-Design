@@ -81,7 +81,31 @@ Cancellation from `created` is immediate. Cancellation from any leased stage bec
 
 Lease tokens are never public, logged or placed in audit/outbox metadata. Claim and publication recheck each current C2 asset status, byte count, detected MIME type, SHA-256, rights basis, service consent, denied training status and C8 withdrawal record. An expired or superseded token cannot advance, fail or publish. Publication also requires exact job/project/source-manifest scope and reparses the frozen C8 result schema.
 
-Worker implementations in the other C8 lanes must supply real media-preparation/geometry output through this seam. This lane contains no automatic fake worker. Unit/Postgres tests inject explicit deterministic result fixtures only; those fixtures are not provider, camera, GPU, algorithm-accuracy or production-capacity evidence.
+The composed spatial worker supplies real media preparation and the private inference-worker protocol through this seam. It does not contain an automatic success fixture: unavailable reconstruction binaries produce an immutable bounded abstention, and fixture executors remain test-only evidence rather than provider, camera, GPU, algorithm-accuracy or production-capacity evidence.
+
+## Composed reconstruction worker
+
+The C8 runner is disabled unless explicitly activated. It shares the spatial worker's narrow database and S3-compatible storage configuration, then uses the exact durable lease and current rights decision supplied by the platform repository.
+
+```sh
+export C8_RECONSTRUCTION_WORKER_ENABLED='true'
+export C8_INFERENCE_PYTHON_COMMAND='python3'
+export C8_INFERENCE_PYTHONPATH="$PWD/services/inference-worker/src"
+pnpm --filter @interior-design/spatial-worker dev
+```
+
+The production flow is:
+
+1. claim one attempt with tenant/project/job/attempt/lease fencing;
+2. reload every immutable source and recheck C2 status, checksum, MIME type, rights and C8 withdrawal;
+3. send only RGB image/video sources through the bounded FFmpeg preparation and privacy-review pipeline;
+4. stage accepted sanitized frames in an attempt-owned private directory and invoke the fixed Python module with no shell or request-controlled executable/flags;
+5. run the registered geometry adapter, optionally compose a separate appearance adapter, verify every private artifact hash/path/size and upload it through the derived-storage port; and
+6. ask the platform repository to atomically publish the locator-free terminal result, or fail/acknowledge cancellation without allowing a stale worker to publish.
+
+`C8_INFERENCE_PYTHON_COMMAND` and `C8_INFERENCE_PYTHONPATH` are operator configuration, never request data. Defaults are `python3` and the repository inference-worker source root. Production installation must provide the approved Python environment and optional tools; the registry truthfully returns unavailable state when a binary/runtime is absent.
+
+The RGB path uses COLMAP when its registered binary is available and otherwise publishes a safe abstention. Open3D requires independently validated colour/depth pairs, intrinsics and poses. Native encoded-photo depth presence alone is not sufficient. On hosts without trusted known-pose TSDF inputs, RGB-D/hybrid requests keep `RGBD_TSDF_INPUT_UNAVAILABLE` visible and may still produce an independently labelled RGB proposal. Nerfstudio/gsplat run only for optional appearance after valid geometry/cameras and an eligible CUDA runtime; their output remains non-dimensional.
 
 ## Honest local runtime states
 
@@ -131,4 +155,4 @@ That live suite applies C1–C8 and proves exact replay, tenant isolation, lease
 9. Use a deterministic test result only in the explicit test harness. Verify partial registration, disconnected components, unknown scale and abstention copy remain visible; geometry and appearance remain separate.
 10. Repeat at desktop and 390×844 mobile width, keyboard-only and as the viewer persona. Check no horizontal overflow, visible focus, meaningful live-region status, no framework overlay, no unexpected console warning/error and no failed network request.
 
-The Browser/in-app automation gate is distinct from component tests and production builds. Keep screenshots outside Git. Physical iOS camera/RGB-D, COLMAP/Open3D algorithm runs, CUDA dense geometry and Nerfstudio/gsplat output remain `NOT RUN` unless the named real hardware/runtime was actually used.
+The Browser/in-app automation gate is distinct from component tests and production builds. Keep screenshots outside Git. Physical iOS camera/RGB-D, COLMAP/Open3D algorithm runs, CUDA dense geometry and Nerfstudio/gsplat output remain `NOT RUN` unless the named real hardware/runtime was actually used. The deterministic `C8_UI_TEST_MODE=1` native fixture is available only in a Debug/local build, is visibly synthetic and is compiled out of Release.

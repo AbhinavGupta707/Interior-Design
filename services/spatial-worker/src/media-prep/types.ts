@@ -14,6 +14,8 @@ export interface MediaPreparationSource {
 export interface MediaPreparationRequest {
   readonly jobId: string;
   readonly projectId: string;
+  /** Exact durable job source manifest; orchestration supplies this after rights checks. */
+  readonly sourceManifestSha256?: string;
   readonly sources: readonly MediaPreparationSource[];
 }
 

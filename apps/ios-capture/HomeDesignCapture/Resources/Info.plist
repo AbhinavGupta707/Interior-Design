@@ -25,7 +25,7 @@
 	<key>HomeDesignEnvironment</key>
 	<string>$(APP_ENVIRONMENT)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Capture photos and room geometry as evidence for your selected home design project.</string>
+	<string>Capture rights-cleared photos, silent video, and supported depth as immutable evidence for your selected home design project.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>

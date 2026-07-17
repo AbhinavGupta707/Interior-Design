@@ -11,6 +11,11 @@ export interface ProcessResult {
   readonly stdout: string;
 }
 
+export interface ProcessExecutionOptions {
+  /** Code-owned working directory. Request payloads must never supply this value. */
+  readonly cwd?: string;
+}
+
 export class ProcessExecutionError extends Error {
   readonly reason: "aborted" | "exit" | "output-limit" | "spawn" | "timeout";
   readonly exitCode?: number;
@@ -45,6 +50,7 @@ export function runBoundedProcess(
   arguments_: readonly string[],
   limits: ProcessLimits,
   signal?: AbortSignal,
+  options: ProcessExecutionOptions = {},
 ): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -53,6 +59,7 @@ export function runBoundedProcess(
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     const child = spawn(executable, [...arguments_], {
+      ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
       env: {
         LANG: "C",
         LC_ALL: "C",

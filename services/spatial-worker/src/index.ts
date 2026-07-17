@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import path from "node:path";
+import { PostgresReconstructionRepository } from "@interior-design/platform-api/reconstruction";
 import postgres from "postgres";
 
 import { parseWorkerConfig } from "./config.js";
@@ -12,7 +13,13 @@ import {
   PostgresPlanProcessingQueue,
 } from "./plan-processing/index.js";
 import { MediaProcessor } from "./processor.js";
+import { MediaPreparationPipeline } from "./media-prep/index.js";
 import { PostgresRoomPlanProcessingQueue, RoomPlanProcessingRunner } from "./roomplan/index.js";
+import {
+  PostgresReconstructionSourceLoader,
+  PythonReconstructionProcessor,
+  ReconstructionProcessingRunner,
+} from "./reconstruction/index.js";
 import { SpatialWorkerRunner } from "./runner.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
 
@@ -33,6 +40,7 @@ export { IsolatedWorkspace } from "./workspace.js";
 export * from "./plan-processing/index.js";
 export * from "./roomplan/index.js";
 export * from "./media-prep/index.js";
+export * from "./reconstruction/index.js";
 
 export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8"] as const);
 
@@ -93,6 +101,32 @@ export async function runSpatialWorker(
           workerId: `c7-${config.workerId}`.slice(0, 100),
         })
       : undefined;
+  const reconstructionRunner =
+    environment.C8_RECONSTRUCTION_WORKER_ENABLED === "true"
+      ? new ReconstructionProcessingRunner({
+          leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
+          logger,
+          media: new MediaPreparationPipeline({
+            logger,
+            temporaryRoot: config.temporaryDirectory.root,
+          }),
+          pollMilliseconds: config.pollMs,
+          processor: new PythonReconstructionProcessor({
+            maximumOutputBytes: config.subprocess.maximumOutputBytes,
+            processTimeoutMilliseconds: Math.max(config.subprocess.timeoutMs, 3_600_000),
+            pythonCommand: environment.C8_INFERENCE_PYTHON_COMMAND ?? "python3",
+            pythonModuleRoot:
+              environment.C8_INFERENCE_PYTHONPATH ??
+              path.resolve(process.cwd(), "services/inference-worker/src"),
+            storage,
+            temporaryRoot: config.temporaryDirectory.root,
+          }),
+          queue: new PostgresReconstructionRepository(sql),
+          sources: new PostgresReconstructionSourceLoader(sql),
+          storage,
+          workerId: `c8-${config.workerId}`.slice(0, 100),
+        })
+      : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -104,6 +138,7 @@ export async function runSpatialWorker(
       runner.run(shutdown.signal),
       ...(planRunner === undefined ? [] : [planRunner.run(shutdown.signal)]),
       ...(roomPlanRunner === undefined ? [] : [roomPlanRunner.run(shutdown.signal)]),
+      ...(reconstructionRunner === undefined ? [] : [reconstructionRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);

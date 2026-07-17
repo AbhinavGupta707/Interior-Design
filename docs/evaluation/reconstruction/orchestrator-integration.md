@@ -1,18 +1,18 @@
-# C8-L4 orchestrator integration
+# C8 orchestrator integration
 
-## Required composition after lane merge
+## Completed composition after lane merge
 
-This lane does not own worker registration, durable job code, shared TypeScript contracts, native project generation, or web routes. The orchestrator must perform these steps after L3, L2, and L1 are merged.
+The orchestrator completed the shared composition after merging L3, L2, L1 and L4 in the frozen order.
 
-1. Register `NeuralAppearanceAdapter.discover()` and `GsplatAppearanceAdapter.discover()` in the inference worker's official adapter discovery path. Expose unavailable registrations as bounded provider/hardware state; do not hide the feature and do not debug permissions until registration is present.
-2. Compose `c8-neural-appearance-input-v1` only inside the trusted worker from the exact accepted prepared manifest, L3 camera manifest/artifact, L3 geometry result, durable job/project/attempt, method, and current rights decision. Do not add a public route accepting this envelope.
-3. Resolve sanitized frame storage through the worker's narrow tenant-scoped storage credential. Pass the private direct-child mapping as `TrustedStagedFrames`; never place paths, keys, URLs, or credentials in the manifest, log, result, retry record, or API.
-4. Supply cancellation and a final atomic publication fence covering tenant, project, job, attempt, optimistic version, terminal state, rights withdrawal, and cancellation. The `ArtifactPublisher` must synchronously store the artifact and immutable appearance manifest only after that fence. Retry creates a new attempt; a late old worker cannot publish.
-5. Keep geometry and appearance as distinct shared results. Never feed a Nerfstudio checkpoint, radiance field, exported mesh, or splat back into the geometry or C5 canonical mutation path.
-6. Add the C8 XCUITest source through the orchestrator-owned XcodeGen step after the C8-L2 fixture state/identifiers are present. Do not weaken the tests to make missing producer state pass.
-7. Point the live Playwright journey at the real L1 web/BFF/API/worker stack and expand the opt-in test with producer-confirmed stable identifiers for source selection, consent, cancel/retry, and result diagnostics.
+1. `discover_reconstruction_adapters()` always registers COLMAP, Open3D, Nerfstudio and gsplat through their code-owned activation paths and exposes only bounded availability/hardware/safe-code state. On this Mac it truthfully reports COLMAP and Open3D not installed and both appearance tools unavailable.
+2. `ReconstructionProcessingRunner` claims the durable L1 lease, rechecks exact L1/C2 source scope and rights, runs L2 preparation, advances the fenced stages, invokes the private Python protocol, uploads verified artifacts and asks L1 to atomically publish the immutable terminal result.
+3. `PythonReconstructionProcessor` stages accepted sanitized frames as private direct children, validates every hash, sends no locator through the public API and constrains the Python module, working directory, timeout and output. The Python protocol composes L3 geometry and optional L4 appearance only from this trusted envelope.
+4. Artifact paths must resolve beneath the attempt workspace and match the declared byte count and SHA-256 before upload. Public results contain descriptors only. Storage keys, paths, URLs, credentials, provider output and subprocess output do not enter public results or logs.
+5. L1's database publication remains the final tenant/project/job/attempt/lease/cancellation/rights fence. Geometry stays `proposal-only`; optional appearance stays `non-dimensional`; neither path calls C5 or changes the canonical snapshot.
+6. XcodeGen now includes the C8 native implementation, unit tests and five C8 acceptance journeys. A deterministic C8 presentation fixture is accepted only in a Debug/local build with exact opt-in and is compiled out of Release.
+7. The independent Playwright fixture remains visibly synthetic. The live composed database path is covered below by the real platform repository and spatial worker integration suites; a signed-in in-app Browser run against a separately started full stack remains a distinct evidence class.
 
-## Producer mapping to confirm
+## Producer mapping confirmed
 
 | L4 field              | Required producer fact                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------- |
@@ -24,7 +24,14 @@ This lane does not own worker registration, durable job code, shared TypeScript 
 | `TrustedStagedFrames` | private direct-child image files whose SHA-256 equals the prepared manifest                       |
 | publisher             | storage adapter that does not return/log a key, URL, path, payload, or credential                 |
 
-If L3's camera artifact shape differs from `c8-calibrated-cameras-v1`, adapt it in the orchestrator-owned trusted composition layer or transfer an exact L4 file for an agreed schema update. Do not weaken the parser or accept arbitrary tool output.
+The trusted Python bridge adapts L3's strict `c8-calibrated-cameras-v1` world-to-camera document into the private appearance input only when the geometry result contains a valid camera set and an eligible appearance runtime is registered. The public parser was not widened and arbitrary tool output remains rejected.
+
+## Honest runtime boundary
+
+- The composed RGB path is complete: immutable source → FFmpeg preparation/privacy gate → private worker protocol → COLMAP adapter discovery/execution or bounded abstention → verified artifact upload → atomic database publication.
+- Known-pose Open3D TSDF, Nerfstudio and gsplat adapters and their private composition contracts are implemented and deterministically tested. Their real algorithms were not run because this Apple M1 host has no Open3D/COLMAP/PyTorch/CUDA/NVIDIA runtime.
+- Native AVFoundation still capture records whether the encoded photo contains depth, but this run did not prove a physical depth payload, calibration/pose extraction, or a native RGB-D-to-Open3D journey. RGB-D/hybrid jobs retain an explicit `RGBD_TSDF_INPUT_UNAVAILABLE` finding and use the independently valid RGB geometry path when trusted known-pose TSDF inputs are not available.
+- The physical camera/RGB-D and Windows/NVIDIA evidence gates remain `NOT RUN`; synthetic executors and Simulator states do not change that status.
 
 ## Exact integration commands
 
@@ -68,11 +75,11 @@ xcodebuild -project HomeDesignCapture.xcodeproj -scheme HomeDesignCapture \
 Run the real web journey only with a live integrated stack and non-sensitive test session:
 
 ```sh
-C8_LIVE_RECONSTRUCTION_URL=http://127.0.0.1:3000 \
-C8_LIVE_RECONSTRUCTION_PATH=/reconstruction \
-C8_LIVE_RECONSTRUCTION_STORAGE_STATE=/tmp/c8-owner-storage-state.json \
+C8_LIVE_RECONSTRUCTION_URL=http://localhost:3000 \
 pnpm exec playwright test --config tests/e2e/reconstruction/playwright.live.config.ts
 ```
+
+The live specification can create its own local fixture session and tenant project through the real BFF/API. `C8_LIVE_RECONSTRUCTION_PATH` and `C8_LIVE_RECONSTRUCTION_STORAGE_STATE` remain optional overrides for an already-provisioned non-sensitive test project/session.
 
 Finally run the repository gate:
 
