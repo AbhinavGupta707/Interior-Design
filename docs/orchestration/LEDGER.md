@@ -259,3 +259,34 @@
 - Human correction time remains `NOT MEASURED`; the automated pack cannot satisfy the 8/15-minute human target. The baseline is promotion-ineligible until a rights-approved human study and representative plan set exist.
 - No paid provider, API key, outbound inference call, GPU, customer plan, physical capture, survey-grade geometry, structure/fire/regulatory conclusion or training use is present. C6 handles one deliberately narrow straight-edged page and visibly abstains outside that box. Physical capture/reconstruction/fusion and 3D delivery remain owned by C7-C10.
 - Integrated product SHA: `84071a8`. The ledger-close commit is the commit containing this completed record; C7 records that commit as its immutable predecessor before any new lane opens.
+
+## C7 — Native iOS RoomPlan capture and secure sync
+
+### Master activation
+
+- Status: prelude complete on `main`; four isolated worktrees are ready to launch from the ledger activation commit containing this record
+- Contract: `docs/orchestration/checkpoints/C7_CONTRACT.md` (`c7-capture-session-v1`, `c7-capture-package-v1`, `c7-roomplan-normalized-v1`, `c7-capture-proposal-v1`)
+- Immutable predecessor: `96d0a72`
+- Prelude commit: `f4c8182`
+- Frozen worker base: the ledger activation commit containing this record; its exact SHA and task IDs are recorded immediately after launch
+- Planned lanes: four, retained adaptively because native RoomPlan/AR correctness, privacy-preserving background sync, durable backend/conversion and independent field/security evaluation are substantial independent risks with exclusive write boundaries
+- Provider policy: no paid provider, cloud key, GPU or customer capture is required; local PostGIS/S3-compatible storage and visibly synthetic RoomPlan fixtures support deterministic gates
+- Mutation policy: C7 preserves immutable Apple evidence and emits a bounded canonical-shaped proposal or explicit abstention; it cannot call C5 preview/commit or mutate canonical state
+- Physical-device status at activation: `NOT RUN`; Xcode reports only the Mac and iOS Simulators, so DQ-020 and the named C7/C18 field-release blocker remain open
+
+| Lane                         | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State | Exclusive roots                                                                                                                        |
+| ---------------------------- | -------------- | ----------------------- | ---------- | --------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| C7-L1 RoomPlan/AR session    | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native RoomCapture feature, AR platform adapter and C7 RoomCapture tests                                                               |
+| C7-L2 quality/sync/workspace | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native capture quality/sync/workspace features, C7 QualitySync tests and three explicitly allocated app integration files              |
+| C7-L3 backend/converter      | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | platform capture module/C7 composition/migration/tests, spatial-worker RoomPlan converter/tests and native-capture development runbook |
+| C7-L4 mobile/field/security  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | C7 XCUITests, mobile/security/evaluation packs, RoomPlan evaluation/threat model and iOS field/release runbooks                        |
+
+### Prelude gate evidence
+
+- Primary Apple RoomPlan, multi-room `StructureBuilder`, capture encoding, instruction, relocalisation, AR world-map and surface-shape documentation informed the frozen boundaries. Apple encodings and USDZ remain immutable evidence; a separately versioned, integer-normalized manifest provides bounded deterministic conversion without pretending classification confidence is dimensional accuracy.
+- Shared TypeScript and Swift 6 contracts freeze exact capture/session/package/proposal versions, routes, rights, state transitions, identifiers, media kinds, multipart limits, cross-references, normalized integer units, device/quality metadata and proposal/abstention shapes. Seven focused C7 contract cases pass, and the full contract package passes 40/40.
+- The central authorization registry and independent security fixture now include all seven C7 actions. The focused identity/security invocation passes 686 cases; owner/editor receive create/read/cancel/upload/finalize/retry authority while viewers remain read-only for sessions/proposals and all tenant mismatches fail closed.
+- XcodeGen reproducibly registers the shared Swift contract tests and a real UI-test target. The iPhone Air iOS 26.4 Simulator passes 29/29 XCTest/XCUITest cases with zero failures or skips. An unsigned generic physical-iOS build also passes. Neither result is counted as LiDAR, RoomPlan, relocalisation or field evidence.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, all 14 package lint/typecheck suites, 638 JavaScript unit tests, all production builds, Ruff, strict mypy and 12 Python tests. The C7 prelude also passes `git diff --check`.
+- Migration `0007_native_capture.sql` is reserved exclusively for C7-L3 before launch. Shared contracts/core authz, migration registry, package/root manifests, lockfiles, accepted checkpoint contract, generated Xcode project, `project.yml`, `.github`, `.codex`, `AGENTS.md` and this ledger remain orchestrator-owned.
+- All four implementation lanes use exact `gpt-5.6-sol` with `xhigh` reasoning. This is an adaptive assignment, not a checkpoint-wide default: C7 has no bounded/mechanical lane once native sensor state, protected background transfer, tenant-safe geometry publication or adversarial field acceptance is included; later checkpoints may use `high` for genuinely bounded work.
