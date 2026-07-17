@@ -218,9 +218,10 @@
 
 ### Master activation
 
-- Status: integration complete; product commit pending from merged base `3803016`
+- Status: complete on `main`; C7 may open from the ledger-close commit after product integration `84071a8`
 - Contract: `docs/orchestration/checkpoints/C6_CONTRACT.md` (`c6-plan-job-v1`, `c6-plan-parser-input-v1`, `c6-plan-proposal-v1`, `c6-plan-operation-draft-v1`)
 - Prelude commit: `0baf74a`
+- Frozen worker base commit: `25721c5`
 - Planned lanes: four, retained adaptively because durable workflow/persistence, isolated parser execution, correction UX and independent rights/benchmark/security evaluation have clean exclusive ownership boundaries
 - Parser policy: no paid provider, key, outbound inference call or GPU; securely normalized deterministic vector first, deterministic CPU raster fallback, stable adapter boundary for later evaluated models
 - Mutation policy: parser output is an immutable proposal only; calibrated reviewed candidates become exact public C5 operations, and only C5 preview/commit may mutate canonical state
@@ -257,4 +258,4 @@
 - The retained reference evaluation reports 90% accepted coverage, 100% hard-negative abstention, zero severe or scope errors, wall-endpoint P90 35 mm, opening-centre P90 42 mm, calibration P90 14 mm, ECE 0.12 over 45 samples, wall-clock P90 57 ms, CPU peak 38% and memory peak 39%. These are deterministic synthetic/reference measurements, not customer-plan or production-capacity claims.
 - Human correction time remains `NOT MEASURED`; the automated pack cannot satisfy the 8/15-minute human target. The baseline is promotion-ineligible until a rights-approved human study and representative plan set exist.
 - No paid provider, API key, outbound inference call, GPU, customer plan, physical capture, survey-grade geometry, structure/fire/regulatory conclusion or training use is present. C6 handles one deliberately narrow straight-edged page and visibly abstains outside that box. Physical capture/reconstruction/fusion and 3D delivery remain owned by C7-C10.
-- Integrated product SHA: pending. Ledger-close SHA: pending.
+- Integrated product SHA: `84071a8`. The ledger-close commit is the commit containing this completed record; C7 records that commit as its immutable predecessor before any new lane opens.
