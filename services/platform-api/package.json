@@ -23,6 +23,7 @@
     "@interior-design/authz": "workspace:*",
     "@interior-design/config": "workspace:*",
     "@interior-design/contracts": "workspace:*",
+    "@interior-design/provider-adapters": "workspace:*",
     "@opentelemetry/api": "^1.9.1",
     "fastify": "^5.10.0",
     "pino": "^10.3.1",

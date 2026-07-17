@@ -36,18 +36,30 @@ const expectedSameTenantAccess = {
   editor: {
     "intake:read": true,
     "intake:update": true,
+    "property:read": true,
+    "property:refresh": true,
+    "property:resolve": true,
+    "property:update": true,
     "project:create": true,
     "project:read": true,
   },
   owner: {
     "intake:read": true,
     "intake:update": true,
+    "property:read": true,
+    "property:refresh": true,
+    "property:resolve": true,
+    "property:update": true,
     "project:create": true,
     "project:read": true,
   },
   viewer: {
     "intake:read": true,
     "intake:update": false,
+    "property:read": true,
+    "property:refresh": false,
+    "property:resolve": false,
+    "property:update": false,
     "project:create": false,
     "project:read": true,
   },
@@ -68,6 +80,10 @@ describe("authoriseProjectAction", () => {
       "project:read",
       "intake:read",
       "intake:update",
+      "property:read",
+      "property:refresh",
+      "property:resolve",
+      "property:update",
     ]);
     expect(Object.isFrozen(projectActions)).toBe(true);
   });

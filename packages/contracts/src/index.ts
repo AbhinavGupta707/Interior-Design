@@ -503,3 +503,333 @@ export const c2RouteContract = Object.freeze({
   listAssets: "/v1/projects/:projectId/assets",
   signUploadPart: "/v1/projects/:projectId/assets/upload-sessions/:sessionId/parts",
 });
+
+export const propertyIdSchema = z.uuid();
+export const propertyResolutionIdSchema = z.uuid();
+export const propertyCandidateIdSchema = z.uuid();
+export const propertySourceRecordIdSchema = z.uuid();
+export const uprnSchema = z.string().regex(/^\d{1,12}$/u);
+
+export const propertyJurisdictionSchema = z.enum([
+  "england",
+  "wales",
+  "scotland",
+  "northern-ireland",
+  "unknown",
+]);
+export type PropertyJurisdiction = z.infer<typeof propertyJurisdictionSchema>;
+
+export const propertyAddressSchema = z
+  .object({
+    countryCode: z.literal("GB"),
+    line1: z.string().trim().min(1).max(120),
+    line2: z.string().trim().min(1).max(120).optional(),
+    locality: z.string().trim().min(1).max(120).optional(),
+    postcode: z.string().trim().min(2).max(16).optional(),
+  })
+  .strict();
+export type PropertyAddress = z.infer<typeof propertyAddressSchema>;
+
+export const propertyIdentifierSchema = z
+  .object({
+    scheme: z.literal("UPRN"),
+    value: uprnSchema,
+  })
+  .strict();
+
+export const propertyLocationSchema = z
+  .discriminatedUnion("crs", [
+    z
+      .object({
+        coordinates: z.tuple([z.number(), z.number()]),
+        crs: z.literal("EPSG:27700"),
+      })
+      .strict(),
+    z
+      .object({
+        coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
+        crs: z.literal("EPSG:4326"),
+      })
+      .strict(),
+  ])
+  .describe(
+    "A property identity point, never a legal boundary or interior geometry. Coordinates are easting/northing for EPSG:27700 and longitude/latitude for EPSG:4326.",
+  );
+
+export const propertySourceSchema = z
+  .object({
+    coverage: z.enum(["fixture-complete", "partial", "unknown"]),
+    dataset: z.string().trim().min(1).max(120),
+    datasetVersion: z.string().trim().min(1).max(120),
+    licence: z
+      .object({
+        id: z.string().trim().min(1).max(120),
+        title: z.string().trim().min(1).max(200),
+        url: safeHttpsUrlSchema.optional(),
+      })
+      .strict(),
+    modelTrainingAllowed: z.literal(false),
+    participantSharingAllowed: z.boolean(),
+    providerId: z
+      .string()
+      .trim()
+      .regex(/^[a-z0-9][a-z0-9-]{0,79}$/u),
+    retrievedAt: z.iso.datetime({ offset: true }),
+    serviceProcessingAllowed: z.literal(true),
+  })
+  .strict();
+export type PropertySource = z.infer<typeof propertySourceSchema>;
+
+export const propertyCandidateSchema = z
+  .object({
+    address: propertyAddressSchema,
+    candidateId: propertyCandidateIdSchema,
+    displayAddress: z.string().trim().min(1).max(240),
+    identifiers: z.array(propertyIdentifierSchema).max(5),
+    jurisdiction: propertyJurisdictionSchema,
+    location: propertyLocationSchema.optional(),
+    source: propertySourceSchema,
+  })
+  .strict();
+export type PropertyCandidate = z.infer<typeof propertyCandidateSchema>;
+
+export const resolvePropertyRequestSchema = z
+  .object({
+    countryCode: z.literal("GB"),
+    query: z.string().trim().min(3).max(160),
+  })
+  .strict();
+export type ResolvePropertyRequest = z.infer<typeof resolvePropertyRequestSchema>;
+
+export const propertyResolutionResponseSchema = z
+  .object({
+    candidates: z.array(propertyCandidateSchema).max(20),
+    expiresAt: z.iso.datetime({ offset: true }),
+    manualEntryAllowed: z.literal(true),
+    providerState: z.enum(["fixture", "disabled", "unavailable"]),
+    resolutionId: propertyResolutionIdSchema,
+    status: z.enum(["matched", "ambiguous", "no-match", "unavailable"]),
+  })
+  .strict()
+  .superRefine((resolution, context) => {
+    const validCandidateCount =
+      (resolution.status === "matched" && resolution.candidates.length === 1) ||
+      (resolution.status === "ambiguous" && resolution.candidates.length >= 2) ||
+      ((resolution.status === "no-match" || resolution.status === "unavailable") &&
+        resolution.candidates.length === 0);
+    if (!validCandidateCount) {
+      context.addIssue({
+        code: "custom",
+        message: "Property resolution status must agree with its candidate count.",
+        path: ["candidates"],
+      });
+    }
+    const providerStateAgrees =
+      (resolution.status === "unavailable" &&
+        (resolution.providerState === "disabled" || resolution.providerState === "unavailable")) ||
+      (resolution.status !== "unavailable" && resolution.providerState === "fixture");
+    if (!providerStateAgrees) {
+      context.addIssue({
+        code: "custom",
+        message: "Property resolution status must agree with its provider state.",
+        path: ["providerState"],
+      });
+    }
+  });
+export type PropertyResolutionResponse = z.infer<typeof propertyResolutionResponseSchema>;
+
+const selectCandidatePropertyRequestSchema = z
+  .object({
+    candidateId: propertyCandidateIdSchema,
+    expectedVersion: z.int().nonnegative(),
+    mode: z.literal("candidate"),
+    resolutionId: propertyResolutionIdSchema,
+  })
+  .strict();
+
+const selectManualPropertyRequestSchema = z
+  .object({
+    address: propertyAddressSchema,
+    expectedVersion: z.int().nonnegative(),
+    jurisdiction: propertyJurisdictionSchema,
+    mode: z.literal("manual"),
+  })
+  .strict();
+
+export const selectProjectPropertyRequestSchema = z.discriminatedUnion("mode", [
+  selectCandidatePropertyRequestSchema,
+  selectManualPropertyRequestSchema,
+]);
+export type SelectProjectPropertyRequest = z.infer<typeof selectProjectPropertyRequestSchema>;
+
+export const projectPropertySchema = z
+  .object({
+    address: propertyAddressSchema,
+    displayAddress: z.string().trim().min(1).max(240),
+    identifiers: z.array(propertyIdentifierSchema).max(5),
+    interiorKnowledgeStatus: z.literal("unknown-without-evidence"),
+    jurisdiction: propertyJurisdictionSchema,
+    location: propertyLocationSchema.optional(),
+    mode: z.enum(["candidate", "manual"]),
+    projectId: projectIdSchema,
+    propertyId: propertyIdSchema,
+    selectedAt: z.iso.datetime({ offset: true }),
+    source: propertySourceSchema,
+    updatedAt: z.iso.datetime({ offset: true }),
+    version: z.int().positive(),
+  })
+  .strict();
+export type ProjectProperty = z.infer<typeof projectPropertySchema>;
+
+export const propertyDossierClassificationSchema = z.enum([
+  "source-observation",
+  "user-assertion",
+  "estimate",
+  "inference",
+  "unknown",
+]);
+export type PropertyDossierClassification = z.infer<typeof propertyDossierClassificationSchema>;
+
+export const propertyDossierValueSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("boolean"), value: z.boolean() }).strict(),
+  z
+    .object({
+      kind: z.literal("integer"),
+      unit: z.enum(["count", "m2", "mm", "year"]).optional(),
+      value: z.int().min(-1_000_000_000).max(1_000_000_000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("number"),
+      unit: z.enum(["m", "m2", "percent", "rating"]).optional(),
+      value: z.number().min(-1_000_000_000).max(1_000_000_000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("text"),
+      value: z.string().trim().min(1).max(500),
+    })
+    .strict(),
+  z.object({ kind: z.literal("unknown") }).strict(),
+]);
+export type PropertyDossierValue = z.infer<typeof propertyDossierValueSchema>;
+
+export const propertyDossierItemSchema = z
+  .object({
+    classification: propertyDossierClassificationSchema,
+    confidencePercent: z.int().min(0).max(100).optional(),
+    interiorClaim: z.literal("none"),
+    key: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/u),
+    label: z.string().trim().min(1).max(120),
+    note: z.string().trim().min(1).max(500).optional(),
+    sourceRecordIds: z.array(propertySourceRecordIdSchema).max(20),
+    value: propertyDossierValueSchema,
+  })
+  .strict()
+  .superRefine((item, context) => {
+    const isUnknown = item.classification === "unknown";
+    if (isUnknown !== (item.value.kind === "unknown")) {
+      context.addIssue({
+        code: "custom",
+        message: "Unknown dossier items must carry an explicit unknown value.",
+        path: ["value"],
+      });
+    }
+    const needsConfidence =
+      item.classification === "estimate" || item.classification === "inference";
+    if (needsConfidence !== (item.confidencePercent !== undefined)) {
+      context.addIssue({
+        code: "custom",
+        message: "Only estimates and inferences carry a bounded confidence percentage.",
+        path: ["confidencePercent"],
+      });
+    }
+    if (item.classification !== "unknown" && item.sourceRecordIds.length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Every established dossier item must reference a source record.",
+        path: ["sourceRecordIds"],
+      });
+    }
+  });
+export type PropertyDossierItem = z.infer<typeof propertyDossierItemSchema>;
+
+export const propertySourceRecordSchema = z
+  .object({
+    fields: z
+      .array(z.string().regex(/^[a-z][a-z0-9-]{0,79}$/u))
+      .min(1)
+      .max(100),
+    id: propertySourceRecordIdSchema,
+    normalizedPayloadSha256: sha256HexSchema,
+    projectId: projectIdSchema,
+    propertyId: propertyIdSchema,
+    source: propertySourceSchema,
+  })
+  .strict();
+export type PropertySourceRecord = z.infer<typeof propertySourceRecordSchema>;
+
+export const propertyDossierSchema = z
+  .object({
+    coverageWarnings: z.array(z.string().trim().min(1).max(500)).min(1).max(20),
+    generatedAt: z.iso.datetime({ offset: true }),
+    interiorKnowledgeStatus: z.literal("unknown-without-evidence"),
+    items: z.array(propertyDossierItemSchema).min(1).max(200),
+    planningStatus: z.literal("not-reviewed"),
+    property: projectPropertySchema,
+    sources: z.array(propertySourceRecordSchema).max(50),
+    version: z.int().positive(),
+  })
+  .strict()
+  .superRefine((dossier, context) => {
+    const sourceIds = new Set(dossier.sources.map((source) => source.id));
+    if (sourceIds.size !== dossier.sources.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Dossier source records must be unique.",
+        path: ["sources"],
+      });
+    }
+    dossier.items.forEach((item, index) => {
+      item.sourceRecordIds.forEach((sourceRecordId) => {
+        if (!sourceIds.has(sourceRecordId)) {
+          context.addIssue({
+            code: "custom",
+            message: "Dossier items may reference only included source records.",
+            path: ["items", index, "sourceRecordIds"],
+          });
+        }
+      });
+    });
+    dossier.sources.forEach((source, index) => {
+      if (
+        source.projectId !== dossier.property.projectId ||
+        source.propertyId !== dossier.property.propertyId
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Dossier source records must belong to the dossier property and project.",
+          path: ["sources", index],
+        });
+      }
+    });
+  });
+export type PropertyDossier = z.infer<typeof propertyDossierSchema>;
+
+export const refreshPropertyDossierRequestSchema = z
+  .object({ expectedVersion: z.int().nonnegative() })
+  .strict();
+
+export const propertySourceRecordsResponseSchema = z
+  .object({ sources: z.array(propertySourceRecordSchema).max(50) })
+  .strict();
+
+export const c3RouteContract = Object.freeze({
+  getDossier: "/v1/projects/:projectId/property/dossier",
+  listSourceRecords: "/v1/projects/:projectId/property/source-records",
+  refreshDossier: "/v1/projects/:projectId/property/dossier/refresh",
+  resolveProperty: "/v1/projects/:projectId/property/resolutions",
+  selectProperty: "/v1/projects/:projectId/property",
+});

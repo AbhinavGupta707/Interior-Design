@@ -12,6 +12,12 @@
       "checkpoint": "C2",
       "owner": "C2-L1",
       "path": "0002_assets_evidence.sql"
+    },
+    {
+      "id": "0003",
+      "checkpoint": "C3",
+      "owner": "C3-L1",
+      "path": "0003_property_dossier.sql"
     }
   ]
 }
