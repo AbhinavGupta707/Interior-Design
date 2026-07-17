@@ -6,6 +6,8 @@ concurrency, and safe audit events on PostgreSQL. C2 adds rights-aware immutable
 checksum-bound multipart uploads, durable processing jobs and short-lived ready-asset access through
 a fail-closed S3-compatible adapter. C3 adds tenant-safe synthetic/manual property resolution and an
 immutable source-aware dossier with explicit unknowns. No paid or cloud provider is required locally.
+C4 adds immutable, hash-addressed canonical home snapshots with separate existing, proposed and
+as-built profile pointers, deterministic geometry validation and optimistic hash concurrency.
 
 ## Local commands
 
@@ -19,6 +21,7 @@ pnpm --filter @interior-design/provider-adapters build
 pnpm --filter @interior-design/platform-api exec tsx src/c1.ts migrate-and-bootstrap
 pnpm --filter @interior-design/platform-api exec tsx src/c2.ts migrate
 pnpm --filter @interior-design/platform-api exec tsx src/c3.ts migrate
+pnpm --filter @interior-design/platform-api exec tsx src/c4.ts migrate
 pnpm --filter @interior-design/platform-api dev
 ```
 
@@ -53,6 +56,7 @@ listens. The service reads these settings and never logs credential values:
 | `C2_STORAGE_FORCE_PATH_STYLE`       | `true` locally                                                        | Path-style S3 switch                            |
 | `C3_DATABASE_URL`                   | C1/loopback database                                                  | Optional C3 database override                   |
 | `C3_PROPERTY_PROVIDER_MODE`         | `fixture` outside production; `disabled` in production                | Synthetic, explicit unavailable, or manual-only |
+| `C4_DATABASE_URL`                   | C1/loopback database                                                  | Optional C4 database override                   |
 
 ## Operational contracts
 
@@ -67,6 +71,8 @@ listens. The service reads these settings and never logs credential values:
   non-loopback HTTPS endpoint; no SDK credential-chain fallback is used.
 - C3 readiness requires migration `0003_property_dossier`. Production property resolution remains
   disabled/manual-only; fixture and injected-unavailable modes cannot be activated in production.
+- C4 readiness requires migration `0004_canonical_models`. Snapshot reads recompute canonical bytes,
+  SHA-256 and byte length through the codec after every JSONB round-trip.
 - Every response includes validated/generated `x-request-id`, W3C `traceparent`, and
   `x-trace-id` headers.
 - Errors use `application/problem+json` and include stable code, status, request ID, and trace ID.
@@ -92,3 +98,11 @@ source records retain normalized SHA-256 rather than raw provider payload; and d
 planning/current-interior/structure/boundary limitations explicit. Address/query fields are redacted
 from structured logging. See `docs/runbooks/development/c3-property-api.md` for provider modes,
 disposable database setup, route semantics and live transaction verification.
+
+The C4 HTTP surface is the frozen four-route model profile/snapshot API. Lists always include exact
+existing/proposed/as-built summaries; owner/editor snapshot writes require an idempotency key and
+expected current SHA-256; viewers are read-only; and empty/foreign/unknown reads are
+non-disclosing. The C4 create route alone has a bounded envelope above 1 MiB while the canonical
+record remains capped at 10 MiB. Snapshot bodies and internal persistence fields are excluded from
+logs. See `docs/runbooks/development/c4-canonical-model-api.md` for the clean C1–C4 database run,
+JSONB canonicalisation rule, concurrency semantics, trigger checks and residual integration limits.
