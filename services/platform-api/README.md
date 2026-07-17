@@ -8,6 +8,8 @@ a fail-closed S3-compatible adapter. C3 adds tenant-safe synthetic/manual proper
 immutable source-aware dossier with explicit unknowns. No paid or cloud provider is required locally.
 C4 adds immutable, hash-addressed canonical home snapshots with separate existing, proposed and
 as-built profile pointers, deterministic geometry validation and optimistic hash concurrency.
+C5 adds exact typed model operations, immutable branches, bounded previews, atomic commits,
+cursor history, stable-ID comparison, restore-as-history and deterministic replay verification.
 
 ## Local commands
 
@@ -22,6 +24,7 @@ pnpm --filter @interior-design/platform-api exec tsx src/c1.ts migrate-and-boots
 pnpm --filter @interior-design/platform-api exec tsx src/c2.ts migrate
 pnpm --filter @interior-design/platform-api exec tsx src/c3.ts migrate
 pnpm --filter @interior-design/platform-api exec tsx src/c4.ts migrate
+pnpm --filter @interior-design/platform-api exec tsx src/c5.ts migrate
 pnpm --filter @interior-design/platform-api dev
 ```
 
@@ -57,6 +60,7 @@ listens. The service reads these settings and never logs credential values:
 | `C3_DATABASE_URL`                   | C1/loopback database                                                  | Optional C3 database override                   |
 | `C3_PROPERTY_PROVIDER_MODE`         | `fixture` outside production; `disabled` in production                | Synthetic, explicit unavailable, or manual-only |
 | `C4_DATABASE_URL`                   | C1/loopback database                                                  | Optional C4 database override                   |
+| `C5_DATABASE_URL`                   | C4/C1 loopback database                                               | Optional C5 database override                   |
 
 ## Operational contracts
 
