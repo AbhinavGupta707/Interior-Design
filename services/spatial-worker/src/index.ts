@@ -12,6 +12,7 @@ import {
   PostgresPlanProcessingQueue,
 } from "./plan-processing/index.js";
 import { MediaProcessor } from "./processor.js";
+import { PostgresRoomPlanProcessingQueue, RoomPlanProcessingRunner } from "./roomplan/index.js";
 import { SpatialWorkerRunner } from "./runner.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
 
@@ -30,6 +31,7 @@ export type { DerivedWrite, ObjectStorage } from "./storage.js";
 export { ProcessExecutionError, runBoundedProcess } from "./subprocess.js";
 export { IsolatedWorkspace } from "./workspace.js";
 export * from "./plan-processing/index.js";
+export * from "./roomplan/index.js";
 
 export async function runSpatialWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
@@ -76,6 +78,18 @@ export async function runSpatialWorker(
           workerId: `c6-${config.workerId}`.slice(0, 100),
         })
       : undefined;
+  const roomPlanRunner =
+    environment.C7_ROOMPLAN_WORKER_ENABLED === "true"
+      ? new RoomPlanProcessingRunner({
+          heartbeatMilliseconds: Math.min(config.heartbeatMs, 15_000),
+          leaseMilliseconds: Math.max(config.leaseMs, 60_000),
+          logger,
+          pollMilliseconds: config.pollMs,
+          queue: new PostgresRoomPlanProcessingQueue(sql),
+          storage,
+          workerId: `c7-${config.workerId}`.slice(0, 100),
+        })
+      : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -86,6 +100,7 @@ export async function runSpatialWorker(
     await Promise.all([
       runner.run(shutdown.signal),
       ...(planRunner === undefined ? [] : [planRunner.run(shutdown.signal)]),
+      ...(roomPlanRunner === undefined ? [] : [roomPlanRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);
