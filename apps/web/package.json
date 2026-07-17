@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint src test",
+    "test:e2e": "playwright test --config ../../tests/e2e/onboarding/playwright.config.ts",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run --exclude '.next/**'"
   },

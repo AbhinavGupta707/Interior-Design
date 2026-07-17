@@ -24,9 +24,10 @@ export function AppShell({ children }: AppShellProps) {
           <nav aria-label="Primary navigation" className="site-navigation">
             <a href="/#journey">Journey</a>
             <a href="/#principles">Principles</a>
+            <a href="/projects">Projects</a>
           </nav>
-          <ActionLink className="site-header__action" href="/#journey" tone="secondary">
-            Explore the journey
+          <ActionLink className="site-header__action" href="/sign-in" tone="secondary">
+            Local fixture sign in
           </ActionLink>
         </PageContainer>
       </header>
