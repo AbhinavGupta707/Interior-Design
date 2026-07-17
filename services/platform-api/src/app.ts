@@ -6,6 +6,7 @@ import {
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 import type { LoggerOptions as PinoLoggerOptions } from "pino";
 
+import { registerC1Module, type C1ModuleOptions } from "./c1.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -19,6 +20,7 @@ declare module "fastify" {
 type LoggerSetting = boolean | (FastifyLoggerOptions & PinoLoggerOptions);
 
 export interface CreateServerOptions {
+  readonly c1?: C1ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -63,7 +65,17 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
   server.decorate("platformConfig", config);
   registerRequestCorrelation(server);
   registerErrorHandling(server);
-  registerHealthRoutes(server, options.readinessChecks ?? [], config.readinessTimeoutMs);
+  const c1 = registerC1Module(
+    server,
+    config.runtimeEnvironment,
+    options.environment ?? process.env,
+    options.c1,
+  );
+  registerHealthRoutes(
+    server,
+    options.readinessChecks ?? c1.readinessChecks,
+    config.readinessTimeoutMs,
+  );
 
   return server;
 }
