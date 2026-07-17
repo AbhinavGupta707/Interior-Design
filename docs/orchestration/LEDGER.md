@@ -101,20 +101,21 @@
 
 ## C3 — Honest property and home dossier
 
-### Master activation
+### Master activation and integration
 
-- Status: active; lanes frozen and pending launch
+- Status: complete on `main`; C4 may open from the ledger-close commit
 - Contract: `docs/orchestration/checkpoints/C3_CONTRACT.md` (`c3-property-v1`)
 - Prelude commit: `f26179b`
 - Frozen worker base commit: `c5880bd`
+- Product completion SHA: `432f2fd`
 - Planned lanes: two, selected adaptively for one producing backend and one consuming UX
 - Provider policy: deterministic synthetic fixture plus manual entry; live address, EPC and planning providers remain disabled
 - Data policy: no real address/query fixture, no raw provider payload, no inferred interior, model training denied
 
-| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                      |
-| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| C3-L1 dossier backend/adapters | `019f6e0c-1fe7-7241-9d20-c369f5a64467` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | property adapter, platform property module/C3 composition, migration, fixture, backend tests/runbook |
-| C3-L2 dossier UX/comprehension | `019f6e0c-1fe7-7241-9d20-c38e30717a00` | `gpt-5.6-sol` / `high`  | pending    | pending   | active | allocated web property/BFF/project/CSS, contract/E2E tests and comprehension evaluation              |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                      |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| C3-L1 dossier backend/adapters | `019f6e0c-1fe7-7241-9d20-c369f5a64467` | `gpt-5.6-sol` / `xhigh` | `7892d86`  | `54da2ca` | integrated | property adapter, platform property module/C3 composition, migration, fixture, backend tests/runbook |
+| C3-L2 dossier UX/comprehension | `019f6e0c-1fe7-7241-9d20-c38e30717a00` | `gpt-5.6-sol` / `high`  | `6641c88`  | `0decc88` | integrated | allocated web property/BFF/project/CSS, contract/E2E tests and comprehension evaluation              |
 
 ### Prelude gate evidence
 
@@ -122,3 +123,14 @@
 - Focused hardening after review passed all 14 contract tests, 51 authorisation tests, contracts/adapter typechecks and `git diff --check`.
 - Shared contracts preserve UPRNs as strings, keep provider-disabled/failure/no-match states distinct, require immutable source metadata and deny training use, constrain every non-unknown dossier item to a source, and reject cross-project/property source records.
 - The two lane assignments and their exact `gpt-5.6-sol` reasoning levels were frozen before launch. L1 receives `xhigh` because it owns privacy, tenant isolation, idempotency, concurrency and immutable persistence; L2 receives `high` because it is a bounded consumer of the frozen contract with no provider or persistence authority.
+
+### Integrated gate evidence
+
+- Both worktrees completed cleanly from the frozen `c5880bd` base and were merged in the declared L1-then-L2 order. Their exclusive manifests were audited before merge: L1 touched only its 18 backend/adapter allocations and L2 only its 23 web/contract/E2E allocations.
+- The first integrated verification correctly identified an incomplete workspace install rather than a code defect. A frozen lockfile install restored the missing workspace link without changing a manifest or lockfile. `UV_CACHE_DIR=.cache/uv pnpm verify` then passed formatting, eight-package lint/typecheck, 172 JavaScript unit tests, every production build, Ruff, strict mypy and pytest; seven provider/live-environment cases remained explicitly skipped in the provider-free unit invocation.
+- The independent property contract passed four cases, and Playwright passed all 12 journeys at 1440×960 desktop and 390×844 mobile sizes. The matrix covers exact, ambiguous, expiry, no-match, manual, disabled, outage, offline, conflict, owner/viewer, keyboard, semantics, labels and overflow behavior.
+- A clean disposable PostGIS database received C1, C2 and C3 migrations in sequence. The live C3 Postgres suite passed 2/2, proving same-key replay, different-key races, expiry/consumption, tenant isolation, immutable-history triggers, one-effect concurrency and the valid empty pre-selection source collection.
+- The in-app browser exercised the real Next BFF and real API/database end to end. It created a fresh synthetic owner project, searched and selected `14 Example Mews`, loaded all five epistemic labels, explicit unknown interior, `not-reviewed` planning and immutable source permissions. Desktop and 390×844 mobile checks had no horizontal overflow or console warning/error. The alpha viewer had zero editable controls and could inspect provenance with model training explicitly denied.
+- That real journey caught a cross-lane integration defect missed by mocked browser tests: the Postgres backend returned `404` for source records before a first property selection. The product completion commit `432f2fd` now returns the contractually valid empty collection, adds unit/live regressions and fixes the disposable-database runbook to use explicit loopback password authentication.
+- API logs redacted every request URL throughout the live journey and emitted no address query, token or raw provider payload. Production still fails closed to the disabled adapter; fixture and injected-unavailable modes are rejected in production.
+- Honest residual limits: C3 has no activated live address, UPRN, EPC, mapping or planning provider, no provider licence/privacy/retention approval, no customer data and no professional interior, structure, boundary or planning claim. Those are deliberate later-provider decisions, not C3 completion evidence.
