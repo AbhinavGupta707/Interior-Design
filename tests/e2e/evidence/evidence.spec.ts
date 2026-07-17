@@ -51,8 +51,12 @@ test("rights-first upload pauses, survives reload, resumes with fresh signed sta
   await expect(page.getByText("Denied", { exact: true })).toBeVisible();
 
   const accessResponse = page.waitForResponse((response) => response.url().includes("/access"));
-  await page.getByRole("button", { name: "Open preview" }).click();
+  await page.getByRole("button", { name: "Request preview" }).click();
   expect((await accessResponse).status()).toBe(200);
+  const previewLink = page.getByRole("link", { name: "Open short-lived preview" });
+  await expect(previewLink).toBeVisible();
+  await expect(previewLink).toHaveAttribute("target", "_blank");
+  await expect(previewLink).toHaveAttribute("rel", "noreferrer");
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -110,7 +114,7 @@ test("viewer can inspect ready inventory but cannot upload", async ({ page, requ
 
   await expect(page.getByText("Viewer access", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Hash and upload" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Open preview" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Request preview" })).toBeVisible();
 });
 
 async function signInAndOpenEvidence(page: import("@playwright/test").Page) {

@@ -72,8 +72,9 @@ const onePixelJpeg = Buffer.from(
 );
 
 function minimalPdf(extraObject = ""): Buffer {
+  const contentsReference = extraObject.length === 0 ? "" : " /Contents 4 0 R";
   return Buffer.from(
-    `%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Count 1 /Kids [3 0 R] >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 1 1] >> endobj\n${extraObject}\ntrailer << /Root 1 0 R >>\n%%EOF\n`,
+    `%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Count 1 /Kids [3 0 R] >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 1 1]${contentsReference} >> endobj\n${extraObject}\ntrailer << /Root 1 0 R >>\n%%EOF\n`,
     "ascii",
   );
 }
@@ -275,11 +276,12 @@ export const adversarialFixtureDefinitions = Object.freeze([
     id: "pdf-decompression-claim",
     kind: "document",
     processingExpectation: {
-      mode: "reject",
+      forbiddenPreviewMarkers: ["/FlateDecode", "2147483647"],
+      mode: "reject-or-sanitise",
       rejectionCodes: ["resource-limit", "malformed-media"],
     },
     safetyNote:
-      "The PDF stores only a tiny invalid stream and a large declared length; it is not a compressed bomb.",
+      "The PDF stores only a tiny invalid stream and a large declared length; it is not a compressed bomb. A bounded parser may reject it or emit only a metadata-free raster.",
   },
   {
     attackClasses: ["pdf-bomb"],
@@ -349,7 +351,7 @@ export const adversarialFixtureDefinitions = Object.freeze([
     processingExpectation: {
       forbiddenPreviewMarkers: ["<!DOCTYPE", "<!ENTITY", "file:///synthetic/nonexistent"],
       mode: "reject-or-sanitise",
-      rejectionCodes: ["malformed-media", "unsupported-type"],
+      rejectionCodes: ["malformed-media", "signature-mismatch", "unsupported-type"],
     },
     safetyNote:
       "The entity targets an intentionally nonexistent synthetic path and contains no local data.",

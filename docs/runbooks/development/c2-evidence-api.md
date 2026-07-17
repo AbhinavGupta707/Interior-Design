@@ -59,9 +59,8 @@ an 8–128 character `Idempotency-Key`. Reusing a key with a different actor, op
    declared MIME, safe display filename, kind and rights. `serviceProcessingConsent` must be true;
    training permission defaults independently to `denied`.
 2. `GET /v1/projects/:projectId/assets/upload-sessions/:sessionId` returns the strict public session
-   fields plus a sorted unique `recordedPartNumbers` array. Empty sessions return `[]`. This local
-   strict extension is ready to be replaced by the orchestrator-owned shared schema export once the
-   frozen contract is amended.
+   fields plus the shared-contract `recordedPartNumbers` array. It is always sorted and unique;
+   empty sessions return `[]`.
 3. `POST .../:sessionId/parts` binds the exact planned byte size, part number, SHA-256 checksum and
    a maximum 15-minute expiry into the signed request. The client must send every returned
    `requiredHeaders` entry unchanged.
@@ -93,11 +92,13 @@ Foreign tenant/project/asset/session IDs and unknown IDs use the same non-disclo
 ## Durable processing jobs
 
 Completion inserts one validated `c2-ingest-v1` command into `asset_processing_jobs`. Workers lease
-with `FOR UPDATE SKIP LOCKED`; a claim increments and revalidates the attempt number, changes the
-asset from `uploaded` to `processing`, and expires after 30–900 seconds. Safe failures may be retried
-up to ten attempts. A validated result atomically records immutable artifacts and transitions the
-asset to `ready`, `quarantined` or `rejected`. An exhausted job rejects the asset with the public
-`processing-failed` code. Worker error details are never stored; only bounded safe codes are kept.
+with `FOR UPDATE SKIP LOCKED`; a claim moves the job from `queued` or `retryable` to `leased`,
+increments and revalidates the attempt number, changes the asset from `uploaded` to `processing`,
+and expires after 30–900 seconds. Safe failures may return to `retryable` up to ten attempts. A
+validated result atomically records immutable artifacts, transitions the asset to `ready`,
+`quarantined` or `rejected`, and marks the job `succeeded`. An exhausted job becomes `failed` and
+rejects the asset with the public `processing-failed` code. Every commit is fenced by the current
+lease token. Worker error details are never stored; only bounded safe codes are kept.
 
 ## Expiry cleanup and readiness
 
@@ -131,3 +132,18 @@ denial, idempotent retries, complete/abort races, durable job retries, access an
 immutability. The S3 suite uses one synthetic object to prove real path-style multipart signing,
 checksum/header binding, completion and attachment access. Neither suite claims worker media
 inspection, antivirus, cloud S3 or real customer evidence.
+
+With the migrated local stack, API and spatial worker already running, execute the complete
+synthetic upload-to-preview journey and the live adversarial API/media pack:
+
+```sh
+C2_LIVE_STACK_API_URL=http://127.0.0.1:4100 \
+  node tests/integration/evidence/live-stack-smoke.mjs
+C2_LIVE_STACK_API_URL=http://127.0.0.1:4100 \
+  node tests/integration/evidence/run-live-api-harness.mjs
+```
+
+The smoke harness proves signed multipart upload, durable leasing, bounded processing, a fetchable
+derived JPEG and viewer denial for original-source access. The adversarial harness creates isolated
+synthetic tenants and passes bearer fixtures to Vitest only through the child environment; it must
+not print or persist those credentials.

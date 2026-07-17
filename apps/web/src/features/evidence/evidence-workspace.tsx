@@ -111,6 +111,11 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
   const [selectionError, setSelectionError] = useState<string>();
   const [accessing, setAccessing] = useState<string>();
   const [accessError, setAccessError] = useState<string>();
+  const [previewAccess, setPreviewAccess] = useState<{
+    assetId: string;
+    expiresAt: string;
+    url: string;
+  }>();
   const abortController = useRef<AbortController | undefined>(undefined);
   const activeRecovery = useRef<{ file: File; record: RecoveryRecord } | undefined>(undefined);
   const errorRef = useRef<HTMLDivElement>(null);
@@ -323,10 +328,11 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
 
   async function access(asset: Asset) {
     setAccessError(undefined);
+    setPreviewAccess(undefined);
     setAccessing(asset.id);
     try {
       const access = await issueAssetAccess(projectId, asset.id, "preview", crypto.randomUUID());
-      window.open(access.url, "_blank", "noopener,noreferrer");
+      setPreviewAccess({ assetId: asset.id, expiresAt: access.expiresAt, url: access.url });
     } catch (reason) {
       setAccessError(
         reason instanceof Error ? reason.message : "Short-lived access could not be issued.",
@@ -728,13 +734,25 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
                     </div>
                     <div className="asset-actions">
                       {asset.status === "ready" ? (
-                        <ActionButton
-                          disabled={accessing === asset.id}
-                          onClick={() => void access(asset)}
-                          tone="secondary"
-                        >
-                          {accessing === asset.id ? "Requesting…" : "Open preview"}
-                        </ActionButton>
+                        previewAccess?.assetId === asset.id ? (
+                          <a
+                            className="ui-action"
+                            data-tone="secondary"
+                            href={previewAccess.url}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            Open short-lived preview
+                          </a>
+                        ) : (
+                          <ActionButton
+                            disabled={accessing === asset.id}
+                            onClick={() => void access(asset)}
+                            tone="secondary"
+                          >
+                            {accessing === asset.id ? "Requesting…" : "Request preview"}
+                          </ActionButton>
+                        )
                       ) : null}
                     </div>
                   </article>

@@ -90,39 +90,39 @@ Signed URLs are bearer capabilities. Replay inside their TTL is a residual risk 
 
 `tests/fixtures/c2/adversarial/factory.ts` deterministically generates fifteen cases covering traversal/control/shell names, MIME mismatch, PNG/SVG polyglot, SVG external entity/resource, image/PDF/video metadata bombs, malformed/output-heavy codec metadata, and EXIF/GPS. Every case is ≤4 KiB. `.invalid` is the only remote domain; the only `file:` path is intentionally nonexistent; GPS is zero-valued synthetic metadata. There is no malware, real bomb, PII, address, customer media, credential, or executable fixture.
 
-## Findings to route before C2 integration closes
+## Findings routed and resolved during C2 integration
 
-### C2-QA-001 — High — video ceiling is 30 hours in schemas, 30 minutes in the checkpoint
+### C2-QA-001 — High — resolved — video ceiling aligned to 30 minutes
 
 Location: `docs/orchestration/checkpoints/C2_CONTRACT.md:63` versus `packages/contracts/src/index.ts:383` and `:456`.
 
 Impact: a worker that follows the frozen numeric schemas can admit up to 30 hours of video while the accepted product/security contract says 30 minutes, multiplying frames, parser time, disk and compute exposure by 60.
 
-Required owner action: orchestrator/shared-contract owner must resolve the frozen value; C2-L2 must enforce the resolved value before decode. Do not hide the mismatch in a worker-only constant.
+Resolution: the orchestrator changed both the shared metadata schema and `c2IngestionPolicy` to `1_800_000` ms. Contract and worker tests now accept the boundary and reject one millisecond above it.
 
-### C2-QA-002 — High — 100 MP is not enforced by the shared technical-metadata schema
+### C2-QA-002 — High — resolved — 100 MP enforced across fields
 
 Location: `packages/contracts/src/index.ts:381-389` versus policy at `:453`.
 
 Impact: `20,000 × 20,000` (400 MP) passes the per-dimension result schema even though the policy ceiling is 100 MP. A result can be schema-valid while violating the resource policy.
 
-Required owner action: C2-L2 must enforce the cross-field product before decode/result commit; orchestrator should add shared `superRefine` coverage when the frozen contract can be amended.
+Resolution: the shared metadata schema now performs overflow-safe cross-field area validation, and the worker performs the limit check before committing a result. The acceptance pack proves `10,000 × 10,000` is accepted and `20,000 × 20,000` is rejected.
 
-### C2-QA-003 — Medium — resumable part numbers have no frozen response field
+### C2-QA-003 — Medium — resolved — resumable parts frozen in the public session
 
 Location: checkpoint route requirement at `docs/orchestration/checkpoints/C2_CONTRACT.md:47`; strict `assetUploadSessionSchema` at `packages/contracts/src/index.ts:271-282`.
 
 Impact: the API cannot both return already-recorded part numbers and validate against the strict frozen session schema. Ad-hoc response drift can break resume clients or leak provider data.
 
-Required owner action: orchestrator/shared-contract owner must freeze one public field (the acceptance pack expects `recordedPartNumbers: number[]`) before generated clients are treated as complete.
+Resolution: `recordedPartNumbers` is now required by the shared strict session schema, bounded to 10,000 entries and required to be unique and strictly ascending. API, web and iOS reconciliation consume it without persisting signed URLs.
 
-### C2-QA-004 — Medium defense-in-depth — pathless misleading filenames remain valid
+### C2-QA-004 — Medium defense-in-depth — resolved with display-only containment
 
 Location: `packages/contracts/src/index.ts:200-214`.
 
 Impact: `.`, `..`, percent-encoded separators, bidi controls and shell/flag-looking names may pass because they contain no literal slash/backslash/ASCII control. This is safe only if the name remains escaped display metadata and is never decoded, normalized into storage, used as a process argument, or reflected into an active URL/HTML context.
 
-Required owner action: C2-L1/L2/L3 must prove opaque server keys, argument isolation, bidi-safe text rendering and no filename logging. The orchestrator may later tighten display-name policy without treating filename as identity.
+Resolution: the API generates opaque UUID source keys; the worker never uses a public filename as a storage key, path or process argument; web renders names as bidi-isolated text; iOS uses verbatim text and opaque staging identities; the static and browser evidence checks retain misleading names only as inert display metadata. Tightening the display-name policy remains a compatible future hardening option.
 
 ## Execution runbook
 

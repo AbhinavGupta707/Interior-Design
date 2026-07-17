@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const databaseUrl = process.env.C2_ADVERSARIAL_DATABASE_URL ?? "";
 const enabled = databaseUrl.length > 0;
+const connection = enabled ? new URL(databaseUrl) : undefined;
 const tables = [
   "asset_audit_events",
   "asset_processing_jobs",
@@ -19,7 +20,16 @@ async function psql(sql: string): Promise<string> {
       "psql",
       ["--no-psqlrc", "--no-align", "--tuples-only", "--set", "ON_ERROR_STOP=1", "--command", sql],
       {
-        env: { ...process.env, PAGER: "cat", PGDATABASE: databaseUrl },
+        env: {
+          ...process.env,
+          PAGER: "cat",
+          PGDATABASE: connection?.pathname.slice(1),
+          PGHOST: connection?.hostname,
+          PGPASSWORD:
+            connection === undefined ? undefined : decodeURIComponent(connection.password),
+          PGPORT: connection?.port || "5432",
+          PGUSER: connection === undefined ? undefined : decodeURIComponent(connection.username),
+        },
         shell: false,
         stdio: ["ignore", "pipe", "pipe"],
       },

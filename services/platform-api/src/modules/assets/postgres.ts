@@ -138,6 +138,7 @@ function mapSession(row: SessionRow, now: Date): AssetUploadSession {
     maximumPartCount: row.maximum_part_count,
     minimumNonFinalPartSize: row.minimum_non_final_part_size,
     partSize: row.part_size,
+    recordedPartNumbers: [],
     sessionId: row.session_id,
     state: effectiveState,
   });
@@ -402,6 +403,7 @@ export class PostgresAssetBackend implements AssetBackend {
           maximumPartCount: c2IngestionPolicy.maximumUploadParts,
           minimumNonFinalPartSize: c2IngestionPolicy.minimumNonFinalPartBytes,
           partSize: C2_PART_SIZE_BYTES,
+          recordedPartNumbers: [],
           sessionId,
           state: "initiated",
         });

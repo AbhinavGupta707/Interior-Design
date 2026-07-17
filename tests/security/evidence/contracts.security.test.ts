@@ -265,22 +265,32 @@ describe("C2 adversarial frozen-contract boundaries", () => {
     expect(internalObjectKeySchema.safeParse("projects/../source").success).toBe(false);
   });
 
-  it("records the 100 MP cross-field validation gap for worker enforcement", () => {
-    const metadata = assetTechnicalMetadataSchema.parse({
-      heightPixels: c2IngestionPolicy.maximumImageDimension,
-      widthPixels: c2IngestionPolicy.maximumImageDimension,
-    });
-    expect((metadata.heightPixels ?? 0) * (metadata.widthPixels ?? 0)).toBeGreaterThan(
-      c2IngestionPolicy.maximumImagePixels,
-    );
+  it("enforces the 100 MP cross-field ceiling in the shared contract", () => {
+    expect(
+      assetTechnicalMetadataSchema.safeParse({
+        heightPixels: 10_000,
+        widthPixels: 10_000,
+      }).success,
+    ).toBe(true);
+    expect(
+      assetTechnicalMetadataSchema.safeParse({
+        heightPixels: c2IngestionPolicy.maximumImageDimension,
+        widthPixels: c2IngestionPolicy.maximumImageDimension,
+      }).success,
+    ).toBe(false);
   });
 
-  it("records the prose/schema video-duration mismatch for orchestrator routing", () => {
-    expect(c2IngestionPolicy.maximumVideoDurationMilliseconds / 60_000).toBe(1_800);
-    expect(c2IngestionPolicy.maximumVideoDurationMilliseconds).not.toBe(30 * 60_000);
+  it("keeps the policy and result schema at the same 30 minute ceiling", () => {
+    expect(c2IngestionPolicy.maximumVideoDurationMilliseconds).toBe(30 * 60_000);
+    expect(
+      assetTechnicalMetadataSchema.safeParse({ durationMilliseconds: 30 * 60_000 }).success,
+    ).toBe(true);
+    expect(
+      assetTechnicalMetadataSchema.safeParse({ durationMilliseconds: 30 * 60_000 + 1 }).success,
+    ).toBe(false);
   });
 
-  it("records that strict upload-session schema cannot carry resumed part numbers", () => {
+  it("validates sorted unique resumed part numbers in the shared upload session", () => {
     const session = {
       asset: baseAsset,
       expiresAt: timestamp,
@@ -291,7 +301,13 @@ describe("C2 adversarial frozen-contract boundaries", () => {
       sessionId: randomUUID(),
       state: "uploading",
     };
-    expect(assetUploadSessionSchema.safeParse(session).success).toBe(false);
+    expect(assetUploadSessionSchema.safeParse(session).success).toBe(true);
+    expect(
+      assetUploadSessionSchema.safeParse({ ...session, recordedPartNumbers: [2, 1] }).success,
+    ).toBe(false);
+    expect(
+      assetUploadSessionSchema.safeParse({ ...session, recordedPartNumbers: [1, 1] }).success,
+    ).toBe(false);
   });
 
   it("records misleading-but-pathless filename cases that must never become keys or commands", () => {

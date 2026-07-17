@@ -10,34 +10,11 @@ import {
   type SignAssetUploadPartRequest,
   type SignedAssetUploadPart,
 } from "@interior-design/contracts";
-import { z } from "zod";
 
 import type { RequestCorrelation } from "../../correlation.js";
 
-function hasSortedUniqueParts(parts: readonly number[]): boolean {
-  for (let index = 1; index < parts.length; index += 1) {
-    const previous = parts[index - 1];
-    const current = parts[index];
-    if (previous === undefined || current === undefined || current <= previous) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/*
- * This local strict extension is intentionally shaped for the orchestrator-owned shared-schema
- * amendment. It can be replaced by that export without changing repository or route responses.
- */
-export const resumableAssetUploadSessionSchema = assetUploadSessionSchema
-  .extend({
-    recordedPartNumbers: z.array(z.int().min(1).max(10_000)).max(10_000),
-  })
-  .strict()
-  .refine((session) => hasSortedUniqueParts(session.recordedPartNumbers), {
-    message: "Recorded upload parts must be sorted and unique.",
-  });
-export type ResumableAssetUploadSession = z.infer<typeof resumableAssetUploadSessionSchema>;
+export const resumableAssetUploadSessionSchema = assetUploadSessionSchema;
+export type ResumableAssetUploadSession = AssetUploadSession;
 
 /*
  * Keep the types below public and locator-free. Provider identifiers and object keys only occur in

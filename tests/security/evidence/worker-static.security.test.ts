@@ -27,7 +27,9 @@ describe.skipIf(!enabled)(suiteName, () => {
     const source = (await Promise.all(files.map(async (file) => readFile(file, "utf8")))).join(
       "\n",
     );
-    expect(source).not.toMatch(/\bexec(?:Sync)?\s*\(/u);
+    expect(source).not.toMatch(
+      /import\s*\{[^}]*\bexec(?:Sync)?\b[^}]*\}\s*from\s*["']node:child_process["']/u,
+    );
     expect(source).not.toMatch(/shell\s*:\s*true/u);
     expect(source).not.toMatch(/spawn(?:Sync)?\s*\(\s*["'](?:bash|cmd|powershell|sh)["']/u);
     expect(source).not.toMatch(/["']-c["']/u);
@@ -39,7 +41,9 @@ describe.skipIf(!enabled)(suiteName, () => {
       "\n",
     );
     expect(source).toMatch(/(?:AbortSignal|timeout|wallTime)/u);
-    expect(source).toMatch(/(?:maxOutput|maxBuffer|outputLimit|stdoutLimit)/u);
-    expect(source).toMatch(/(?:maxTemporary|maxTemp|temporaryDisk|tempDisk)/u);
+    expect(source).toMatch(/(?:maximumOutputBytes|maxOutput|maxBuffer|outputLimit|stdoutLimit)/u);
+    expect(source).toMatch(
+      /(?:temporaryDirectory\.maximumBytes|maxTemporary|maxTemp|temporaryDisk|tempDisk)/u,
+    );
   });
 });

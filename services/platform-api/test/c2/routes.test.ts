@@ -161,6 +161,7 @@ class MemoryAssetBackend implements AssetBackend {
         maximumPartCount: 10_000,
         minimumNonFinalPartSize: 5_242_880,
         partSize: 134_217_728,
+        recordedPartNumbers: [],
         sessionId,
         state: "initiated",
       }),
@@ -330,10 +331,10 @@ describe("C2 evidence HTTP contract", () => {
     expect(empty.json()).toMatchObject({ recordedPartNumbers: [], sessionId });
     expect(() =>
       resumableAssetUploadSessionSchema.parse({ ...resumed, recordedPartNumbers: [2, 1] }),
-    ).toThrow(/sorted and unique/u);
+    ).toThrow(/unique and strictly ascending/u);
     expect(() =>
       resumableAssetUploadSessionSchema.parse({ ...resumed, recordedPartNumbers: [1, 1] }),
-    ).toThrow(/sorted and unique/u);
+    ).toThrow(/unique and strictly ascending/u);
   });
 
   it("makes foreign and unknown project lookups non-disclosing", async () => {

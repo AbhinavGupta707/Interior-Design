@@ -30,7 +30,8 @@ The default development path uses local PostgreSQL/PostGIS and the loopback S3-c
 | MP4/QuickTime | signature, major brand/container agreement, exactly one bounded video stream, allowed audio/video codecs, dimensions/pixels and duration                                                                     | one bounded FFmpeg frame re-encoded by Sharp plus thumbnail                        |
 | HEIC/HEIF     | signature agreement only                                                                                                                                                                                     | rejected as `unsupported-type`; no speculative transcode                           |
 
-The contract prose freezes video duration at 30 minutes. The exported shared numeric constant and result-schema maximum are currently `108_000_000` ms (30 hours). The worker deliberately enforces the stricter prose requirement, `1_800_000` ms. The orchestrator/shared-contract owner should reconcile this inconsistency; this lane does not edit `packages/contracts/**`.
+The contract and exported shared schema both freeze video duration at 30 minutes
+(`1_800_000` ms). The worker enforces the same ceiling before any derived write.
 
 The worker caps media streams at 16, SVG source at 16 MiB, subprocess output at 1 MiB by default and temporary storage at 2.5 GiB by default. Source upload size remains bounded by the shared 2 GiB contract. A source larger than the result schema can represent is failed without inventing a `verifiedSource` fingerprint.
 
@@ -73,16 +74,20 @@ pnpm --filter @interior-design/spatial-worker dev
 
 `SIGINT` and `SIGTERM` abort active uncommitted work, clean its temporary directory, close S3/PostgreSQL clients and leave the lease recoverable after expiry.
 
-## Frozen migration/API integration assumptions
+## Integrated migration/API contract
 
-This lane cannot edit migration `0002` or API files. `PostgresProcessingJobRepository` expects the C2-L1 migration to expose the following internal worker columns and legal states:
+Migration `0002_assets_evidence` and `PostgresProcessingJobRepository` share the following internal
+worker columns and legal states:
 
-- `asset_processing_jobs`: `id`, `tenant_id`, `project_id`, `asset_id`, `command jsonb`, `result jsonb`, `status` (`queued`, `retryable`, `processing`, `completed`, `failed`), `attempt_count`, `maximum_attempts`, `available_at`, `lease_owner`, `lease_token uuid`, `lease_expires_at`, `processing_started_at`, `last_error_code`, `created_at`, `updated_at`, `completed_at`;
+- `asset_processing_jobs`: `id`, `tenant_id`, `project_id`, `asset_id`, `command jsonb`, `result jsonb`, `status` (`queued`, `leased`, `retryable`, `succeeded`, `failed`), `attempt_count`, `maximum_attempts`, `available_at`, `lease_owner`, `lease_token uuid`, `lease_expires_at`, `processing_started_at`, `last_error_code`, `created_at`, `updated_at`, `completed_at`;
 - `assets`: tenant/project-scoped `id`, `status`, `detected_mime_type`, `rejection_code`, `technical_metadata`, `updated_at`;
 - `derived_asset_artifacts`: `id`, tenant/project/asset IDs, `bucket`, `object_key`, `kind`, `mime_type`, `byte_size`, `sha256`, plus uniqueness compatible with `(tenant_id, project_id, asset_id, kind, sha256)`;
-- `asset_audit_events`: `id`, tenant/project/asset IDs, `event_type`, `details`, and a database-owned occurrence timestamp.
+- `asset_audit_events`: `id`, tenant/project/asset IDs, `actor_kind`, `actor_identifier`, `action`, `resource_type`, `resource_id`, and a database-owned occurrence timestamp.
 
-The L1 integration must either match those names/states or adapt this repository during orchestrator integration. Every predicate includes tenant, project and asset identity. `processing_started_at` must remain stable across retries so the result/manifest `executedAt` and content-addressed manifest are idempotent.
+Every predicate includes tenant, project and asset identity. Lease-token fencing prevents a stale
+worker from committing after another attempt takes ownership. `processing_started_at` remains
+stable across retries so the result/manifest `executedAt` and content-addressed manifest are
+idempotent.
 
 When an infrastructure failure exhausts attempts before a full source fingerprint exists, the repository marks the job failed and the asset `rejected` with `processing-failed`, leaving `result` null. This avoids falsely populating the frozen result's required `verifiedSource` field. The API should tolerate that terminal internal failure projection.
 
@@ -109,7 +114,19 @@ pnpm --filter @interior-design/spatial-worker build
 
 The synthetic suite generates tiny JPEG, SVG, PDF and MP4 inputs and covers checksum/signature/malformed failures, limits, missing tools, subprocess timeout/error/output, argument/path isolation, metadata stripping, manifest provenance, log redaction, conditional retry idempotence, lease loss/recovery and exhausted pre-verification failure.
 
-This lane does not include migration `0002`, so a real Postgres/SeaweedFS end-to-end run requires the integrated C2-L1 lane. Do not record live lease/storage evidence until that integrated path has actually run.
+For integrated Postgres/SeaweedFS proof, start the migrated local stack, platform API and this
+worker, then run from the repository root:
+
+```bash
+C2_LIVE_STACK_API_URL=http://127.0.0.1:4100 \
+  node tests/integration/evidence/live-stack-smoke.mjs
+C2_LIVE_STACK_API_URL=http://127.0.0.1:4100 \
+  node tests/integration/evidence/run-live-api-harness.mjs
+```
+
+Record live lease/storage evidence only from that disposable synthetic environment. Neither harness
+establishes malware-scanner coverage, production-cloud IAM/lifecycle behavior, or physical-device
+continuity.
 
 ## Troubleshooting
 

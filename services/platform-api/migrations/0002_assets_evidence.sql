@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS assets (
     detected_mime_type IS NULL
     OR char_length(detected_mime_type) BETWEEN 1 AND 200
   ),
+  technical_metadata jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (
+    jsonb_typeof(technical_metadata) = 'object'
+  ),
   source_byte_size bigint NOT NULL CHECK (source_byte_size BETWEEN 1 AND 2147483648),
   source_sha256 text NOT NULL CHECK (source_sha256 ~ '^[0-9a-f]{64}$'),
   source_bucket text NOT NULL DEFAULT 'source' CHECK (source_bucket = 'source'),
@@ -180,7 +183,9 @@ CREATE TABLE IF NOT EXISTS asset_processing_jobs (
   maximum_attempts integer NOT NULL DEFAULT 10 CHECK (maximum_attempts = 10),
   available_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   lease_owner text CHECK (lease_owner IS NULL OR char_length(lease_owner) BETWEEN 1 AND 120),
+  lease_token uuid,
   lease_expires_at timestamptz,
+  processing_started_at timestamptz,
   last_error_code text CHECK (
     last_error_code IS NULL OR last_error_code ~ '^[a-z0-9][a-z0-9-]{0,79}$'
   ),
@@ -191,8 +196,10 @@ CREATE TABLE IF NOT EXISTS asset_processing_jobs (
   FOREIGN KEY (tenant_id, project_id, asset_id)
     REFERENCES assets(tenant_id, project_id, id) ON DELETE RESTRICT,
   CONSTRAINT asset_processing_jobs_lease_consistency CHECK (
-    (status = 'leased' AND lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL)
-    OR (status <> 'leased' AND lease_owner IS NULL AND lease_expires_at IS NULL)
+    (status = 'leased' AND lease_owner IS NOT NULL AND lease_token IS NOT NULL
+      AND lease_expires_at IS NOT NULL)
+    OR (status <> 'leased' AND lease_owner IS NULL AND lease_token IS NULL
+      AND lease_expires_at IS NULL)
   ),
   CONSTRAINT asset_processing_jobs_result_consistency CHECK (
     (status = 'succeeded' AND result IS NOT NULL AND completed_at IS NOT NULL)

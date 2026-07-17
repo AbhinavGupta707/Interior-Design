@@ -141,10 +141,9 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
   const production = extracted.NODE_ENV === "production";
   const databaseUrl = extracted.C2_DATABASE_URL ?? (production ? undefined : localDatabaseUrl);
   const endpoint = extracted.C2_S3_ENDPOINT ?? (production ? undefined : localS3Endpoint);
-  const accessKeyId =
-    extracted.C2_S3_ACCESS_KEY_ID ?? (production ? undefined : "local-development-access-key");
+  const accessKeyId = extracted.C2_S3_ACCESS_KEY_ID ?? (production ? undefined : "localdev");
   const secretAccessKey =
-    extracted.C2_S3_SECRET_ACCESS_KEY ?? (production ? undefined : "local-development-secret-key");
+    extracted.C2_S3_SECRET_ACCESS_KEY ?? (production ? undefined : "local-development-only");
   if (
     databaseUrl === undefined ||
     endpoint === undefined ||

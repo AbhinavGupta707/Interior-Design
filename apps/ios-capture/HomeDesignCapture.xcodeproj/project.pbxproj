@@ -12,8 +12,13 @@
 		21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC63546001772B6B43829640 /* RoomPlan.framework */; };
 		3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */; };
 		44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A59599EAEA6781787237269 /* CaptureFlowModel.swift */; };
+		5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */; };
 		701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */; };
+		72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */; };
+		78590673BBA441661F2BEF49 /* EvidenceWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */; };
 		7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCD513E21B995439356829E /* ManualEvidenceView.swift */; };
+		80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DE930A75C9651B86254FEB /* EvidenceModels.swift */; };
+		8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */; };
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
@@ -23,6 +28,7 @@
 		E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */; };
 		E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */; };
 		E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */; };
+		F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,17 +50,23 @@
 		4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeDesignCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
 		575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRepositoryTests.swift; sourceTree = "<group>"; };
+		638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceFlowTests.swift; sourceTree = "<group>"; };
+		686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepository.swift; sourceTree = "<group>"; };
 		68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6A59599EAEA6781787237269 /* CaptureFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModel.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
+		746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkspaceView.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
+		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
 		B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		BC63546001772B6B43829640 /* RoomPlan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RoomPlan.framework; path = System/Library/Frameworks/RoomPlan.framework; sourceTree = SDKROOT; };
+		BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceService.swift; sourceTree = "<group>"; };
 		C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreparationView.swift; sourceTree = "<group>"; };
 		CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnsupportedCaptureView.swift; sourceTree = "<group>"; };
 		D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModelTests.swift; sourceTree = "<group>"; };
 		EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapabilityTests.swift; sourceTree = "<group>"; };
 		EBB12C1C614BACC3644EBBDF /* HomeDesignCaptureTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6DE930A75C9651B86254FEB /* EvidenceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceModels.swift; sourceTree = "<group>"; };
 		FFCD513E21B995439356829E /* ManualEvidenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEvidenceView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -133,6 +145,17 @@
 			path = Projects;
 			sourceTree = "<group>";
 		};
+		61D79269D6AF0E2D590E7817 /* Evidence */ = {
+			isa = PBXGroup;
+			children = (
+				F6DE930A75C9651B86254FEB /* EvidenceModels.swift */,
+				686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */,
+				BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */,
+				746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */,
+			);
+			path = Evidence;
+			sourceTree = "<group>";
+		};
 		8092AACCFB015054F9B542F3 /* Platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -175,6 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				2D42209B58C3CE9C34260C53 /* C1 */,
+				CD04126CC756A6BE91371EF8 /* C2 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -194,10 +218,20 @@
 			isa = PBXGroup;
 			children = (
 				09B074659F34D63201964557 /* CaptureEligibility */,
+				61D79269D6AF0E2D590E7817 /* Evidence */,
 				EC59D210FDEEE0C3C53466C3 /* ManualEvidence */,
 				4EFF2CE2DE1F7BBC06912644 /* Projects */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		CD04126CC756A6BE91371EF8 /* C2 */ = {
+			isa = PBXGroup;
+			children = (
+				638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */,
+				B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */,
+			);
+			path = C2;
 			sourceTree = "<group>";
 		};
 		D88E00BC4F6ED12AC47A941B /* Core */ = {
@@ -319,6 +353,10 @@
 				44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */,
 				DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */,
 				E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */,
+				80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */,
+				F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */,
+				72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */,
+				78590673BBA441661F2BEF49 /* EvidenceWorkspaceView.swift in Sources */,
 				B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */,
 				7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */,
 				1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */,
@@ -333,6 +371,8 @@
 				701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */,
 				140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */,
 				B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */,
+				8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */,
+				5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */,
 				BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

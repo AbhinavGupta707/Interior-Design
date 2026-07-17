@@ -5,7 +5,7 @@ import {
   type AssetProcessingResult,
 } from "@interior-design/contracts";
 import { randomUUID } from "node:crypto";
-import type { JSONValue, Sql } from "postgres";
+import type { JSONValue, Sql, TransactionSql } from "postgres";
 
 export interface LeasedProcessingJob {
   readonly command: AssetProcessingCommand;
@@ -58,6 +58,38 @@ function jsonValue(value: unknown): JSONValue {
   return JSON.parse(JSON.stringify(value)) as JSONValue;
 }
 
+async function insertWorkerAudit(
+  transaction: TransactionSql,
+  row: Pick<CandidateRow, "asset_id" | "id" | "project_id" | "tenant_id">,
+  workerId: string,
+  action: string,
+): Promise<void> {
+  await transaction`
+    INSERT INTO asset_audit_events (
+      id,
+      tenant_id,
+      project_id,
+      asset_id,
+      actor_kind,
+      actor_identifier,
+      action,
+      resource_type,
+      resource_id
+    )
+    VALUES (
+      ${randomUUID()}::uuid,
+      ${row.tenant_id}::uuid,
+      ${row.project_id}::uuid,
+      ${row.asset_id}::uuid,
+      'worker',
+      ${workerId},
+      ${action},
+      'processing-job',
+      ${row.id}::uuid
+    )
+  `;
+}
+
 export class PostgresProcessingJobRepository implements ProcessingJobRepository {
   readonly #sql: Sql;
 
@@ -74,7 +106,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
           AND (
             (status IN ('queued', 'retryable') AND available_at <= clock_timestamp())
             OR
-            (status = 'processing' AND lease_expires_at <= clock_timestamp())
+            (status = 'leased' AND lease_expires_at <= clock_timestamp())
           )
         ORDER BY available_at ASC, created_at ASC, id ASC
         FOR UPDATE SKIP LOCKED
@@ -102,27 +134,29 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
         `;
         await transaction`
           UPDATE assets
+          SET status = 'processing',
+              updated_at = clock_timestamp()
+          WHERE tenant_id = ${candidate.tenant_id}::uuid
+            AND project_id = ${candidate.project_id}::uuid
+            AND id = ${candidate.asset_id}::uuid
+            AND status = 'uploaded'
+        `;
+        await transaction`
+          UPDATE assets
           SET status = 'rejected',
               rejection_code = 'processing-failed',
               updated_at = clock_timestamp()
           WHERE tenant_id = ${candidate.tenant_id}::uuid
             AND project_id = ${candidate.project_id}::uuid
             AND id = ${candidate.asset_id}::uuid
-            AND status IN ('uploaded', 'processing')
+            AND status = 'processing'
         `;
-        await transaction`
-          INSERT INTO asset_audit_events (
-            id, tenant_id, project_id, asset_id, event_type, details
-          )
-          VALUES (
-            ${randomUUID()}::uuid,
-            ${candidate.tenant_id}::uuid,
-            ${candidate.project_id}::uuid,
-            ${candidate.asset_id}::uuid,
-            'asset.processing-command-invalid',
-            ${transaction.json(jsonValue({ jobId: candidate.id, status: "rejected" }))}
-          )
-        `;
+        await insertWorkerAudit(
+          transaction,
+          candidate,
+          workerId,
+          "asset.processing.command-invalid",
+        );
         return undefined;
       }
       const storedCommand = parsedCommand.data;
@@ -137,7 +171,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
             lease_owner = ${workerId},
             lease_token = ${leaseToken}::uuid,
             processing_started_at = COALESCE(processing_started_at, clock_timestamp()),
-            status = 'processing',
+            status = 'leased',
             updated_at = clock_timestamp()
         WHERE id = ${candidate.id}::uuid
           AND tenant_id = ${candidate.tenant_id}::uuid
@@ -182,7 +216,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
         AND tenant_id = ${job.tenantId}::uuid
         AND project_id = ${job.command.projectId}::uuid
         AND asset_id = ${job.command.assetId}::uuid
-        AND status = 'processing'
+        AND status = 'leased'
         AND lease_owner = ${job.workerId}
         AND lease_token = ${job.leaseToken}::uuid
         AND lease_expires_at > clock_timestamp()
@@ -207,7 +241,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
           AND tenant_id = ${job.tenantId}::uuid
           AND project_id = ${job.command.projectId}::uuid
           AND asset_id = ${job.command.assetId}::uuid
-          AND status = 'processing'
+          AND status = 'leased'
           AND lease_owner = ${job.workerId}
           AND lease_token = ${job.leaseToken}::uuid
           AND lease_expires_at > clock_timestamp()
@@ -254,7 +288,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
       }
       await transaction`
         UPDATE asset_processing_jobs
-        SET status = 'completed',
+        SET status = 'succeeded',
             result = ${transaction.json(jsonValue(result))},
             completed_at = clock_timestamp(),
             lease_owner = NULL,
@@ -263,27 +297,23 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
             updated_at = clock_timestamp()
         WHERE id = ${job.jobId}::uuid
           AND tenant_id = ${job.tenantId}::uuid
+          AND project_id = ${job.command.projectId}::uuid
+          AND asset_id = ${job.command.assetId}::uuid
+          AND status = 'leased'
+          AND lease_owner = ${job.workerId}
+          AND lease_token = ${job.leaseToken}::uuid
       `;
-      await transaction`
-        INSERT INTO asset_audit_events (
-          id, tenant_id, project_id, asset_id, event_type, details
-        )
-        VALUES (
-          ${randomUUID()}::uuid,
-          ${job.tenantId}::uuid,
-          ${result.projectId}::uuid,
-          ${result.assetId}::uuid,
-          'asset.processing-completed',
-          ${transaction.json(
-            jsonValue({
-              jobId: job.jobId,
-              rejectionCode: result.status === "ready" ? undefined : result.rejectionCode,
-              status: result.status,
-              version: result.version,
-            }),
-          )}
-        )
-      `;
+      await insertWorkerAudit(
+        transaction,
+        {
+          asset_id: result.assetId,
+          id: job.jobId,
+          project_id: result.projectId,
+          tenant_id: job.tenantId,
+        },
+        job.workerId,
+        "asset.processing.complete",
+      );
       return true;
     });
   }
@@ -293,7 +323,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
     safeErrorCode: string,
     retryDelayMs: number,
   ): Promise<RetryOutcome> {
-    if (!/^[a-z][a-z0-9-]{1,99}$/u.test(safeErrorCode)) {
+    if (!/^[a-z][a-z0-9-]{1,79}$/u.test(safeErrorCode)) {
       throw new Error("Retry error codes must be bounded and non-sensitive.");
     }
     return this.#sql.begin(async (transaction) => {
@@ -304,7 +334,7 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
           AND tenant_id = ${job.tenantId}::uuid
           AND project_id = ${job.command.projectId}::uuid
           AND asset_id = ${job.command.assetId}::uuid
-          AND status = 'processing'
+          AND status = 'leased'
           AND lease_owner = ${job.workerId}
           AND lease_token = ${job.leaseToken}::uuid
           AND lease_expires_at > clock_timestamp()
@@ -324,6 +354,11 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
               updated_at = clock_timestamp()
           WHERE id = ${job.jobId}::uuid
             AND tenant_id = ${job.tenantId}::uuid
+            AND project_id = ${job.command.projectId}::uuid
+            AND asset_id = ${job.command.assetId}::uuid
+            AND status = 'leased'
+            AND lease_owner = ${job.workerId}
+            AND lease_token = ${job.leaseToken}::uuid
         `;
         return "retrying";
       }
@@ -338,6 +373,11 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
             updated_at = clock_timestamp()
         WHERE id = ${job.jobId}::uuid
           AND tenant_id = ${job.tenantId}::uuid
+          AND project_id = ${job.command.projectId}::uuid
+          AND asset_id = ${job.command.assetId}::uuid
+          AND status = 'leased'
+          AND lease_owner = ${job.workerId}
+          AND lease_token = ${job.leaseToken}::uuid
       `;
       await transaction`
         UPDATE assets
@@ -349,21 +389,17 @@ export class PostgresProcessingJobRepository implements ProcessingJobRepository 
           AND id = ${job.command.assetId}::uuid
           AND status = 'processing'
       `;
-      await transaction`
-        INSERT INTO asset_audit_events (
-          id, tenant_id, project_id, asset_id, event_type, details
-        )
-        VALUES (
-          ${randomUUID()}::uuid,
-          ${job.tenantId}::uuid,
-          ${job.command.projectId}::uuid,
-          ${job.command.assetId}::uuid,
-          'asset.processing-exhausted',
-          ${transaction.json(
-            jsonValue({ errorCode: safeErrorCode, jobId: job.jobId, status: "rejected" }),
-          )}
-        )
-      `;
+      await insertWorkerAudit(
+        transaction,
+        {
+          asset_id: job.command.assetId,
+          id: job.jobId,
+          project_id: job.command.projectId,
+          tenant_id: job.tenantId,
+        },
+        job.workerId,
+        "asset.processing.exhausted",
+      );
       return "exhausted";
     });
   }
