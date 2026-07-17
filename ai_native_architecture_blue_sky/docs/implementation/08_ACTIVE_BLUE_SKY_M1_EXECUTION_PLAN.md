@@ -209,12 +209,12 @@ There are 19 sequential checkpoints and 68 planned worker lanes. This is an orch
 
 | Lane | Exclusive paths | Output and evidence |
 |---|---|---|
-| C8-L1 media preparation | `services/spatial-worker/src/media-prep/**` | frame sampling, blur/exposure/overlap checks, EXIF stripping, redaction hooks, manifests |
-| C8-L2 geometric reconstruction | `services/inference-worker/src/reconstruction/{colmap,open3d}/**` | camera/SfM/MVS/RGB-D adapters, scale anchors, point/mesh outputs and diagnostics |
-| C8-L3 neural appearance | `services/inference-worker/src/reconstruction/{nerfstudio,gsplat}/**` | versioned optional NeRF/splat adapter, viewer/export artifacts, no canonical authority |
-| C8-L4 GPU/evaluation | `ml/reconstruction/**`, `tests/evaluation/reconstruction/**`, `docs/ml/reconstruction/**` | reproducible Mac/Windows manifests, failure/severe-error/latency/memory benchmarks |
+| C8-L1 durable workflow/status UX | platform reconstruction API/migration plus isolated web reconstruction paths | tenant-safe idempotent lifecycle, fencing/cancel/retry/publication, accessible source/job/diagnostic/result journey |
+| C8-L2 native capture/media preparation | isolated iOS media-capture paths plus `services/spatial-worker/src/media-prep/**` | guided photo/video/optional RGB-D capture, immutable handoff, bounded FFmpeg preparation, quality/privacy manifests |
+| C8-L3 geometric reconstruction | `services/inference-worker/src/inference_worker/reconstruction/{common,colmap,open3d}/**` | camera/SfM/MVS/RGB-D adapters, scale anchors, disconnected components, point/mesh outputs and diagnostics |
+| C8-L4 neural/GPU/independent QA | neural adapter, GPU package, reconstruction security/evaluation/E2E/XCUITest paths | optional non-dimensional NeRF/splat outputs, reproducible Windows/NVIDIA run, Mac/no-GPU behavior and exhaustive user/adversarial evidence |
 
-**Gate:** geometric and appearance artifacts are separate; partial/failed registration is visible; raw customer media/weights never enter Git.
+All four C8 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because concurrency, native sensors, hostile media, numerical geometry, CUDA boundaries and adversarial evaluation are complex. **Gate:** geometric and appearance artifacts are separate; partial/failed registration is visible; the real browser and Simulator fixture journeys are verified without claiming unavailable camera/GPU evidence; raw customer media/weights never enter Git.
 
 ### C9 — Autonomous multi-source full-house fusion — 4 lanes
 

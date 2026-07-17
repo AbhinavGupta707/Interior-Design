@@ -66,6 +66,11 @@ const expectedSameTenantAccess = {
     "property:update": true,
     "project:create": true,
     "project:read": true,
+    "reconstruction:job:cancel": true,
+    "reconstruction:job:create": true,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": true,
+    "reconstruction:result:read": true,
   },
   owner: {
     "capture:artifact:upload": true,
@@ -100,6 +105,11 @@ const expectedSameTenantAccess = {
     "property:update": true,
     "project:create": true,
     "project:read": true,
+    "reconstruction:job:cancel": true,
+    "reconstruction:job:create": true,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": true,
+    "reconstruction:result:read": true,
   },
   viewer: {
     "capture:artifact:upload": false,
@@ -134,6 +144,11 @@ const expectedSameTenantAccess = {
     "property:update": false,
     "project:create": false,
     "project:read": true,
+    "reconstruction:job:cancel": false,
+    "reconstruction:job:create": false,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": false,
+    "reconstruction:result:read": true,
   },
 } as const;
 
@@ -150,6 +165,11 @@ describe("authoriseProjectAction", () => {
     expect(projectActions).toEqual([
       "project:create",
       "project:read",
+      "reconstruction:job:create",
+      "reconstruction:job:read",
+      "reconstruction:job:cancel",
+      "reconstruction:job:retry",
+      "reconstruction:result:read",
       "capture:session:create",
       "capture:session:read",
       "capture:session:cancel",

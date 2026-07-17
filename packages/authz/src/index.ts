@@ -4,6 +4,11 @@ import type { Actor, MemberRole } from "@interior-design/contracts";
 export const projectActions = Object.freeze([
   "project:create",
   "project:read",
+  "reconstruction:job:create",
+  "reconstruction:job:read",
+  "reconstruction:job:cancel",
+  "reconstruction:job:retry",
+  "reconstruction:result:read",
   "capture:session:create",
   "capture:session:read",
   "capture:session:cancel",
@@ -83,6 +88,11 @@ const permissions: RoleActionMatrix = Object.freeze({
     "property:update": true,
     "project:create": true,
     "project:read": true,
+    "reconstruction:job:cancel": true,
+    "reconstruction:job:create": true,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": true,
+    "reconstruction:result:read": true,
   }),
   owner: Object.freeze({
     "capture:artifact:upload": true,
@@ -117,6 +127,11 @@ const permissions: RoleActionMatrix = Object.freeze({
     "property:update": true,
     "project:create": true,
     "project:read": true,
+    "reconstruction:job:cancel": true,
+    "reconstruction:job:create": true,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": true,
+    "reconstruction:result:read": true,
   }),
   viewer: Object.freeze({
     "capture:artifact:upload": false,
@@ -151,6 +166,11 @@ const permissions: RoleActionMatrix = Object.freeze({
     "property:update": false,
     "project:create": false,
     "project:read": true,
+    "reconstruction:job:cancel": false,
+    "reconstruction:job:create": false,
+    "reconstruction:job:read": true,
+    "reconstruction:job:retry": false,
+    "reconstruction:result:read": true,
   }),
 });
 
