@@ -25,6 +25,7 @@
     "@interior-design/contracts": "workspace:*",
     "@interior-design/domain-model": "workspace:*",
     "@interior-design/geometry-kernel": "workspace:*",
+    "@interior-design/model-operations": "workspace:*",
     "@interior-design/provider-adapters": "workspace:*",
     "@interior-design/provenance": "workspace:*",
     "@opentelemetry/api": "^1.9.1",

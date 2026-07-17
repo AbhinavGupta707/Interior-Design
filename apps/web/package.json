@@ -17,6 +17,8 @@
   "dependencies": {
     "@interior-design/config": "workspace:*",
     "@interior-design/contracts": "workspace:*",
+    "@interior-design/editor-core": "workspace:*",
+    "@interior-design/model-operations": "workspace:*",
     "@interior-design/ui": "workspace:*",
     "next": "^16.2.10",
     "react": "^19.2.7",

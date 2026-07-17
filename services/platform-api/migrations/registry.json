@@ -24,6 +24,12 @@
       "checkpoint": "C4",
       "owner": "C4-L3",
       "path": "0004_canonical_models.sql"
+    },
+    {
+      "id": "0005",
+      "checkpoint": "C5",
+      "owner": "C5-L1",
+      "path": "0005_model_operations.sql"
     }
   ]
 }

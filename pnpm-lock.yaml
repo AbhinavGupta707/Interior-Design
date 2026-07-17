@@ -47,6 +47,12 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/editor-core':
+        specifier: workspace:*
+        version: link:../../packages/editor-core
+      '@interior-design/model-operations':
+        specifier: workspace:*
+        version: link:../../packages/model-operations
       '@interior-design/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -97,11 +103,32 @@ importers:
         specifier: workspace:*
         version: link:../provenance
 
+  packages/editor-core:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/model-operations':
+        specifier: workspace:*
+        version: link:../model-operations
+
   packages/geometry-kernel:
     dependencies:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/model-operations:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+      '@interior-design/geometry-kernel':
+        specifier: workspace:*
+        version: link:../geometry-kernel
 
   packages/provenance:
     dependencies:
@@ -153,6 +180,9 @@ importers:
       '@interior-design/geometry-kernel':
         specifier: workspace:*
         version: link:../../packages/geometry-kernel
+      '@interior-design/model-operations':
+        specifier: workspace:*
+        version: link:../../packages/model-operations
       '@interior-design/provenance':
         specifier: workspace:*
         version: link:../../packages/provenance
