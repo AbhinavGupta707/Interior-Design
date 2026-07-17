@@ -6,23 +6,62 @@ struct AppRootView: View {
   @State private var flow: CaptureFlowModel
   @State private var projectRepository: ProjectRepository
   @State private var evidenceRepository: EvidenceRepository
+  @State private var captureWorkspaceModel: C7CaptureWorkspaceModel
 
   @MainActor
   init(
     configuration: AppConfiguration,
     capabilityChecker: any CaptureCapabilityChecking = SystemCaptureCapabilityChecker(),
-    projectService: (any ProjectServing)? = nil
+    projectService: (any ProjectServing)? = nil,
+    captureTokenProvider: (any C7CaptureTokenProviding)? = nil,
+    captureLauncher: any C7CaptureLaunching = C7UnavailableCaptureLauncher(),
+    captureRole: C7WorkspaceRole = .owner
   ) {
     self.configuration = configuration
     _flow = State(initialValue: CaptureFlowModel(capabilityChecker: capabilityChecker))
-    let service = projectService ?? C1ProjectAPIClient(
-      baseURL: configuration.apiBaseURL,
-      transport: URLSessionTransport()
-    )
+    let service =
+      projectService
+      ?? C1ProjectAPIClient(
+        baseURL: configuration.apiBaseURL,
+        transport: URLSessionTransport()
+      )
+    let refresher: any C7CaptureTokenRefreshing
+    if configuration.environment == .local {
+      refresher = C7LocalSessionTokenRefresher(baseURL: configuration.apiBaseURL)
+    } else {
+      refresher = C7UnavailableTokenRefresher()
+    }
+    let tokenProvider: any C7CaptureTokenProviding =
+      captureTokenProvider
+      ?? C7KeychainBackedTokenProvider(
+        store: C7KeychainTokenStore(),
+        refresher: refresher
+      )
     _projectRepository = State(initialValue: ProjectRepository(service: service))
     _evidenceRepository = State(
       initialValue: EvidenceRepository(
-        service: C2EvidenceAPIClient(baseURL: configuration.apiBaseURL)
+        service: C2EvidenceAPIClient(
+          baseURL: configuration.apiBaseURL,
+          tokenProvider: tokenProvider
+        )
+      )
+    )
+    let captureService = C7CaptureAPIClient(
+      baseURL: configuration.apiBaseURL,
+      tokenProvider: tokenProvider
+    )
+    let captureJournal = C7ProtectedCaptureJournal()
+    let captureSync = C7CaptureSyncEngine(
+      service: captureService,
+      journal: captureJournal
+    )
+    _captureWorkspaceModel = State(
+      initialValue: C7CaptureWorkspaceModel(
+        role: captureRole,
+        service: captureService,
+        journal: captureJournal,
+        syncEngine: captureSync,
+        captureLauncher: captureLauncher
       )
     )
   }
@@ -66,7 +105,8 @@ struct AppRootView: View {
           }
         }
       case .capturePreparation:
-        CapturePreparationView(
+        C7CaptureWorkspaceView(
+          model: captureWorkspaceModel,
           project: project,
           onUseManualEvidence: flow.useManualEvidence,
           onChooseAnotherProject: flow.reset
