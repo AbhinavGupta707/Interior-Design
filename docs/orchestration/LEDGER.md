@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous programme target: complete C1 through C10 sequentially; the immutable C1–C6 goal is followed immediately by a C7–C10 continuation goal
+- Autonomous execution boundary: complete C1 through C8. The user explicitly stopped the run after C8; C9 and C10 remain planned but are not opened, scaffolded or launched in this run.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -304,24 +304,25 @@
 
 ## C8 — Guided photo/video/RGB-D reconstruction
 
-### Master activation
+### Master activation and closure
 
-- Status: four isolated project worktrees active from frozen base `707ad0b`
+- Status: code/integration checkpoint complete on `main` under the contract's explicit unavailable-hardware/runtime evidence boundary; C9 was not opened per the user's terminal instruction
 - Contract: `docs/orchestration/checkpoints/C8_CONTRACT.md` (`c8-reconstruction-job-v1`, `c8-media-preparation-v1`, `c8-geometry-result-v1`, `c8-appearance-result-v1`, `c8-reconstruction-result-v1`)
 - Immutable predecessor: `20f6c5f`
 - Prelude commit: `bad15ee`
 - Frozen worker base: `707ad0b`
+- Product completion SHA: `babf083bdad2d299d90f4b8bd2e1c9e51f63350a`
 - Planned lanes: four, retained adaptively because the durable API/status journey, native and hostile-media boundary, numerical geometry adapters and optional neural/GPU/adversarial evidence are substantial independent risks with exclusive write boundaries
 - Provider policy: no paid provider, cloud key, customer media or training use is required; deterministic synthetic inputs, local PostGIS/S3-compatible storage and FFmpeg support the base gates
 - Mutation policy: C8 preserves immutable media, publishes proposal-only geometry and optional non-dimensional appearance, and cannot call C5 or mutate canonical state; C9 owns fusion and discrepancy resolution
 - Hardware status at activation: physical iOS camera/RGB-D and NVIDIA/CUDA dense/neural evidence are `NOT RUN`; this Apple M1 host has FFmpeg/ffprobe 8.1 but no COLMAP, Open3D, PyTorch, Blender or CUDA runtime
 
-| Lane                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                            |
-| -------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| C8-L1 durable workflow/status UX | `019f700a-6630-76b1-a437-03bb6b32c341` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | platform reconstruction module/C8 composition/migration/tests, isolated web reconstruction page/BFF/features/tests and development runbook |
-| C8-L2 native capture/media prep  | `019f700a-667e-74c1-adb3-b7178db5fb80` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | native MediaCapture/Camera features and tests, spatial-worker media-prep source/tests and named composition files                          |
-| C8-L3 geometric reconstruction   | `019f700a-6633-7ce3-a9fb-6ac719c5750e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | inference-worker common/COLMAP/Open3D reconstruction source and tests                                                                      |
-| C8-L4 neural/GPU/independent QA  | `019f700a-662f-7ce1-9357-12d31ff644a6` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | Nerfstudio/gsplat adapters, GPU package, reconstruction evaluation/security/E2E/XCUITest evidence and documents                            |
+| Lane                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                                                            |
+| -------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| C8-L1 durable workflow/status UX | `019f700a-6630-76b1-a437-03bb6b32c341` | `gpt-5.6-sol` / `xhigh` | `5bd72f5`  | `c7639f7` | integrated | platform reconstruction module/C8 composition/migration/tests, isolated web reconstruction page/BFF/features/tests and development runbook |
+| C8-L2 native capture/media prep  | `019f700a-667e-74c1-adb3-b7178db5fb80` | `gpt-5.6-sol` / `xhigh` | `9473ac7`  | `b9bbf19` | integrated | native MediaCapture/Camera features and tests, spatial-worker media-prep source/tests and named composition files                          |
+| C8-L3 geometric reconstruction   | `019f700a-6633-7ce3-a9fb-6ac719c5750e` | `gpt-5.6-sol` / `xhigh` | `3cf9629`  | `6d3941a` | integrated | inference-worker common/COLMAP/Open3D reconstruction source and tests                                                                      |
+| C8-L4 neural/GPU/independent QA  | `019f700a-662f-7ce1-9357-12d31ff644a6` | `gpt-5.6-sol` / `xhigh` | `4af266e`  | `79348e2` | integrated | Nerfstudio/gsplat adapters, GPU package, reconstruction evaluation/security/E2E/XCUITest evidence and documents                            |
 
 ### Prelude gate evidence
 
@@ -331,3 +332,16 @@
 - `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, all 14 package lint/typecheck suites, every JavaScript unit suite and production build, Ruff, strict mypy and 12 Python tests. Focused C8 contract/authz/security typechecks pass and `git diff --check` is clean.
 - Migration `0008_reconstruction.sql` is reserved exclusively for C8-L1. Shared contracts/core authz, migration registry, package/root manifests, lockfiles, accepted checkpoint contract, generated Xcode project, shared project/navigation/composition, `.github`, `.codex`, `AGENTS.md` and this ledger remain orchestrator-owned except for the exact narrow integration files transferred in a lane task.
 - All four implementation lanes use exact `gpt-5.6-sol` with `xhigh` reasoning. This is an adaptive per-lane assignment, not an automatic checkpoint default: durable tenant/concurrency boundaries, native sensors, hostile-media subprocesses, numerical geometry and CUDA/adversarial evaluation each require complex reasoning; later bounded lanes may use `high`.
+
+### Integration and closure evidence
+
+- The orchestrator merged in the frozen L3 → L2 → L1 → L4 order. L3 supplied strict COLMAP/Open3D geometry adapters and parsers; L2 supplied AVFoundation capture and bounded FFmpeg preparation; L1 supplied durable tenant-safe API/lease/publication and accessible web status; L4 supplied optional non-dimensional Nerfstudio/gsplat adapters plus independent evaluation/security/browser/native packs.
+- The shared integration registers all four adapters through code-owned discovery, exposes bounded unavailable state, composes the spatial worker from exact database sources through real media preparation into a private path-bearing Python protocol, verifies artifact scope/hash/size, uploads with the narrow storage port and leaves final publication behind L1's atomic tenant/project/job/attempt/lease/cancellation/rights fence. No public route accepts a path, locator or private tool envelope; no C5/canonical mutation is reachable.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, all 14 package lint/typecheck suites, every JavaScript unit suite and production build, Ruff, strict mypy and 86 passed Python tests with two named unavailable-runtime skips. The spatial worker reports 84 passed with three live-only skips in the provider-free run; focused reconstruction Python passes 74 with two real-runtime skips.
+- A disposable Postgres database passes the live platform C8 suite 8/8 and the composed spatial-worker source → rights → FFmpeg preparation → private worker → artifact → atomic result test 1/1. Idempotency, tenant isolation, lease reclaim/stale-token denial, cancellation at every stage, retry fencing, rights withdrawal, immutable publication and zero canonical mutation are covered.
+- Actual local FFmpeg/ffprobe 8.1 processes visibly synthetic still/video inputs, strips metadata, samples deterministically and cleans temporary workspaces. Actual worker-host discovery invokes the private Python module and truthfully publishes a COLMAP-unavailable abstention on this Apple M1 host instead of fixture geometry.
+- Independent evaluation passes 7/7 and reconstruction security passes 24/24. Synthetic Playwright passes six desktop/mobile/keyboard Chromium journeys. A separate producer-live run passes 2/2 through the real Next app, same-origin BFF, C1–C8 API, disposable Postgres and fixture identity: it signs in, creates a tenant project, loads the C8 workspace at desktop/mobile widths and verifies honest unavailable capability state, no eligible media, unchanged canonical state, no overflow/disclosure and no console/page/C8 request failure. The in-app Browser controller failed before tab acquisition, so that route remains explicitly `NOT RUN` and CLI Playwright is the documented fallback.
+- The first integrated native run exposed five C8 XCUITest skips because the fixture producer had not been registered in the app. Closure stopped. The orchestrator added an exact Debug/local-only fixture and parser tests, regenerated Xcode, and the focused two unit plus five UI journeys then passed with zero skips. The final complete iOS scheme passed 143 reported cases / 150 XCTest invocations with zero failures and zero skips on iPhone Air / iOS 26.4 Simulator.
+- An unsigned generic `arm64` Release build succeeds with the AVFoundation camera/depth paths. Binary inspection finds none of the C8 fixture environment keys or presentation copy, proving the acceptance protocol is compiled out of production.
+- Physical camera/RGB-D, usable native depth/calibration/pose extraction, COLMAP/Open3D algorithms, CUDA dense reconstruction, Nerfstudio/gsplat runtime, Windows/NVIDIA capacity and representative geometric accuracy remain `NOT RUN`. The implementations and safe unavailable behavior are present, but synthetic executors and Simulator states are not relabelled as hardware/runtime evidence.
+- Durable evidence: `docs/evaluation/reconstruction/c8-evidence-record-2026-07-17.md`. C9 was neither activated nor scaffolded; execution stops at the C8 ledger-close commit by explicit user instruction.
