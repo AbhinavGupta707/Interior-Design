@@ -16,7 +16,15 @@ struct HomeDesignCaptureApp: App {
     WindowGroup {
       switch bootstrap {
       case .ready(let configuration):
-        AppRootView(configuration: configuration)
+        #if DEBUG
+          if let scenario = C7UITestFixtureScenario.current(configuration: configuration) {
+            C7UITestFixtureView(scenario: scenario)
+          } else {
+            AppRootView(configuration: configuration)
+          }
+        #else
+          AppRootView(configuration: configuration)
+        #endif
       case .failed(let message):
         ConfigurationFailureView(message: message)
       }

@@ -46,7 +46,7 @@ git diff --exit-code -- project.yml HomeDesignCapture.xcodeproj
 Run strict Simulator tests on an installed iOS 26.4 simulator, substituting only an actually listed device name:
 
 ```sh
-C7_RUN_INTEGRATED_UI=1 xcodebuild test \
+xcodebuild test \
   -project apps/ios-capture/HomeDesignCapture.xcodeproj \
   -scheme HomeDesignCapture \
   -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.4' \
@@ -54,7 +54,7 @@ C7_RUN_INTEGRATED_UI=1 xcodebuild test \
   -only-testing:HomeDesignCaptureUITests/C7GoldenContractUITests
 ```
 
-Then run the complete scheme without `-only-testing`. Record executed, passed, failed and skipped counts separately. `C7_RUN_INTEGRATED_UI` must be visible to the test runner; if the C7 suite skips, the integrated UI gate is **NOT RUN**.
+Then run the complete scheme without `-only-testing`. Record executed, passed, failed and skipped counts separately. Once the C7 fixture protocol is integrated, this suite must execute by default; any skipped C7 acceptance case makes the integrated UI gate **NOT RUN**.
 
 Generic no-signing compilation is separate evidence:
 

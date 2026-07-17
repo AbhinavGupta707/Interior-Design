@@ -7,31 +7,65 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */; };
+		09D7CC666216C7D345613160 /* RoomCaptureDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009594AC33EE380D224ADCBF /* RoomCaptureDomain.swift */; };
+		109FDDB62242C5C36CE7B984 /* RoomPlanNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FA313D6A2491915A01B4DE /* RoomPlanNormalizer.swift */; };
 		140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */; };
 		1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */; };
 		21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC63546001772B6B43829640 /* RoomPlan.framework */; };
+		35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */; };
+		360C3C5191E23DDBB4CB29B6 /* FixtureRoomCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */; };
 		3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */; };
+		3DB1883D0119E7BF7B74240F /* CapturePreflightAndMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */; };
 		3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */; };
+		404B3B8DEE54C8023D323D8E /* SyntheticRoomCaptureFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */; };
+		437C0271F653EE62590D8EB0 /* CaptureWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 355194F068616831A4B117DC /* CaptureWorkspaceModel.swift */; };
+		43C6E86E45DF3AA8C08A6D91 /* CaptureWorkspaceModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35802FA6AE1B015F3F3CAC44 /* CaptureWorkspaceModelTests.swift */; };
 		44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A59599EAEA6781787237269 /* CaptureFlowModel.swift */; };
+		48A413F3EA84E3A1FF1F5F72 /* CaptureQualityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6847560C7C5511E7267625 /* CaptureQualityModels.swift */; };
+		4B468F9B8E087CB970FEA0C0 /* CaptureQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */; };
+		4F3490ACDDA54352DDF83C96 /* RoomCaptureArtifactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F189627CFAAF6E01994B21 /* RoomCaptureArtifactTests.swift */; };
+		561AC7177ECE5F41545D6F55 /* CaptureQualityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0254ED72823AE11B121D /* CaptureQualityView.swift */; };
+		576A0EECADD8626736CF8150 /* CaptureTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809F3FA3F44F7683744EBD5 /* CaptureTokenProvider.swift */; };
+		585F380C28C113C4F94FAC64 /* C7GoldenContractUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4FD66A87EAC9C4B168A6106 /* C7GoldenContractUITests.swift */; };
 		5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */; };
+		5CABFD84489281540124CD59 /* FixtureRoomCaptureEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1939F54E12D0EDFF5168492 /* FixtureRoomCaptureEngineTests.swift */; };
+		6EB81D6C603A83FB962C34B0 /* CaptureSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */; };
 		701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */; };
 		72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */; };
+		764CC793F6C8C684C09E52F9 /* ProtectedCaptureJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB98D116726F900D369D054 /* ProtectedCaptureJournal.swift */; };
 		78590673BBA441661F2BEF49 /* EvidenceWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */; };
+		7A86C395C64C42F71815AF13 /* RoomPlanNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03829D01C478CDEE00421559 /* RoomPlanNormalizerTests.swift */; };
 		7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCD513E21B995439356829E /* ManualEvidenceView.swift */; };
+		7D532A62835469F85D2F79DA /* ProtectedCaptureJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E591A8E99A20C7A4A6DA3D /* ProtectedCaptureJournalTests.swift */; };
 		7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */; };
 		80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DE930A75C9651B86254FEB /* EvidenceModels.swift */; };
+		83AD74D9950485839F495388 /* RoomCaptureStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F444C68A6BA603F3648FEF /* RoomCaptureStateMachine.swift */; };
+		88D234068099691EC57E82FE /* CaptureSecurityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84E0D41C2BB42D745CFAAD /* CaptureSecurityServiceTests.swift */; };
 		8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */; };
 		9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */; };
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
+		940FDBB79B930C589F848D9E /* RoomCaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
+		A1C1339F90E84B6043AA5933 /* RoomCaptureStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
+		B1A528CF35351323D878F3D1 /* CaptureWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */; };
 		B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */; };
 		BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */; };
+		C94532183AEDB4F45F9DA729 /* CaptureSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0947CB0F939A786E6C0DE386 /* CaptureSyncService.swift */; };
+		CFB3A197CC5EFF652CF85A22 /* CaptureSyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */; };
+		D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */; };
+		D5C0DF62C5BA57FEA572CC32 /* RoomPlanCaptureSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */; };
+		DB7563707C9F91699769D317 /* RoomCaptureSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D615B7544349E395E07640 /* RoomCaptureSessionView.swift */; };
+		DB91FEBD12707F2253613DBA /* RoomPlanCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */; };
 		DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */; };
 		E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */; };
 		E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */; };
 		E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */; };
+		EB6AFDD85483B2A1F09F107B /* RoomCaptureArtifacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */; };
+		EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */; };
 		F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */; };
+		F5C1551AF49B951F1F148A4C /* CaptureSyncModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,32 +86,66 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		009594AC33EE380D224ADCBF /* RoomCaptureDomain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureDomain.swift; sourceTree = "<group>"; };
+		03829D01C478CDEE00421559 /* RoomPlanNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanNormalizerTests.swift; sourceTree = "<group>"; };
+		06F444C68A6BA603F3648FEF /* RoomCaptureStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureStateMachine.swift; sourceTree = "<group>"; };
+		0947CB0F939A786E6C0DE386 /* CaptureSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncService.swift; sourceTree = "<group>"; };
+		0A84E0D41C2BB42D745CFAAD /* CaptureSecurityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSecurityServiceTests.swift; sourceTree = "<group>"; };
 		0C7C417F96BFE83119FC4501 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSelectionView.swift; sourceTree = "<group>"; };
 		12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapability.swift; sourceTree = "<group>"; };
+		16FA313D6A2491915A01B4DE /* RoomPlanNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanNormalizer.swift; sourceTree = "<group>"; };
 		172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDesignCaptureApp.swift; sourceTree = "<group>"; };
+		1809F3FA3F44F7683744EBD5 /* CaptureTokenProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureTokenProvider.swift; sourceTree = "<group>"; };
 		1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContracts.swift; sourceTree = "<group>"; };
+		1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreflightAndMappingTests.swift; sourceTree = "<group>"; };
+		21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7UITestFixtureScenarioTests.swift; sourceTree = "<group>"; };
+		32E591A8E99A20C7A4A6DA3D /* ProtectedCaptureJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectedCaptureJournalTests.swift; sourceTree = "<group>"; };
+		355194F068616831A4B117DC /* CaptureWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModel.swift; sourceTree = "<group>"; };
+		35802FA6AE1B015F3F3CAC44 /* CaptureWorkspaceModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModelTests.swift; sourceTree = "<group>"; };
+		3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceView.swift; sourceTree = "<group>"; };
+		420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureRoomCaptureEngine.swift; sourceTree = "<group>"; };
+		46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7UITestFixtureView.swift; sourceTree = "<group>"; };
 		48EB186AC67396E926C3F733 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		4A6847560C7C5511E7267625 /* CaptureQualityModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityModels.swift; sourceTree = "<group>"; };
 		4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeDesignCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
+		5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncModels.swift; sourceTree = "<group>"; };
 		575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRepositoryTests.swift; sourceTree = "<group>"; };
+		5DB98D116726F900D369D054 /* ProtectedCaptureJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectedCaptureJournal.swift; sourceTree = "<group>"; };
 		638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceFlowTests.swift; sourceTree = "<group>"; };
 		686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepository.swift; sourceTree = "<group>"; };
 		68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6A59599EAEA6781787237269 /* CaptureFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModel.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
 		723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7AcceptanceUITests.swift; sourceTree = "<group>"; };
 		743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContractTests.swift; sourceTree = "<group>"; };
 		746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkspaceView.swift; sourceTree = "<group>"; };
+		75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureSurface.swift; sourceTree = "<group>"; };
+		838A0254ED72823AE11B121D /* CaptureQualityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityView.swift; sourceTree = "<group>"; };
+		8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureCoordinator.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
+		9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifacts.swift; sourceTree = "<group>"; };
+		9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticRoomCaptureFixtures.swift; sourceTree = "<group>"; };
+		A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7SyntheticFixtures.swift; sourceTree = "<group>"; };
+		A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityTests.swift; sourceTree = "<group>"; };
+		B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncEngineTests.swift; sourceTree = "<group>"; };
+		B2F189627CFAAF6E01994B21 /* RoomCaptureArtifactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifactTests.swift; sourceTree = "<group>"; };
 		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
 		B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncEngine.swift; sourceTree = "<group>"; };
 		BC63546001772B6B43829640 /* RoomPlan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RoomPlan.framework; path = System/Library/Frameworks/RoomPlan.framework; sourceTree = SDKROOT; };
 		BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceService.swift; sourceTree = "<group>"; };
+		C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureStateMachineTests.swift; sourceTree = "<group>"; };
 		C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreparationView.swift; sourceTree = "<group>"; };
 		CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnsupportedCaptureView.swift; sourceTree = "<group>"; };
+		D1939F54E12D0EDFF5168492 /* FixtureRoomCaptureEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureRoomCaptureEngineTests.swift; sourceTree = "<group>"; };
 		D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchUITests.swift; sourceTree = "<group>"; };
+		D2D615B7544349E395E07640 /* RoomCaptureSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureSessionView.swift; sourceTree = "<group>"; };
 		D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModelTests.swift; sourceTree = "<group>"; };
+		E4FD66A87EAC9C4B168A6106 /* C7GoldenContractUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7GoldenContractUITests.swift; sourceTree = "<group>"; };
+		E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureEngine.swift; sourceTree = "<group>"; };
 		EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapabilityTests.swift; sourceTree = "<group>"; };
 		EBB12C1C614BACC3644EBBDF /* HomeDesignCaptureTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F6DE930A75C9651B86254FEB /* EvidenceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceModels.swift; sourceTree = "<group>"; };
@@ -110,6 +178,7 @@
 			isa = PBXGroup;
 			children = (
 				68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */,
+				46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */,
 				172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */,
 			);
 			path = App;
@@ -142,6 +211,19 @@
 			path = HomeDesignCapture;
 			sourceTree = "<group>";
 		};
+		3C431264FFC6013842066185 /* RoomCapture */ = {
+			isa = PBXGroup;
+			children = (
+				9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */,
+				8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */,
+				009594AC33EE380D224ADCBF /* RoomCaptureDomain.swift */,
+				D2D615B7544349E395E07640 /* RoomCaptureSessionView.swift */,
+				06F444C68A6BA603F3648FEF /* RoomCaptureStateMachine.swift */,
+				16FA313D6A2491915A01B4DE /* RoomPlanNormalizer.swift */,
+			);
+			path = RoomCapture;
+			sourceTree = "<group>";
+		};
 		46D39148B1AAFA8F2CCB0BAC /* Configurations */ = {
 			isa = PBXGroup;
 			children = (
@@ -149,6 +231,27 @@
 				48EB186AC67396E926C3F733 /* Release.xcconfig */,
 			);
 			path = Configurations;
+			sourceTree = "<group>";
+		};
+		4AEA9043467CDFC55A00D69D /* CaptureSync */ = {
+			isa = PBXGroup;
+			children = (
+				BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */,
+				5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */,
+				0947CB0F939A786E6C0DE386 /* CaptureSyncService.swift */,
+				1809F3FA3F44F7683744EBD5 /* CaptureTokenProvider.swift */,
+				5DB98D116726F900D369D054 /* ProtectedCaptureJournal.swift */,
+			);
+			path = CaptureSync;
+			sourceTree = "<group>";
+		};
+		4EF0C21784ECD38850E937C4 /* CaptureQuality */ = {
+			isa = PBXGroup;
+			children = (
+				4A6847560C7C5511E7267625 /* CaptureQualityModels.swift */,
+				838A0254ED72823AE11B121D /* CaptureQualityView.swift */,
+			);
+			path = CaptureQuality;
 			sourceTree = "<group>";
 		};
 		4EFF2CE2DE1F7BBC06912644 /* Projects */ = {
@@ -222,8 +325,24 @@
 			isa = PBXGroup;
 			children = (
 				12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */,
+				420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */,
+				E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */,
+				75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */,
 			);
 			path = AR;
+			sourceTree = "<group>";
+		};
+		A83B0C7935680C1E5260605C /* QualitySync */ = {
+			isa = PBXGroup;
+			children = (
+				A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */,
+				A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */,
+				0A84E0D41C2BB42D745CFAAD /* CaptureSecurityServiceTests.swift */,
+				B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */,
+				35802FA6AE1B015F3F3CAC44 /* CaptureWorkspaceModelTests.swift */,
+				32E591A8E99A20C7A4A6DA3D /* ProtectedCaptureJournalTests.swift */,
+			);
+			path = QualitySync;
 			sourceTree = "<group>";
 		};
 		B4CD5AB503A04870C474EBDA /* HomeDesignCaptureTests */ = {
@@ -239,6 +358,19 @@
 			path = HomeDesignCaptureTests;
 			sourceTree = "<group>";
 		};
+		BA7A12FB0A5E4B99FB5E4174 /* RoomCapture */ = {
+			isa = PBXGroup;
+			children = (
+				1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */,
+				D1939F54E12D0EDFF5168492 /* FixtureRoomCaptureEngineTests.swift */,
+				B2F189627CFAAF6E01994B21 /* RoomCaptureArtifactTests.swift */,
+				C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */,
+				03829D01C478CDEE00421559 /* RoomPlanNormalizerTests.swift */,
+				9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */,
+			);
+			path = RoomCapture;
+			sourceTree = "<group>";
+		};
 		BB3077E03A74853DDD8D7A0B /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -251,9 +383,13 @@
 			isa = PBXGroup;
 			children = (
 				09B074659F34D63201964557 /* CaptureEligibility */,
+				4EF0C21784ECD38850E937C4 /* CaptureQuality */,
+				4AEA9043467CDFC55A00D69D /* CaptureSync */,
+				F5262870A95256265601DCD9 /* CaptureWorkspace */,
 				61D79269D6AF0E2D590E7817 /* Evidence */,
 				EC59D210FDEEE0C3C53466C3 /* ManualEvidence */,
 				4EFF2CE2DE1F7BBC06912644 /* Projects */,
+				3C431264FFC6013842066185 /* RoomCapture */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -286,6 +422,15 @@
 			path = Configuration;
 			sourceTree = "<group>";
 		};
+		EC4630328F20A36D620EAE05 /* C7 */ = {
+			isa = PBXGroup;
+			children = (
+				732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */,
+				E4FD66A87EAC9C4B168A6106 /* C7GoldenContractUITests.swift */,
+			);
+			path = C7;
+			sourceTree = "<group>";
+		};
 		EC59D210FDEEE0C3C53466C3 /* ManualEvidence */ = {
 			isa = PBXGroup;
 			children = (
@@ -298,8 +443,20 @@
 			isa = PBXGroup;
 			children = (
 				76DB48CAB98CF9A82C034775 /* Contract */,
+				A83B0C7935680C1E5260605C /* QualitySync */,
+				BA7A12FB0A5E4B99FB5E4174 /* RoomCapture */,
+				21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */,
 			);
 			path = C7;
+			sourceTree = "<group>";
+		};
+		F5262870A95256265601DCD9 /* CaptureWorkspace */ = {
+			isa = PBXGroup;
+			children = (
+				355194F068616831A4B117DC /* CaptureWorkspaceModel.swift */,
+				3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */,
+			);
+			path = CaptureWorkspace;
 			sourceTree = "<group>";
 		};
 		F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */ = {
@@ -313,6 +470,7 @@
 		F96E2278E5F993197F981738 /* HomeDesignCaptureUITests */ = {
 			isa = PBXGroup;
 			children = (
+				EC4630328F20A36D620EAE05 /* C7 */,
 				D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */,
 			);
 			path = HomeDesignCaptureUITests;
@@ -419,6 +577,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */,
+				EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */,
+				585F380C28C113C4F94FAC64 /* C7GoldenContractUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,18 +589,37 @@
 				3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */,
 				E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */,
 				3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */,
+				011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */,
 				E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */,
 				95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */,
 				44779B26B053F97AD0CF81A7 /* CaptureFlowModel.swift in Sources */,
 				DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */,
 				E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */,
+				48A413F3EA84E3A1FF1F5F72 /* CaptureQualityModels.swift in Sources */,
+				561AC7177ECE5F41545D6F55 /* CaptureQualityView.swift in Sources */,
+				6EB81D6C603A83FB962C34B0 /* CaptureSyncEngine.swift in Sources */,
+				F5C1551AF49B951F1F148A4C /* CaptureSyncModels.swift in Sources */,
+				C94532183AEDB4F45F9DA729 /* CaptureSyncService.swift in Sources */,
+				576A0EECADD8626736CF8150 /* CaptureTokenProvider.swift in Sources */,
+				437C0271F653EE62590D8EB0 /* CaptureWorkspaceModel.swift in Sources */,
+				B1A528CF35351323D878F3D1 /* CaptureWorkspaceView.swift in Sources */,
 				80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */,
 				F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */,
 				72C04DADFF32AA4CE225E16F /* EvidenceService.swift in Sources */,
 				78590673BBA441661F2BEF49 /* EvidenceWorkspaceView.swift in Sources */,
+				360C3C5191E23DDBB4CB29B6 /* FixtureRoomCaptureEngine.swift in Sources */,
 				B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */,
 				7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */,
 				1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */,
+				764CC793F6C8C684C09E52F9 /* ProtectedCaptureJournal.swift in Sources */,
+				EB6AFDD85483B2A1F09F107B /* RoomCaptureArtifacts.swift in Sources */,
+				940FDBB79B930C589F848D9E /* RoomCaptureCoordinator.swift in Sources */,
+				09D7CC666216C7D345613160 /* RoomCaptureDomain.swift in Sources */,
+				DB7563707C9F91699769D317 /* RoomCaptureSessionView.swift in Sources */,
+				83AD74D9950485839F495388 /* RoomCaptureStateMachine.swift in Sources */,
+				DB91FEBD12707F2253613DBA /* RoomPlanCaptureEngine.swift in Sources */,
+				D5C0DF62C5BA57FEA572CC32 /* RoomPlanCaptureSurface.swift in Sources */,
+				109FDDB62242C5C36CE7B984 /* RoomPlanNormalizer.swift in Sources */,
 				935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -451,11 +630,24 @@
 			files = (
 				701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */,
 				7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */,
+				D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */,
+				35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */,
 				140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */,
 				B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */,
+				3DB1883D0119E7BF7B74240F /* CapturePreflightAndMappingTests.swift in Sources */,
+				4B468F9B8E087CB970FEA0C0 /* CaptureQualityTests.swift in Sources */,
+				88D234068099691EC57E82FE /* CaptureSecurityServiceTests.swift in Sources */,
+				CFB3A197CC5EFF652CF85A22 /* CaptureSyncEngineTests.swift in Sources */,
+				43C6E86E45DF3AA8C08A6D91 /* CaptureWorkspaceModelTests.swift in Sources */,
 				8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */,
 				5C9CCBFED23964086215F205 /* EvidenceRepositoryTests.swift in Sources */,
+				5CABFD84489281540124CD59 /* FixtureRoomCaptureEngineTests.swift in Sources */,
 				BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */,
+				7D532A62835469F85D2F79DA /* ProtectedCaptureJournalTests.swift in Sources */,
+				4F3490ACDDA54352DDF83C96 /* RoomCaptureArtifactTests.swift in Sources */,
+				A1C1339F90E84B6043AA5933 /* RoomCaptureStateMachineTests.swift in Sources */,
+				7A86C395C64C42F71815AF13 /* RoomPlanNormalizerTests.swift in Sources */,
+				404B3B8DEE54C8023D323D8E /* SyntheticRoomCaptureFixtures.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
