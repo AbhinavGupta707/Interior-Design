@@ -301,3 +301,33 @@
 - Computer Use visually inspected and operated two Simulator journeys: two-room structure review → accept → packaging, and permission denied → manual evidence → fallback. Controls were tappable, layout remained readable and the synthetic/non-RoomPlan limitation copy stayed visible. These are `Simulator / visibly synthetic / non-RoomPlan` observations only.
 - No connected physical iPhone/iPad was available. F1–F6, physical VoiceOver, real camera permission, LiDAR, RoomPlan output, tracking/relocalisation, thermal behavior, background transfer and accuracy distributions remain `NOT RUN`. The rights-controlled physical development and holdout splits remain empty, evaluator promotion remains false, DQ-020 remains unresolved and the C7/C18 release blocker remains **OPEN**. Under the user-authorized overnight continuation and the explicit C7 contract exception, this blocks release promotion but not opening C8's independent media-reconstruction work.
 - Durable evidence record: `docs/evaluation/roomplan/c7-code-checkpoint-evidence-2026-07-17.md`. Integrated product SHA: `d10416a`. The ledger-close commit is the commit containing this completed record; C8 must record that commit as its immutable predecessor before any worker launches.
+
+## C8 — Guided photo/video/RGB-D reconstruction
+
+### Master activation
+
+- Status: prelude complete on `main`; four isolated worktrees are ready to launch from the ledger activation commit containing this record
+- Contract: `docs/orchestration/checkpoints/C8_CONTRACT.md` (`c8-reconstruction-job-v1`, `c8-media-preparation-v1`, `c8-geometry-result-v1`, `c8-appearance-result-v1`, `c8-reconstruction-result-v1`)
+- Immutable predecessor: `20f6c5f`
+- Prelude commit: `bad15ee`
+- Frozen worker base: the ledger activation commit containing this record; its exact SHA and task IDs are recorded immediately after launch
+- Planned lanes: four, retained adaptively because the durable API/status journey, native and hostile-media boundary, numerical geometry adapters and optional neural/GPU/adversarial evidence are substantial independent risks with exclusive write boundaries
+- Provider policy: no paid provider, cloud key, customer media or training use is required; deterministic synthetic inputs, local PostGIS/S3-compatible storage and FFmpeg support the base gates
+- Mutation policy: C8 preserves immutable media, publishes proposal-only geometry and optional non-dimensional appearance, and cannot call C5 or mutate canonical state; C9 owns fusion and discrepancy resolution
+- Hardware status at activation: physical iOS camera/RGB-D and NVIDIA/CUDA dense/neural evidence are `NOT RUN`; this Apple M1 host has FFmpeg/ffprobe 8.1 but no COLMAP, Open3D, PyTorch, Blender or CUDA runtime
+
+| Lane                             | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State | Exclusive roots                                                                                                                            |
+| -------------------------------- | -------------- | ----------------------- | ---------- | --------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| C8-L1 durable workflow/status UX | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | platform reconstruction module/C8 composition/migration/tests, isolated web reconstruction page/BFF/features/tests and development runbook |
+| C8-L2 native capture/media prep  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native MediaCapture/Camera features and tests, spatial-worker media-prep source/tests and named composition files                          |
+| C8-L3 geometric reconstruction   | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | inference-worker common/COLMAP/Open3D reconstruction source and tests                                                                      |
+| C8-L4 neural/GPU/independent QA  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | Nerfstudio/gsplat adapters, GPU package, reconstruction evaluation/security/E2E/XCUITest evidence and documents                            |
+
+### Prelude gate evidence
+
+- Current primary COLMAP, Open3D, Nerfstudio, gsplat and FFmpeg documentation informed the CPU/CUDA boundary, non-contiguous-ID parsing, disconnected-model behavior, three-correspondence alignment, known-pose TSDF requirements, optional neural export and fixed-command media preparation boundaries recorded in the accepted contract.
+- Shared TypeScript schemas freeze five versioned contracts, exact routes, rights, source/type/byte/frame/artifact budgets, job states, retry/result invariants, stripped-frame privacy state, tool/config/source hashes, geometry scale/alignment/components and the proposal-only versus non-dimensional authority split. Seven focused C8 cases pass; the full contract package passes 47/47.
+- The central authorization registry and independent policy fixture now include all five C8 actions. The package authorization suite passes 327/327 and the identity/security pack passes 786/786: owner/editor may create/read/cancel/retry and read results; viewers are job/result read-only; every foreign-tenant action fails closed.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passes Prettier, all 14 package lint/typecheck suites, every JavaScript unit suite and production build, Ruff, strict mypy and 12 Python tests. Focused C8 contract/authz/security typechecks pass and `git diff --check` is clean.
+- Migration `0008_reconstruction.sql` is reserved exclusively for C8-L1. Shared contracts/core authz, migration registry, package/root manifests, lockfiles, accepted checkpoint contract, generated Xcode project, shared project/navigation/composition, `.github`, `.codex`, `AGENTS.md` and this ledger remain orchestrator-owned except for the exact narrow integration files transferred in a lane task.
+- All four implementation lanes use exact `gpt-5.6-sol` with `xhigh` reasoning. This is an adaptive per-lane assignment, not an automatic checkpoint default: durable tenant/concurrency boundaries, native sensors, hostile-media subprocesses, numerical geometry and CUDA/adversarial evaluation each require complex reasoning; later bounded lanes may use `high`.
