@@ -234,9 +234,14 @@ export function ProjectsScreen() {
                     <span>Updated {formatUpdate(project.updatedAt)}</span>
                   </p>
                 </div>
-                <Link className="project-row__action" href={`/onboarding/${project.id}`}>
-                  Resume intake
-                </Link>
+                <div className="project-row__actions">
+                  <Link className="project-row__action" href={`/onboarding/${project.id}`}>
+                    Resume intake
+                  </Link>
+                  <Link className="project-row__action" href={`/evidence/${project.id}`}>
+                    Evidence
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
