@@ -833,3 +833,5 @@ export const c3RouteContract = Object.freeze({
   resolveProperty: "/v1/projects/:projectId/property/resolutions",
   selectProperty: "/v1/projects/:projectId/property",
 });
+
+export * from "./c4.js";

@@ -36,6 +36,8 @@ const expectedSameTenantAccess = {
   editor: {
     "intake:read": true,
     "intake:update": true,
+    "model:read": true,
+    "model:snapshot:create": true,
     "property:read": true,
     "property:refresh": true,
     "property:resolve": true,
@@ -46,6 +48,8 @@ const expectedSameTenantAccess = {
   owner: {
     "intake:read": true,
     "intake:update": true,
+    "model:read": true,
+    "model:snapshot:create": true,
     "property:read": true,
     "property:refresh": true,
     "property:resolve": true,
@@ -56,6 +60,8 @@ const expectedSameTenantAccess = {
   viewer: {
     "intake:read": true,
     "intake:update": false,
+    "model:read": true,
+    "model:snapshot:create": false,
     "property:read": true,
     "property:refresh": false,
     "property:resolve": false,
@@ -80,6 +86,8 @@ describe("authoriseProjectAction", () => {
       "project:read",
       "intake:read",
       "intake:update",
+      "model:read",
+      "model:snapshot:create",
       "property:read",
       "property:refresh",
       "property:resolve",

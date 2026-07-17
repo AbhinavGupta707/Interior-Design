@@ -18,6 +18,12 @@
       "checkpoint": "C3",
       "owner": "C3-L1",
       "path": "0003_property_dossier.sql"
+    },
+    {
+      "id": "0004",
+      "checkpoint": "C4",
+      "owner": "C4-L3",
+      "path": "0004_canonical_models.sql"
     }
   ]
 }

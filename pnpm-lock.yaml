@@ -88,7 +88,34 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  packages/domain-model:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/provenance':
+        specifier: workspace:*
+        version: link:../provenance
+
+  packages/geometry-kernel:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/provenance:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/provider-adapters:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/test-fixtures:
     dependencies:
       '@interior-design/contracts':
         specifier: workspace:*
@@ -120,6 +147,15 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/domain-model':
+        specifier: workspace:*
+        version: link:../../packages/domain-model
+      '@interior-design/geometry-kernel':
+        specifier: workspace:*
+        version: link:../../packages/geometry-kernel
+      '@interior-design/provenance':
+        specifier: workspace:*
+        version: link:../../packages/provenance
       '@interior-design/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters

@@ -6,6 +6,8 @@ export const projectActions = Object.freeze([
   "project:read",
   "intake:read",
   "intake:update",
+  "model:read",
+  "model:snapshot:create",
   "property:read",
   "property:refresh",
   "property:resolve",
@@ -29,6 +31,8 @@ const permissions: RoleActionMatrix = Object.freeze({
   editor: Object.freeze({
     "intake:read": true,
     "intake:update": true,
+    "model:read": true,
+    "model:snapshot:create": true,
     "property:read": true,
     "property:refresh": true,
     "property:resolve": true,
@@ -39,6 +43,8 @@ const permissions: RoleActionMatrix = Object.freeze({
   owner: Object.freeze({
     "intake:read": true,
     "intake:update": true,
+    "model:read": true,
+    "model:snapshot:create": true,
     "property:read": true,
     "property:refresh": true,
     "property:resolve": true,
@@ -49,6 +55,8 @@ const permissions: RoleActionMatrix = Object.freeze({
   viewer: Object.freeze({
     "intake:read": true,
     "intake:update": false,
+    "model:read": true,
+    "model:snapshot:create": false,
     "property:read": true,
     "property:refresh": false,
     "property:resolve": false,
