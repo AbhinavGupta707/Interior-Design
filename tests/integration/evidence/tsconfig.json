@@ -1,0 +1,8 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../.."
+  },
+  "include": ["./**/*.ts", "../../fixtures/c2/adversarial/**/*.ts"]
+}
