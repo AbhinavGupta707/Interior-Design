@@ -173,3 +173,31 @@
 - A real loopback HTTP listener then passed an 18-assertion authenticated client journey: three local personas signed in, an owner created a project, invalid geometry returned a located `WALL_PATH_SELF_INTERSECTION` without persistence, valid creation and same-key replay returned one version-one record, all three lifecycle states appeared exactly once, a viewer read current/history but received `403` on mutation, the foreign tenant received `404`, and an unauthenticated request received `401`.
 - Structured API logs showed only bounded codes, status, correlation IDs and the allowed finding code. Every request URL was `[REDACTED]`; no access token, idempotency key, snapshot body, project/model identifier, address, provider locator or credential appeared. C4 has no rendered user surface, so the contractually correct user gate is the public authenticated API journey rather than a fabricated browser or simulator check.
 - Honest residual limits: C4 is a deterministic TypeScript 2.5D information/validation kernel, not a survey-grade solid model, mesh reconstruction, GPU renderer, structural analysis, regulatory approval, IFC authoring tool or professional certification. It stores synthetic fixtures only; typed editing begins in C5, inference in C6, physical capture/reconstruction in C7-C9 and glTF delivery in C10.
+
+## C5 — Typed operations, branches, replay and 2D editor
+
+### Master activation
+
+- Status: active; lanes frozen and pending launch
+- Contract: `docs/orchestration/checkpoints/C5_CONTRACT.md` (`c5-model-operation-v1`)
+- Prelude commit: `2ab2dfc`
+- Frozen worker base commit: pending activation commit
+- Planned lanes: four, retained adaptively because reducer/persistence, policy/audit, interactive editor and independent replay/concurrency evaluation are all substantial and have exclusive write boundaries
+- Mutation policy: the integrated product accepts canonical amendments only through the exact versioned registry; initialise and restore are internal typed operations, preview is non-mutating and committed history is append-only
+- Concurrency policy: every preview/commit pins both branch revision and head SHA-256; no implicit geometry merge or history rewrite
+- Editor policy: canonical-SVG projection, integer-millimetre commands, bounded local undo/redo, structured keyboard inspector and responsive conflict recovery
+
+| Lane                        | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                                             |
+| --------------------------- | ----------- | ----------------------- | ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| C5-L1 operation producer    | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | model-operations package; operation API/composition/migration/tests/runbook; allocated C4 initialise bridge |
+| C5-L2 model policy/audit    | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | model policy/audit packages/modules/tests and threat model                                                  |
+| C5-L3 editor core/UI        | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | pending | editor-core, allocated web editor/BFF/project/CSS/component-test paths                                      |
+| C5-L4 replay/concurrency QA | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | pending | independent operation integration/geometry/E2E suites and invariant evaluation                              |
+
+### Prelude gate evidence
+
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, 14-package lint/typecheck, 343 JavaScript tests, every production build, Ruff, strict mypy and pytest after registering the model-operations and editor-core packages.
+- Shared C5 contracts pass six focused cases for the exact ten-type public/internal registry, dual revision/hash preconditions, duplicate command IDs, non-zero integer translation, enumerated safe metadata paths, pinned branch source and the eight frozen route names. The full contract package passes 26 cases.
+- The explicit role/action matrix now passes 111 authorisation cases. Owner/editor may create/read/compare branches, preview/commit, restore and inspect history/audit; viewer is read/history/compare/audit only; every foreign-tenant action is denied before resource disclosure.
+- Migration `0005_model_operations.sql` is allocated exclusively to C5-L1 in the migration registry before launch. Root/package manifests, lockfile, shared contracts/core authz registry, accepted checkpoint contract and ledger are orchestrator-owned and frozen for workers.
+- Reasoning is adaptive and recorded before launch: L1 receives `xhigh` for reducers, transactional persistence, replay and concurrency; L2 receives `xhigh` for person/machine policy, tenant security and immutable audit; L3 receives `high` as a bounded consumer of frozen contracts; L4 receives `xhigh` for adversarial property, race, replay and cross-surface acceptance work.
