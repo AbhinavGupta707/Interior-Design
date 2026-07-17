@@ -264,22 +264,22 @@
 
 ### Master activation
 
-- Status: prelude complete on `main`; four isolated worktrees are ready to launch from the ledger activation commit containing this record
+- Status: four isolated project worktrees active from frozen base `e438d8f`
 - Contract: `docs/orchestration/checkpoints/C7_CONTRACT.md` (`c7-capture-session-v1`, `c7-capture-package-v1`, `c7-roomplan-normalized-v1`, `c7-capture-proposal-v1`)
 - Immutable predecessor: `96d0a72`
 - Prelude commit: `f4c8182`
-- Frozen worker base: the ledger activation commit containing this record; its exact SHA and task IDs are recorded immediately after launch
+- Frozen worker base: `e438d8f`
 - Planned lanes: four, retained adaptively because native RoomPlan/AR correctness, privacy-preserving background sync, durable backend/conversion and independent field/security evaluation are substantial independent risks with exclusive write boundaries
 - Provider policy: no paid provider, cloud key, GPU or customer capture is required; local PostGIS/S3-compatible storage and visibly synthetic RoomPlan fixtures support deterministic gates
 - Mutation policy: C7 preserves immutable Apple evidence and emits a bounded canonical-shaped proposal or explicit abstention; it cannot call C5 preview/commit or mutate canonical state
 - Physical-device status at activation: `NOT RUN`; Xcode reports only the Mac and iOS Simulators, so DQ-020 and the named C7/C18 field-release blocker remain open
 
-| Lane                         | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State | Exclusive roots                                                                                                                        |
-| ---------------------------- | -------------- | ----------------------- | ---------- | --------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| C7-L1 RoomPlan/AR session    | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native RoomCapture feature, AR platform adapter and C7 RoomCapture tests                                                               |
-| C7-L2 quality/sync/workspace | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | native capture quality/sync/workspace features, C7 QualitySync tests and three explicitly allocated app integration files              |
-| C7-L3 backend/converter      | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | platform capture module/C7 composition/migration/tests, spatial-worker RoomPlan converter/tests and native-capture development runbook |
-| C7-L4 mobile/field/security  | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | ready | C7 XCUITests, mobile/security/evaluation packs, RoomPlan evaluation/threat model and iOS field/release runbooks                        |
+| Lane                         | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                                        |
+| ---------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| C7-L1 RoomPlan/AR session    | `019f6f8b-500b-75a3-9705-1afc0f7310a2` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | native RoomCapture feature, AR platform adapter and C7 RoomCapture tests                                                               |
+| C7-L2 quality/sync/workspace | `019f6f8b-5005-7463-b083-49074ffaa2ba` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | native capture quality/sync/workspace features, C7 QualitySync tests and three explicitly allocated app integration files              |
+| C7-L3 backend/converter      | `019f6f8b-4ffd-7730-aa47-fac87b4f16cd` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | platform capture module/C7 composition/migration/tests, spatial-worker RoomPlan converter/tests and native-capture development runbook |
+| C7-L4 mobile/field/security  | `019f6f8b-5000-7363-a7ba-5c3f35304833` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | C7 XCUITests, mobile/security/evaluation packs, RoomPlan evaluation/threat model and iOS field/release runbooks                        |
 
 ### Prelude gate evidence
 
