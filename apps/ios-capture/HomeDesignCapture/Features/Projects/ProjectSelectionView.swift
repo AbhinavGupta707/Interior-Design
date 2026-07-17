@@ -207,7 +207,7 @@ struct ProjectSelectionView: View {
       }
 
       Section {
-        LabeledContent("Persona", value: "Avery Morgan")
+        LabeledContent("Persona", value: "Alpha homeowner")
         LabeledContent("Session", value: "Synthetic local fixture")
       } header: {
         Text("Local development identity")

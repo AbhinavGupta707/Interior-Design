@@ -12,9 +12,9 @@ const users = {
   "viewer-alpha": "cccccccc-3333-4333-8333-333333333333",
 };
 const displayNames = {
-  "homeowner-alpha": "Avery Morgan",
-  "homeowner-beta": "Morgan Lee",
-  "viewer-alpha": "Sam Taylor",
+  "homeowner-alpha": "Alpha homeowner",
+  "homeowner-beta": "Beta homeowner",
+  "viewer-alpha": "Alpha viewer",
 };
 
 let projectsByTenant = new Map();

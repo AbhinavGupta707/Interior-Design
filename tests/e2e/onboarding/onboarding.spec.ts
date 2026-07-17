@@ -36,12 +36,12 @@ test("signs in, creates a project, saves, edits and resumes structured intake", 
     await page.keyboard.press("Tab");
     await expect(page.locator(":focus")).toHaveText("Skip to main content");
   }
-  const avery = page.getByRole("radio", { name: /Avery Morgan/u });
-  await avery.focus();
+  const alphaHomeowner = page.getByRole("radio", { name: /Alpha homeowner/u });
+  await alphaHomeowner.focus();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("radio", { name: /Morgan Lee/u })).toBeChecked();
-  await avery.check();
-  await page.getByRole("button", { name: "Continue as Avery Morgan" }).click();
+  await expect(page.getByRole("radio", { name: /Beta homeowner/u })).toBeChecked();
+  await alphaHomeowner.check();
+  await page.getByRole("button", { name: "Continue as Alpha homeowner" }).click();
 
   await expect(page).toHaveURL(/\/projects$/u);
   await expect(page.getByText("Local fixture · Synthetic data")).toBeVisible();
@@ -115,7 +115,7 @@ test("shows expired, forbidden, offline and retry recovery states", async ({ pag
       status: 401,
     });
   });
-  await page.getByRole("button", { name: "Continue as Avery Morgan" }).click();
+  await page.getByRole("button", { name: "Continue as Alpha homeowner" }).click();
   await expect(page.getByRole("heading", { name: "Your session has expired" })).toBeVisible();
 
   await page.unroute("**/api/c1/projects");
@@ -127,7 +127,7 @@ test("shows expired, forbidden, offline and retry recovery states", async ({ pag
       status: 403,
     });
   });
-  await page.getByRole("button", { name: "Continue as Avery Morgan" }).click();
+  await page.getByRole("button", { name: "Continue as Alpha homeowner" }).click();
   await expect(page.getByRole("heading", { name: "Projects are unavailable" })).toBeVisible();
 
   await page.unroute("**/api/c1/projects");
@@ -144,7 +144,7 @@ test("shows expired, forbidden, offline and retry recovery states", async ({ pag
 
 async function signInAndCreateProject(page: import("@playwright/test").Page) {
   await page.goto("/sign-in");
-  await page.getByRole("button", { name: "Continue as Avery Morgan" }).click();
+  await page.getByRole("button", { name: "Continue as Alpha homeowner" }).click();
   await page.getByLabel("New project name").fill("Sample terrace refresh");
   await page.getByRole("button", { name: "New project" }).click();
   await expect(page.getByRole("heading", { name: "Tell us about your home" })).toBeVisible();

@@ -10,19 +10,19 @@ export interface PersonaOption {
 export const personaOptions: readonly PersonaOption[] = [
   {
     description: "Synthetic tenant Alpha owner",
-    displayName: "Avery Morgan",
+    displayName: "Alpha homeowner",
     id: "homeowner-alpha",
     roleLabel: "Homeowner",
   },
   {
     description: "Synthetic tenant Beta owner",
-    displayName: "Morgan Lee",
+    displayName: "Beta homeowner",
     id: "homeowner-beta",
     roleLabel: "Homeowner",
   },
   {
     description: "Synthetic tenant Alpha read-only member",
-    displayName: "Sam Taylor",
+    displayName: "Alpha viewer",
     id: "viewer-alpha",
     roleLabel: "Viewer",
   },

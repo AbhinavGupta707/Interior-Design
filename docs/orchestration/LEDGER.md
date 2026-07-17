@@ -7,6 +7,7 @@
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design`
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
+- Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
 - Autonomous programme target: complete C1 through C10 sequentially; the immutable C1–C6 goal is followed immediately by a C7–C10 continuation goal
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 

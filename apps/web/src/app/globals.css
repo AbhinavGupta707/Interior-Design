@@ -975,7 +975,7 @@ select {
   accent-color: var(--ui-colour-accent);
 }
 
-.evidence-option > span {
+.intake-form .evidence-option > span {
   display: grid;
   gap: var(--ui-space-1);
   margin: 0;

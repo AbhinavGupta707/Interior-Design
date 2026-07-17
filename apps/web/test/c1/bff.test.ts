@@ -8,7 +8,7 @@ const sessionPayload = {
   accessToken: "fixture-access-token-with-more-than-thirty-two-characters",
   session: {
     actor: {
-      displayName: "Avery Morgan",
+      displayName: "Alpha homeowner",
       role: "owner",
       subject: "fixture:homeowner-alpha",
       tenantId: "11111111-1111-4111-8111-111111111111",

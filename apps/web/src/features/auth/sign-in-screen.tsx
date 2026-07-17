@@ -16,7 +16,7 @@ export function SignInScreen() {
   const [error, setError] = useState<string>();
   const errorRef = useRef<HTMLDivElement>(null);
   const selectedName =
-    personaOptions.find((option) => option.id === persona)?.displayName ?? "Avery Morgan";
+    personaOptions.find((option) => option.id === persona)?.displayName ?? "Alpha homeowner";
 
   useEffect(() => {
     if (error) errorRef.current?.focus();

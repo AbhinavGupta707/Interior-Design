@@ -70,6 +70,8 @@ Before every checkpoint the orchestrator commits a contract prelude containing a
 
 Each lane prompt states its exclusive paths, read-only dependencies, forbidden paths, verification commands and required evidence. A lane-count or boundary change is allowed only before launch, or after affected workers are stopped and a written replan is committed. The next checkpoint starts only after all active lanes are reviewed, merged in dependency order, integrated, tested and documented.
 
+Every isolated implementation task is created explicitly with `gpt-5.6-sol`. The orchestrator assigns `high` reasoning to bounded, well-specified or mechanically straightforward lanes, and `xhigh` reasoning to lanes involving architecture, security, geometry, inference, concurrency, adversarial evaluation or substantial cross-surface integration. The checkpoint contract and ledger predeclare the model/reasoning choice for every lane; lower reasoning levels are not used for implementation workers.
+
 ## 6. Adaptive checkpoint allocation
 
 | Checkpoint | Lanes | Verifiable product increment | Why this split is conflict-safe |

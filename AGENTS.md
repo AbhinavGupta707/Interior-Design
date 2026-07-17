@@ -17,6 +17,7 @@ The product accepts home details and multimodal evidence, creates an uncertainty
 
 - Only the orchestrator opens checkpoints and freezes shared contracts.
 - Use project-scoped Codex worktree tasks for implementation lanes.
+- Launch every implementation lane explicitly with `gpt-5.6-sol`: use `high` reasoning for bounded or straightforward work and `xhigh` reasoning for complex architecture, security, geometry, inference, concurrency or cross-surface integration work. Record the choice in the checkpoint contract and ledger before launch.
 - One worker exclusively owns every editable path named in its prompt.
 - Do not edit root manifests, lockfiles, `.github/**`, `.codex/**`, accepted ADRs, shared OpenAPI/generated clients, migration registry or orchestration ledger unless the prompt explicitly transfers one named file.
 - Do not start a later checkpoint before the current checkpoint is merged, integrated, verified and documented.

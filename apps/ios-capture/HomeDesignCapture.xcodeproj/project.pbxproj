@@ -18,6 +18,7 @@
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
 		B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */; };
+		BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */; };
 		DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */; };
 		E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */; };
 		E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */; };
@@ -42,6 +43,7 @@
 		48EB186AC67396E926C3F733 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeDesignCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
+		575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRepositoryTests.swift; sourceTree = "<group>"; };
 		68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6A59599EAEA6781787237269 /* CaptureFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlowModel.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
@@ -93,6 +95,14 @@
 				6A59599EAEA6781787237269 /* CaptureFlowModel.swift */,
 			);
 			path = Navigation;
+			sourceTree = "<group>";
+		};
+		2D42209B58C3CE9C34260C53 /* C1 */ = {
+			isa = PBXGroup;
+			children = (
+				575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */,
+			);
+			path = C1;
 			sourceTree = "<group>";
 		};
 		3AEE4307F6C074A804449AFD /* HomeDesignCapture */ = {
@@ -164,6 +174,7 @@
 		B4CD5AB503A04870C474EBDA /* HomeDesignCaptureTests */ = {
 			isa = PBXGroup;
 			children = (
+				2D42209B58C3CE9C34260C53 /* C1 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -322,6 +333,7 @@
 				701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */,
 				140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */,
 				B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */,
+				BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
