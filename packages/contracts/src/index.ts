@@ -275,6 +275,26 @@ export const assetUploadSessionSchema = z
     maximumPartCount: z.literal(10_000),
     minimumNonFinalPartSize: z.literal(5_242_880),
     partSize: z.int().min(5_242_880).max(134_217_728),
+    recordedPartNumbers: z
+      .array(z.int().min(1).max(10_000))
+      .max(10_000)
+      .superRefine((partNumbers, context) => {
+        for (let index = 1; index < partNumbers.length; index += 1) {
+          const currentPartNumber = partNumbers[index];
+          const previousPartNumber = partNumbers[index - 1];
+          if (
+            currentPartNumber !== undefined &&
+            previousPartNumber !== undefined &&
+            currentPartNumber <= previousPartNumber
+          ) {
+            context.addIssue({
+              code: "custom",
+              message: "Recorded part numbers must be unique and strictly ascending.",
+              path: [index],
+            });
+          }
+        }
+      }),
     sessionId: assetUploadSessionIdSchema,
     state: assetUploadSessionStateSchema,
   })
@@ -380,10 +400,23 @@ export type AssetProcessingCommand = z.infer<typeof assetProcessingCommandSchema
 
 export const assetTechnicalMetadataSchema = z
   .object({
-    durationMilliseconds: z.int().nonnegative().max(108_000_000).optional(),
+    durationMilliseconds: z.int().nonnegative().max(1_800_000).optional(),
     heightPixels: z.int().positive().max(20_000).optional(),
     pageCount: z.int().positive().max(500).optional(),
     widthPixels: z.int().positive().max(20_000).optional(),
+  })
+  .superRefine((metadata, context) => {
+    if (
+      metadata.widthPixels !== undefined &&
+      metadata.heightPixels !== undefined &&
+      BigInt(metadata.widthPixels) * BigInt(metadata.heightPixels) > 100_000_000n
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Image dimensions exceed the 100 megapixel processing limit.",
+        path: ["widthPixels"],
+      });
+    }
   })
   .strict();
 
@@ -453,7 +486,7 @@ export const c2IngestionPolicy = Object.freeze({
   maximumImagePixels: 100_000_000,
   maximumPdfPages: 500,
   maximumUploadParts: 10_000,
-  maximumVideoDurationMilliseconds: 108_000_000,
+  maximumVideoDurationMilliseconds: 1_800_000,
   minimumNonFinalPartBytes: 5_242_880,
   signedAccessTtlSeconds: 300,
   signedUploadPartTtlSeconds: 900,
