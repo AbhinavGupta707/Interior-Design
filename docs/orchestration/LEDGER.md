@@ -404,11 +404,11 @@
 - Mutation policy: C10 reads one exact committed C4 snapshot and publishes a content-addressed derived visualisation only. It cannot write C4 snapshots, call C5 preview/commit, resolve C9 discrepancies or raise the model's evidence/professional status.
 - Hardware/runtime status at activation: physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA, representative-home accuracy and cloud delivery remain `NOT RUN`; these are upstream fidelity/release gates, not missing C10 architecture.
 
-| Lane                                 | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State       | Exclusive roots                                                                                  |
-| ------------------------------------ | ----------- | ----------------------- | ---------- | --------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| C10-L1 scene compiler/runtime        | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
-| C10-L2 durable scene backend/storage | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
-| C10-L3 viewer/independent acceptance | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | predeclared | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
+| Lane                                 | Task/thread                                              | Model / reasoning       | Worker SHA | Merge SHA | State        | Exclusive roots                                                                                  |
+| ------------------------------------ | -------------------------------------------------------- | ----------------------- | ---------- | --------- | ------------ | ------------------------------------------------------------------------------------------------ |
+| C10-L1 scene compiler/runtime        | `client-new-thread:ebee5379-2616-4028-aad9-f65e9516ad06` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
+| C10-L2 durable scene backend/storage | `client-new-thread:4469a026-6868-4fc1-b171-2a17e61bed7e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
+| C10-L3 viewer/independent acceptance | `client-new-thread:2d59bf64-7d9a-4703-8fdd-deb51c7977ae` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | provisioning | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
 
 ### Prelude decisions and gate evidence
 
