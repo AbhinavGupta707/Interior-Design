@@ -62,7 +62,7 @@ function normalizeFindings(findings: readonly GeometryFinding[]): readonly Geome
 }
 
 function allElements(elements: MutableElements): Array<{ readonly id: string }> {
-  return Object.values(elements).flat() as Array<{ readonly id: string }>;
+  return Object.values(elements).flat();
 }
 
 function assertNewElementId(elements: MutableElements, id: string, operationIndex: number): void {
@@ -327,7 +327,9 @@ export function reduceModelOperations(
   }
 
   const draft = structuredClone(base) as MutableSnapshot;
-  operations.forEach((operation, index) => applyOperation(draft, operation, index));
+  operations.forEach((operation, index) => {
+    applyOperation(draft, operation, index);
+  });
   // Full schema parsing precedes the single final canonicalisation. This makes
   // arithmetic overflow and any incompatible attributed shape fail closed.
   const reparsed = canonicalHomeSnapshotSchema.safeParse(draft);

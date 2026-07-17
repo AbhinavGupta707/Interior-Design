@@ -150,3 +150,8 @@ export function authoriseProjectAction(
 
   return { allowed: true, reason: "allowed" };
 }
+
+// C5's resource-bound policy is part of the public authorisation package so
+// later inference and automation lanes cannot bypass its human-confirmation
+// and machine-preview boundaries.
+export * from "./model/index.js";

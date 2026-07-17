@@ -21,6 +21,13 @@ import type {
 } from "../../src/modules/projects/repository.js";
 
 const actors: Readonly<Record<LocalPersona, Actor>> = {
+  "editor-alpha": {
+    displayName: "Alpha editor",
+    role: "editor",
+    subject: "fixture|editor-alpha",
+    tenantId: "10000000-0000-4000-8000-000000000001",
+    userId: "20000000-0000-4000-8000-000000000005",
+  },
   "homeowner-alpha": {
     displayName: "Alpha homeowner",
     role: "owner",

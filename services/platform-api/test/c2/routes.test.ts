@@ -37,6 +37,13 @@ const sourceSha256 = "a".repeat(64);
 const now = "2026-07-17T12:00:00.000Z";
 
 const actors: Readonly<Record<LocalPersona, Actor>> = {
+  "editor-alpha": {
+    displayName: "Synthetic alpha editor",
+    role: "editor",
+    subject: "fixture|editor-alpha",
+    tenantId: alphaTenantId,
+    userId: "20000000-0000-4000-8000-000000000005",
+  },
   "homeowner-alpha": {
     displayName: "Synthetic alpha owner",
     role: "owner",

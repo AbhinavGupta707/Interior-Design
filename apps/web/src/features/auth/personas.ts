@@ -15,6 +15,12 @@ export const personaOptions: readonly PersonaOption[] = [
     roleLabel: "Homeowner",
   },
   {
+    description: "Synthetic tenant Alpha design editor",
+    displayName: "Alpha editor",
+    id: "editor-alpha",
+    roleLabel: "Editor",
+  },
+  {
     description: "Synthetic tenant Beta owner",
     displayName: "Beta homeowner",
     id: "homeowner-beta",

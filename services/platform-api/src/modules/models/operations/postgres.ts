@@ -31,6 +31,7 @@ import type { JSONValue, Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 import { ApiError } from "../../../errors.js";
+import type { ModelAuditAction } from "../../audit/types.js";
 import { notFound } from "../../identity/http.js";
 import { BranchRevisionConflictError } from "./errors.js";
 import type {
@@ -616,6 +617,7 @@ async function insertSnapshot(
 async function appendAuditAndOutbox(
   transaction: TransactionSql,
   input: {
+    readonly action: ModelAuditAction;
     readonly actorUserId: string;
     readonly branch: BranchRow;
     readonly commitId?: string;
@@ -633,14 +635,14 @@ async function appendAuditAndOutbox(
   await transaction`
     INSERT INTO model_domain_audit_events (
       id, tenant_id, project_id, model_id, profile, branch_id, commit_id,
-      revision, event_type, operation_type, snapshot_id, snapshot_sha256,
-      actor_user_id, request_id, trace_id, occurred_at
+      revision, action, event_type, operation_types, outcome, snapshot_id,
+      snapshot_sha256, actor_user_id, request_id, trace_id, occurred_at
     ) VALUES (
       ${input.uuid()}::uuid, ${input.tenantId}::uuid, ${input.branch.project_id}::uuid,
       ${input.branch.model_id}::uuid, ${input.branch.profile}, ${input.branch.id}::uuid,
-      ${input.commitId ?? null}::uuid, ${input.revision}, ${input.eventType},
-      ${input.operationTypes.length === 1 ? input.operationTypes[0] : null},
-      ${input.snapshotId}::uuid, ${input.snapshotSha256}, ${input.actorUserId}::uuid,
+      ${input.commitId ?? null}::uuid, ${input.revision}, ${input.action}, ${input.eventType},
+      ${transaction.json(json(input.operationTypes))}, 'accepted', ${input.snapshotId}::uuid,
+      ${input.snapshotSha256}, ${input.actorUserId}::uuid,
       ${input.correlation.requestId}, ${input.correlation.traceId},
       ${input.occurredAt}::timestamptz
     )
@@ -873,6 +875,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
       `;
       if (advanced.length !== 1) throw new Error("Initialization branch did not advance once.");
       await appendAuditAndOutbox(transaction, {
+        action: "model:snapshot:create",
         actorUserId: command.actor.userId,
         branch,
         commitId,
@@ -957,6 +960,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
       );
       if (stored === undefined) throw new Error("Created model branch is missing.");
       await appendAuditAndOutbox(transaction, {
+        action: "model:branch:create",
         actorUserId: command.actor.userId,
         branch: stored,
         correlation: command.correlation,
@@ -1139,6 +1143,14 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
         AND commit_id = ${input.commitId}::uuid
       ORDER BY ordinal
     `;
+    const findings = z
+      .array(geometryFindingSchema)
+      .max(10_000)
+      .parse(commit.validation_findings)
+      .map(({ location, ...finding }) => ({
+        ...finding,
+        ...(location === undefined ? {} : { location }),
+      }));
     return {
       branch: mapBranch(branch, {
         headSnapshotId: commit.snapshot_id,
@@ -1150,7 +1162,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
         commit,
         operations.map(({ id }) => id),
       ),
-      findings: z.array(geometryFindingSchema).max(10_000).parse(commit.validation_findings),
+      findings,
     };
   }
 
@@ -1159,6 +1171,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
     input: {
       readonly branch: BranchRow;
       readonly canonical: CanonicalOperationResult;
+      readonly auditAction: ModelAuditAction;
       readonly command: CommitOperationsCommand | RestoreBranchCommand;
       readonly eventType: string;
       readonly message: string;
@@ -1244,6 +1257,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
       });
     }
     await appendAuditAndOutbox(transaction, {
+      action: input.auditAction,
       actorUserId: input.command.actor.userId,
       branch: input.branch,
       commitId,
@@ -1380,6 +1394,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
         throw new Error("Exact preview confirmation failed deterministic recomputation.");
       }
       const persisted = await this.#persistCommit(transaction, {
+        auditAction: "model:operation:commit",
         branch,
         canonical: result,
         command,
@@ -1471,6 +1486,7 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
         type: "snapshot.restore.v1",
       });
       const persisted = await this.#persistCommit(transaction, {
+        auditAction: "model:branch:restore",
         branch,
         canonical,
         command,
@@ -1540,7 +1556,9 @@ export class PostgresModelOperationRepository implements ModelOperationRepositor
         type: row.type,
       })),
     });
-    return response;
+    return response.nextCursor === undefined
+      ? { operations: response.operations }
+      : { nextCursor: response.nextCursor, operations: response.operations };
   }
 
   async compareBranches(

@@ -14,6 +14,7 @@ import { z } from "zod";
 export const modelAuditPublicSchemaVersion = "c5-model-audit-public-v1" as const;
 
 export const modelAuditActionSchema = z.enum([
+  "model:snapshot:create",
   "model:branch:create",
   "model:branch:read",
   "model:branch:compare",

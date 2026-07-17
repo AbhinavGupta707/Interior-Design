@@ -37,10 +37,10 @@ describe("the frozen C5 registry and upcaster", () => {
   it("fails closed for unknown schema versions and operation names", () => {
     expect(() =>
       upcastModelOperation({ schemaVersion: "c5-model-operation-v2", type: "wall.translate.v1" }),
-    ).toThrowError(expect.objectContaining({ code: "UNKNOWN_OPERATION_VERSION" }));
+    ).toThrow(expect.objectContaining({ code: "UNKNOWN_OPERATION_VERSION" }));
     expect(() =>
       upcastModelOperation({ schemaVersion: "c5-model-operation-v1", type: "wall.delete.v1" }),
-    ).toThrowError(expect.objectContaining({ code: "UNKNOWN_OPERATION_TYPE" }));
+    ).toThrow(expect.objectContaining({ code: "UNKNOWN_OPERATION_TYPE" }));
   });
 });
 
@@ -189,7 +189,7 @@ describe("pure schema-safe operation reduction", () => {
           value: known("Unsafe dynamic target"),
         },
       ]),
-    ).toThrowError(expect.objectContaining({ code: "UNSUPPORTED_CORRECTION_TARGET" }));
+    ).toThrow(expect.objectContaining({ code: "UNSUPPORTED_CORRECTION_TARGET" }));
   });
 
   it("corrects provenance without inventing or discarding the attributed value", () => {
@@ -213,7 +213,7 @@ describe("pure schema-safe operation reduction", () => {
       level: structuredClone(existingLevel),
       type: "level.create.v1" as const,
     };
-    expect(() => reduceModelOperations(baseSnapshot(), [duplicate])).toThrowError(
+    expect(() => reduceModelOperations(baseSnapshot(), [duplicate])).toThrow(
       expect.objectContaining({ code: "DUPLICATE_ELEMENT_ID" }),
     );
     expect(() =>
@@ -225,7 +225,7 @@ describe("pure schema-safe operation reduction", () => {
           type: "space.rename.v1",
         },
       ]),
-    ).toThrowError(expect.objectContaining({ code: "TARGET_TYPE_MISMATCH" }));
+    ).toThrow(expect.objectContaining({ code: "TARGET_TYPE_MISMATCH" }));
     expect(() =>
       reduceModelOperations(baseSnapshot(), [
         {

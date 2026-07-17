@@ -237,8 +237,23 @@ CREATE TABLE IF NOT EXISTS model_domain_audit_events (
   branch_id uuid NOT NULL,
   commit_id uuid,
   revision integer NOT NULL CHECK (revision >= 0),
+  action text NOT NULL CHECK (action IN (
+    'model:snapshot:create',
+    'model:branch:create',
+    'model:branch:read',
+    'model:branch:compare',
+    'model:operation:preview',
+    'model:operation:commit',
+    'model:branch:restore',
+    'model:operation:history',
+    'model:audit:read'
+  )),
   event_type text NOT NULL CHECK (event_type ~ '^[a-z][a-z0-9.-]{2,79}$'),
-  operation_type text,
+  operation_types jsonb NOT NULL CHECK (
+    jsonb_typeof(operation_types) = 'array'
+    AND jsonb_array_length(operation_types) <= 50
+  ),
+  outcome text NOT NULL CHECK (outcome IN ('accepted', 'denied')),
   snapshot_id uuid NOT NULL,
   snapshot_sha256 text NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
   actor_user_id uuid NOT NULL REFERENCES identity_users(id),

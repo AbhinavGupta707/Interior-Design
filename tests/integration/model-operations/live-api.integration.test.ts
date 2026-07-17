@@ -6,6 +6,7 @@ import {
   modelBranchSchema,
   modelOperationHistoryResponseSchema,
   modelOperationsPreviewSchema,
+  modelSnapshotRecordSchema,
   type ModelBranch,
 } from "../../../packages/contracts/src/index.js";
 import { describe, expect, it } from "vitest";
@@ -156,13 +157,27 @@ describe.skipIf(!liveEnabled)(suiteName, () => {
         .branches.some(({ id }) => id === branch.id),
     ).toBe(true);
 
+    const currentSnapshot = await apiRequest(
+      owner,
+      `/v1/projects/${owner.projectId}/models/${profile}`,
+      { method: "GET" },
+    );
+    expect(currentSnapshot.status).toBe(200);
+    const current = modelSnapshotRecordSchema.parse(await json(currentSnapshot));
     const rawMutation = await apiRequest(
       owner,
       `/v1/projects/${owner.projectId}/models/${profile}/snapshots`,
-      { body: JSON.stringify({ snapshot: {} }), method: "POST" },
+      {
+        body: JSON.stringify({
+          expectedCurrentSnapshotSha256: current.snapshotSha256,
+          snapshot: current.snapshot,
+        }),
+        method: "POST",
+      },
       `c5-raw-snapshot-${randomUUID()}`,
     );
-    expect([404, 405]).toContain(rawMutation.status);
+    expect(rawMutation.status).toBe(409);
+    expect(await json(rawMutation)).toMatchObject({ code: "TYPED_OPERATION_REQUIRED" });
   });
 
   it("keeps viewer and foreign-tenant behavior non-mutating and non-disclosing", async () => {

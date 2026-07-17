@@ -13,6 +13,13 @@
           "userId": "20000000-0000-4000-8000-000000000001"
         },
         {
+          "displayName": "Alpha editor",
+          "persona": "editor-alpha",
+          "role": "editor",
+          "subject": "fixture|editor-alpha",
+          "userId": "20000000-0000-4000-8000-000000000005"
+        },
+        {
           "displayName": "Alpha viewer",
           "persona": "viewer-alpha",
           "role": "viewer",

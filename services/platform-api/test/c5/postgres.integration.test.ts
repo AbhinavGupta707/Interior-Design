@@ -13,13 +13,16 @@ import type { Sql } from "postgres";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createServer } from "../../src/app.js";
+import { ModelAuditCursorCodec } from "../../src/modules/audit/cursor.js";
+import { PostgresModelAuditProjectionPort } from "../../src/modules/audit/postgres.js";
+import { ModelAuditProjection } from "../../src/modules/audit/projection.js";
 import { applyC1Migration, bootstrapC1Fixtures, createC1Sql } from "../../src/c1.js";
 import { applyC2Migration } from "../../src/c2.js";
 import { applyC3Migration } from "../../src/c3.js";
 import { applyC4Migration } from "../../src/c4.js";
 import { applyC5Migration } from "../../src/c5.js";
 import { PostgresModelOperationRepository } from "../../src/modules/models/operations/postgres.js";
-import { alphaTenantId, canonicalSnapshotFixture, spaceId } from "../c4/fixtures.js";
+import { alphaTenantId, canonicalSnapshotFixture, ownerUserId, spaceId } from "../c4/fixtures.js";
 
 const integrationDatabaseUrl = process.env.C5_TEST_DATABASE_URL ?? "";
 const describeWithPostgres = integrationDatabaseUrl === "" ? describe.skip : describe;
@@ -297,6 +300,47 @@ describeWithPostgres("C5 real Postgres integration", () => {
     const repository = new PostgresModelOperationRepository(administration);
     const replay = await repository.verifyReplay(alphaTenantId, project.id, "existing", main.id);
     expect(replay).toMatchObject({ commitCount: 3 });
+
+    const auditProjection = new ModelAuditProjection(
+      new PostgresModelAuditProjectionPort(administration),
+      new ModelAuditCursorCodec("c5-live-audit-cursor-secret-with-at-least-32-bytes"),
+    );
+    const auditAccess = {
+      scope: {
+        branchId: main.id,
+        modelId,
+        profile: "existing" as const,
+        projectId: project.id,
+        tenantId: alphaTenantId,
+      },
+      subjectId: ownerUserId,
+      visibility: "member" as const,
+    };
+    const firstAuditPage = await auditProjection.list(auditAccess, { limit: 2 });
+    expect(firstAuditPage.records.map(({ action }) => action)).toEqual([
+      "model:branch:restore",
+      "model:operation:commit",
+    ]);
+    expect(firstAuditPage.records.every(({ actor }) => "id" in actor)).toBe(true);
+    expect(firstAuditPage.nextCursor).toBeDefined();
+    if (firstAuditPage.nextCursor === undefined) {
+      throw new Error("Expected a signed audit cursor.");
+    }
+    const secondAuditPage = await auditProjection.list(auditAccess, {
+      cursor: firstAuditPage.nextCursor,
+      limit: 2,
+    });
+    expect(secondAuditPage.records.map(({ action }) => action)).toEqual(["model:snapshot:create"]);
+    const supportAuditPage = await auditProjection.list(
+      {
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        scope: auditAccess.scope,
+        subjectId: "support.synthetic",
+        visibility: "support-redacted",
+      },
+      { limit: 2 },
+    );
+    expect(supportAuditPage.records.every(({ actor }) => !("id" in actor))).toBe(true);
 
     const counts = await administration<
       {

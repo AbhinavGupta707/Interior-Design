@@ -45,8 +45,8 @@ The optional `C1_LOCAL_SESSION_SECRET` must contain at least 32 bytes. When it i
 development/test, the service uses a source-controlled local-only signing secret. Never reuse that
 default or a fixture token outside the loopback development environment.
 
-The synthetic sign-in personas are `homeowner-alpha`, `viewer-alpha`, and `homeowner-beta`. A sign-in
-returns a 15-minute bearer token:
+The synthetic sign-in personas are `homeowner-alpha`, `editor-alpha`, `viewer-alpha`, and
+`homeowner-beta`. A sign-in returns a 15-minute bearer token:
 
 ```sh
 curl --fail-with-body \

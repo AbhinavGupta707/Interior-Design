@@ -43,6 +43,13 @@ const candidateId = "60000000-0000-4000-8000-000000000001";
 const resolutionId = "70000000-0000-4000-8000-000000000001";
 
 const actors: Readonly<Record<LocalPersona, Actor>> = {
+  "editor-alpha": {
+    displayName: "Alpha editor",
+    role: "editor",
+    subject: "fixture|editor-alpha",
+    tenantId: alphaTenantId,
+    userId: "20000000-0000-4000-8000-000000000005",
+  },
   "homeowner-alpha": {
     displayName: "Alpha homeowner",
     role: "owner",

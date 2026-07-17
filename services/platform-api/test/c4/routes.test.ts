@@ -81,6 +81,7 @@ const actors: Record<string, Actor> = {
 };
 
 const personaSubjects: Record<LocalPersona, string> = {
+  "editor-alpha": "fixture|editor-alpha",
   "homeowner-alpha": "fixture|homeowner-alpha",
   "homeowner-beta": "fixture|homeowner-beta",
   "viewer-alpha": "fixture|viewer-alpha",

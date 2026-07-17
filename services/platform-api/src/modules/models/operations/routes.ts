@@ -88,7 +88,7 @@ function sendBranchConflict(
   request: FastifyRequest,
   reply: FastifyReply,
   error: BranchRevisionConflictError,
-): FastifyReply {
+): void {
   const correlation = getRequestCorrelation(request);
   const problem: BranchConflictProblem = {
     branchId: error.branchId,
@@ -113,14 +113,14 @@ function sendBranchConflict(
     },
     "request rejected",
   );
-  return reply.status(409).type("application/problem+json").send(problem);
+  void reply.status(409).type("application/problem+json").send(problem);
 }
 
 function sendValidationProblem(
   request: FastifyRequest,
   reply: FastifyReply,
   error: ModelOperationValidationError,
-): FastifyReply {
+): void {
   const correlation = getRequestCorrelation(request);
   const problem: ValidationProblem = {
     code: "CANONICAL_GEOMETRY_INVALID",
@@ -143,8 +143,11 @@ function sendValidationProblem(
     },
     "request rejected",
   );
-  return reply.status(422).type("application/problem+json").send(problem);
+  void reply.status(422).type("application/problem+json").send(problem);
 }
+
+type ConflictProblemResult<T> =
+  { readonly handled: true } | { readonly handled: false; readonly value: T };
 
 async function authorisedProject(
   request: FastifyRequest,
@@ -169,15 +172,17 @@ async function withConflictProblem<T>(
   request: FastifyRequest,
   reply: FastifyReply,
   operation: () => Promise<T>,
-): Promise<T | FastifyReply> {
+): Promise<ConflictProblemResult<T>> {
   try {
-    return await operation();
+    return { handled: false, value: await operation() };
   } catch (error: unknown) {
     if (error instanceof BranchRevisionConflictError) {
-      return sendBranchConflict(request, reply, error);
+      sendBranchConflict(request, reply, error);
+      return { handled: true };
     }
     if (error instanceof ModelOperationValidationError) {
-      return sendValidationProblem(request, reply, error);
+      sendValidationProblem(request, reply, error);
+      return { handled: true };
     }
     throw error;
   }
@@ -225,9 +230,9 @@ export function registerModelOperationRoutes(
           snapshot: body.snapshot,
         }),
       );
-      if ("statusCode" in result) return result;
-      if (result.replayed) reply.header("Idempotent-Replay", "true");
-      return reply.status(201).send(modelSnapshotRecordSchema.parse(result.record));
+      if (result.handled) return;
+      if (result.value.replayed) reply.header("Idempotent-Replay", "true");
+      return reply.status(201).send(modelSnapshotRecordSchema.parse(result.value.record));
     },
   );
 
@@ -328,9 +333,9 @@ export function registerModelOperationRoutes(
           projectId: params.projectId,
         }),
       );
-      if ("statusCode" in result) return result;
-      if (result.replayed) reply.header("Idempotent-Replay", "true");
-      return reply.status(201).send(result.preview);
+      if (result.handled) return;
+      if (result.value.replayed) reply.header("Idempotent-Replay", "true");
+      return reply.status(201).send(result.value.preview);
     },
   );
 
@@ -360,9 +365,9 @@ export function registerModelOperationRoutes(
         projectId: params.projectId,
       }),
     );
-    if ("statusCode" in result) return result;
-    if (result.replayed) reply.header("Idempotent-Replay", "true");
-    return reply.status(201).send(commitModelOperationsResponseSchema.parse(result.response));
+    if (result.handled) return;
+    if (result.value.replayed) reply.header("Idempotent-Replay", "true");
+    return reply.status(201).send(commitModelOperationsResponseSchema.parse(result.value.response));
   });
 
   server.get<{
@@ -419,9 +424,9 @@ export function registerModelOperationRoutes(
         sourceSnapshotSha256: body.sourceSnapshotSha256,
       }),
     );
-    if ("statusCode" in result) return result;
-    if (result.replayed) reply.header("Idempotent-Replay", "true");
-    return reply.status(201).send(commitModelOperationsResponseSchema.parse(result.response));
+    if (result.handled) return;
+    if (result.value.replayed) reply.header("Idempotent-Replay", "true");
+    return reply.status(201).send(commitModelOperationsResponseSchema.parse(result.value.response));
   });
 
   server.get<{

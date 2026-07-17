@@ -7,7 +7,12 @@ export const userIdSchema = z.uuid();
 export const memberRoleSchema = z.enum(["owner", "editor", "viewer"]);
 export type MemberRole = z.infer<typeof memberRoleSchema>;
 
-export const localPersonaSchema = z.enum(["homeowner-alpha", "homeowner-beta", "viewer-alpha"]);
+export const localPersonaSchema = z.enum([
+  "homeowner-alpha",
+  "editor-alpha",
+  "homeowner-beta",
+  "viewer-alpha",
+]);
 export type LocalPersona = z.infer<typeof localPersonaSchema>;
 
 export const actorSchema = z.object({

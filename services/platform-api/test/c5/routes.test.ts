@@ -11,7 +11,7 @@ import {
   type Project,
 } from "@interior-design/contracts";
 import { canonicalizeHomeSnapshot } from "@interior-design/domain-model";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { registerRequestCorrelation } from "../../src/correlation.js";
@@ -331,10 +331,10 @@ class FixtureModelOperationRepository implements ModelOperationRepository {
   }
 }
 
-const activeServers = new Set<ReturnType<typeof Fastify>>();
+const activeServers = new Set<FastifyInstance>();
 
-function createFixtureServer() {
-  const server = Fastify({ logger: false });
+function createFixtureServer(logger: false | FastifyLoggerOptions = false) {
+  const server = Fastify({ logger });
   registerRequestCorrelation(server);
   registerErrorHandling(server);
   const identity = new IdentityService("test", new FixtureIdentityStore(), tokenProvider);
@@ -489,6 +489,47 @@ describe("C5 model operation routes", () => {
       currentRevision: 0,
       recoveryActions: ["reload", "compare", "discard-local", "rebuild-preview"],
     });
+  });
+
+  it("handles an expected stale-write response without a reply-already-sent server error", async () => {
+    const logLines: string[] = [];
+    const { server } = createFixtureServer({
+      level: "error",
+      stream: {
+        write(line: string) {
+          logLines.push(line);
+        },
+      },
+    });
+    const fixtureSpace = canonicalSnapshotFixture().elements.spaces[0];
+    if (fixtureSpace === undefined) throw new Error("Fixture space is missing.");
+
+    const response = await server.inject({
+      headers: { ...auth("fixture|editor-alpha"), "idempotency-key": "c5-stale-log-001" },
+      method: "POST",
+      payload: {
+        expectedHeadSnapshotSha256: snapshotHash(),
+        expectedRevision: 7,
+        operations: [
+          {
+            clientOperationId,
+            name: {
+              attribution: fixtureSpace.name.attribution,
+              knowledge: "known",
+              value: "Renamed fixture",
+            },
+            reason: "Rename fixture",
+            schemaVersion: "c5-model-operation-v1",
+            spaceId: fixtureSpace.id,
+            type: "space.rename.v1",
+          },
+        ],
+      },
+      url: `/v1/projects/${alphaProjectId}/models/existing/branches/${branchId}/previews`,
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(logLines.join("\n")).not.toContain("Promise errored, but reply.sent = true was set");
   });
 
   it("denies cross-tenant requests before branch disclosure", async () => {
