@@ -10,7 +10,7 @@ import { fusionWorkerFixture } from "./support.js";
 
 describe("C9 bounded producer protocol", () => {
   it("turns absent provider composition into explicit unregistered results and honest abstention", async () => {
-    const { acquired } = fusionWorkerFixture();
+    const { acquired, lease } = fusionWorkerFixture();
     const protocol = new BoundedFusionProducerProtocol({
       registration: new UnavailableRegistrationProducer(),
       semantic: new UnavailableSemanticProducer(),
@@ -20,7 +20,10 @@ describe("C9 bounded producer protocol", () => {
     expect(registrations.every(({ status }) => status === "unregistered")).toBe(true);
     const semantic = await protocol.fit({
       baseSnapshot: acquired.baseSnapshot,
+      baseSnapshotReference: lease.request.baseSnapshot,
       inferencePolicy: "label-and-expose",
+      jobId: lease.jobId,
+      projectId: lease.projectId,
       registrations,
       sources: acquired.sources,
     });
@@ -64,7 +67,7 @@ describe("C9 bounded producer protocol", () => {
   });
 
   it("enforces the 16 MiB semantic output resource bound", async () => {
-    const { acquired } = fusionWorkerFixture();
+    const { acquired, lease } = fusionWorkerFixture();
     const protocol = new BoundedFusionProducerProtocol({
       registration: new UnavailableRegistrationProducer(),
       semantic: {
@@ -93,7 +96,10 @@ describe("C9 bounded producer protocol", () => {
     await expect(
       protocol.fit({
         baseSnapshot: acquired.baseSnapshot,
+        baseSnapshotReference: lease.request.baseSnapshot,
         inferencePolicy: "label-and-expose",
+        jobId: lease.jobId,
+        projectId: lease.projectId,
         registrations,
         sources: acquired.sources,
       }),

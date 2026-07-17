@@ -14,6 +14,8 @@ export interface ProcessResult {
 export interface ProcessExecutionOptions {
   /** Code-owned working directory. Request payloads must never supply this value. */
   readonly cwd?: string;
+  /** Bounded code-owned protocol input. Customer paths and commands must never enter here. */
+  readonly stdin?: string | Uint8Array;
 }
 
 export class ProcessExecutionError extends Error {
@@ -66,9 +68,15 @@ export function runBoundedProcess(
         PATH: process.env.PATH ?? "/usr/bin:/bin",
       },
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [options.stdin === undefined ? "ignore" : "pipe", "pipe", "pipe"],
       windowsHide: true,
     });
+    const childStdout = child.stdout;
+    const childStderr = child.stderr;
+    if (childStdout === null || childStderr === null) {
+      reject(new ProcessExecutionError("spawn"));
+      return;
+    }
 
     const cleanup = (): void => {
       clearTimeout(timer);
@@ -96,10 +104,10 @@ export function runBoundedProcess(
       }
       target.push(chunk);
     };
-    child.stdout.on("data", (chunk: Buffer) => {
+    childStdout.on("data", (chunk: Buffer) => {
       collect(stdout, chunk);
     });
-    child.stderr.on("data", (chunk: Buffer) => {
+    childStderr.on("data", (chunk: Buffer) => {
       collect(stderr, chunk);
     });
     child.once("error", (error) => {
@@ -137,6 +145,14 @@ export function runBoundedProcess(
       abort();
     } else {
       signal?.addEventListener("abort", abort, { once: true });
+    }
+    if (options.stdin !== undefined && child.stdin !== null) {
+      child.stdin.once("error", (error) => {
+        if (!settled && pendingFailure === undefined) {
+          failAndKill(new ProcessExecutionError("spawn", { cause: error }));
+        }
+      });
+      child.stdin.end(options.stdin);
     }
   });
 }

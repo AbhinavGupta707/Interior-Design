@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import path from "node:path";
+import { existsSync } from "node:fs";
 import { PostgresReconstructionRepository } from "@interior-design/platform-api/reconstruction";
 import postgres from "postgres";
 
@@ -17,10 +18,10 @@ import { MediaPreparationPipeline } from "./media-prep/index.js";
 import {
   BoundedFusionProducerProtocol,
   FusionProcessingRunner,
+  GeometryKernelRegistrationProducer,
   PostgresFusionProcessingQueue,
   PostgresFusionSourceAcquisition,
-  UnavailableRegistrationProducer,
-  UnavailableSemanticProducer,
+  PythonScanToModelProducer,
 } from "./model-fusion/index.js";
 import { PostgresRoomPlanProcessingQueue, RoomPlanProcessingRunner } from "./roomplan/index.js";
 import {
@@ -52,6 +53,14 @@ export * from "./reconstruction/index.js";
 export * from "./model-fusion/index.js";
 
 export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8", "C9"] as const);
+
+function defaultInferenceModuleRoot(): string {
+  const repositoryRoot = path.resolve(process.cwd(), "services/inference-worker/src");
+  if (existsSync(repositoryRoot)) return repositoryRoot;
+  const serviceSibling = path.resolve(process.cwd(), "../inference-worker/src");
+  if (existsSync(serviceSibling)) return serviceSibling;
+  return repositoryRoot;
+}
 
 export async function runSpatialWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
@@ -86,9 +95,7 @@ export async function runSpatialWorker(
           parser: new IsolatedPlanParserPort({
             arguments: ["-m", "inference_worker.plan_parser"],
             command: environment.C6_PLAN_PARSER_COMMAND ?? "python3",
-            pythonPath:
-              environment.C6_PLAN_PARSER_PYTHONPATH ??
-              path.resolve(process.cwd(), "services/inference-worker/src"),
+            pythonPath: environment.C6_PLAN_PARSER_PYTHONPATH ?? defaultInferenceModuleRoot(),
           }),
           pollMilliseconds: config.pollMs,
           queue: new PostgresPlanProcessingQueue(sql),
@@ -124,9 +131,7 @@ export async function runSpatialWorker(
             maximumOutputBytes: config.subprocess.maximumOutputBytes,
             processTimeoutMilliseconds: Math.max(config.subprocess.timeoutMs, 3_600_000),
             pythonCommand: environment.C8_INFERENCE_PYTHON_COMMAND ?? "python3",
-            pythonModuleRoot:
-              environment.C8_INFERENCE_PYTHONPATH ??
-              path.resolve(process.cwd(), "services/inference-worker/src"),
+            pythonModuleRoot: environment.C8_INFERENCE_PYTHONPATH ?? defaultInferenceModuleRoot(),
             storage,
             temporaryRoot: config.temporaryDirectory.root,
           }),
@@ -144,8 +149,11 @@ export async function runSpatialWorker(
           logger,
           pollMilliseconds: config.pollMs,
           producers: new BoundedFusionProducerProtocol({
-            registration: new UnavailableRegistrationProducer(),
-            semantic: new UnavailableSemanticProducer(),
+            registration: new GeometryKernelRegistrationProducer(),
+            semantic: new PythonScanToModelProducer({
+              pythonCommand: environment.C9_INFERENCE_PYTHON_COMMAND ?? "python3",
+              pythonModuleRoot: environment.C9_INFERENCE_PYTHONPATH ?? defaultInferenceModuleRoot(),
+            }),
           }),
           queue: new PostgresFusionProcessingQueue(sql),
           sources: new PostgresFusionSourceAcquisition(sql),

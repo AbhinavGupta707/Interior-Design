@@ -123,7 +123,10 @@ export class FusionProcessingRunner {
       const semantic = await this.#options.producers.fit(
         {
           baseSnapshot: acquired.baseSnapshot,
+          baseSnapshotReference: lease.request.baseSnapshot,
           inferencePolicy: lease.request.inferencePolicy,
+          jobId: lease.jobId,
+          projectId: lease.projectId,
           registrations,
           sources: acquired.sources,
         },

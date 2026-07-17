@@ -222,6 +222,7 @@ test("@keyboard completes create, progress, every decision and exact draft using
   await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "Advance synthetic job" }).focus();
   await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Full-house proposal ready" })).toBeVisible();
   const decisions = [
     ["Decision for dimension conflict", "a", "accept-candidate"],
     ["Decision for topology conflict", "k", "keep-base"],

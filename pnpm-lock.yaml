@@ -220,6 +220,9 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/geometry-kernel':
+        specifier: workspace:*
+        version: link:../../packages/geometry-kernel
       '@interior-design/platform-api':
         specifier: workspace:*
         version: link:../platform-api

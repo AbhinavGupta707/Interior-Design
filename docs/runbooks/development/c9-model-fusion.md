@@ -77,14 +77,26 @@ Enable the C9 runner explicitly:
 ```sh
 export C2_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design'
 export C9_FUSION_WORKER_ENABLED='true'
+# Optional only when Python is not `python3` or the repository layout is non-standard:
+export C9_INFERENCE_PYTHON_COMMAND='python3'
+export C9_INFERENCE_PYTHONPATH="$PWD/services/inference-worker/src"
 pnpm --filter @interior-design/spatial-worker dev
 ```
 
-The composed worker intentionally uses unavailable geometry-registration and semantic-fitting
-ports. It therefore publishes a bounded `FUSION_PRODUCER_UNAVAILABLE` abstention, not fixture
-geometry. A future producer is composed through the narrow ports in
-`services/spatial-worker/src/model-fusion/types.ts`; it receives bounded in-memory payloads and an
-abort signal, never public paths, URLs, object-store locators or broad credentials.
+The default C9 composition uses `GeometryKernelRegistrationProducer` and
+`PythonScanToModelProducer`. Project-local sources receive an explicit identity registration;
+source-local inputs require a non-degenerate, reflection-safe control-point transform through the
+C9 geometry kernel. The semantic producer adapts exact C6 plan and C7 RoomPlan proposal payloads
+to the bounded private `python -m inference_worker.scan_to_model` stdin/stdout protocol and then
+schema-validates and canonically re-hashes the returned existing-condition candidate.
+
+No provider key or GPU is required for this path. The child process receives only bounded JSON,
+exact source/evidence/tool pins and an abort signal—never public paths, URLs, object-store locators
+or broad credentials. C8 reconstruction results currently expose no inline parametric semantic
+observations in their immutable result contract, so they remain registered evidence but cannot be
+promoted into dimensional geometry by this adapter. If fewer than two registered source kinds
+provide explicit semantic observations, the producer emits a bounded
+`FUSION_INSUFFICIENT_SEMANTIC_SOURCES` abstention. It never substitutes fixture geometry.
 
 Source acquisition permits at most 32 sources, 8 MiB per payload and 32 MiB total. It verifies the
 exact source schema, element count, SHA-256, current rights and exact base snapshot before any
@@ -107,14 +119,17 @@ returns media locators or credentials. Owner/editor can create, cancel, retry, d
 draft. Viewer access is read-only.
 
 Producer capability labels default honestly to `unavailable`. Set these presentation flags only
-when the corresponding composed process is actually available:
+after startup/preflight confirms the geometry module and Python fitter are actually available in
+the running deployment:
 
 ```sh
 export C9_GEOMETRY_PRODUCER_STATUS='available'
 export C9_SEMANTIC_PRODUCER_STATUS='available'
 ```
 
-The flags do not install a producer, grant rights, create credentials or bypass durable fences.
+The flags do not install a producer, run preflight, grant rights, create credentials or bypass
+durable fences. The standalone browser acceptance fixture always labels itself synthetic and
+`No live C9 producer`; it is presentation evidence only, not producer-live evidence.
 
 ## Focused verification
 
@@ -135,6 +150,12 @@ pnpm --filter @interior-design/platform-api build
 pnpm --filter @interior-design/spatial-worker build
 pnpm --filter @interior-design/web build
 ```
+
+`services/spatial-worker/test/model-fusion/production-producers.test.ts` is the provider-free
+cross-lane integration gate. It invokes the real C9 geometry producer plus a real Python fitter
+subprocess for exact C6+C7 inputs, validates the returned C4 candidate, checks its canonical hash
+and rejects credentials, URLs and mutation authority in output. It is distinct from the visibly
+synthetic browser fixture.
 
 The live PostgreSQL suite is gated. Without `C9_TEST_DATABASE_URL`, report it as `NOT RUN`, never
 passed:

@@ -12,7 +12,7 @@ import { SYNTHETIC_IDS, syntheticNormalized, syntheticSources } from "../roompla
 const planSourceId = "ca000000-0000-4000-8000-000000000001";
 const roomSourceId = "ca000000-0000-4000-8000-000000000002";
 
-function baseSnapshot() {
+export function captureProposalFixture() {
   const sources = syntheticSources();
   const normalized = sources.artifacts.find(({ kind }) => kind === "roomplan-normalized-json");
   if (!normalized) throw new Error("Synthetic RoomPlan normalized artifact is missing.");
@@ -27,7 +27,11 @@ function baseSnapshot() {
     proposalId: SYNTHETIC_IDS.proposal,
   });
   if (proposal.status !== "proposal") throw new Error("Synthetic RoomPlan conversion abstained.");
-  return proposal.proposedSnapshot;
+  return proposal;
+}
+
+function baseSnapshot() {
+  return captureProposalFixture().proposedSnapshot;
 }
 
 export const workerSources: readonly FusionSource[] = [

@@ -74,8 +74,11 @@ export interface FusionSemanticProducerPort {
   fit(
     input: {
       readonly baseSnapshot: CanonicalHomeSnapshot;
+      readonly baseSnapshotReference: CreateFusionJobRequest["baseSnapshot"];
       readonly inferencePolicy: "label-and-expose";
+      readonly jobId: string;
       readonly limits: FusionProducerLimits;
+      readonly projectId: string;
       readonly registrations: readonly FusionRegistrationResult[];
       readonly sources: readonly FusionSourcePayload[];
     },
