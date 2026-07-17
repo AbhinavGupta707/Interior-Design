@@ -17,6 +17,12 @@ import {
   PageContainer,
   StatePanel,
 } from "../../components/ui-primitives";
+import {
+  buildFusionAnchorGroups,
+  minimumFusionAnchorDrafts,
+  type FusionAnchorDraft,
+  type FusionAnchorDrafts,
+} from "./anchors";
 import { fusionClient, FusionProblem } from "./api";
 import type { FusionWorkspace as Workspace } from "./contracts";
 import { ProposalReview } from "./proposal-review";
@@ -70,6 +76,7 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
   const [selectedBranchId, setSelectedBranchId] = useState<string>();
   const [label, setLabel] = useState("Whole-home evidence fusion");
   const [consentConfirmed, setConsentConfirmed] = useState(false);
+  const [anchorDrafts, setAnchorDrafts] = useState<FusionAnchorDrafts>({});
   const [busy, setBusy] = useState<BusyAction>();
   const [alert, setAlert] = useState<string>();
   const [liveMessage, setLiveMessage] = useState("");
@@ -115,6 +122,19 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
     () => new Set(selectedSources.map(({ source }) => source.kind)),
     [selectedSources],
   );
+  const selectedSourceDescriptors = useMemo(
+    () => selectedSources.map(({ source }) => source),
+    [selectedSources],
+  );
+  const registrationReady = useMemo(
+    () =>
+      buildFusionAnchorGroups(
+        selectedSourceDescriptors,
+        anchorDrafts,
+        () => "00000000-0000-4000-8000-000000000001",
+      ) !== undefined,
+    [anchorDrafts, selectedSourceDescriptors],
+  );
   const editable = workspace ? workspace.session.actor.role !== "viewer" : false;
   const canStart =
     editable &&
@@ -124,6 +144,7 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
     selectedSources.length >= 2 &&
     selectedSources.length <= 32 &&
     selectedKinds.size >= 2 &&
+    registrationReady &&
     !busy;
 
   const loadProposal = useCallback(
@@ -173,24 +194,51 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
     };
   }, [loadProposal, projectId, selectedJob]);
 
-  function toggleSource(sourceId: string): void {
+  function toggleSource(source: Workspace["sources"][number]["source"]): void {
     setSelectedSourceIds((current) =>
-      current.includes(sourceId)
-        ? current.filter((id) => id !== sourceId)
+      current.includes(source.id)
+        ? current.filter((id) => id !== source.id)
         : current.length >= 32
           ? current
-          : [...current, sourceId],
+          : [...current, source.id],
     );
+    if (source.coordinateFrame !== "project-local" && anchorDrafts[source.id] === undefined) {
+      setAnchorDrafts((current) => ({
+        ...current,
+        [source.id]: minimumFusionAnchorDrafts(),
+      }));
+    }
+  }
+
+  function updateAnchor(
+    sourceId: string,
+    index: number,
+    field: keyof FusionAnchorDraft,
+    value: string,
+  ): void {
+    setAnchorDrafts((current) => {
+      const rows = current[sourceId] ?? minimumFusionAnchorDrafts();
+      return {
+        ...current,
+        [sourceId]: rows.map((row, rowIndex) =>
+          rowIndex === index ? { ...row, [field]: value } : row,
+        ),
+      };
+    });
   }
 
   async function startJob(event: SyntheticEvent<HTMLFormElement, SubmitEvent>): Promise<void> {
     event.preventDefault();
     if (!canStart || workspace.baseSnapshot === undefined) return;
+    const anchorGroups = buildFusionAnchorGroups(selectedSourceDescriptors, anchorDrafts, () =>
+      crypto.randomUUID(),
+    );
+    if (anchorGroups === undefined) return;
     setBusy("start");
     setAlert(undefined);
     try {
       const job = await fusionClient.createJob(projectId, {
-        anchorGroups: [],
+        anchorGroups,
         baseSnapshot: {
           modelId: workspace.baseSnapshot.modelId,
           profile: "existing",
@@ -199,7 +247,7 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
         },
         inferencePolicy: "label-and-expose",
         label: label.trim(),
-        sources: selectedSources.map(({ source }) => source),
+        sources: selectedSourceDescriptors,
       });
       setWorkspace((current) =>
         current
@@ -452,7 +500,7 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
                         checked={selectedSourceIds.includes(source.id)}
                         disabled={sourceStatus !== "eligible"}
                         onChange={() => {
-                          toggleSource(source.id);
+                          toggleSource(source);
                         }}
                         type="checkbox"
                       />
@@ -477,8 +525,83 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
             <div className="fusion-selection-summary" role="status">
               <strong>{selectedSources.length} sources selected</strong>
               <span>{selectedKinds.size} distinct kinds</span>
-              <span>No explicit anchors supplied; alignment must infer safely or abstain.</span>
+              <span>
+                {registrationReady
+                  ? "Every source-local input has a non-collinear registration basis."
+                  : "Add three measured, non-collinear correspondences for every source-local input."}
+              </span>
             </div>
+
+            {selectedSources.some(({ source }) => source.coordinateFrame !== "project-local") ? (
+              <section className="fusion-anchor-panel" aria-labelledby="fusion-anchor-title">
+                <header>
+                  <div>
+                    <h3 id="fusion-anchor-title">Measured registration correspondences</h3>
+                    <p>
+                      Enter the same three physical points in source and project coordinates. Do not
+                      guess: invalid, collinear or unsupported alignment must abstain.
+                    </p>
+                  </div>
+                  <span>
+                    {registrationReady ? "Registration ready" : "Registration incomplete"}
+                  </span>
+                </header>
+                {selectedSources
+                  .filter(({ source }) => source.coordinateFrame !== "project-local")
+                  .map(({ label: sourceLabel, source }) => (
+                    <fieldset
+                      className="fusion-anchor-source"
+                      disabled={!editable || Boolean(busy)}
+                      key={source.id}
+                    >
+                      <legend>{sourceLabel}</legend>
+                      <p>
+                        {source.coordinateFrame.replaceAll("-", " ")} · values are exact integer
+                        millimetres in each declared coordinate frame.
+                      </p>
+                      <div className="fusion-anchor-rows">
+                        {(anchorDrafts[source.id] ?? minimumFusionAnchorDrafts()).map(
+                          (row, index) => (
+                            <div
+                              className="fusion-anchor-row"
+                              key={`${source.id}-${String(index)}`}
+                            >
+                              <strong>Point {index + 1}</strong>
+                              {(
+                                [
+                                  ["sourceX", "Source X"],
+                                  ["sourceY", "Source Y"],
+                                  ["sourceZ", "Source Z"],
+                                  ["projectX", "Project X"],
+                                  ["projectY", "Project Y"],
+                                  ["projectZ", "Project Z"],
+                                ] as const
+                              ).map(([field, fieldLabel]) => (
+                                <label key={field}>
+                                  <span>{fieldLabel} (mm)</span>
+                                  <input
+                                    data-testid={`anchor-${source.id}-${String(index)}-${field}`}
+                                    inputMode="numeric"
+                                    max={10_000_000}
+                                    min={-10_000_000}
+                                    onChange={(event) => {
+                                      updateAnchor(source.id, index, field, event.target.value);
+                                    }}
+                                    required
+                                    step={1}
+                                    type="number"
+                                    value={row[field]}
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </fieldset>
+                  ))}
+              </section>
+            ) : null}
 
             <label className="consent-check">
               <input

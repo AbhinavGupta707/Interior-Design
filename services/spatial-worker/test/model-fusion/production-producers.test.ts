@@ -247,6 +247,27 @@ describe("C9 production fusion producers", () => {
 
   it("runs real C6+C7 observations through the bounded Python fitter and returns a canonical proposal", async () => {
     const fixture = sources();
+    const firstWall = fixture.base.elements.walls[0];
+    if (firstWall?.path.knowledge !== "known") {
+      throw new Error("The production producer fixture requires a known base wall path.");
+    }
+    const shiftedBase = canonicalHomeSnapshotSchema.parse({
+      ...fixture.base,
+      elements: {
+        ...fixture.base.elements,
+        walls: fixture.base.elements.walls.map((wall) =>
+          wall.id === firstWall.id && wall.path.knowledge === "known"
+            ? {
+                ...wall,
+                path: {
+                  ...wall.path,
+                  value: wall.path.value.map(({ xMm, yMm }) => ({ xMm: xMm - 25, yMm })),
+                },
+              }
+            : wall,
+        ),
+      },
+    });
     const registration = new GeometryKernelRegistrationProducer();
     const registrations = await registration.register({
       anchorGroups: [],
@@ -258,9 +279,9 @@ describe("C9 production fusion producers", () => {
       pythonModuleRoot: path.resolve(process.cwd(), "../inference-worker/src"),
     });
     const result = await producer.fit({
-      baseSnapshot: fixture.base,
+      baseSnapshot: shiftedBase,
       baseSnapshotReference: {
-        modelId: fixture.base.modelId,
+        modelId: shiftedBase.modelId,
         profile: "existing",
         snapshotId: ids.snapshot,
         snapshotSha256: "9".repeat(64),
@@ -278,10 +299,47 @@ describe("C9 production fusion producers", () => {
     expect(result.coverage).toMatchObject({ inputSourceCount: 2, registeredSourceCount: 2 });
     expect(result.candidateSnapshot.elements.levels.length).toBeGreaterThan(0);
     expect(result.candidateSnapshot.elements.walls.length).toBeGreaterThan(0);
+    expect(result.discrepancies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          affectedElementIds: [firstWall.id],
+          code: "FUSION_BASE_WALL_POSITION_CONFLICT",
+          kind: "position",
+          magnitudeMm: 25,
+          suggestedOperations: [
+            expect.objectContaining({
+              translation: { xMm: 25, yMm: 0 },
+              type: "wall.translate.v1",
+              wallId: firstWall.id,
+            }),
+          ],
+        }),
+      ]),
+    );
     expect(canonicalHomeSnapshotSchema.parse(result.candidateSnapshot)).toEqual(
       result.candidateSnapshot,
     );
     expect(result.candidateSnapshotSha256).toBe(canonicalSnapshotSha256(result.candidateSnapshot));
     expect(JSON.stringify(result)).not.toMatch(/credential|objectKey|canonicalWrite|https?:\/\//u);
+    const aligned = await producer.fit({
+      baseSnapshot: fixture.base,
+      baseSnapshotReference: {
+        modelId: fixture.base.modelId,
+        profile: "existing",
+        snapshotId: ids.snapshot,
+        snapshotSha256: "9".repeat(64),
+      },
+      inferencePolicy: "label-and-expose",
+      jobId: ids.job,
+      limits: c9ProducerLimits,
+      projectId: fixture.base.projectId,
+      registrations,
+      sources: fixture.payloads,
+    });
+    expect(aligned.discrepancies).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "FUSION_BASE_WALL_POSITION_CONFLICT" }),
+      ]),
+    );
   }, 30_000);
 });

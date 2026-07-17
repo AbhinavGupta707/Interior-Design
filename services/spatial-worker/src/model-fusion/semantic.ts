@@ -1045,6 +1045,105 @@ function discrepancies(
   return values.slice(0, 10_000);
 }
 
+function translatedWallDiscrepancies(
+  base: CanonicalHomeSnapshot,
+  candidate: CanonicalHomeSnapshot,
+  sources: readonly FusionSourcePayload[],
+): FusionDiscrepancy[] {
+  const values: FusionDiscrepancy[] = [];
+  const matchedCandidateIds = new Set<string>();
+  const claims = (wallId: string, path: unknown) =>
+    sources.map(({ descriptor }) => ({
+      elementId: wallId,
+      sourceId: descriptor.id,
+      state: descriptor.evidenceState,
+      valueSha256: canonicalSha256(path),
+    }));
+  if (sources.length < 2) return values;
+  for (const baseWall of base.elements.walls) {
+    if (baseWall.path.knowledge !== "known" || baseWall.path.value.length < 2) continue;
+    const basePath = baseWall.path.value;
+    const firstBase = basePath[0];
+    if (!firstBase) continue;
+    const matches = candidate.elements.walls.flatMap((candidateWall) => {
+      if (
+        matchedCandidateIds.has(candidateWall.id) ||
+        candidateWall.path.knowledge !== "known" ||
+        candidateWall.path.value.length !== basePath.length
+      ) {
+        return [];
+      }
+      const candidatePath = candidateWall.path.value;
+      const firstCandidate = candidatePath[0];
+      if (!firstCandidate) return [];
+      const xMm = firstCandidate.xMm - firstBase.xMm;
+      const yMm = firstCandidate.yMm - firstBase.yMm;
+      const uniform = basePath.every((point, index) => {
+        const proposed = candidatePath[index];
+        return (
+          proposed !== undefined &&
+          proposed.xMm - point.xMm === xMm &&
+          proposed.yMm - point.yMm === yMm
+        );
+      });
+      if (!uniform) return [];
+      return [
+        {
+          candidatePath,
+          candidateWallId: candidateWall.id,
+          magnitudeMm: Math.round(Math.hypot(xMm, yMm)),
+          xMm,
+          yMm,
+        },
+      ];
+    });
+    const match = matches.toSorted(
+      (left, right) =>
+        left.magnitudeMm - right.magnitudeMm ||
+        left.candidateWallId.localeCompare(right.candidateWallId),
+    )[0];
+    if (!match) continue;
+    matchedCandidateIds.add(match.candidateWallId);
+    const { candidatePath, magnitudeMm, xMm, yMm } = match;
+    if (xMm === 0 && yMm === 0) continue;
+    values.push(
+      fusionDiscrepancySchema.parse({
+        affectedElementIds: [baseWall.id],
+        code: "FUSION_BASE_WALL_POSITION_CONFLICT",
+        id: deterministicUuid(
+          `c9:discrepancy:base-wall:${baseWall.id}:${String(xMm)}:${String(yMm)}`,
+        ),
+        kind: "position",
+        location: { levelId: baseWall.levelId, xMm: firstBase.xMm, yMm: firstBase.yMm },
+        magnitudeMm,
+        message:
+          `The fused source evidence places this wall ${String(magnitudeMm)} mm from the exact base snapshot.`.slice(
+            0,
+            500,
+          ),
+        requiresHumanDecision: true,
+        schemaVersion: "c9-discrepancy-v1",
+        severity: magnitudeMm > 250 ? "error" : "warning",
+        sourceClaims: claims(baseWall.id, candidatePath),
+        suggestedOperations: [
+          {
+            clientOperationId: deterministicUuid(
+              `c9:operation:wall-translate:${baseWall.id}:${String(xMm)}:${String(yMm)}`,
+            ),
+            pathAttribution: baseWall.path.attribution,
+            reason: "Apply the reviewed fused wall position to the exact existing-model branch.",
+            schemaVersion: "c5-model-operation-v1",
+            translation: { xMm, yMm },
+            type: "wall.translate.v1",
+            wallId: baseWall.id,
+          },
+        ],
+      }),
+    );
+  }
+  return values;
+}
+
 function abstention(
   input: Parameters<FusionSemanticProducerPort["fit"]>[0],
   safeCode: string,
@@ -1200,7 +1299,10 @@ export class PythonScanToModelProducer implements FusionSemanticProducerPort {
     }
     const proposalPayload = proposalPayloadSchema.parse(result.payload);
     const snapshot = candidateSnapshot(input.baseSnapshot, proposalPayload, unsupportedKinds);
-    const proposalDiscrepancies = discrepancies(proposalPayload, input.sources);
+    const proposalDiscrepancies = [
+      ...translatedWallDiscrepancies(input.baseSnapshot, snapshot, input.sources),
+      ...discrepancies(proposalPayload, input.sources),
+    ].slice(0, 10_000);
     const registeredCount = input.registrations.filter(
       ({ status }) => status !== "unregistered",
     ).length;

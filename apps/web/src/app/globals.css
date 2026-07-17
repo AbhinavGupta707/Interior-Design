@@ -3344,6 +3344,95 @@ select {
   color: var(--ui-colour-text);
 }
 
+.fusion-anchor-panel {
+  display: grid;
+  min-width: 0;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-colour-border);
+  background: #f7f4eb;
+}
+
+.fusion-anchor-panel > header {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+}
+
+.fusion-anchor-panel h3,
+.fusion-anchor-panel p {
+  margin: 0;
+}
+
+.fusion-anchor-panel p,
+.fusion-anchor-source > p {
+  color: var(--ui-colour-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.fusion-anchor-panel > header > span {
+  flex: none;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #aa8752;
+  color: #704f1e;
+  background: #fff4d9;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.fusion-anchor-source {
+  display: grid;
+  gap: var(--ui-space-2);
+  padding-top: var(--ui-space-3) !important;
+  border-top: 1px solid var(--ui-colour-border) !important;
+}
+
+.fusion-anchor-source legend {
+  margin: 0;
+  color: var(--ui-colour-text);
+  font-size: 0.82rem;
+}
+
+.fusion-anchor-rows {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.fusion-anchor-row {
+  display: grid;
+  grid-template-columns: 5rem repeat(6, minmax(5.5rem, 1fr));
+  gap: var(--ui-space-2);
+  align-items: end;
+}
+
+.fusion-anchor-row strong {
+  padding-bottom: 0.65rem;
+  font-size: 0.72rem;
+}
+
+.fusion-anchor-row label {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  color: var(--ui-colour-muted);
+  font-size: 0.66rem;
+}
+
+.fusion-anchor-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid var(--ui-colour-border);
+  border-radius: 0;
+  color: var(--ui-colour-text);
+  background: var(--ui-colour-surface);
+  font: inherit;
+}
+
 .consent-check {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3807,6 +3896,15 @@ select {
   .draft-controls {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+
+  .fusion-anchor-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fusion-anchor-row strong {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
 }
 
 @media (max-width: 52rem) {
@@ -3830,6 +3928,19 @@ select {
 
   .producer-status {
     justify-content: start;
+  }
+
+  .fusion-anchor-panel > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fusion-anchor-panel > header > span {
+    align-self: start;
+  }
+
+  .fusion-anchor-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .base-pin,
