@@ -106,15 +106,15 @@
 - Status: active; lanes frozen and pending launch
 - Contract: `docs/orchestration/checkpoints/C3_CONTRACT.md` (`c3-property-v1`)
 - Prelude commit: `f26179b`
-- Frozen worker base commit: this activation commit; exact SHA is recorded with the created task IDs
+- Frozen worker base commit: `c5880bd`
 - Planned lanes: two, selected adaptively for one producing backend and one consuming UX
 - Provider policy: deterministic synthetic fixture plus manual entry; live address, EPC and planning providers remain disabled
 - Data policy: no real address/query fixture, no raw provider payload, no inferred interior, model training denied
 
-| Lane                           | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State          | Exclusive roots                                                                                       |
-| ------------------------------ | ----------- | ----------------------- | ---------- | --------- | -------------- | ----------------------------------------------------------------------------------------------------- |
-| C3-L1 dossier backend/adapters | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | frozen/queued  | property adapter, platform property module/C3 composition, migration, fixture, backend tests/runbook |
-| C3-L2 dossier UX/comprehension | pending     | `gpt-5.6-sol` / `high`  | pending    | pending   | frozen/queued  | allocated web property/BFF/project/CSS, contract/E2E tests and comprehension evaluation              |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                      |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| C3-L1 dossier backend/adapters | `019f6e0c-1fe7-7241-9d20-c369f5a64467` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | property adapter, platform property module/C3 composition, migration, fixture, backend tests/runbook |
+| C3-L2 dossier UX/comprehension | `019f6e0c-1fe7-7241-9d20-c38e30717a00` | `gpt-5.6-sol` / `high`  | pending    | pending   | active | allocated web property/BFF/project/CSS, contract/E2E tests and comprehension evaluation              |
 
 ### Prelude gate evidence
 
