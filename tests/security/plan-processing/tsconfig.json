@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../..",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "./**/*.ts",
+    "../../../packages/contracts/src/**/*.ts",
+    "../../../packages/test-fixtures/src/plans/**/*.ts"
+  ]
+}
