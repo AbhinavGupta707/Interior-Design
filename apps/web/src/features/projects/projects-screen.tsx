@@ -250,6 +250,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/plan-import/${project.id}`}>
                     Correct floor plan
                   </Link>
+                  <Link className="project-row__action" href={`/reconstruction/${project.id}`}>
+                    Reconstruct media
+                  </Link>
                 </div>
               </article>
             ))}
