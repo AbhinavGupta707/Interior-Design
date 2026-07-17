@@ -1,0 +1,243 @@
+import { runtimeEnvironmentSchema, type RuntimeEnvironment } from "@interior-design/config";
+import type { FastifyInstance } from "fastify";
+import { access } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import type { Sql } from "postgres";
+
+import { createC1Sql } from "./c1.js";
+import type { ReadinessCheck } from "./health.js";
+import {
+  LocalFixtureTokenProvider,
+  OidcTokenProvider,
+  UnavailableTokenProvider,
+  type SessionTokenProvider,
+} from "./modules/identity/jwt.js";
+import { PostgresIdentityStore } from "./modules/identity/postgres.js";
+import { IdentityService } from "./modules/identity/service.js";
+import {
+  PostgresProjectRepository,
+  type ProjectRepository,
+} from "./modules/projects/repository.js";
+import { PostgresSceneRepository } from "./modules/scenes/postgres.js";
+import { registerSceneRoutes } from "./modules/scenes/routes.js";
+import { SceneService, SceneWorkerService } from "./modules/scenes/service.js";
+import { PostgresSceneSnapshotVerifier } from "./modules/scenes/snapshot.js";
+import { S3SceneObjectStorage, type SceneObjectStorage } from "./modules/scenes/storage.js";
+import type {
+  SceneClock,
+  SceneCompilerDescriptor,
+  SceneCompilerWorkerPort,
+  SceneRepository,
+  SceneSnapshotVerifier,
+  SceneTelemetry,
+  SceneUuidFactory,
+} from "./modules/scenes/types.js";
+import { loadS3AssetStorageConfig } from "./storage/config.js";
+
+const LOCAL_DATABASE_URL =
+  "postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design";
+const LOCAL_SESSION_SECRET = "local-fixture-only-session-secret-not-for-production-2026-c1";
+
+type C10EnvironmentSource = Readonly<Record<string, string | undefined>>;
+
+export interface C10ModuleOptions {
+  readonly clock?: SceneClock;
+  readonly closeDatabase?: boolean;
+  readonly compiler?: SceneCompilerDescriptor;
+  readonly database?: Sql;
+  readonly databaseUrl?: string;
+  readonly identity?: IdentityService;
+  readonly projects?: ProjectRepository;
+  readonly repository?: SceneRepository;
+  readonly snapshotVerifier?: SceneSnapshotVerifier;
+  readonly storage?: SceneObjectStorage;
+  readonly telemetry?: SceneTelemetry;
+  readonly tokenProvider?: SessionTokenProvider;
+  readonly uuid?: SceneUuidFactory;
+}
+
+export interface C10Module {
+  readonly readinessChecks: readonly ReadinessCheck[];
+  readonly repository: SceneRepository;
+  readonly service: SceneService;
+  readonly storage: SceneObjectStorage;
+  readonly worker: SceneCompilerWorkerPort;
+}
+
+function databaseUrl(
+  runtimeEnvironment: RuntimeEnvironment,
+  environment: C10EnvironmentSource,
+  override: string | undefined,
+): string {
+  const configured =
+    override ??
+    environment.C10_DATABASE_URL ??
+    environment.C9_DATABASE_URL ??
+    environment.C8_DATABASE_URL ??
+    environment.C7_DATABASE_URL ??
+    environment.C6_DATABASE_URL ??
+    environment.C1_DATABASE_URL;
+  if (configured !== undefined && configured.length > 0) return configured;
+  if (runtimeEnvironment === "production") {
+    throw new Error("C10_DATABASE_URL or a predecessor database URL is required in production.");
+  }
+  return LOCAL_DATABASE_URL;
+}
+
+function configuredTokenProvider(
+  runtimeEnvironment: RuntimeEnvironment,
+  environment: C10EnvironmentSource,
+): SessionTokenProvider {
+  const mode = environment.C1_AUTH_MODE ?? (runtimeEnvironment === "production" ? "oidc" : "local");
+  if (mode === "local") {
+    return runtimeEnvironment === "production"
+      ? new UnavailableTokenProvider()
+      : new LocalFixtureTokenProvider(environment.C1_LOCAL_SESSION_SECRET ?? LOCAL_SESSION_SECRET);
+  }
+  if (mode === "oidc") {
+    const issuer = environment.C1_OIDC_ISSUER;
+    const audience = environment.C1_OIDC_AUDIENCE;
+    const encodedPublicKey = environment.C1_OIDC_PUBLIC_KEY_BASE64;
+    if (issuer === undefined || audience === undefined || encodedPublicKey === undefined) {
+      return new UnavailableTokenProvider();
+    }
+    return new OidcTokenProvider({
+      audience,
+      issuer,
+      publicKeyPem: Buffer.from(encodedPublicKey, "base64").toString("utf8"),
+    });
+  }
+  throw new Error("C1_AUTH_MODE must be local or oidc.");
+}
+
+export function registerC10Module(
+  server: FastifyInstance,
+  runtimeEnvironment: RuntimeEnvironment,
+  environment: C10EnvironmentSource,
+  options: C10ModuleOptions = {},
+): C10Module {
+  const needsDatabase =
+    options.repository === undefined ||
+    options.snapshotVerifier === undefined ||
+    options.identity === undefined ||
+    options.projects === undefined;
+  const ownsDatabase = needsDatabase && options.database === undefined;
+  const sql = needsDatabase
+    ? (options.database ??
+      createC1Sql(databaseUrl(runtimeEnvironment, environment, options.databaseUrl)))
+    : options.database;
+  const identity =
+    options.identity ??
+    new IdentityService(
+      runtimeEnvironment,
+      new PostgresIdentityStore(sql as Sql),
+      options.tokenProvider ?? configuredTokenProvider(runtimeEnvironment, environment),
+    );
+  const projects = options.projects ?? new PostgresProjectRepository(sql as Sql);
+  const repository =
+    options.repository ??
+    new PostgresSceneRepository(sql as Sql, {
+      ...(options.clock === undefined ? {} : { clock: options.clock }),
+      ...(options.uuid === undefined ? {} : { uuid: options.uuid }),
+    });
+  const snapshotVerifier =
+    options.snapshotVerifier ?? new PostgresSceneSnapshotVerifier(sql as Sql);
+  const storage =
+    options.storage ??
+    new S3SceneObjectStorage(loadS3AssetStorageConfig(runtimeEnvironment, environment));
+  const service = new SceneService({
+    ...(options.clock === undefined ? {} : { clock: options.clock }),
+    ...(options.compiler === undefined ? {} : { compiler: options.compiler }),
+    repository,
+    snapshotVerifier,
+    storage,
+    ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
+  });
+  const worker = new SceneWorkerService({
+    repository,
+    snapshotVerifier,
+    storage,
+    ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
+  });
+  registerSceneRoutes(server, identity, projects, service);
+
+  if (sql !== undefined && (ownsDatabase || options.closeDatabase === true)) {
+    server.addHook("onClose", async () => {
+      await sql.end({ timeout: 5 });
+    });
+  }
+  const readinessChecks: ReadinessCheck[] = [];
+  if (sql !== undefined) {
+    readinessChecks.push({
+      name: "c10-database",
+      check: async () => {
+        const rows = await sql<{ readonly id: string }[]>`
+          SELECT id FROM platform_schema_migrations WHERE id = '0010_scenes' LIMIT 1
+        `;
+        if (rows.length !== 1) throw new Error("C10 database migration is not applied.");
+      },
+    });
+  }
+  readinessChecks.push({ name: "c10-scene-storage", check: async () => storage.readiness() });
+  readinessChecks.push({
+    name: "c10-scene-compiler",
+    check: () => {
+      if (options.compiler === undefined) {
+        throw new Error("The C10-L1 compiler is not composed.");
+      }
+    },
+    required: false,
+  });
+  return { readinessChecks, repository, service, storage, worker };
+}
+
+async function firstExistingPath(candidates: readonly string[]): Promise<string> {
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Continue to the next repository-relative candidate.
+    }
+  }
+  throw new Error("The required C10 migration file could not be located.");
+}
+
+export async function applyC10Migration(sql: Sql, filePath?: string): Promise<void> {
+  const resolvedPath =
+    filePath ??
+    (await firstExistingPath([
+      path.resolve(process.cwd(), "services/platform-api/migrations/0010_scenes.sql"),
+      path.resolve(process.cwd(), "migrations/0010_scenes.sql"),
+    ]));
+  await sql.begin(async (transaction) => {
+    await transaction.file(resolvedPath);
+  });
+}
+
+async function runAdminCommand(command: string | undefined): Promise<void> {
+  if (command !== "migrate") throw new Error("Expected: migrate.");
+  const runtimeEnvironment = runtimeEnvironmentSchema.parse(process.env.NODE_ENV ?? "development");
+  const sql = createC1Sql(databaseUrl(runtimeEnvironment, process.env, undefined));
+  try {
+    await applyC10Migration(sql);
+    process.stdout.write(`${JSON.stringify({ command, status: "ok" })}\n`);
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+const entrypoint = process.argv[1];
+if (entrypoint !== undefined && import.meta.url === pathToFileURL(entrypoint).href) {
+  void runAdminCommand(process.argv[2]).catch((error: unknown) => {
+    process.stderr.write(
+      `${JSON.stringify({
+        errorType: error instanceof Error ? error.name : "UnknownError",
+        event: "c10_admin_failed",
+        status: "error",
+      })}\n`,
+    );
+    process.exitCode = 1;
+  });
+}
