@@ -350,23 +350,23 @@
 
 ### Master activation
 
-- Status: active; implementation lanes not yet launched
+- Status: active; four implementation lanes launched from one frozen base
 - Contract: `docs/orchestration/checkpoints/C9_CONTRACT.md` (`c9-fusion-job-v1`, `c9-registration-result-v1`, `c9-full-house-proposal-v1`, `c9-discrepancy-v1`, `c9-operation-draft-v1`)
 - Immutable predecessor/C8 ledger-close: `3e0bd2b06cc2a504076f93cc21f75062543f3ef4`
 - Prelude commit: `8f27b17`
-- Frozen worker base: the commit containing this activation record
+- Frozen worker base: `d2b4ba1bbef929bdc7255a4324ac34fd0aa409ef`
 - Planned lanes: four, retained adaptively because deterministic robust registration, semantic fitting, durable tenant-safe cross-surface orchestration and independent adversarial evaluation are substantial independent risks with exclusive write boundaries
 - Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because numerical geometry, inference/topology, durable concurrency/security and failure-inclusive evaluation are all complex; no C9 lane is merely bounded/mechanical.
 - Provider/data policy: no paid provider, cloud key, customer data or training use is required. Deterministic synthetic proposal fixtures, local PostGIS and existing local services supply the base gate.
 - Mutation policy: C9 emits proposal-only geometry, explicit discrepancies, attributable decisions and a branch/revision/head-hash-pinned C5 operation draft. It cannot call C5 preview/commit, advance a branch or mutate a canonical snapshot.
 - Hardware/runtime status at activation: no physical iPhone/iPad, COLMAP, Open3D, PyTorch, Blender, NVIDIA or CUDA is available. C7 physical RoomPlan and C8 real algorithm/GPU evidence remain `NOT RUN`; C9 fixtures cannot promote them.
 
-| Lane                                             | Task/thread    | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                                       |
-| ------------------------------------------------ | -------------- | ----------------------- | ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| C9-L1 registration/fusion kernel                 | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | geometry-kernel registration/fusion source/tests and allocated package export                         |
-| C9-L2 semantic fitting                           | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | inference-worker scan-to-model source/tests                                                           |
-| C9-L3 durable fusion/discrepancy product         | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | isolated platform/spatial/web fusion paths, migration 0009, tests/runbook and named composition files |
-| C9-L4 independent evaluation/security/acceptance | pending launch | `gpt-5.6-sol` / `xhigh` | pending    | pending   | planned | fusion fixtures, evaluation/security/E2E packs and evaluation/threat-model documents                  |
+| Lane                                             | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                       |
+| ------------------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| C9-L1 registration/fusion kernel                 | `019f7194-9cdf-7593-8858-4c3e05e9fdb1` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | geometry-kernel registration/fusion source/tests and allocated package export                         |
+| C9-L2 semantic fitting                           | `019f7194-9ce0-7d71-9580-81e57bd3518b` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | inference-worker scan-to-model source/tests                                                           |
+| C9-L3 durable fusion/discrepancy product         | `019f7194-9ce0-7d71-9580-820951d80ade` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated platform/spatial/web fusion paths, migration 0009, tests/runbook and named composition files |
+| C9-L4 independent evaluation/security/acceptance | `019f7194-9ce3-7c83-a8d3-d032c30bbe3d` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | fusion fixtures, evaluation/security/E2E packs and evaluation/threat-model documents                  |
 
 ### Prelude gate evidence
 
