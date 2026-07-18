@@ -436,21 +436,25 @@
 
 ### Master activation
 
-- Status: prelude active; implementation lanes not yet launched
+- Status: implementation lanes active from the frozen prelude
 - Subsequent authority: user authorised sequential C11-C15 execution on 2026-07-18 after the accepted C10 closure; C10's terminal statement above remains a truthful record of its closure-time boundary
 - Continuation control: `docs/orchestration/C11_C15_CONTINUATION.md`; C15 is terminal and C16 is not authorised
 - Contract: `docs/orchestration/checkpoints/C11_CONTRACT.md` (`c11-design-brief-v1`, `c11-brief-revision-v1`, `c11-consultation-session-v1`, `c11-brief-patch-proposal-v1`, `c11-reference-board-v1`)
 - Immutable predecessor: `2cfa04772493b8fd60446edf9dc75fced7b5557b`
+- Prelude commit and frozen worker base: `bd578780e4d805b7bbf884cc21c4a36b72d86e4f`
 - Planned lanes: three, retained adaptively because attributable revisioned brief persistence, adversarial bounded model tooling and independent cross-surface consultation acceptance have clean exclusive ownership boundaries
 - Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning, recorded before launch because all three lanes include security, provenance, concurrency or adversarial integration work
 - Provider/data policy: deterministic local adapter and synthetic rights-cleared fixtures only; every external LLM/media provider is disabled, no customer data or training permission is used and accessibility/health/household content is excluded from logs
 - Mutation policy: C11 proposals are expiring typed brief patches only; explicit authorised confirmation and optimistic revision checks are mandatory, and no C4/C5/C9/C10 mutation is reachable
 
-| Lane                              | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State        | Exclusive roots                                                                             |
-| --------------------------------- | ----------- | ----------------------- | ---------- | --------- | ------------ | ------------------------------------------------------------------------------------------- |
-| C11-L1 brief domain/persistence   | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | design-brief package; platform briefs module/tests; migration `0011`; runbook               |
-| C11-L2 bounded design agent       | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | model-gateway package; platform design-agent module/tests; C11 threat model                 |
-| C11-L3 consultation UX/acceptance | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | isolated consultation web/BFF/tests; brief-assistant evaluation/security/E2E/evidence paths |
+| Lane                              | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                             |
+| --------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------- |
+| C11-L1 brief domain/persistence   | `019f72a5-65cb-74a3-82f6-e04d25b0ee2e` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | design-brief package; platform briefs module/tests; migration `0011`; runbook               |
+| C11-L2 bounded design agent       | `019f72a5-65cb-74a3-82f6-e02407a22b8b` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | model-gateway package; platform design-agent module/tests; C11 threat model                 |
+| C11-L3 consultation UX/acceptance | `019f72a5-65cf-7312-83a6-f02c032bf19d` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated consultation web/BFF/tests; brief-assistant evaluation/security/E2E/evidence paths |
+
+- Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/9874/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/be3d/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/5cae/Interior Design`.
+- Provisioning client IDs: L1 `client-new-thread:b6b4fcbe-c004-46a0-b30e-1036ce7dc51c`; L2 `client-new-thread:91034c51-ccdb-4833-80fe-d134669b3572`; L3 `client-new-thread:7a148d92-af91-4ae7-b403-f3e41a7152d9`.
 
 ### Prelude decisions
 
