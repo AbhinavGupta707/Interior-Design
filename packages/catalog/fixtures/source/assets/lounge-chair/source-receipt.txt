@@ -1,0 +1,9 @@
+C13 creator-owned synthetic source receipt
+asset-id: 8c86dfdb-bc55-5022-a031-6e2966819285
+asset-version-id: 2cf1b34b-8b9f-5d72-a35e-60c76a45437d
+category: lounge-chair
+created-by: Interior Design synthetic fixture team
+created-at: 2026-07-18T00:00:00.000Z
+external-network-used: false
+third-party-source-used: false
+training-allowed: false

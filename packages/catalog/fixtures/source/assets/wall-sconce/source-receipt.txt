@@ -1,0 +1,9 @@
+C13 creator-owned synthetic source receipt
+asset-id: 65420024-3da6-5ccf-ad77-50e63100911b
+asset-version-id: 30d2c648-131d-5e68-8d84-04240ccce2a8
+category: wall-sconce
+created-by: Interior Design synthetic fixture team
+created-at: 2026-07-18T00:00:00.000Z
+external-network-used: false
+third-party-source-used: false
+training-allowed: false

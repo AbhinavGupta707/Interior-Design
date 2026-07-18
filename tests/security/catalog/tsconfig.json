@@ -1,0 +1,23 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": "../../..",
+    "ignoreDeprecations": "6.0",
+    "noEmit": true,
+    "paths": {
+      "@interior-design/catalog": ["packages/catalog/src/index.ts"],
+      "@interior-design/contracts": ["packages/contracts/src/index.ts"],
+      "@interior-design/domain-model": ["packages/domain-model/src/index.ts"],
+      "@interior-design/interior-assets": ["packages/interior-assets/src/index.ts"]
+    },
+    "rootDir": "../../..",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "./**/*.ts",
+    "../../../packages/catalog/src/**/*.ts",
+    "../../../services/spatial-worker/src/catalog/**/*.ts",
+    "../../../services/platform-api/src/modules/catalog/**/*.ts"
+  ]
+}

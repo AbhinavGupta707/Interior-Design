@@ -1,0 +1,9 @@
+C13 creator-owned synthetic source receipt
+asset-id: a80ad0df-2a0e-5395-8b7e-fa2597251d9d
+asset-version-id: 3243fa58-84a8-573d-bcd4-b06e375920d9
+category: three-seat-sofa
+created-by: Interior Design synthetic fixture team
+created-at: 2026-07-18T00:00:00.000Z
+external-network-used: false
+third-party-source-used: false
+training-allowed: false

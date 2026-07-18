@@ -1,0 +1,6 @@
+LicenseRef-InteriorDesign-CreatorOwned-Synthetic
+
+These synthetic catalog fixtures were created for the Interior Design repository.
+Service processing, project design derivatives, thumbnail display, commercial service use, and rendered-output distribution are permitted.
+Raw fixture redistribution and model-training use are not permitted.
+No third-party product, brand, price, stock, delivery, or supplier claim is attached.

@@ -1,0 +1,9 @@
+C13 creator-owned synthetic source receipt
+asset-id: 990ce74c-ac24-530f-b4ab-ed5df594b1e9
+asset-version-id: c15331e2-98a9-5260-a8cd-f7e2ce0ae01e
+category: floor-finish-timber-tone
+created-by: Interior Design synthetic fixture team
+created-at: 2026-07-18T00:00:00.000Z
+external-network-used: false
+third-party-source-used: false
+training-allowed: false
