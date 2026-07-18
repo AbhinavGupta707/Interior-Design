@@ -572,13 +572,17 @@
 
 ### Master activation
 
-- Status: activation preparation in progress from clean pushed `main`; C14 is not complete and C15 remains closed.
+- Status: implementation active from clean pushed `main`; C14 is not complete and C15 remains closed.
 - Contract: `docs/orchestration/checkpoints/C14_CONTRACT.md` (`c14-render-scene-manifest-v1`, `c14-render-job-v1`, `c14-render-artifact-v1`, `c14-render-output-manifest-v1`, `c14-enhancement-result-v1`, `c14-geometry-guard-v1`).
 - Immutable predecessor/C13 ledger close: `ad161f4478c83f295f5cebcc5b3a8b622df31dab`.
 - Prelude commit: `8a5f483a4bced91eae25c8ff9d3ae652ea8f2ee9`.
 - Planned lanes: four, retained adaptively because deterministic scene construction, durable fenced render execution, optional enhancement isolation and independent browser/image evaluation have exclusive non-overlapping paths.
-- Planned worker runtime: exact `gpt-5.6-sol` / `xhigh` for all four lanes. Thread/client IDs will be recorded before implementation begins.
-- Resumption preflight: clean `main`/`origin/main` at `713c6f9fe5cac8c2b7471bd0f98a77887dc7e332`; only the primary project worktree exists; approximately 85 GiB is free on the Data volume; no unrelated repository changes are present.
+- Worker runtime: exact `gpt-5.6-sol` / `xhigh` for all four lanes, as frozen before launch. The common immutable worker base is pushed commit `4253c06e4018362cf90222c29fbda025b7957a41`.
+- Resumption preflight: clean `main`/`origin/main` at `4253c06e4018362cf90222c29fbda025b7957a41`; approximately 85 GiB is free on the Data volume; no unrelated repository changes are present.
+- L1 render-scene builder: client `2df695a8-0b8c-40ef-898a-c39185430458`; task `019f7779-7ea7-75c3-8e93-32d09c08ae4e`; worktree `/Users/abhinavgupta/.codex/worktrees/3d48/Interior Design`; exclusive ownership `packages/render-scene/**` and `docs/runbooks/development/c14-render-scene.md`; active.
+- L2 durable render control-plane: client `6bbf457e-087a-43ad-b905-ab54624ca72d`; task `019f7779-7e77-7180-b1ef-6b0e2b016df2`; worktree `/Users/abhinavgupta/.codex/worktrees/57b2/Interior Design`; exclusive ownership covers the frozen renderer worker, render-stills platform/spatial modules and tests, migration `0014`, security suite, runbook and threat model; active.
+- L3 enhancement boundary: client `bc1aa881-3589-44a0-be0b-54e25892e172`; task `019f7779-7e7e-7ef2-9c36-db506bb6a257`; worktree `/Users/abhinavgupta/.codex/worktrees/b669/Interior Design`; exclusive ownership covers `image_enhancement`, its tests/security suite, runbook and threat model; active.
+- L4 render UX/evaluation: client `bc6b9f25-f4a7-4916-8392-893f17fceb14`; task `019f7779-7e97-7383-ae03-2bab940278aa`; worktree `/Users/abhinavgupta/.codex/worktrees/c2df/Interior Design`; exclusive ownership covers render evaluation, render-stills web/BFF, E2E/evaluation/performance/security tests and evaluation docs; active.
 - Guardrail: task-attached 20-minute heartbeat `interior-design-c14-orchestration-guardrail` is active. It may resume only the current verified C14 state, cannot open C15 early and explicitly prohibits Blender on this Mac.
 - Current user constraint: no further Blender execution on this Mac. Earlier preflight capability/tiny-probe observations are not C14 acceptance evidence. Worker prompts will prohibit Blender invocation on this host; subprocess control can use inert fake executables only.
 - Honest checkpoint state: the code/control-plane may become `implementation-ready / hardware-gate-deferred`, but C14 cannot be marked complete until a real geometry-safe Blender render/pass bundle is produced and verified on an authorised render host. Under the strict sequential gate, C15 cannot open before that evidence unless the user explicitly changes the rule.
