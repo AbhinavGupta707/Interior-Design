@@ -1,16 +1,23 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { safeSpecificationLogFields } from "../../../services/platform-api/src/modules/specifications/telemetry.js";
 import { mapSpecificationDatabaseError } from "../../../services/platform-api/src/modules/specifications/postgres.js";
 
 const postgresSource = readFileSync(
-  resolve(process.cwd(), "services/platform-api/src/modules/specifications/postgres.ts"),
+  fileURLToPath(
+    new URL(
+      "../../../services/platform-api/src/modules/specifications/postgres.ts",
+      import.meta.url,
+    ),
+  ),
   "utf8",
 );
 const routeSource = readFileSync(
-  resolve(process.cwd(), "services/platform-api/src/modules/specifications/routes.ts"),
+  fileURLToPath(
+    new URL("../../../services/platform-api/src/modules/specifications/routes.ts", import.meta.url),
+  ),
   "utf8",
 );
 

@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  resolve(process.cwd(), "services/platform-api/migrations/0013_specifications.sql"),
+  fileURLToPath(
+    new URL("../../../services/platform-api/migrations/0013_specifications.sql", import.meta.url),
+  ),
   "utf8",
 );
 

@@ -1,8 +1,10 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const migrationPath = path.resolve(process.cwd(), "migrations/0013_specifications.sql");
+const migrationPath = fileURLToPath(
+  new URL("../../../migrations/0013_specifications.sql", import.meta.url),
+);
 
 describe("C13 specification migration contract", () => {
   it("creates composite tenant/project catalog, one-line truth, history and transaction records", async () => {
