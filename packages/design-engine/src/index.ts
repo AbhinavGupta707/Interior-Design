@@ -1,11 +1,13 @@
 /**
  * Pure C12 deterministic constraint/layout engine.
  *
- * The public surface is deliberately narrow: callers provide frozen C11/C12/C5 declarations to
- * `runDeterministicDesignEngine`; the engine returns exact replayable declarations or a typed,
- * privacy-minimised abstention. No provider, clock, random source or mutation capability exists.
+ * The public surface is deliberately narrow: callers freeze candidate-independent constraints,
+ * then provide frozen C11/C12/C5 declarations to `runDeterministicDesignEngine`; both paths return
+ * exact declarations or a typed, privacy-minimised abstention. No provider, clock, random source or
+ * mutation capability exists.
  */
 export { runDeterministicDesignEngine } from "./engine.js";
+export { deriveDeterministicDesignConstraints } from "./preflight.js";
 export {
   designEngineAbstentionCodes,
   designEnginePackageContract,
@@ -24,6 +26,10 @@ export type {
   DesignEngineAbstention,
   DesignEngineAbstentionCode,
   DeterministicDesignEngineFailure,
+  DeterministicDesignConstraintRequest,
+  DeterministicDesignConstraintResult,
+  DeterministicDesignConstraintSuccess,
+  DeterministicDesignConstraintSystemPolicy,
   DeterministicDesignEngineRequest,
   DeterministicDesignEngineResult,
   DeterministicDesignEngineSuccess,

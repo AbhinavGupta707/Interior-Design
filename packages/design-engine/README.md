@@ -4,12 +4,16 @@ Pure deterministic C12 constraint, spatial-validation, bounded-search, Pareto an
 
 ## Public API
 
-`runDeterministicDesignEngine(input: unknown)` is the only executable export. Runtime validation accepts exact frozen C11 briefs, C4 source/working snapshots, C12 asset references and C5 design-operation templates. It returns either:
+`deriveDeterministicDesignConstraints(input: unknown)` is the narrow job-preflight port. Runtime validation accepts an exact candidate-independent shape containing only the accepted C11 brief and content pin, C4 source/working references and snapshots, typed brief facts, explicit keep-outs, valid finish-target policy and the versioned boundary-touch system policy. It returns the frozen constraints and `constraintsSha256`, or a typed abstention. It accepts no candidates, assets, search controls, clocks or providers.
+
+`runDeterministicDesignEngine(input: unknown)` accepts the full frozen C12 job input and calls that same preflight implementation before search. A platform job can therefore freeze the constraint set at creation and a worker can rederive identical IDs and hashes before publication. It returns either:
 
 - a successful declaration with derived C12 constraints, exact C12 operation bundles, replayed canonical candidate snapshots/hashes, non-dominated candidates and a complete pairwise diversity matrix; or
 - a typed, privacy-minimised abstention. Abstentions never echo brief statements or asset payloads.
 
 The remaining public exports are version/resource constants and TypeScript input/result types.
+
+The shared set never contains candidate-generated element IDs. It deterministically retains exact canonical levels, spaces, fixed geometry and valid common finish hosts, adds explicit keep-outs, and accepts typed brief facts only when their referenced elements exist in the common working snapshot. A fact that could apply only to some templates causes a typed abstention. Candidate furnishing containment, collision, per-side asset clearance, vertical fit, binding and finish-face validation remain mandatory rejection gates, without being misreported as shared constraint passes. Every retained operation bundle contains exactly one truthful result for every frozen constraint.
 
 Candidate templates carry bounded integer objective vectors from the trusted placement-producer port. The engine keeps those proxies separate from hard constraint results, normalises their order, rejects conflicting scores for semantically identical candidates and computes the stable Pareto frontier. Brief prose is never parsed into geometry or an objective score; hard brief entries require an explicit typed computational fact or the engine abstains.
 

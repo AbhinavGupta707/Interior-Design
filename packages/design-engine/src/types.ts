@@ -83,6 +83,11 @@ export interface DeterministicSearchConfiguration {
   readonly schemaVersion: typeof deterministicSearchConfigurationVersion;
 }
 
+export interface DeterministicDesignConstraintSystemPolicy {
+  readonly boundaryTouch: BoundaryTouchPolicy;
+  readonly schemaVersion: typeof deterministicSearchConfigurationVersion;
+}
+
 export interface CandidateAssetPlacementInput {
   /** Stable semantic slot, deliberately independent of generated element/operation UUIDs. */
   readonly assignmentKey: string;
@@ -114,6 +119,23 @@ export interface DeterministicDesignEngineRequest {
   readonly requestedOptionCount: number;
   readonly sourceModel: OptionSourceModelReference;
   readonly sourceSnapshot: CanonicalHomeSnapshot;
+  readonly workingModel: OptionWorkingModelReference;
+  readonly workingSnapshot: CanonicalHomeSnapshot;
+}
+
+/**
+ * Candidate-independent inputs used to freeze one constraint set for an option job. Candidate
+ * templates, assets, search controls, clocks and providers are deliberately outside this port.
+ */
+export interface DeterministicDesignConstraintRequest {
+  readonly acceptedBrief: DesignBrief;
+  readonly acceptedBriefContentSha256: string;
+  readonly briefConstraintFacts: readonly BriefConstraintFact[];
+  readonly finishTargets: readonly FinishTargetDeclaration[];
+  readonly keepOuts: readonly KeepOutDeclaration[];
+  readonly sourceModel: OptionSourceModelReference;
+  readonly sourceSnapshot: CanonicalHomeSnapshot;
+  readonly systemPolicy: DeterministicDesignConstraintSystemPolicy;
   readonly workingModel: OptionWorkingModelReference;
   readonly workingSnapshot: CanonicalHomeSnapshot;
 }
@@ -211,6 +233,15 @@ export interface DerivedConstraintSet {
   readonly constraints: readonly DesignConstraint[];
   readonly constraintsSha256: string;
 }
+
+export interface DeterministicDesignConstraintSuccess extends DerivedConstraintSet {
+  readonly ok: true;
+}
+
+export type DeterministicDesignConstraintResult =
+  DeterministicDesignEngineFailure | DeterministicDesignConstraintSuccess;
+
+export type ParsedDesignConstraintRequest = DeterministicDesignConstraintRequest;
 
 export interface ParsedDesignEngineRequest extends Omit<
   DeterministicDesignEngineRequest,
