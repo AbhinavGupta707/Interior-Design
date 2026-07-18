@@ -17,3 +17,4 @@ reconstructions/
 captures/
 pnpm-lock.yaml
 uv.lock
+packages/catalog/fixtures/source/release.json
