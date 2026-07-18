@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C10 are complete. The user subsequently authorised strict sequential execution of C11-C15; C11 is active, C15 is terminal and C16 is not authorised.
+- Autonomous execution boundary: C0-C12 are complete. The user subsequently authorised strict sequential execution through C15; C13 is in prelude, C15 is terminal and C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -521,3 +521,31 @@
 - Captured API, Next and spawned-worker process logs contained safe lifecycle events (`design-options.published`, `scene.compiled`) while excluding the injected private brief marker, bearer token, option summary, asset ID, operations, placements and lease-token fields. The serialized live-PostgreSQL C12 suite passed 12 files / 46 tests, including stale-source fencing, lease reclaim, cancellation/retry/abstention, concurrent sibling confirmation, idempotent replay, RLS activation and append-only rejection. Independent evaluation/security/performance passed 14/14.
 - `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, all 19 workspace lint/typecheck/unit/build pipelines, Ruff, strict MyPy and Python 117 passed / two honest optional capability skips. The independent Playwright matrix passed all 12 Chromium, Firefox and WebKit desktop/mobile cases. Connected Chrome visibly passed synthetic sign-in, comparison, confirmation and 390×844 overflow/console inspection. The Codex in-app Browser controller failed before tab acquisition and is recorded as unavailable, not as evidence.
 - No external provider, paid service, provider key, customer data, GPU/CUDA, physical-device/LiDAR, representative-household study, human-rated agency-design study or structural/regulatory/clinical/cost/availability professional review was exercised or claimed. Durable details and commands are recorded in `docs/evaluation/design-options/C12_L4_ACCEPTANCE_2026-07-18.md` and `docs/runbooks/development/c12-design-options.md`.
+
+## C13 — Rights-aware catalog and room specification
+
+### Master prelude
+
+- Status: prelude frozen on `main`; no C13 implementation lane launched yet and C14 remains closed
+- Contract: `docs/orchestration/checkpoints/C13_CONTRACT.md` (`c13-catalog-artifact-v1`, `c13-catalog-rights-record-v1`, `c13-catalog-asset-version-v1`, `c13-catalog-release-v1`, `c13-specification-v1`, `c13-specification-revision-v1`, `c13-substitution-preview-v1`, `c13-substitution-confirmation-v1`)
+- Immutable predecessor/C12 ledger close: `c8f266e68fdd31402d49a9f12b80b5af21644ae6`
+- Prelude commit: pending this gate; the subsequent activation record will freeze the exact worker base before launch
+- Planned lanes: three, retained adaptively because hostile/right-sensitive asset ingestion, transactional C5/specification persistence with forced RLS, and independent cross-surface exact-version acceptance have clean exclusive ownership boundaries
+- Worker runtime: every lane will use exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because all three lanes include untrusted artifacts/licensing, concurrency/security or cross-domain C5/C10/browser integration.
+- Provider/data policy: creator-authored generic local assets and deterministic local workers only; no runtime URL ingestion, external provider, paid service, customer data, training permission, live price, supplier or availability source is activated
+- Mutation policy: C13 projects one exact confirmed C12 option into immutable specification revisions. Previews are non-canonical and labelled bounded; only an explicit owner/editor confirmation may reuse `design.element.replace.v1` on the exact proposed branch, after which C10 may compile the committed result.
+
+| Lane                           | Task/thread  | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                          |
+| ------------------------------ | ------------ | ----------------------- | ---------- | --------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| C13-L1 catalog pipeline        | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | catalog package; isolated catalog worker/API/tests/security/runbook paths                                |
+| C13-L2 specification domain    | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | specification package; isolated specification API/tests; migration `0013`; security/runbook/threat paths |
+| C13-L3 selection UX/acceptance | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | isolated materials-products web/BFF/tests and specification evaluation/performance/E2E paths             |
+
+### Prelude decisions
+
+- C12 v1 remains immutable. C13 wraps all eight exact C12 starter references in richer catalog records and adds only creator-authored local alternatives. Catalog appearance/detail and C10 parametric canonical truth remain distinct.
+- Shared contracts pin content-addressed GLB/PNG/licence/source artifacts, declared versus concluded SPDX expressions, independent grants/policies, integer scale/axis/pivot rules, immutable release/version identity, exact C12 confirmation provenance, one schedule-line truth and expiring substitution confirmation.
+- Before confirmation the product may show C5 findings and a bounded catalog preview only. C10 is requested after atomic C5/specification commit and failure is a retriable derived-scene state, not a rollback or truth claim.
+- Migration `0013_specifications.sql` is allocated exclusively to C13-L2. C13 tables must force RLS and prove tenant isolation through a non-owner/no-`BYPASSRLS` application role with transaction-local tenant context. Retrospective C1-C12 table-owner hardening remains an inherited dedicated-hardening risk rather than silent scope expansion.
+- Catalog ingestion accepts repository-local artifacts only and enforces frozen byte/graph/texture/time/memory limits, official Khronos validation plus stricter URI/resource/geometry/rights rules, deterministic publication and no partial release head.
+- Root owns shared contracts/authz/tests, migration registry, manifests/lockfile, central composition/navigation/C12-C13-C10 seams, accepted contract and ledger. The exact three `gpt-5.6-sol` / `xhigh` assignments and non-overlapping paths are frozen before task creation.

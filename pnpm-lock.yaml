@@ -91,6 +91,12 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/catalog:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/config:
     dependencies:
       zod:
@@ -202,6 +208,12 @@ importers:
       gltf-validator:
         specifier: 2.0.0-dev.3.10
         version: 2.0.0-dev.3.10
+
+  packages/specification:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/test-fixtures:
     dependencies:

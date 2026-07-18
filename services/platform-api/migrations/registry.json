@@ -72,6 +72,12 @@
       "checkpoint": "C12",
       "owner": "C12-L3",
       "path": "0012_design_options.sql"
+    },
+    {
+      "id": "0013",
+      "checkpoint": "C13",
+      "owner": "C13-L2",
+      "path": "0013_specifications.sql"
     }
   ]
 }
