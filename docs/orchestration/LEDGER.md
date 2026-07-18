@@ -489,12 +489,15 @@
 - Provider/data policy: creator-owned synthetic bounded-proxy assets and deterministic local execution only; no paid service, provider key, customer data, GPU or training permission is required
 - Mutation policy: generation remains proposal-only; only an explicit owner/editor confirmation can atomically create/reuse an exact proposed base, create an isolated C5 branch and commit a hash-verified furnishing/finish/light bundle. Existing and as-built profiles remain immutable.
 
-| Lane                                          | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State   | Exclusive roots                                                                                                     |
-| --------------------------------------------- | ----------- | ----------------------- | ---------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| C12-L1 deterministic constraint/layout engine | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | `packages/design-engine/**`                                                                                         |
-| C12-L2 generic assets/placement producer      | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | `packages/interior-assets/**`; isolated spatial-worker asset-placement source/tests                                 |
-| C12-L3 durable proposal/confirmation runtime  | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | isolated model-operation AI tools, platform design-options module/tests, migration `0012` and runbook               |
-| C12-L4 option UX/independent acceptance       | pending     | `gpt-5.6-sol` / `xhigh` | —          | —         | planned | isolated web design-options/BFF/tests plus design-options evaluation, security, E2E, performance and evidence paths |
+| Lane                                          | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                                     |
+| --------------------------------------------- | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| C12-L1 deterministic constraint/layout engine | `019f7338-3152-7fc3-b7b7-afd1c3ff799e` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | `packages/design-engine/**`                                                                                         |
+| C12-L2 generic assets/placement producer      | `019f7338-3179-70b1-a6b7-e248d2bcda47` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | `packages/interior-assets/**`; isolated spatial-worker asset-placement source/tests                                 |
+| C12-L3 durable proposal/confirmation runtime  | `019f7338-3167-7993-93e9-8e61fa13540c` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | isolated model-operation AI tools, platform design-options module/tests, migration `0012` and runbook               |
+| C12-L4 option UX/independent acceptance       | `019f7338-3167-7993-93e9-8e84222b53ee` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | isolated web design-options/BFF/tests plus design-options evaluation, security, E2E, performance and evidence paths |
+
+- Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/4483/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/06ba/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/bb16/Interior Design`; L4 `/Users/abhinavgupta/.codex/worktrees/3b52/Interior Design`.
+- Provisioning client IDs: L1 `client-new-thread:3505ef09-df1d-4ef0-a427-5a74b656004a`; L2 `client-new-thread:649de8e5-f33f-408a-bbe5-8918227dfb30`; L3 `client-new-thread:398aa23b-5d5a-4b19-98c5-93eef54ba5b2`; L4 `client-new-thread:e9ab6d58-e674-4eab-b351-26fda53f8036`.
 
 ### Prelude decisions and gate evidence
 
