@@ -1,8 +1,8 @@
-# C11–C15 Authorised Continuation
+# C11–C16 Authorised Continuation
 
 ## Authority and terminal boundary
 
-The user authorised sequential implementation of active checkpoints C11, C12, C13, C14 and C15 on 2026-07-18 after C10 closed at `2cfa04772493b8fd60446edf9dc75fced7b5557b`. C10's accepted contract remains immutable; this document records the subsequent authority. C15 is terminal for this run. C16 is not authorised and must not be opened, scaffolded or launched.
+The user authorised sequential implementation of active checkpoints C11, C12, C13, C14 and C15 on 2026-07-18 after C10 closed at `2cfa04772493b8fd60446edf9dc75fced7b5557b`. On 2026-07-19 the user extended that authority through C16, after C14's active lanes had launched. C10's accepted contract remains immutable; this document records the subsequent authority. C16 is terminal for this run. C17 is not authorised and must not be opened, scaffolded or launched.
 
 `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md` is controlling. Older C11–C19 labels in `04_POST_M1_AND_GPU_ROADMAP.md` are historical identifiers only.
 
@@ -20,7 +20,7 @@ Only one checkpoint is active. For each checkpoint the orchestrator must:
 8. record real evidence, explicit skips/`NOT RUN` states, limitations and SHAs in durable evaluation and ledger records;
 9. commit and push a clean closure before opening the next checkpoint.
 
-The 20-minute task heartbeat is a continuity guard, not an implementation lane. It may resume safe work only when the task is idle and must never overlap current workers.
+The 20-minute task heartbeat is a continuity guard, not an implementation lane. It may resume safe work only when the task is idle, must never overlap current workers, and now terminates only after C16 is closed or the user pauses the programme.
 
 ## Cross-checkpoint decisions
 
@@ -48,9 +48,9 @@ The active lane descriptions are amended by the controlling plan so C14 and C15 
 
 ### Hardware and closure
 
-- The Mac is the local baseline for exact software gates. FFmpeg/ffprobe 8.1 are installed. Blender must be installed, pinned and proven through a real headless CPU or Metal render before C14 can close.
-- C14 requires an actual Blender render and geometry pass set from a synthetic exact model; fake image fixtures are not renderer evidence.
-- C15 requires actual Blender frames plus actual FFmpeg encoding and ffprobe validation; fake video fixtures are not encoder evidence.
+- The Mac is the local baseline for exact software gates. FFmpeg/ffprobe 8.1 are installed. The user explicitly prohibited Blender execution on this Mac, including probes, so the programme must not manufacture local Blender evidence.
+- C14 still requires an actual Blender render and geometry pass set from a synthetic exact model for the later renderer-hardware acceptance record; fake image fixtures are not renderer evidence. The user's 2026-07-19 continuation instruction explicitly allows C15 to open after C14 is otherwise merged, exhaustively verified and documented as `implementation-ready / hardware-gate-deferred`.
+- C15 may run actual FFmpeg encoding and ffprobe validation over deterministic repository-owned frame fixtures on this Mac, but that proves the encode/control plane only. Actual Blender frames and renderer-to-encoder evidence remain deferred to an authorised render host. The same honest deferred-evidence rule does not prevent C16 from exercising version-pinned comparisons with deterministic media fixtures.
 - CUDA/OptiX, Windows/NVIDIA high-resolution rendering, external generative media, physical RoomPlan and representative-home/professional studies remain separate `NOT RUN` release evidence unless genuinely executed. A checkpoint may close locally with real deterministic Mac evidence and visibly disabled optional capabilities; it may not claim those unavailable profiles.
 - Pause new render/video jobs if free space is below the greater of 15 GiB or three times the estimated job bytes.
 
@@ -61,8 +61,9 @@ The active lane descriptions are amended by the controlling plan so C14 and C15 
 | C11        |     3 | structured brief, bounded local consultation, agency workspace                                            | `0011_design_briefs.sql`  | local Postgres/API plus responsive, keyboard and multi-browser consultation journey; no canonical mutation |
 | C12        |     4 | deterministic constraints/layout/assets, proposal runtime, option UX                                      | `0012_design_options.sql` | accepted brief to distinct valid operation bundles and explicitly confirmed isolated branches              |
 | C13        |     3 | rights-aware generic catalogue, room specifications, selection UX                                         | `0013_specifications.sql` | exact option/catalog/spec linkage, safe replacement through C5/C10 and browser schedules                   |
-| C14        |     4 | render scene, Blender/durable backend, optional disabled enhancement, render UX/QA                        | `0014_render_jobs.sql`    | real headless Blender still and passes plus signed artifact and browser compare/status journey             |
+| C14        |     4 | render scene, Blender/durable backend, optional disabled enhancement, render UX/QA                        | `0014_render_stills.sql`  | real headless Blender still and passes plus signed artifact and browser compare/status journey             |
 | C15        |     4 | camera path/authoring, durable Blender/FFmpeg video, optional disabled enhancement/narration, temporal QA | `0015_video_jobs.sql`     | real frames, encode, ffprobe, captions and accessible multi-browser playback journey                       |
+| C16        |     3 | exact-version compare, decide and collaborate backend, synchronised UX and comprehension/e2e QA           | `0016_decisions.sql`      | exact-version freeze, same-camera multimodal compare and accessible owner/editor/viewer/foreign journeys   |
 
 Only the current checkpoint migration is added to the migration registry during its prelude.
 

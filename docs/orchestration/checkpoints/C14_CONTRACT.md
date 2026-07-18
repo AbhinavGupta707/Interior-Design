@@ -3,7 +3,7 @@
 ## Authority, predecessor and outcome
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`.
-- Continuation authority: `docs/orchestration/C11_C15_CONTINUATION.md`; this prelude may be pushed without launching lanes. C14 activation is recorded separately in the ledger, and C15 remains closed.
+- Continuation authority: `docs/orchestration/C11_C15_CONTINUATION.md`; this prelude may be pushed without launching lanes. C14 activation is recorded separately in the ledger. C15 remains closed until all locally available C14 gates are merged, verified and documented; the user's 2026-07-19 continuation amendment then authorises sequential C15 and C16 work while preserving the real-render gate as deferred evidence.
 - Immutable predecessor: pushed C13 ledger close `ad161f4478c83f295f5cebcc5b3a8b622df31dab`.
 - Outcome: an owner/editor can select one exact C13-backed C10 scene, canonical camera and canonical lighting set; request a durable render; inspect a reproducible geometry-safe PNG and diagnostic passes; and, only when separately enabled and accepted, compare an illustrative enhancement that cannot replace the safe result.
 - Truth boundary: C4/C5 remain canonical geometry. C10 remains the protected derived mesh. C13 remains the exact product/material specification. C14 enriches appearance, camera and light presentation without creating, moving or deleting canonical elements.
@@ -108,6 +108,6 @@ C14 cannot close until all of the following pass:
 
 CUDA/OptiX/Windows high-resolution rendering, external enhancement quality, paid services, customer data, physical devices and professional validation remain explicitly `NOT RUN` and do not masquerade as Mac baseline evidence.
 
-Until item 4 is collected, the durable checkpoint state is `implementation-ready / hardware-gate-deferred`, not `complete`. Under the sequential checkpoint rule C15 remains closed unless the real C14 gate is later supplied or the user explicitly changes that rule; this contract does not infer permission to skip it.
+Until item 4 is collected, the durable checkpoint state is `implementation-ready / hardware-gate-deferred`, not renderer-hardware-complete. On 2026-07-19 the user explicitly changed the sequential rule: C15 may open after every other C14 gate is merged, exhaustively verified and documented, with item 4 retained as an honest deferred acceptance record. This amendment authorises progression; it does not convert fixtures into renderer evidence or weaken any locally available gate.
 
 Primary official sources checked on 2026-07-18: [Blender headless rendering](https://docs.blender.org/manual/en/5.0/advanced/command_line/render.html), [scripting security](https://docs.blender.org/manual/en/5.0/advanced/scripting/security.html), [Cycles GPU rendering](https://docs.blender.org/manual/en/5.0/render/cycles/gpu_rendering.html), [OpenEXR output](https://docs.blender.org/manual/en/5.0/render/output/properties/output.html), [render passes](https://docs.blender.org/manual/en/5.0/render/layers/passes.html), [colour management](https://docs.blender.org/manual/en/5.0/render/color_management.html) and [production deployment](https://docs.blender.org/manual/en/dev/advanced/deploying_blender.html).
