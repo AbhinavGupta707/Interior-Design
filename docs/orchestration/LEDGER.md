@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C9 are complete. The user subsequently authorised C10; C10 contract preflight is open and no C11 work may begin.
+- Autonomous execution boundary: C0-C10 are complete. C10 is the terminal user-authorised checkpoint; no C11 work may begin.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -395,20 +395,22 @@
 
 ### Master activation
 
-- Status: three frozen implementation worktrees active from prelude commit `85714d9`
+- Status: complete on `main`; terminal checkpoint, no C11 authorised
 - Contract: `docs/orchestration/checkpoints/C10_CONTRACT.md` (`c10-scene-job-v1`, `c10-scene-manifest-v1`, `c10-scene-artifact-v1`)
 - Immutable predecessor/C9 ledger-close: `77854a1726b40ba7ac7a05d26a39d881b7e38509`
+- Prelude commits: `85714d9`, `99a0c9a`, `30aadbe`
+- Product completion SHA: `5f48cd05a25b57bcd2295fc62710d60c0803efe3`
 - Planned lanes: three, retained adaptively because deterministic scene compilation, tenant-safe durable storage/workflow and browser 3D/performance acceptance are substantial independent risks with exclusive write boundaries
 - Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning. Numerical geometry/specification, durable concurrency/security and cross-browser 3D/performance are complex; no C10 implementation lane is bounded enough for lower reasoning.
 - Provider/data policy: no paid provider, cloud key, customer data, RoomPlan device, reconstruction runtime or GPU is required. Exact committed synthetic canonical homes, local Postgres/S3-compatible storage and browser software rendering provide the base gate.
 - Mutation policy: C10 reads one exact committed C4 snapshot and publishes a content-addressed derived visualisation only. It cannot write C4 snapshots, call C5 preview/commit, resolve C9 discrepancies or raise the model's evidence/professional status.
 - Hardware/runtime status at activation: physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA, representative-home accuracy and cloud delivery remain `NOT RUN`; these are upstream fidelity/release gates, not missing C10 architecture.
 
-| Lane                                 | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                  |
-| ------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | ------------------------------------------------------------------------------------------------ |
-| C10-L1 scene compiler/runtime        | `019f723e-93ec-79d2-9b8d-d7c704ce49c6` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
-| C10-L2 durable scene backend/storage | `019f723e-93ed-7dd0-9e69-873e38544e74` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
-| C10-L3 viewer/independent acceptance | `019f723e-93ed-7dd0-9e69-87165c5840e5` | `gpt-5.6-sol` / `xhigh` | pending    | pending   | active | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
+| Lane                                 | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                  |
+| ------------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | ------------------------------------------------------------------------------------------------ |
+| C10-L1 scene compiler/runtime        | `019f723e-93ec-79d2-9b8d-d7c704ce49c6` | `gpt-5.6-sol` / `xhigh` | `d107a88`  | `dced053` | integrated | scene-compiler source/tests and isolated spatial-worker scene-compile source/tests               |
+| C10-L2 durable scene backend/storage | `019f723e-93ed-7dd0-9e69-873e38544e74` | `gpt-5.6-sol` / `xhigh` | `5133059`  | `081d490` | integrated | isolated platform scenes module/C10 composition/migration/tests and runbook                      |
+| C10-L3 viewer/independent acceptance | `019f723e-93ed-7dd0-9e69-87165c5840e5` | `gpt-5.6-sol` / `xhigh` | `8caf731`  | `c295a8d` | integrated | isolated web viewer/BFF/tests plus viewer E2E/performance/security/evaluation/threat-model paths |
 
 - Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/9ca3/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/505a/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/0f60/Interior Design`.
 - Provisioning client IDs: L1 `client-new-thread:ebee5379-2616-4028-aad9-f65e9516ad06`; L2 `client-new-thread:4469a026-6868-4fc1-b171-2a17e61bed7e`; L3 `client-new-thread:2d59bf64-7d9a-4703-8fdd-deb51c7977ae`.
@@ -419,3 +421,13 @@
 - Shared C10 contracts freeze exact-snapshot jobs, deterministic compiler configuration, derived-only authority, integer-millimetre bounds, stable one-owner element mappings, explicit omissions/findings, bounded artifact/count ceilings and loopback-only HTTP signed access. Five deny-by-default C10 actions are added before worker launch.
 - Migration `0010_scenes.sql` is reserved exclusively for C10-L2. Root/package manifests, lockfile, shared contracts/core authz, registry, accepted contract and ledger remain orchestrator-owned after the prelude.
 - Dependency versions were resolved from the current npm registry before freezing: Three.js `0.185.1`, React Three Fiber `9.6.1`, `@types/three` `0.185.1`, Earcut `3.2.3` and Khronos glTF Validator npm `2.0.0-dev.3.10`.
+
+### Integration and closure evidence
+
+- All three workers completed from the frozen prelude and merged in L1 → L2 → L3 order. Cross-lane integration then composed the real scene compiler with the durable API repository, exact snapshot verifier and S3-compatible object storage behind explicit environment activation.
+- Root review aligned compiler/backend determinism identity, `canonicalElementId` verification and per-level node ownership; enforced BFF project identity; and repaired the production runner so an ordinary publication rejection becomes a fenced durable failure rather than a silently stranded `publishing` job.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, every package lint/typecheck/build pipeline and all default unit suites. Focused totals include scene compiler 24, platform API 134 passed / 28 declared environment skips, spatial worker 109 passed / three declared live skips, web 93, geometry 43 and Python 117 passed / two unavailable COLMAP/Open3D-runtime skips.
+- Live PostgreSQL plus local S3-compatible API/storage tests passed 5/5. The separate production-composed gate used a real API, real `SceneCompilationRunner`, real compiler, exact committed two-level C4 snapshot, PostgreSQL and object storage; it passed 1/1 and produced a signed-download-verified 29,456-byte GLB (`730e0b6b20d1a5438d17b15a592d4fda52b8d15c41fd76e5b54411f98f817a7a`) containing 14 nodes, 9 meshes, 561 vertices, 281 triangles and 6 materials. Database counts remained one snapshot, one scene, zero branches and zero operation commits.
+- Independent scene security passed 11/11. Browser semantics passed 5 with 2 actual-canvas skips across Chromium, Firefox and WebKit. The two desktop/mobile performance cases were skipped because the host reported a WebGL major caveat, so no numeric GPU claim is made. The in-app Browser failed before tab creation with `Cannot redefine property: process`; Playwright is the recorded fallback evidence.
+- Physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA execution, actual hardware-GPU performance, representative-home accuracy, cloud-provider delivery and professional review remain exactly `NOT RUN`. They are release/field evidence and are not missing scene architecture. No paid service, key, customer data or training permission was used.
+- Durable evidence: `docs/evaluation/viewer/C10_L3_ACCEPTANCE_2026-07-17.md`. C10 terminates the authorised programme; no C11 checkpoint is open.
