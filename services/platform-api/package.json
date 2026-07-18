@@ -8,6 +8,11 @@
       "types": "./src/modules/reconstruction/index.ts",
       "development": "./src/modules/reconstruction/index.ts",
       "default": "./dist/src/modules/reconstruction/index.js"
+    },
+    "./scenes": {
+      "types": "./src/modules/scenes/index.ts",
+      "development": "./src/modules/scenes/index.ts",
+      "default": "./dist/src/modules/scenes/index.js"
     }
   },
   "scripts": {
@@ -21,6 +26,7 @@
     "test:integration": "vitest run --passWithNoTests --exclude 'dist/**'"
   },
   "devDependencies": {
+    "@interior-design/scene-compiler": "workspace:*",
     "@types/node": "^26.1.1",
     "tsx": "^4.23.1"
   },

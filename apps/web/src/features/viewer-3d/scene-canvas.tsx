@@ -11,6 +11,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { GLTF } from "three/addons/loaders/GLTFLoader.js";
 
 import { createViewerMetricsRecorder } from "./metrics";
+import { isVisibleForLevels } from "./level-visibility";
 
 export type ViewerControlMode = "orbit" | "walk";
 export type ViewerMaterialMode = "material" | "status";
@@ -293,10 +294,8 @@ function SceneRuntime({
   useEffect(() => {
     for (const mapping of manifest.elementMappings) {
       const node = nodeByElementRef.current.get(mapping.elementId);
-      if (node && mapping.elementType === "level") {
-        node.visible = visibleLevelIds.has(mapping.elementId);
-      }
       if (!node) continue;
+      node.visible = isVisibleForLevels(node, visibleLevelIds);
       node.traverse((object) => {
         if (!isMaterialMesh(object)) return;
         meshMaterials(object).forEach((material) => {

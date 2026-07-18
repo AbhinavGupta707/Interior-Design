@@ -127,7 +127,7 @@ export function validGlb(): Uint8Array {
         primitives: [{ attributes: { POSITION: 0 }, indices: 1, material: 0, mode: 4 }],
       },
     ],
-    nodes: [{ extras: { elementId: spaceId }, mesh: 0 }],
+    nodes: [{ extras: { canonicalElementId: spaceId }, mesh: 0 }],
     scene: 0,
     scenes: [{ nodes: [0] }],
   };

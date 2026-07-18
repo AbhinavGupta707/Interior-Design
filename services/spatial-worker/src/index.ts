@@ -1,6 +1,12 @@
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { existsSync } from "node:fs";
+import {
+  PostgresSceneRepository,
+  PostgresSceneSnapshotVerifier,
+  S3SceneObjectStorage,
+  SceneWorkerService,
+} from "@interior-design/platform-api/scenes";
 import { PostgresReconstructionRepository } from "@interior-design/platform-api/reconstruction";
 import postgres from "postgres";
 
@@ -30,6 +36,7 @@ import {
   ReconstructionProcessingRunner,
 } from "./reconstruction/index.js";
 import { SpatialWorkerRunner } from "./runner.js";
+import { SceneCompilationRunner } from "./scene-compile/index.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
 
 export const spatialWorkerCheckpoint = "C2" as const;
@@ -51,8 +58,16 @@ export * from "./roomplan/index.js";
 export * from "./media-prep/index.js";
 export * from "./reconstruction/index.js";
 export * from "./model-fusion/index.js";
+export * from "./scene-compile/index.js";
 
-export const spatialWorkerCapabilities = Object.freeze(["C2", "C6", "C7", "C8", "C9"] as const);
+export const spatialWorkerCapabilities = Object.freeze([
+  "C2",
+  "C6",
+  "C7",
+  "C8",
+  "C9",
+  "C10",
+] as const);
 
 function defaultInferenceModuleRoot(): string {
   const repositoryRoot = path.resolve(process.cwd(), "services/inference-worker/src");
@@ -160,6 +175,20 @@ export async function runSpatialWorker(
           workerId: `c9-${config.workerId}`.slice(0, 100),
         })
       : undefined;
+  const sceneRunner = config.c10SceneWorkerEnabled
+    ? new SceneCompilationRunner({
+        heartbeatMilliseconds: Math.min(config.heartbeatMs, 15_000),
+        leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
+        logger,
+        pollMilliseconds: config.pollMs,
+        worker: new SceneWorkerService({
+          repository: new PostgresSceneRepository(sql),
+          snapshotVerifier: new PostgresSceneSnapshotVerifier(sql),
+          storage: new S3SceneObjectStorage(config.s3, { client: s3Client }),
+        }),
+        workerId: `c10-${config.workerId}`.slice(0, 100),
+      })
+    : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -173,6 +202,7 @@ export async function runSpatialWorker(
       ...(roomPlanRunner === undefined ? [] : [roomPlanRunner.run(shutdown.signal)]),
       ...(reconstructionRunner === undefined ? [] : [reconstructionRunner.run(shutdown.signal)]),
       ...(fusionRunner === undefined ? [] : [fusionRunner.run(shutdown.signal)]),
+      ...(sceneRunner === undefined ? [] : [sceneRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);

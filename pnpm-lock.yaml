@@ -162,7 +162,6 @@ importers:
       earcut:
         specifier: ^3.2.3
         version: 3.2.3
-    devDependencies:
       gltf-validator:
         specifier: 2.0.0-dev.3.10
         version: 2.0.0-dev.3.10
@@ -254,6 +253,9 @@ importers:
       '@interior-design/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@interior-design/scene-compiler':
+        specifier: workspace:*
+        version: link:../../packages/scene-compiler
       file-type:
         specifier: ^22.0.1
         version: 22.0.1

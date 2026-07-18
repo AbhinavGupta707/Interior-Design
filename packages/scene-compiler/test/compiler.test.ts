@@ -35,7 +35,7 @@ describe("canonical scene compiler", () => {
       numWarnings: 0,
       validatorVersion: "2.0.0-dev.3.10",
     });
-    expect(result.glb.byteLength).toBe(28_816);
+    expect(result.glb.byteLength).toBe(29_456);
     expect(result.manifest.counts).toEqual({
       materials: 6,
       meshes: 9,
@@ -48,8 +48,8 @@ describe("canonical scene compiler", () => {
       minimum: { xMm: -100, yMm: -100, zMm: 0 },
     });
     expect(result.artifact).toMatchObject({
-      byteSize: 28_816,
-      glbSha256: "ed323d5eadb5c26e901cbbf719a96b571dca816e4f3ed3233f9f0b3c48a97392",
+      byteSize: 29_456,
+      glbSha256: "730e0b6b20d1a5438d17b15a592d4fda52b8d15c41fd76e5b54411f98f817a7a",
       mimeType: "model/gltf-binary",
     });
     expect(result.artifact.manifestSha256).toBe(sha256Hex(result.manifestBytes));
@@ -81,6 +81,8 @@ describe("canonical scene compiler", () => {
     const multiSegmentWall = nodes.find(
       (node) => (node.extras as Record<string, unknown>).canonicalElementId === fixtureIds.wallEast,
     );
+    expect((wall?.extras as Record<string, unknown>).levelId).toBe(fixtureIds.ground);
+    expect((opening?.extras as Record<string, unknown>).levelId).toBe(fixtureIds.ground);
     expect(camera?.translation).toEqual([1, 1.600000023841858, -1]);
     expect(opening?.translation).toEqual([1.4500000476837158, 1.0499999523162842, 0]);
     const mesh = arrayMember(parsed.json, "meshes")[wall?.mesh as number];

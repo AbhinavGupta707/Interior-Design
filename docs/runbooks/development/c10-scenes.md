@@ -8,9 +8,10 @@ snapshot, profile, branch or operation. The API accepts only the frozen snapshot
 reloads the canonical record, checks committed status and re-hashes the persisted payload before a
 job is created, retried, loaded by a worker or published.
 
-The platform API does not contain a fixture or fallback compiler. Production composition exposes
-the `SceneCompilerWorkerPort` for C10-L1, and `POST /scene-jobs` returns
-`SCENE_COMPILER_UNAVAILABLE` until a real compiler descriptor is explicitly composed. A job cannot
+The platform API does not contain a fixture or fallback compiler. `POST /scene-jobs` returns
+`SCENE_COMPILER_UNAVAILABLE` until the real worker is explicitly enabled. The spatial-worker
+executable then composes `SceneCompilationRunner`, the real `1.0.0` scene compiler, the narrow
+tenant-fenced worker port, PostgreSQL and the existing private S3-compatible store. A job cannot
 succeed without validated GLB bytes and a manifest bound to the exact snapshot, compiler and
 configuration hashes.
 
@@ -45,8 +46,9 @@ pnpm --filter @interior-design/platform-api exec tsx src/c10.ts migrate
 
 Database lookup is `C10_DATABASE_URL`, then C9, C8, C7, C6 and C1. Production requires one of
 those variables. Readiness includes required `c10-database` and `c10-scene-storage` checks.
-Optional `c10-scene-compiler` remains unavailable until L1 is composed; this is deliberately
-honest and does not make a compiler appear merely because the API is ready.
+Optional `c10-scene-compiler` remains unavailable until the exact worker activation below is
+present; this is deliberately honest and does not make a compiler appear merely because the API
+or object store is ready.
 
 ## Public API and authorization
 
@@ -77,6 +79,20 @@ scene record exposes a storage locator.
 
 ## Object storage and L1 composition
 
+The API and spatial-worker processes must receive the same explicit activation. The worker binary
+contains compiler version `1.0.0`; do not configure a different API descriptor because jobs would
+correctly remain unclaimable.
+
+```sh
+export C10_SCENE_WORKER_ENABLED='true'
+export C10_SCENE_COMPILER_VERSION='1.0.0'
+export C10_DATABASE_URL='postgresql://deployment-user:secret@database.example.invalid/interior_design'
+```
+
+`C10_SCENE_COMPILER_VERSION` is consumed by the API descriptor; the spatial worker always claims
+with its compiled-in version. Omit the variables or set activation to `false` to keep both
+processes honestly disabled. Any other activation value fails startup validation.
+
 Default composition reuses the existing S3-compatible C2 configuration:
 
 ```sh
@@ -93,12 +109,17 @@ GLB SHA-256, sends checksum metadata and conditional immutable writes, and signs
 returning the locator or provider identity. `InMemorySceneObjectStorage` is provider-free and for
 tests/local composition only.
 
-L1 should receive the `SceneCompilerWorkerPort` returned by `registerC10Module`. The worker must:
+The production `services/spatial-worker` executable builds `SceneWorkerService` from
+`PostgresSceneRepository`, `PostgresSceneSnapshotVerifier` and `S3SceneObjectStorage`, then gives
+that narrow port to `SceneCompilationRunner`. The runner:
 
-1. claim using its real compiler descriptor and retain the returned lease privately;
-2. load the exact source through the port, heartbeat `compiling`, then heartbeat `publishing`;
-3. publish real GLB bytes plus the frozen manifest, or fail with a bounded safe code;
-4. stop on `SCENE_CANCELLATION_REQUESTED` and acknowledge cancellation with the same lease.
+1. claims using the real compiler descriptor and retains the returned lease privately;
+2. reloads the exact committed C4 source through the narrow port and advances monotonically from
+   `leased` to `compiling` to `publishing`;
+3. compiles and publishes real validator-clean GLB bytes plus the frozen manifest, or fails with a
+   bounded safe code;
+4. serialises periodic heartbeats with stage transitions, stops on fencing/cancellation and
+   acknowledges a real cancellation with the same lease.
 
 The port never supplies broad object-store credentials or a storage locator. GLB verification
 rejects malformed/chunk-invalid documents, external URIs, required extensions and manifest count
@@ -128,6 +149,15 @@ Use a disposable database. The live gate applies C1-C10 and proves exact committ
 loading, idempotency/cache reuse, lease stages, cancellation acknowledgement, retry append/fencing,
 atomic immutable publication, signed-access audit and unchanged model/branch counts. Storage tests
 cover checksum binding, conditional content addressing, safe signing and redacted failures.
+
+The full production-composed gate additionally exercises the actual runner and compiler against
+the disposable database and loopback object store, then downloads and re-hashes the signed GLB:
+
+```sh
+C10_RUNNER_TEST_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design_c10_runner_test' \
+C10_RUNNER_TEST_STORAGE_ENDPOINT='http://127.0.0.1:8333' \
+  pnpm exec vitest run tests/integration/scenes/live-production.integration.test.ts
+```
 
 This backend lane alone is not compiler-live, GPU, browser, physical-device, geometry-accuracy,
 capacity or human-review evidence. Those states must remain explicitly unavailable until the

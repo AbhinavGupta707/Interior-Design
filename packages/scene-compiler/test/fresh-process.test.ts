@@ -10,7 +10,7 @@ function compileInFreshProcess(): string {
   const spatialWorkerDirectory = fileURLToPath(
     new URL("../../../services/spatial-worker/", import.meta.url),
   );
-  return execFileSync(process.execPath, ["--import", "tsx", child], {
+  return execFileSync(process.execPath, ["--conditions=development", "--import", "tsx", child], {
     cwd: spatialWorkerDirectory,
     encoding: "utf8",
     timeout: 30_000,
@@ -24,8 +24,8 @@ describe("fresh-process determinism", () => {
     expect(second).toBe(first);
     expect(JSON.parse(first)).toMatchObject({
       artifact: {
-        byteSize: 28_816,
-        glbSha256: "ed323d5eadb5c26e901cbbf719a96b571dca816e4f3ed3233f9f0b3c48a97392",
+        byteSize: 29_456,
+        glbSha256: "730e0b6b20d1a5438d17b15a592d4fda52b8d15c41fd76e5b54411f98f817a7a",
       },
     });
   });

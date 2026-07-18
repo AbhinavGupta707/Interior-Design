@@ -19,9 +19,7 @@
   "dependencies": {
     "@interior-design/contracts": "workspace:*",
     "@interior-design/geometry-kernel": "workspace:*",
-    "earcut": "^3.2.3"
-  },
-  "devDependencies": {
+    "earcut": "^3.2.3",
     "gltf-validator": "2.0.0-dev.3.10"
   }
 }

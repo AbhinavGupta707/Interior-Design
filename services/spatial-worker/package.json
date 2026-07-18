@@ -22,6 +22,7 @@
     "@interior-design/geometry-kernel": "workspace:*",
     "@interior-design/platform-api": "workspace:*",
     "@interior-design/provider-adapters": "workspace:*",
+    "@interior-design/scene-compiler": "workspace:*",
     "file-type": "^22.0.1",
     "postgres": "^3.4.9",
     "sharp": "^0.35.3",

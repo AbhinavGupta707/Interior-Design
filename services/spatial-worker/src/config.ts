@@ -24,9 +24,14 @@ const extractedEnvironmentSchema = z
     C2_QUARANTINE_BUCKET: z.literal("quarantine").default("quarantine"),
     C2_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
     C2_S3_ENDPOINT: z.string().trim().min(1).optional(),
-    C2_S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).default("true"),
-    C2_S3_REGION: z.string().trim().min(1).max(100).default("local"),
+    C2_S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).optional(),
+    C2_S3_REGION: z.string().trim().min(1).max(100).optional(),
     C2_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    C2_STORAGE_ACCESS_KEY_ID: z.string().min(1).optional(),
+    C2_STORAGE_ENDPOINT: z.string().trim().min(1).optional(),
+    C2_STORAGE_FORCE_PATH_STYLE: z.enum(["true", "false"]).optional(),
+    C2_STORAGE_REGION: z.string().trim().min(1).max(100).optional(),
+    C2_STORAGE_SECRET_ACCESS_KEY: z.string().min(1).optional(),
     C2_SOURCE_BUCKET: z.literal("source").default("source"),
     C2_SUBPROCESS_MAX_OUTPUT_BYTES: positiveInteger(4_096, 4_194_304).default(1_048_576),
     C2_SUBPROCESS_TIMEOUT_MS: positiveInteger(1_000, 120_000).default(30_000),
@@ -39,11 +44,14 @@ const extractedEnvironmentSchema = z
       .max(100)
       .regex(/^[A-Za-z0-9_.:-]+$/u)
       .default("spatial-worker-local"),
+    C10_SCENE_WORKER_ENABLED: z.enum(["true", "false"]).default("false"),
+    C10_DATABASE_URL: z.string().trim().min(1).optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
   .strict();
 
 export interface WorkerConfig {
+  readonly c10SceneWorkerEnabled: boolean;
   readonly databaseUrl: string;
   readonly derivedBucket: "derived";
   readonly executables: {
@@ -130,20 +138,38 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     C2_S3_FORCE_PATH_STYLE: environment.C2_S3_FORCE_PATH_STYLE,
     C2_S3_REGION: environment.C2_S3_REGION,
     C2_S3_SECRET_ACCESS_KEY: environment.C2_S3_SECRET_ACCESS_KEY,
+    C2_STORAGE_ACCESS_KEY_ID: environment.C2_STORAGE_ACCESS_KEY_ID,
+    C2_STORAGE_ENDPOINT: environment.C2_STORAGE_ENDPOINT,
+    C2_STORAGE_FORCE_PATH_STYLE: environment.C2_STORAGE_FORCE_PATH_STYLE,
+    C2_STORAGE_REGION: environment.C2_STORAGE_REGION,
+    C2_STORAGE_SECRET_ACCESS_KEY: environment.C2_STORAGE_SECRET_ACCESS_KEY,
     C2_SOURCE_BUCKET: environment.C2_SOURCE_BUCKET,
     C2_SUBPROCESS_MAX_OUTPUT_BYTES: environment.C2_SUBPROCESS_MAX_OUTPUT_BYTES,
     C2_SUBPROCESS_TIMEOUT_MS: environment.C2_SUBPROCESS_TIMEOUT_MS,
     C2_TEMP_MAX_BYTES: environment.C2_TEMP_MAX_BYTES,
     C2_TEMP_ROOT: environment.C2_TEMP_ROOT,
     C2_WORKER_ID: environment.C2_WORKER_ID,
+    C10_SCENE_WORKER_ENABLED: environment.C10_SCENE_WORKER_ENABLED,
+    C10_DATABASE_URL: environment.C10_DATABASE_URL,
     NODE_ENV: environment.NODE_ENV,
   });
   const production = extracted.NODE_ENV === "production";
-  const databaseUrl = extracted.C2_DATABASE_URL ?? (production ? undefined : localDatabaseUrl);
-  const endpoint = extracted.C2_S3_ENDPOINT ?? (production ? undefined : localS3Endpoint);
-  const accessKeyId = extracted.C2_S3_ACCESS_KEY_ID ?? (production ? undefined : "localdev");
+  const databaseUrl =
+    extracted.C10_DATABASE_URL ??
+    extracted.C2_DATABASE_URL ??
+    (production ? undefined : localDatabaseUrl);
+  const endpoint =
+    extracted.C2_S3_ENDPOINT ??
+    extracted.C2_STORAGE_ENDPOINT ??
+    (production ? undefined : localS3Endpoint);
+  const accessKeyId =
+    extracted.C2_S3_ACCESS_KEY_ID ??
+    extracted.C2_STORAGE_ACCESS_KEY_ID ??
+    (production ? undefined : "localdev");
   const secretAccessKey =
-    extracted.C2_S3_SECRET_ACCESS_KEY ?? (production ? undefined : "local-development-only");
+    extracted.C2_S3_SECRET_ACCESS_KEY ??
+    extracted.C2_STORAGE_SECRET_ACCESS_KEY ??
+    (production ? undefined : "local-development-only");
   if (
     databaseUrl === undefined ||
     endpoint === undefined ||
@@ -160,6 +186,7 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     throw new Error("C2_TEMP_ROOT must resolve to an absolute path.");
   }
   return {
+    c10SceneWorkerEnabled: extracted.C10_SCENE_WORKER_ENABLED === "true",
     databaseUrl: validateDatabaseUrl(databaseUrl),
     derivedBucket: extracted.C2_DERIVED_BUCKET,
     executables: {
@@ -177,8 +204,10 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     s3: {
       accessKeyId,
       endpoint: validateEndpoint(endpoint, production),
-      forcePathStyle: extracted.C2_S3_FORCE_PATH_STYLE === "true",
-      region: extracted.C2_S3_REGION,
+      forcePathStyle:
+        (extracted.C2_S3_FORCE_PATH_STYLE ?? extracted.C2_STORAGE_FORCE_PATH_STYLE ?? "true") ===
+        "true",
+      region: extracted.C2_S3_REGION ?? extracted.C2_STORAGE_REGION ?? "local",
       secretAccessKey,
     },
     sourceBucket: extracted.C2_SOURCE_BUCKET,

@@ -38,6 +38,36 @@ describe("strict worker configuration", () => {
       parseWorkerConfig({ C2_HEARTBEAT_MS: "5000", C2_LEASE_MS: "10000", NODE_ENV: "test" }),
     ).toThrow("less than half");
   });
+
+  it("enables the C10 runner only through an exact boolean environment value", () => {
+    expect(parseWorkerConfig({ C10_SCENE_WORKER_ENABLED: "true", NODE_ENV: "test" })).toMatchObject(
+      { c10SceneWorkerEnabled: true },
+    );
+    expect(() =>
+      parseWorkerConfig({ C10_SCENE_WORKER_ENABLED: "yes", NODE_ENV: "test" }),
+    ).toThrow();
+  });
+
+  it("accepts the platform API database and storage variable names for one C10 deployment", () => {
+    expect(
+      parseWorkerConfig({
+        C10_DATABASE_URL: "postgresql://worker:secret@database.example.test/interior",
+        C2_STORAGE_ACCESS_KEY_ID: "access",
+        C2_STORAGE_ENDPOINT: "https://objects.example.test",
+        C2_STORAGE_FORCE_PATH_STYLE: "false",
+        C2_STORAGE_REGION: "eu-west-2",
+        C2_STORAGE_SECRET_ACCESS_KEY: "secret",
+        NODE_ENV: "production",
+      }),
+    ).toMatchObject({
+      databaseUrl: "postgresql://worker:secret@database.example.test/interior",
+      s3: {
+        endpoint: "https://objects.example.test",
+        forcePathStyle: false,
+        region: "eu-west-2",
+      },
+    });
+  });
 });
 
 describe("bounded subprocess execution", () => {

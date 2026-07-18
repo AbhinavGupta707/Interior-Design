@@ -38,6 +38,8 @@ import { loadS3AssetStorageConfig } from "./storage/config.js";
 const LOCAL_DATABASE_URL =
   "postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design";
 const LOCAL_SESSION_SECRET = "local-fixture-only-session-secret-not-for-production-2026-c1";
+const C10_COMPILER_NAME = "interior-design-scene-compiler" as const;
+const C10_COMPILER_VERSION = "1.0.0";
 
 type C10EnvironmentSource = Readonly<Record<string, string | undefined>>;
 
@@ -111,6 +113,21 @@ function configuredTokenProvider(
   throw new Error("C1_AUTH_MODE must be local or oidc.");
 }
 
+function configuredSceneCompiler(
+  environment: C10EnvironmentSource,
+): SceneCompilerDescriptor | undefined {
+  const enabled = environment.C10_SCENE_WORKER_ENABLED;
+  if (enabled === undefined || enabled === "false") return undefined;
+  if (enabled !== "true") {
+    throw new Error("C10_SCENE_WORKER_ENABLED must be true or false.");
+  }
+  const version = environment.C10_SCENE_COMPILER_VERSION ?? C10_COMPILER_VERSION;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._+-]{0,99}$/u.test(version)) {
+    throw new Error("C10_SCENE_COMPILER_VERSION is invalid.");
+  }
+  return { name: C10_COMPILER_NAME, version };
+}
+
 export function registerC10Module(
   server: FastifyInstance,
   runtimeEnvironment: RuntimeEnvironment,
@@ -146,9 +163,10 @@ export function registerC10Module(
   const storage =
     options.storage ??
     new S3SceneObjectStorage(loadS3AssetStorageConfig(runtimeEnvironment, environment));
+  const compiler = options.compiler ?? configuredSceneCompiler(environment);
   const service = new SceneService({
     ...(options.clock === undefined ? {} : { clock: options.clock }),
-    ...(options.compiler === undefined ? {} : { compiler: options.compiler }),
+    ...(compiler === undefined ? {} : { compiler }),
     repository,
     snapshotVerifier,
     storage,
@@ -183,7 +201,7 @@ export function registerC10Module(
   readinessChecks.push({
     name: "c10-scene-compiler",
     check: () => {
-      if (options.compiler === undefined) {
+      if (compiler === undefined) {
         throw new Error("The C10-L1 compiler is not composed.");
       }
     },

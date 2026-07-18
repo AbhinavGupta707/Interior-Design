@@ -1,10 +1,12 @@
 import { loadPlatformApiConfig } from "@interior-design/config";
 import {
   modelSnapshotRecordSchema,
+  sceneAccessResponseSchema,
   type LocalPersona,
   type Project,
 } from "@interior-design/contracts";
-import { randomUUID } from "node:crypto";
+import { compileCanonicalScene } from "@interior-design/scene-compiler";
+import { createHash, randomUUID } from "node:crypto";
 import type { Sql } from "postgres";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -23,9 +25,13 @@ import { DomainCanonicalSnapshotCodec } from "../../src/modules/models/core/cano
 import { PostgresSceneRepository } from "../../src/modules/scenes/postgres.js";
 import { SceneWorkerService } from "../../src/modules/scenes/service.js";
 import { PostgresSceneSnapshotVerifier } from "../../src/modules/scenes/snapshot.js";
-import { InMemorySceneObjectStorage } from "../../src/modules/scenes/storage.js";
+import {
+  InMemorySceneObjectStorage,
+  S3SceneObjectStorage,
+  type SceneObjectStorage,
+} from "../../src/modules/scenes/storage.js";
 import { canonicalSnapshotFixture } from "../c4/fixtures.js";
-import { compiler, validGlb, validManifest } from "./support.js";
+import { compiler } from "./support.js";
 
 const databaseUrl = process.env.C10_TEST_DATABASE_URL ?? "";
 const describeWithPostgres = databaseUrl.length === 0 ? describe.skip : describe;
@@ -36,6 +42,19 @@ const config = loadPlatformApiConfig({
   PLATFORM_API_SHUTDOWN_TIMEOUT_MS: "2000",
 });
 const activeServers = new Set<ReturnType<typeof createServer>>();
+const liveStorageEndpoint = process.env.C10_TEST_STORAGE_ENDPOINT;
+
+function sceneStorage(): SceneObjectStorage {
+  return liveStorageEndpoint === undefined
+    ? new InMemorySceneObjectStorage()
+    : new S3SceneObjectStorage({
+        accessKeyId: process.env.C10_TEST_STORAGE_ACCESS_KEY_ID ?? "localdev",
+        endpoint: liveStorageEndpoint,
+        forcePathStyle: true,
+        region: process.env.C10_TEST_STORAGE_REGION ?? "local",
+        secretAccessKey: process.env.C10_TEST_STORAGE_SECRET_ACCESS_KEY ?? "local-development-only",
+      });
+}
 
 function authorization(token: string) {
   return { authorization: `Bearer ${token}` };
@@ -115,7 +134,7 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
   });
 
   it("proves idempotency/cache, leases, cancellation, retry fencing, publication, access audit, and zero model mutation", async () => {
-    const storage = new InMemorySceneObjectStorage();
+    const storage = sceneStorage();
     const server = createServer({
       c1: { closeDatabase: true, database: createC1Sql(databaseUrl) },
       c4: {
@@ -206,18 +225,6 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
     });
     const lease = await worker.claimNext({ compiler, workerId: "live-scene-worker" });
     if (lease === undefined) throw new Error("Live C10 lease is missing.");
-    expect(
-      (
-        await worker.loadSource({
-          attempt: lease.attempt,
-          jobId: lease.jobId,
-          leaseToken: lease.leaseToken,
-          projectId: lease.projectId,
-          tenantId: lease.tenantId,
-          workerId: "live-scene-worker",
-        })
-      ).id,
-    ).toBe(firstSnapshot.id);
     const scope = {
       attempt: lease.attempt,
       jobId: lease.jobId,
@@ -226,32 +233,19 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
       tenantId: lease.tenantId,
       workerId: "live-scene-worker",
     };
+    const exactSource = await worker.loadSource(scope);
+    expect(exactSource.id).toBe(firstSnapshot.id);
     await worker.heartbeat({ ...scope, stage: "compiling" });
-    await worker.heartbeat({ ...scope, stage: "publishing" });
-    const fixtureManifest = validManifest();
-    const manifest = {
-      ...fixtureManifest,
-      compiler: {
-        ...fixtureManifest.compiler,
-        configuration: request.configuration,
-      },
+    const compiled = await compileCanonicalScene({
+      configuration: request.configuration,
+      snapshot: exactSource.snapshot,
       sourceSnapshot: request.sourceSnapshot,
-    };
-    const { configurationSha256, sceneDeterminismKey } =
-      await import("../../src/modules/scenes/glb.js");
-    const configHash = configurationSha256(request.configuration);
-    const exactManifest = {
-      ...manifest,
-      compiler: { ...manifest.compiler, configurationSha256: configHash },
-      determinismKeySha256: sceneDeterminismKey({
-        compiler,
-        configurationSha256: configHash,
-        snapshotSha256: firstSnapshot.snapshotSha256,
-      }),
-    };
+    });
+    expect(compiled.validation).toMatchObject({ numErrors: 0, numWarnings: 0 });
+    await worker.heartbeat({ ...scope, stage: "publishing" });
     const published = await worker.publish({
       ...scope,
-      output: { glb: validGlb(), manifest: exactManifest },
+      output: { glb: compiled.glb, manifest: compiled.manifest },
     });
     expect(published.state).toBe("succeeded");
 
@@ -271,6 +265,15 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
     expect(`${scene.body}${access.body}`).not.toMatch(
       /objectKey|leaseToken|credential|providerId/u,
     );
+    if (liveStorageEndpoint !== undefined) {
+      const grant = sceneAccessResponseSchema.parse(access.json());
+      const downloaded = await fetch(grant.url);
+      expect(downloaded.status).toBe(200);
+      expect(downloaded.headers.get("content-type")).toContain("model/gltf-binary");
+      const bytes = new Uint8Array(await downloaded.arrayBuffer());
+      expect(bytes.byteLength).toBe(compiled.artifact.byteSize);
+      expect(createHash("sha256").update(bytes).digest("hex")).toBe(compiled.artifact.glbSha256);
+    }
 
     const counts = await administration<
       Array<{
@@ -314,7 +317,7 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
     await expect(
       worker.publish({
         ...scope,
-        output: { glb: validGlb(), manifest: exactManifest },
+        output: { glb: compiled.glb, manifest: compiled.manifest },
       }),
     ).rejects.toMatchObject({ code: "SCENE_LEASE_FENCED" });
 

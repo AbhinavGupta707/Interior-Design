@@ -3510,7 +3510,9 @@ select {
 
 .viewer-controls {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.7fr) minmax(15rem, 1.1fr) minmax(10rem, 0.7fr) minmax(12rem, 0.9fr) minmax(12rem, 1fr) auto;
+  grid-template-columns:
+    minmax(11rem, 0.7fr) minmax(15rem, 1.1fr) minmax(10rem, 0.7fr) minmax(12rem, 0.9fr)
+    minmax(12rem, 1fr) auto;
   align-items: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3) var(--ui-space-4);
@@ -3782,7 +3784,9 @@ select {
 }
 
 @keyframes viewer-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

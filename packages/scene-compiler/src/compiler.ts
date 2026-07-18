@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/triple-slash-reference */
+/// <reference path="./gltf-validator.d.ts" />
+
 import {
   c10ScenePolicy,
   canonicalHomeSnapshotSchema,
@@ -181,6 +184,25 @@ function allElements(elements: Elements): readonly ModelElement[] {
   return Object.values(elements)
     .flat()
     .sort((left, right) => compareStrings(left.id, right.id));
+}
+
+function directLevelId(element: ModelElement, snapshot: CanonicalHomeSnapshot): string | undefined {
+  if (element.elementType === "level") return element.id;
+  if ("levelId" in element && typeof element.levelId === "string") return element.levelId;
+  if (element.elementType === "opening") {
+    return snapshot.elements.walls.find(({ id }) => id === element.hostWallId)?.levelId;
+  }
+  return undefined;
+}
+
+function elementLevelId(
+  element: ModelElement,
+  snapshot: CanonicalHomeSnapshot,
+): string | undefined {
+  const direct = directLevelId(element, snapshot);
+  if (direct !== undefined || element.elementType !== "finish") return direct;
+  const target = allElements(snapshot.elements).find(({ id }) => id === element.targetElementId);
+  return target === undefined ? undefined : directLevelId(target, snapshot);
 }
 
 function preflightRawElementCount(snapshot: unknown): void {
@@ -1040,11 +1062,13 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
       continue;
     }
     const element = plan.element;
+    const levelId = elementLevelId(element, snapshot);
     const node: Record<string, unknown> = {
       extras: {
         authority: "derived-visualisation-only",
         canonicalElementId: element.id,
         canonicalElementType: element.elementType,
+        ...(levelId === undefined ? {} : { levelId }),
         provenanceState: element.origin.state,
       },
       name: `${element.elementType}:${element.id}`,
@@ -1265,9 +1289,12 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
     counts,
     determinismKeySha256: sha256Hex(
       canonicalJsonBytes({
-        compilerVersion: sceneCompilerVersion,
+        compiler: {
+          name: "interior-design-scene-compiler",
+          version: sceneCompilerVersion,
+        },
         configurationSha256,
-        sourceSnapshot,
+        snapshotSha256: sourceSnapshot.snapshotSha256,
       }),
     ),
     elementMappings,

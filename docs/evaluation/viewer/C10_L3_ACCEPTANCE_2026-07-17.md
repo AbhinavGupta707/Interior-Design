@@ -2,19 +2,20 @@
 
 ## Result
 
-The lane implements the lazy, same-origin C10 viewer workflow and independent contract/security/semantic test surfaces. Fixture-backed browser semantics passed in Chromium, Firefox and WebKit. This host's headless Chromium exposed a major WebGL performance caveat, so actual-canvas interaction and performance budgets are **not measured on this host**. That is a capability limitation, not a passing performance claim.
+The integrated checkpoint implements the deterministic compiler, durable PostgreSQL/object-storage workflow, lazy same-origin viewer and independent contract/security/semantic test surfaces. A production-composed local run compiled and published real two-level geometry from an exact committed C4 snapshot. Fixture-backed browser semantics passed in Chromium, Firefox and WebKit. This host's headless Chromium exposed a major WebGL performance caveat, so actual-canvas interaction and performance budgets are **not measured on this host**. That is a capability limitation, not a passing performance claim.
 
 ## Evidence classification
 
-| Evidence                                           | Classification                        | Result                                  |
-| -------------------------------------------------- | ------------------------------------- | --------------------------------------- |
-| BFF/client/verification unit suites                | Local deterministic code evidence     | Passed                                  |
-| Hostile artifact, role and IDOR suites             | Local deterministic security evidence | Passed                                  |
-| Chromium mobile, Firefox and WebKit workflows      | Synthetic fixture / browser semantics | Passed                                  |
-| Chromium desktop actual canvas                     | Not available on this host            | Skipped by production major-caveat gate |
-| Desktop/mobile FPS, load and demand-idle budgets   | Not measured on this host             | Skipped by the same gate                |
-| Backend/compiler/object-store/provider integration | Real-backend evidence                 | Not run                                 |
-| Physical mobile device and hardware GPU            | Hardware evidence                     | Not run                                 |
+| Evidence                                          | Classification                        | Result                                  |
+| ------------------------------------------------- | ------------------------------------- | --------------------------------------- |
+| BFF/client/verification unit suites               | Local deterministic code evidence     | Passed                                  |
+| Hostile artifact, role and IDOR suites            | Local deterministic security evidence | Passed                                  |
+| Chromium mobile, Firefox and WebKit workflows     | Synthetic fixture / browser semantics | Passed                                  |
+| Chromium desktop actual canvas                    | Not available on this host            | Skipped by production major-caveat gate |
+| Desktop/mobile FPS, load and demand-idle budgets  | Not measured on this host             | Skipped by the same gate                |
+| API/worker/compiler/Postgres/local object storage | Real local-backend evidence           | Passed                                  |
+| Cloud provider/deployed tenant integration        | Provider evidence                     | Not run                                 |
+| Physical mobile device and hardware GPU           | Hardware evidence                     | Not run                                 |
 
 The synthetic server is limited to presentation and browser contract evidence. It generates a compact checksum-bound GLB, exposes scenario controls, and labels the UI with “Fixture presentation evidence … not real-backend evidence.”
 
@@ -38,6 +39,10 @@ The synthetic server is limited to presentation and browser contract evidence. I
 | `pnpm --filter @interior-design/web typecheck`           | Passed                                                                                                                                                            |
 | `pnpm --filter @interior-design/web test:unit`           | 26 files, 90 tests passed                                                                                                                                         |
 | `pnpm --filter @interior-design/web build`               | Passed; `/viewer/[projectId]` and `/api/c10/[...segments]` emitted as dynamic routes                                                                              |
+| `UV_CACHE_DIR=.cache/uv pnpm verify`                     | Passed formatting, all package lint/type/build gates, JavaScript suites and 117 passed Python tests with two named unavailable-runtime skips                      |
+| Production API/worker/Postgres/S3-compatible gate        | Passed; exact committed two-level snapshot compiled, atomically published, signed-downloaded and checksum-verified with no canonical or branch mutation           |
+| Compact compiler artifact                                | 29,456-byte GLB; 14 nodes, 9 meshes, 561 vertices, 281 triangles, 6 materials; SHA-256 `730e0b6b20d1a5438d17b15a592d4fda52b8d15c41fd76e5b54411f98f817a7a`         |
+| Khronos validator and fresh-process determinism          | Zero errors/warnings; byte-identical compiler output across fresh supported-runtime processes                                                                     |
 | Security TypeScript + Vitest                             | TypeScript passed; 3 files, 11 tests passed                                                                                                                       |
 | E2E TypeScript + Playwright 1.61.1                       | TypeScript passed; 5 tests passed, 2 actual-canvas tests skipped by the production WebGL major-caveat gate                                                        |
 | Performance TypeScript + Playwright                      | TypeScript passed; both desktop/mobile actual-canvas cases skipped by the same gate, so no numeric performance claim is made                                      |
@@ -49,4 +54,4 @@ Browser artifacts are written outside the repository under `/tmp/c10-viewer-*-re
 
 ## Outstanding acceptance
 
-Integration still needs a deployed owner/editor/viewer tenant matrix, cross-tenant real API checks, immutable object-store headers, real compiler publication, actual GPU Chromium load/FPS/call/idle numbers, and physical mobile evidence. The current tests are designed to run those paths without weakening the production capability gate.
+No known C10 software-architecture gap remains in the local production composition. Still `NOT RUN` are a deployed cloud owner/editor/viewer journey, actual-GPU Chromium canvas load/FPS/call/idle measurements and physical-mobile evidence. Upstream physical RoomPlan, genuine COLMAP/Open3D/neural/CUDA reconstruction, representative-home accuracy and professional review also remain release/field gates; C10 does not promote or replace them.

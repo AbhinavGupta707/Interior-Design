@@ -80,6 +80,15 @@ Merge order is L1 → L2 → L3. Workers must not edit another lane, manifests/l
 8. C7 physical RoomPlan, C8 real COLMAP/Open3D/neural/CUDA, representative-home accuracy and cloud-provider evidence remain exactly `NOT RUN`. They are upstream fidelity/release evidence and do not block C10's exact-model scene compiler gate; C10 does not promote them.
 9. The ledger records task IDs, exact model/reasoning, worker/merge/product SHAs, commands/counts, live database/API/worker/storage/browser evidence, integration repairs, measured budgets and residual limitations before C11 may open.
 
-## Continuation rule
+## Closure evidence
 
-C11 may open only after all three C10 lanes are merged, the production compiler/storage/viewer path is proven from an exact committed snapshot, the GLB/manifest determinism and validator gates pass, the accessible fallback and role boundaries are independently verified, the C10 evidence record and ledger-close commit are on `main` and pushed, and unavailable upstream hardware/runtime evidence remains explicitly named.
+- All three isolated lanes completed with exact `gpt-5.6-sol` / `xhigh`: L1 worker `d107a889a23644e6222394d1a8b859ce95be0537` merged as `dced053`; L2 worker `5133059184bd9647c122246d480b3b9103837141` merged as `081d490`; L3 worker `8caf73127ae95079f2700dd60fabf19ae0f5449d` merged as `c295a8d`.
+- Orchestrator integration connected the real compiler, `SceneWorkerService`, PostgreSQL repository/snapshot verifier and S3-compatible storage behind explicit production capability configuration. It aligned compiler/backend determinism identity, canonical GLB node metadata and level visibility, enforced BFF project identity, and made non-fencing publication failures durable rather than leaving a job stranded.
+- The complete repository verification passed. Focused totals include scene compiler 24, platform API 134 passed with 28 declared environment skips, spatial worker 109 passed with three declared live skips, web 93, geometry 43 and Python 117 passed with two named unavailable COLMAP/Open3D-runtime skips.
+- A clean local PostgreSQL/S3-compatible production composition compiled one exact committed two-level C4 snapshot to a 29,456-byte GLB with 14 nodes, 9 meshes, 561 vertices, 281 triangles and 6 materials. SHA-256 was `730e0b6b20d1a5438d17b15a592d4fda52b8d15c41fd76e5b54411f98f817a7a`; signed download bytes matched; one snapshot, one scene, zero branches and zero operation commits remained.
+- Browser semantics passed five Chromium/Firefox/WebKit journeys; two actual-canvas cases and both numeric performance cases were skipped by the production WebGL major-caveat gate. The in-app Browser runtime failed before tab creation with `Cannot redefine property: process`. These are recorded unavailable-host gates, not passes.
+- Physical RoomPlan, genuine COLMAP/Open3D/neural/CUDA execution, hardware-GPU performance, representative-home accuracy, cloud delivery and professional review remain `NOT RUN`. They are field/release evidence, not missing C10 software architecture.
+
+## Terminal rule
+
+C10 closes the user-authorised programme. No C11 checkpoint is authorised or may open from this contract.

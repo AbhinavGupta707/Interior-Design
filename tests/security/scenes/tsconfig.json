@@ -11,8 +11,5 @@
     "rootDir": "../../..",
     "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "./**/*.ts",
-    "../../../apps/web/src/features/viewer-3d/scene-verification.ts"
-  ]
+  "include": ["./**/*.ts", "../../../apps/web/src/features/viewer-3d/scene-verification.ts"]
 }

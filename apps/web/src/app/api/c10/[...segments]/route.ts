@@ -91,7 +91,11 @@ async function workspace(base: C10RouteBase): Promise<NextResponse> {
       session: session.data,
       snapshots,
     });
-    if (!parsed.success || profiles.data.projectId !== base.projectId) {
+    if (
+      !parsed.success ||
+      project.data.id !== base.projectId ||
+      profiles.data.projectId !== base.projectId
+    ) {
       return problemResponse(
         502,
         "Mismatched scene workspace response",

@@ -149,4 +149,25 @@ describe("C10 same-origin BFF", () => {
     expect(response.status).toBe(502);
     expect(await response.text()).not.toContain("hidden");
   });
+
+  it("rejects a valid same-tenant project body that does not match the requested project", async () => {
+    const foreignProject = {
+      ...project,
+      id: "a1000000-0000-4000-8000-000000000099",
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(foreignProject))
+      .mockResolvedValueOnce(Response.json({ jobs: [job] }))
+      .mockResolvedValueOnce(
+        Response.json({
+          profiles: [],
+          projectId: project.id,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await GET(request(), context(["projects", project.id, "workspace"]));
+    expect(response.status).toBe(502);
+  });
 });

@@ -389,7 +389,7 @@ function independentCounts(
     for (const nodeIndex of mapping.nodeIndices) {
       const node = object(nodes[nodeIndex], `mapped node ${String(nodeIndex)}`);
       const extras = object(node.extras, `mapped node ${String(nodeIndex)} extras`);
-      if (extras.elementId !== mapping.elementId) {
+      if (extras.canonicalElementId !== mapping.elementId) {
         fail("A mapped GLB node does not carry its stable canonical element ID.");
       }
     }
