@@ -1,0 +1,9 @@
+C13 creator-owned synthetic source receipt
+asset-id: fd140b77-cc45-54a6-9680-f94a184559a1
+asset-version-id: 9a0e3de0-b9eb-59d5-b701-cfd12c772dca
+category: floor-light
+created-by: Interior Design synthetic fixture team
+created-at: 2026-07-18T00:00:00.000Z
+external-network-used: false
+third-party-source-used: false
+training-allowed: false
