@@ -54,6 +54,51 @@ describe("C12 browser client", () => {
     expect(new Headers(init.headers).get("idempotency-key")).toBe(key);
   });
 
+  it("binds cancel and retry to the exact displayed job identity and version", async () => {
+    const transitionedJob = { ...job, version: job.version + 1 };
+    const transport = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(Response.json(transitionedJob)));
+    const client = createDesignOptionsClient(transport, () => key);
+
+    await client.cancelJob(ids.project, job);
+    await client.retryJob(ids.project, job);
+
+    for (const [index, action] of ["cancel", "retry"].entries()) {
+      const [url, init] = transport.mock.calls[index] as [string, RequestInit];
+      expect(url).toBe(`/api/c12/projects/${ids.project}/design-option-jobs/${ids.job}/${action}`);
+      expect(JSON.parse(requestBody(init))).toEqual({ expectedVersion: job.version });
+      expect(new Headers(init.headers).get("idempotency-key")).toBe(key);
+    }
+  });
+
+  it("surfaces a stale cancel or retry as an explicit conflict without leaking raw data", async () => {
+    const transport = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        Response.json(
+          {
+            detail:
+              "The brief, source model, job, option, or branch changed. Reload the exact latest pins.",
+            privateJobPayload: "do-not-return",
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+    const client = createDesignOptionsClient(transport, () => key);
+
+    await expect(client.cancelJob(ids.project, job)).rejects.toMatchObject({
+      kind: "conflict",
+      message:
+        "The brief, source model, job, option, or branch changed. Reload the exact latest pins.",
+      status: 409,
+    });
+    await expect(client.retryJob(ids.project, job)).rejects.toMatchObject({
+      kind: "conflict",
+      status: 409,
+    });
+  });
+
   it("maps offline, stale, expiry, and malformed responses without exposing raw payloads", async () => {
     const offline = createDesignOptionsClient(vi.fn().mockRejectedValue(new Error("secret")));
     await expect(offline.getJob(ids.project, ids.job)).rejects.toMatchObject({ kind: "offline" });

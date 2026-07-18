@@ -18,8 +18,8 @@ The UI separately supports the `production-composed` label for responses assembl
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------ | --------------------------------------------- |
 | Web type safety                             | `pnpm --filter @interior-design/web typecheck`                                                                        | PASS                     | Static analysis                               |
 | Web lint                                    | `pnpm --filter @interior-design/web lint`                                                                             | PASS                     | Static analysis                               |
-| C12 web unit/BFF/semantics/recovery/client  | `pnpm --filter @interior-design/web exec vitest run test/design-options`                                              | PASS, 5 files / 18 tests | Synthetic fixtures                            |
-| Independent evaluation/security/performance | `pnpm exec vitest run tests/evaluation/design-options tests/security/design-options tests/performance/design-options` | PASS, 3 files / 13 tests | Synthetic fixtures / static source inspection |
+| C12 web unit/BFF/semantics/recovery/client  | `pnpm --filter @interior-design/web exec vitest run test/design-options`                                              | PASS, 5 files / 23 tests | Synthetic fixtures                            |
+| Independent evaluation/security/performance | `pnpm exec vitest run tests/evaluation/design-options tests/security/design-options tests/performance/design-options` | PASS, 3 files / 14 tests | Synthetic fixtures / static source inspection |
 | E2E config type safety                      | `pnpm exec tsc -p tests/e2e/design-options/tsconfig.json --noEmit`                                                    | PASS                     | Static analysis                               |
 | Cross-browser and responsive E2E            | `pnpm exec playwright test --config tests/e2e/design-options/playwright.config.ts`                                    | PASS, 12 tests           | Synthetic local BFF/backend fixtures          |
 
@@ -67,3 +67,9 @@ Screenshots were stored as disposable local QA artifacts in `/tmp/c12-design-opt
 These unmeasured areas remain explicit limitations and must not be inferred from fixture or browser passes.
 
 The repository-level production composition build is deferred to the root orchestrator after ordered merge and workspace dependency builds. This lane did not build or modify the unrelated `@interior-design/editor-core` package.
+
+## Cancel/retry concurrency follow-up
+
+Root's cross-lane audit found that the L3 cancel and retry routes require strict `{ "expectedVersion": integer }` request bodies. The L4 client and BFF originally sent no body. The follow-up binds each action to the exact `OptionJob` displayed by the workspace, forwards only its positive integer version, and rejects missing, additional, string, zero, negative, fractional, malformed, oversized, stale, or non-advancing transition data.
+
+The 23-test web pack verifies exact client URLs/bodies/idempotency, strict bounded BFF parsing, path/project/job response identity, advancing versions, redacted 409 recovery, and explicit UI reload guidance. The independent 14-test pack includes hostile transition-body coverage. Rendered browser evidence was not rerun for this transport-only follow-up because starting Next would rewrite the explicitly excluded generated `apps/web/next-env.d.ts`; the earlier synthetic browser evidence remains unchanged and is not relabelled.

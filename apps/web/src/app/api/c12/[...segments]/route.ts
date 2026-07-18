@@ -13,7 +13,7 @@ import type {
   OptionSourceModelReference,
 } from "@interior-design/contracts";
 import { NextResponse } from "next/server";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { problemResponse } from "../../c1/_shared/backend";
 import {
@@ -26,6 +26,8 @@ import {
 import type { C12RouteBase, C12RouteContext } from "../_shared/design-options-proxy";
 
 type ListDesignOptionsResponse = z.infer<typeof listDesignOptionsResponseSchema>;
+
+const optionJobTransitionRequestSchema = z.object({ expectedVersion: z.int().positive() }).strict();
 
 function jobsPath(base: C12RouteBase): string {
   return `/v1/projects/${base.projectId}/design-option-jobs`;
@@ -148,10 +150,14 @@ export async function POST(request: Request, context: C12RouteContext): Promise<
   const jobId = parseC12Id(jobValue, "Design-option job");
   if (jobId instanceof NextResponse) return jobId;
   if ((child === "cancel" || child === "retry") && base.remainder.length === 2) {
+    const body = await parseC12Body(request, optionJobTransitionRequestSchema);
+    if (body instanceof NextResponse) return body;
     return validatedC12Backend({
       accessToken: base.accessToken,
+      body,
       idempotencyKey,
-      matches: (job) => job.projectId === base.projectId && job.id === jobId,
+      matches: (job) =>
+        job.projectId === base.projectId && job.id === jobId && job.version > body.expectedVersion,
       method: "POST",
       path: `${jobsPath(base)}/${jobId}/${child}`,
       schema: optionJobSchema,

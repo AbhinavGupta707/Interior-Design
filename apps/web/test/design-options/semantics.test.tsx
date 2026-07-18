@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -12,6 +14,11 @@ import {
   optionB,
   optionSet,
 } from "./fixtures";
+
+const workspaceSource = readFileSync(
+  path.resolve(process.cwd(), "src/features/design-options/design-options-workspace.tsx"),
+  "utf8",
+);
 
 function markup(editable: boolean, confirmed = false): string {
   return renderToStaticMarkup(
@@ -70,5 +77,11 @@ describe("C12 option semantics", () => {
       placement: false,
     });
     expect(semanticOptionDifference(optionA, optionB).genuinelyDifferent).toBe(true);
+  });
+
+  it("binds cancel/retry to the displayed job object and keeps stale recovery explicit", () => {
+    expect(workspaceSource).toContain("cancelJob(projectId, selectedJob)");
+    expect(workspaceSource).toContain("retryJob(projectId, selectedJob)");
+    expect(workspaceSource).toContain("Reload the exact latest pins before trying again.");
   });
 });

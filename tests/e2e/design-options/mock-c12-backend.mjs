@@ -55,7 +55,7 @@ function currentJob() {
       stage: "generating",
       state: "running",
       updatedAt: "2026-07-18T10:02:00.000Z",
-      version: 2,
+      version: retries > 0 ? 4 : 2,
     };
   }
   if (scenario === "cancelled") {
@@ -181,13 +181,23 @@ const server = http.createServer(async (request, response) => {
   ) {
     result = json(optionB);
   } else if (url.pathname === `${jobsPath}/${ids.job}/cancel` && request.method === "POST") {
-    cancellations += 1;
-    scenario = "cancelled";
-    result = json(currentJob());
+    const transitionRequest = await body(request);
+    if (transitionRequest.expectedVersion !== currentJob().version) {
+      result = json({ code: "SOURCE_CHANGED", detail: "raw stale source" }, 409);
+    } else {
+      cancellations += 1;
+      scenario = "cancelled";
+      result = json(currentJob());
+    }
   } else if (url.pathname === `${jobsPath}/${ids.job}/retry` && request.method === "POST") {
-    retries += 1;
-    scenario = "running";
-    result = json(currentJob());
+    const transitionRequest = await body(request);
+    if (transitionRequest.expectedVersion !== currentJob().version) {
+      result = json({ code: "SOURCE_CHANGED", detail: "raw stale source" }, 409);
+    } else {
+      retries += 1;
+      scenario = "running";
+      result = json(currentJob());
+    }
   } else if (
     url.pathname === `${jobsPath}/${ids.job}/options/${ids.optionA}/confirm` &&
     request.method === "POST"

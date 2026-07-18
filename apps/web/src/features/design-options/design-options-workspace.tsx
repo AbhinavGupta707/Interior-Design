@@ -276,7 +276,7 @@ export function DesignOptionsWorkspace({
     setBusy("cancel");
     setAlert(undefined);
     try {
-      const job = await designOptionsClient.cancelJob(projectId, selectedJob.id);
+      const job = await designOptionsClient.cancelJob(projectId, selectedJob);
       setSelectedJob(job);
       setStatusMessage(
         "Cancellation requested. No unpublished or partial option can be confirmed.",
@@ -294,7 +294,7 @@ export function DesignOptionsWorkspace({
     setBusy("retry");
     setAlert(undefined);
     try {
-      const job = await designOptionsClient.retryJob(projectId, selectedJob.id);
+      const job = await designOptionsClient.retryJob(projectId, selectedJob);
       setSelectedJobId(job.id);
       setSelectedJob(job);
       setAcknowledgements({});

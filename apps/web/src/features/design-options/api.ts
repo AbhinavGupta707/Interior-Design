@@ -8,7 +8,7 @@ import {
   optionJobSchema,
 } from "@interior-design/contracts";
 import type { DesignOption, OptionConfirmation, OptionJob } from "@interior-design/contracts";
-import type { z } from "zod";
+import { z } from "zod";
 
 import type { DesignOptionLaunchContext } from "./contracts";
 
@@ -30,6 +30,8 @@ interface ProblemPayload {
   readonly code?: unknown;
   readonly detail?: unknown;
 }
+
+const optionJobTransitionRequestSchema = z.object({ expectedVersion: z.int().positive() }).strict();
 
 export class DesignOptionsProblem extends Error {
   constructor(
@@ -120,12 +122,13 @@ export function createDesignOptionsClient(
   }
 
   return Object.freeze({
-    cancelJob(projectId: string, jobId: string): Promise<OptionJob> {
+    cancelJob(projectId: string, job: OptionJob): Promise<OptionJob> {
       const key = createId();
+      const body = optionJobTransitionRequestSchema.parse({ expectedVersion: job.version });
       return request(
-        `${jobBase(projectId)}/${encodeURIComponent(jobId)}/cancel`,
+        `${jobBase(projectId)}/${encodeURIComponent(job.id)}/cancel`,
         optionJobSchema,
-        idempotentMutation(key),
+        idempotentMutation(key, body),
       );
     },
     confirmOption(
@@ -172,12 +175,13 @@ export function createDesignOptionsClient(
         listDesignOptionsResponseSchema,
       );
     },
-    retryJob(projectId: string, jobId: string): Promise<OptionJob> {
+    retryJob(projectId: string, job: OptionJob): Promise<OptionJob> {
       const key = createId();
+      const body = optionJobTransitionRequestSchema.parse({ expectedVersion: job.version });
       return request(
-        `${jobBase(projectId)}/${encodeURIComponent(jobId)}/retry`,
+        `${jobBase(projectId)}/${encodeURIComponent(job.id)}/retry`,
         optionJobSchema,
-        idempotentMutation(key),
+        idempotentMutation(key, body),
       );
     },
   });

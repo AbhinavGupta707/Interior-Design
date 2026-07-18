@@ -19,18 +19,24 @@ const context = (segments: string[]) => ({ params: Promise.resolve({ segments })
 
 function request(
   body?: unknown,
-  options?: { readonly authorization?: string; readonly cookie?: boolean; readonly key?: string },
+  options?: {
+    readonly authorization?: string;
+    readonly cookie?: boolean;
+    readonly key?: string;
+    readonly method?: "GET" | "POST";
+  },
 ) {
+  const method = options?.method ?? (body === undefined ? "GET" : "POST");
   const result = new Request("http://localhost:3000/api/c12/security", {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     headers: {
       ...(options?.authorization ? { authorization: options.authorization } : {}),
       ...(options?.cookie === false ? {} : { cookie: "hds_c1_session=private-c12-token" }),
-      ...(body === undefined
+      ...(method === "GET"
         ? {}
         : { "content-type": "application/json", "idempotency-key": options?.key ?? key }),
     },
-    method: body === undefined ? "GET" : "POST",
+    method,
   });
   Object.defineProperty(result, "cookies", {
     value: {
@@ -107,6 +113,24 @@ describe("C12 independent BFF security", () => {
       ]),
     );
     expect(response.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("requires one strict positive expectedVersion for cancel and retry", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const [action, body] of [
+      ["cancel", undefined],
+      ["retry", { expectedVersion: job.version, role: "owner" }],
+      ["cancel", { expectedVersion: -1 }],
+      ["retry", { expectedVersion: 1.5 }],
+    ] as const) {
+      const response = await POST(
+        request(body, { method: "POST" }),
+        context(["projects", ids.project, "design-option-jobs", ids.job, action]),
+      );
+      expect(response.status).toBe(400);
+    }
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

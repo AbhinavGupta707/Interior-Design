@@ -77,23 +77,27 @@ describe("C12 exact same-origin BFF", () => {
         suffix: `/v1/projects/${ids.project}/design-option-jobs`,
       },
       {
+        body: { expectedVersion: job.version },
         payload: {
           ...job,
           completedAt: undefined,
           optionCount: 0,
           stage: "publishing",
           state: "cancel-requested",
+          version: job.version + 1,
         },
         segments: ["projects", ids.project, "design-option-jobs", ids.job, "cancel"],
         suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/cancel`,
       },
       {
+        body: { expectedVersion: job.version },
         payload: {
           ...job,
           completedAt: undefined,
           optionCount: 0,
           stage: "generating",
           state: "running",
+          version: job.version + 1,
         },
         segments: ["projects", ids.project, "design-option-jobs", ids.job, "retry"],
         suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/retry`,
@@ -108,6 +112,7 @@ describe("C12 exact same-origin BFF", () => {
       expect(url).toContain(testCase.suffix);
       expect(init.method).toBe("POST");
       expect(new Headers(init.headers).get("idempotency-key")).toBe(mutationKey);
+      expect(JSON.parse(requestBody(init))).toEqual(testCase.body);
       vi.unstubAllGlobals();
     }
 
@@ -186,6 +191,52 @@ describe("C12 exact same-origin BFF", () => {
     );
     expect(mismatch.status).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed on missing, forged, or malformed cancel/retry transition bodies", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const transitionSegments = ["projects", ids.project, "design-option-jobs", ids.job, "cancel"];
+    const bodies = [
+      undefined,
+      { expectedVersion: job.version, jobId: ids.job },
+      { expectedVersion: "4" },
+      { expectedVersion: 0 },
+      { expectedVersion: job.version, padding: "x".repeat(17 * 1024) },
+    ];
+
+    for (const body of bodies) {
+      const response = await POST(request("POST", body), context(transitionSegments));
+      expect(response.status).toBe(400);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects stale transition responses and preserves explicit 409 recovery copy", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(job)));
+    const mismatchedVersion = await POST(
+      request("POST", { expectedVersion: job.version }),
+      context(["projects", ids.project, "design-option-jobs", ids.job, "cancel"]),
+    );
+    expect(mismatchedVersion.status).toBe(502);
+
+    const privateMarker = "PRIVATE_STALE_JOB_PAYLOAD";
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json({ code: "SOURCE_CHANGED", detail: privateMarker }, { status: 409 }),
+        ),
+    );
+    const conflict = await POST(
+      request("POST", { expectedVersion: job.version }),
+      context(["projects", ids.project, "design-option-jobs", ids.job, "retry"]),
+    );
+    const serialized = JSON.stringify(await conflict.json());
+    expect(conflict.status).toBe(409);
+    expect(serialized).toContain("Reload the exact latest pins");
+    expect(serialized).not.toContain(privateMarker);
   });
 
   it("fails closed on foreign/malformed upstream data and redacts raw private errors", async () => {
