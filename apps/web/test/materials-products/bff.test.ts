@@ -24,11 +24,11 @@ afterEach(() => {
 const mutationKey = "c1300000-0000-4000-8000-000000000099";
 const context = (segments: string[]) => ({ params: Promise.resolve({ segments }) });
 
-function request(method = "GET", body?: unknown, search = "") {
+function request(method = "GET", body?: unknown, search = "", token = "server-owned-c13-token") {
   return new NextRequest(`http://localhost:3000/api/c13/test${search}`, {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     headers: {
-      cookie: "hds_c1_session=server-owned-c13-token",
+      cookie: `hds_c1_session=${token}`,
       ...(method === "GET"
         ? {}
         : { "content-type": "application/json", "idempotency-key": mutationKey }),
@@ -191,19 +191,183 @@ describe("C13 exact same-origin BFF", () => {
           ids.preview,
           "confirm",
         ],
+        sceneRequestState: "requested",
       },
     ];
     for (const testCase of cases) {
-      const fetchMock = vi.fn().mockResolvedValue(Response.json(testCase.payload));
+      const fetchMock = vi.fn().mockResolvedValue(
+        Response.json(testCase.payload, {
+          ...(testCase.sceneRequestState
+            ? { headers: { "Scene-Request-State": testCase.sceneRequestState } }
+            : {}),
+        }),
+      );
       vi.stubGlobal("fetch", fetchMock);
       const response = await POST(request("POST", testCase.body), context(testCase.segments));
       expect(response.status).toBe(200);
+      if (testCase.sceneRequestState) {
+        expect(response.headers.get("scene-request-state")).toBe(testCase.sceneRequestState);
+        await expect(response.json()).resolves.toEqual({
+          confirmation,
+          sceneRequestState: testCase.sceneRequestState,
+        });
+      }
       const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(init.method).toBe(testCase.method);
       expect(new Headers(init.headers).get("idempotency-key")).toBe(mutationKey);
       expect(requestBody(init)).toEqual(testCase.body);
       vi.unstubAllGlobals();
     }
+  });
+
+  it("requests an exact scene for one committed revision and preserves its exact job ID", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ sceneJobId: ids.sceneJob }, { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await POST(
+      request("POST", { sceneJobId: ids.sceneJob }),
+      context([
+        "projects",
+        ids.project,
+        "specifications",
+        ids.specification,
+        "revisions",
+        "2",
+        "scene-jobs",
+      ]),
+    );
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({ sceneJobId: ids.sceneJob });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`/specifications/${ids.specification}/revisions/2/scene-jobs`);
+    expect(init.method).toBe("POST");
+    expect(requestBody(init)).toEqual({ sceneJobId: ids.sceneJob });
+    expect(new Headers(init.headers).get("idempotency-key")).toBe(mutationKey);
+  });
+
+  it("propagates only the two exact platform scene request states", async () => {
+    for (const sceneRequestState of ["requested", "retry-required"] as const) {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          Response.json(confirmation, {
+            headers: { "Scene-Request-State": sceneRequestState },
+            status: 201,
+          }),
+        ),
+      );
+      const response = await POST(
+        request("POST", confirmBody()),
+        context([
+          "projects",
+          ids.project,
+          "specifications",
+          ids.specification,
+          "substitutions",
+          ids.preview,
+          "confirm",
+        ]),
+      );
+      expect(response.status).toBe(201);
+      expect(response.headers.get("scene-request-state")).toBe(sceneRequestState);
+      await expect(response.json()).resolves.toEqual({ confirmation, sceneRequestState });
+    }
+  });
+
+  it("keeps viewer scene retry server-authoritative and returns a safe denial", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ detail: "PRIVATE_SCENE_JOB" }, { status: 403 })),
+    );
+    const response = await POST(
+      request("POST", { sceneJobId: ids.sceneJob }, "", "viewer-token"),
+      context([
+        "projects",
+        ids.project,
+        "specifications",
+        ids.specification,
+        "revisions",
+        "2",
+        "scene-jobs",
+      ]),
+    );
+    expect(response.status).toBe(403);
+    const serialized = JSON.stringify(await response.json());
+    expect(serialized).toContain("does not allow");
+    expect(serialized).not.toContain("PRIVATE_SCENE_JOB");
+  });
+
+  it("rejects missing or malformed scene state headers and malformed retry bodies", async () => {
+    const confirmationSegments = [
+      "projects",
+      ids.project,
+      "specifications",
+      ids.specification,
+      "substitutions",
+      ids.preview,
+      "confirm",
+    ];
+    for (const header of [undefined, "queued", "requested, retry-required"]) {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          Response.json(confirmation, {
+            ...(header ? { headers: { "Scene-Request-State": header } } : {}),
+          }),
+        ),
+      );
+      const response = await POST(request("POST", confirmBody()), context(confirmationSegments));
+      expect(response.status).toBe(502);
+      expect(response.headers.get("scene-request-state")).toBeNull();
+    }
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ jobId: ids.sceneJob })));
+    const malformedRetry = await POST(
+      request("POST", { sceneJobId: ids.sceneJob }),
+      context([
+        "projects",
+        ids.project,
+        "specifications",
+        ids.specification,
+        "revisions",
+        "2",
+        "scene-jobs",
+      ]),
+    );
+    expect(malformedRetry.status).toBe(502);
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ sceneJobId: ids.viewer })));
+    const mismatchedRetry = await POST(
+      request("POST", { sceneJobId: ids.sceneJob }),
+      context([
+        "projects",
+        ids.project,
+        "specifications",
+        ids.specification,
+        "revisions",
+        "2",
+        "scene-jobs",
+      ]),
+    );
+    expect(mismatchedRetry.status).toBe(502);
+
+    const missingBodyFetch = vi.fn();
+    vi.stubGlobal("fetch", missingBodyFetch);
+    const missingRetryBody = await POST(
+      request("POST"),
+      context([
+        "projects",
+        ids.project,
+        "specifications",
+        ids.specification,
+        "revisions",
+        "2",
+        "scene-jobs",
+      ]),
+    );
+    expect(missingRetryBody.status).toBe(400);
+    expect(missingBodyFetch).not.toHaveBeenCalled();
   });
 
   it("rejects malformed path IDs, filters, bodies, and preview mismatches before upstream", async () => {

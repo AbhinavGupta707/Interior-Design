@@ -1,13 +1,13 @@
 import type {
   CatalogAssetVersion,
   SpecificationLine,
-  SubstitutionConfirmation,
   SubstitutionPreview,
 } from "@interior-design/contracts";
 import Link from "next/link";
 import { useState } from "react";
 
 import styles from "./materials-products.module.css";
+import type { SubstitutionConfirmationResult } from "./contracts";
 import { artifactReadiness, formattedTime, previewTruth, shortHash } from "./presentation";
 
 export function PreviewPanel({
@@ -18,17 +18,19 @@ export function PreviewPanel({
   onConfirm,
   onInterrupt,
   onPreview,
+  onRetryScene,
   preview,
   projectId,
   selectedLine,
 }: {
-  readonly busy?: "confirm" | "preview";
+  readonly busy?: "confirm" | "preview" | "scene";
   readonly candidate?: CatalogAssetVersion;
-  readonly confirmation?: SubstitutionConfirmation;
+  readonly confirmation?: SubstitutionConfirmationResult;
   readonly editable: boolean;
   readonly onConfirm: () => void;
   readonly onInterrupt: () => void;
   readonly onPreview: () => void;
+  readonly onRetryScene: () => void;
   readonly preview?: SubstitutionPreview;
   readonly projectId: string;
   readonly selectedLine?: SpecificationLine;
@@ -123,17 +125,38 @@ export function PreviewPanel({
         </div>
       ) : null}
       {confirmation ? (
-        <div className={styles.confirmation} role="status">
+        <div
+          className={styles.confirmation}
+          data-scene-state={confirmation.sceneRequestState}
+          role="status"
+        >
           <div>
             <strong>Confirmed into exact C5 result</strong>
             <span>
-              Specification revision {confirmation.specificationRevision} · snapshot{" "}
-              {shortHash(confirmation.resultSnapshotSha256)}
+              Specification revision {confirmation.confirmation.specificationRevision} · snapshot{" "}
+              {shortHash(confirmation.confirmation.resultSnapshotSha256)}
             </span>
+            {confirmation.sceneRequestState === "retry-required" ? (
+              <span>
+                Model committed · exact scene unavailable. C10 dispatch did not complete; no scene
+                readiness is implied.
+              </span>
+            ) : null}
           </div>
-          <Link href={`/viewer/${projectId}?jobId=${confirmation.sceneJobId}`}>
-            Open exact C10 scene job {confirmation.sceneJobId}
-          </Link>
+          {confirmation.sceneRequestState === "requested" ? (
+            <Link href={`/viewer/${projectId}?jobId=${confirmation.confirmation.sceneJobId}`}>
+              Open exact C10 scene job {confirmation.confirmation.sceneJobId}
+            </Link>
+          ) : (
+            <button
+              className={styles.retryScene}
+              disabled={!editable || busy !== undefined}
+              onClick={onRetryScene}
+              type="button"
+            >
+              {busy === "scene" ? "Retrying exact scene…" : "Retry exact scene"}
+            </button>
+          )}
         </div>
       ) : null}
       <div className={styles.previewActions}>

@@ -444,6 +444,16 @@ export const confirmation = substitutionConfirmationSchema.parse({
   specificationRevision: 2,
 });
 
+export const requestedConfirmation = Object.freeze({
+  confirmation,
+  sceneRequestState: "requested" as const,
+});
+
+export const retryRequiredConfirmation = Object.freeze({
+  confirmation,
+  sceneRequestState: "retry-required" as const,
+});
+
 export const project = projectSchema.parse({
   createdAt: "2026-07-18T09:00:00.000Z",
   id: ids.project,

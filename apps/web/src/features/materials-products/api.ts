@@ -5,25 +5,29 @@ import {
   createSpecificationRequestSchema,
   createSubstitutionPreviewRequestSchema,
   specificationSchema,
-  substitutionConfirmationSchema,
   substitutionPreviewSchema,
   updateSelectionBoardRequestSchema,
 } from "@interior-design/contracts";
-import type {
-  Specification,
-  SubstitutionConfirmation,
-  SubstitutionPreview,
-} from "@interior-design/contracts";
-import type { z } from "zod";
+import type { Specification, SubstitutionPreview } from "@interior-design/contracts";
+import { z } from "zod";
 
 import {
   catalogAssetPageSchema,
   catalogReleaseListSchema,
+  sceneJobRequestSchema,
+  sceneJobRequestResponseSchema,
   specificationListSchema,
   specificationRevisionListSchema,
   specificationScheduleLinesSchema,
+  substitutionConfirmationResultSchema,
 } from "./contracts";
-import type { CatalogAssetPage, CatalogFilters, SpecificationScheduleLines } from "./contracts";
+import type {
+  CatalogAssetPage,
+  CatalogFilters,
+  SceneJobRequestResponse,
+  SpecificationScheduleLines,
+  SubstitutionConfirmationResult,
+} from "./contracts";
 
 export type MaterialsProductsProblemKind =
   | "conflict"
@@ -146,7 +150,7 @@ export function createMaterialsProductsClient(
       projectId: string,
       specification: Specification,
       preview: SubstitutionPreview,
-    ): Promise<SubstitutionConfirmation> {
+    ): Promise<SubstitutionConfirmationResult> {
       const body = confirmSubstitutionRequestSchema.parse({
         expectedCandidateSnapshotSha256: preview.candidateSnapshotSha256,
         expectedSpecificationRevision: specification.currentRevision.revision,
@@ -154,7 +158,7 @@ export function createMaterialsProductsClient(
       });
       return request(
         `${base(projectId)}/specifications/${specification.specificationId}/substitutions/${preview.previewId}/confirm`,
-        substitutionConfirmationSchema,
+        substitutionConfirmationResultSchema,
         idempotentMutation(createId, body),
       );
     },
@@ -234,6 +238,24 @@ export function createMaterialsProductsClient(
       return request(
         `${base(projectId)}/specifications/${specificationId}/schedule-lines`,
         specificationScheduleLinesSchema,
+      );
+    },
+    requestExactScene(
+      projectId: string,
+      specificationId: string,
+      revision: number,
+      sceneJobId: string,
+    ): Promise<SceneJobRequestResponse> {
+      const exactRevision = z.int().positive().max(999_999_999).parse(revision);
+      const body = sceneJobRequestSchema.parse({ sceneJobId });
+      const exactSceneResponseSchema = sceneJobRequestResponseSchema.refine(
+        (response) => response.sceneJobId === body.sceneJobId,
+        { message: "The scene response must identify the exact requested job." },
+      );
+      return request(
+        `${base(projectId)}/specifications/${specificationId}/revisions/${String(exactRevision)}/scene-jobs`,
+        exactSceneResponseSchema,
+        idempotentMutation(createId, body),
       );
     },
     updateSelectionBoard(

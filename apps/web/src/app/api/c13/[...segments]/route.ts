@@ -18,9 +18,13 @@ import {
   catalogAssetPageSchema,
   catalogFiltersSchema,
   catalogReleaseListSchema,
+  sceneJobRequestSchema,
+  sceneJobRequestResponseSchema,
+  sceneRequestStateSchema,
   specificationListSchema,
   specificationRevisionListSchema,
   specificationScheduleLinesSchema,
+  substitutionConfirmationResultSchema,
 } from "../../../../features/materials-products/contracts";
 import {
   c13RouteBase,
@@ -37,6 +41,13 @@ function routeUnavailable(): NextResponse {
 
 function rootPath(base: C13RouteBase): string {
   return `/v1/projects/${base.projectId}`;
+}
+
+function revisionFrom(value: string | undefined): number | NextResponse {
+  const parsed = value && /^[1-9][0-9]{0,8}$/u.test(value) ? Number(value) : undefined;
+  return parsed === undefined
+    ? problemResponse(404, "Specification revision unavailable", "This revision is not available.")
+    : parsed;
 }
 
 function specificationMatches(
@@ -219,6 +230,22 @@ export async function POST(request: Request, context: C13RouteContext): Promise<
 
   const specificationId = parseC13Id(first, "Specification");
   if (specificationId instanceof NextResponse) return specificationId;
+  if (second === "revisions" && base.remainder[4] === "scene-jobs") {
+    if (base.remainder.length !== 5) return routeUnavailable();
+    const revision = revisionFrom(third);
+    if (revision instanceof NextResponse) return revision;
+    const body = await parseC13Body(request, sceneJobRequestSchema);
+    if (body instanceof NextResponse) return body;
+    return validatedC13Backend({
+      accessToken: base.accessToken,
+      body,
+      idempotencyKey,
+      matches: (result) => result.sceneJobId === body.sceneJobId,
+      method: "POST",
+      path: `${rootPath(base)}/specifications/${specificationId}/revisions/${String(revision)}/scene-jobs`,
+      schema: sceneJobRequestResponseSchema,
+    });
+  }
   if (second === "selection-board" && !third) {
     const body = await parseC13Body(request, updateSelectionBoardRequestSchema);
     if (body instanceof NextResponse) return body;
@@ -268,5 +295,29 @@ export async function POST(request: Request, context: C13RouteContext): Promise<
     method: "POST",
     path: `${rootPath(base)}/specifications/${specificationId}/substitutions/${previewId}/confirm`,
     schema: substitutionConfirmationSchema,
+    success: (confirmation, response) => {
+      const state = sceneRequestStateSchema.safeParse(response.headers.get("scene-request-state"));
+      if (!state.success) {
+        return problemResponse(
+          502,
+          "Invalid scene request state",
+          "The C13 service did not return a valid exact-scene dispatch state.",
+        );
+      }
+      const result = substitutionConfirmationResultSchema.safeParse({
+        confirmation,
+        sceneRequestState: state.data,
+      });
+      return result.success
+        ? {
+            body: result.data,
+            headers: { "Scene-Request-State": state.data },
+          }
+        : problemResponse(
+            502,
+            "Invalid confirmation result",
+            "The C13 service returned a malformed internal confirmation result.",
+          );
+    },
   });
 }

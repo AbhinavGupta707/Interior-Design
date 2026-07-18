@@ -14,9 +14,10 @@ import {
   assetsResponse,
   chairAsset,
   chairLine,
-  confirmation,
   ids,
   preview,
+  requestedConfirmation,
+  retryRequiredConfirmation,
   sofaAsset,
   specification,
   withdrawnAsset,
@@ -85,6 +86,7 @@ describe("C13 selection semantics", () => {
         onConfirm={vi.fn()}
         onInterrupt={vi.fn()}
         onPreview={vi.fn()}
+        onRetryScene={vi.fn()}
         preview={preview}
         projectId={ids.project}
         selectedLine={chairLine}
@@ -98,11 +100,12 @@ describe("C13 selection semantics", () => {
     const after = renderToStaticMarkup(
       <PreviewPanel
         candidate={sofaAsset}
-        confirmation={confirmation}
+        confirmation={requestedConfirmation}
         editable
         onConfirm={vi.fn()}
         onInterrupt={vi.fn()}
         onPreview={vi.fn()}
+        onRetryScene={vi.fn()}
         preview={preview}
         projectId={ids.project}
         selectedLine={chairLine}
@@ -110,6 +113,41 @@ describe("C13 selection semantics", () => {
     );
     expect(after).toContain(`/viewer/${ids.project}?jobId=${ids.sceneJob}`);
     expect(after).toContain("Open exact C10 scene job");
+  });
+
+  it("keeps a committed model honest when scene dispatch needs retry and viewers read-only", () => {
+    const editable = renderToStaticMarkup(
+      <PreviewPanel
+        candidate={sofaAsset}
+        confirmation={retryRequiredConfirmation}
+        editable
+        onConfirm={vi.fn()}
+        onInterrupt={vi.fn()}
+        onPreview={vi.fn()}
+        onRetryScene={vi.fn()}
+        preview={preview}
+        projectId={ids.project}
+        selectedLine={chairLine}
+      />,
+    );
+    expect(editable).toContain("Model committed · exact scene unavailable");
+    expect(editable).toContain("Retry exact scene");
+    expect(editable).not.toContain(`/viewer/${ids.project}?jobId=`);
+
+    const viewer = renderToStaticMarkup(
+      <PreviewPanel
+        confirmation={retryRequiredConfirmation}
+        editable={false}
+        onConfirm={vi.fn()}
+        onInterrupt={vi.fn()}
+        onPreview={vi.fn()}
+        onRetryScene={vi.fn()}
+        projectId={ids.project}
+      />,
+    );
+    expect(viewer).toContain("Retry exact scene");
+    expect(viewer).toMatch(/<button[^>]*disabled=""[^>]*>Retry exact scene<\/button>/u);
+    expect(viewer).toContain("Viewer access is inspect-only");
   });
 
   it("renders four captioned semantic tables from the same exact lines", () => {

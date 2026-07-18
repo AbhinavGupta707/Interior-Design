@@ -216,6 +216,11 @@ export async function validatedC13Backend<T>(options: {
   readonly method?: "GET" | "POST" | "PUT";
   readonly path: string;
   readonly schema: ZodType<T>;
+  readonly success?: (
+    value: T,
+    response: Response,
+  ) =>
+    NextResponse | { readonly body: unknown; readonly headers?: Readonly<Record<string, string>> };
 }): Promise<NextResponse> {
   try {
     const headers = new Headers();
@@ -245,8 +250,10 @@ export async function validatedC13Backend<T>(options: {
         "The C13 service returned mismatched or malformed frozen-contract data.",
       );
     }
-    return NextResponse.json(parsed.data, {
-      headers: { "cache-control": "no-store" },
+    const success = options.success?.(parsed.data, response);
+    if (success instanceof NextResponse) return success;
+    return NextResponse.json(success?.body ?? parsed.data, {
+      headers: { "cache-control": "no-store", ...success?.headers },
       status: response.status,
     });
   } catch {

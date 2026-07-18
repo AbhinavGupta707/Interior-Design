@@ -10,7 +10,7 @@ export default defineConfig({
   outputDir: "/tmp/c13-specification-playwright-results",
   projects: [
     {
-      grep: /@workflow|@keyboard|@status|@security/u,
+      grep: /@workflow|@keyboard|@status|@security|@scene-retry/u,
       name: "chromium-desktop-1440x960",
       use: { ...devices["Desktop Chrome"], viewport: { height: 960, width: 1440 } },
     },

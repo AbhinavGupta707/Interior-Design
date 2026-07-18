@@ -890,6 +890,22 @@
   text-decoration: none;
 }
 
+.confirmation[data-scene-state="retry-required"] {
+  background: #f7efe0;
+  border-color: #cfad6d;
+}
+
+.retryScene {
+  background: var(--warning);
+  border: 1px solid var(--warning);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-height: 2.7rem;
+  padding: 0.7rem 0.85rem;
+}
+
 .viewerNote {
   color: var(--warning);
   font-size: 0.76rem;

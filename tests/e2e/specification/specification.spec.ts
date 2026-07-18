@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { APIRequestContext, BrowserContext } from "@playwright/test";
+import type { APIRequestContext, BrowserContext, Page } from "@playwright/test";
 
 import { ids } from "../../../apps/web/test/materials-products/fixtures";
 
@@ -42,6 +42,17 @@ test.beforeEach(async ({ context, request }) => {
   await session(context, "owner-token");
 });
 
+async function confirmSofaCandidate(page: Page) {
+  const sofa = page.locator("li").filter({ hasText: "Generic compact sofa" });
+  await sofa.getByRole("button", { name: "Use as candidate" }).click();
+  await page.getByRole("button", { name: "Prepare bounded preview" }).click();
+  await expect(page.getByText("Bounded catalog preview prepared", { exact: true })).toBeVisible();
+  await page
+    .getByLabel(/I understand confirmation creates an immutable specification revision/iu)
+    .check();
+  await page.getByRole("button", { name: "Confirm exact substitution" }).click();
+}
+
 test("@workflow @keyboard owner edits the board, previews safely, and opens the exact scene job", async ({
   page,
   request,
@@ -63,15 +74,8 @@ test("@workflow @keyboard owner edits the board, previews safely, and opens the 
   await page.getByRole("button", { name: "Shortlist" }).click();
   await expect(page.getByText(/Immutable revision 2 created/iu)).toBeAttached();
 
-  const sofa = page.locator("li").filter({ hasText: "Generic compact sofa" });
-  await sofa.getByRole("button", { name: "Use as candidate" }).click();
-  await page.getByRole("button", { name: "Prepare bounded preview" }).click();
-  await expect(page.getByText("Bounded catalog preview prepared", { exact: true })).toBeVisible();
+  await confirmSofaCandidate(page);
   await expect(page.getByText(/not canonical and not C10 scene evidence/iu)).toBeVisible();
-  await page
-    .getByLabel(/I understand confirmation creates an immutable specification revision/iu)
-    .check();
-  await page.getByRole("button", { name: "Confirm exact substitution" }).click();
   const sceneLink = page.getByRole("link", {
     name: new RegExp(`Open exact C10 scene job ${ids.sceneJob}`),
   });
@@ -94,6 +98,56 @@ test("@workflow @keyboard owner edits the board, previews safely, and opens the 
   );
   expect(await page.locator("[draggable=true]").count()).toBe(0);
   expect(consoleErrors).toEqual([]);
+});
+
+test("@scene-retry committed model with retry-required dispatch creates only the exact scene job", async ({
+  page,
+  request,
+}) => {
+  await request.get(`${backend}/__scenario?value=retry-required`);
+  await page.goto(route);
+  await confirmSofaCandidate(page);
+  await expect(page.getByText(/Model committed · exact scene unavailable/iu)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open exact C10 scene job/iu })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Retry exact scene" }).click();
+  const sceneLink = page.getByRole("link", {
+    name: new RegExp(`Open exact C10 scene job ${ids.sceneJob}`),
+  });
+  await expect(sceneLink).toHaveAttribute("href", `/viewer/${ids.project}?jobId=${ids.sceneJob}`);
+  const state = await request.get(`${backend}/__state`);
+  await expect(state.json()).resolves.toMatchObject({
+    confirmations: 1,
+    sceneJobRetries: 1,
+  });
+});
+
+test("@scene-retry retry failure preserves the committed model and viewer remains read-only", async ({
+  context,
+  page,
+  request,
+}) => {
+  await request.get(`${backend}/__scenario?value=retry-failure`);
+  await page.goto(route);
+  await confirmSofaCandidate(page);
+  await page.getByRole("button", { name: "Retry exact scene" }).click();
+  await expect(
+    page.getByText(
+      /exact C5 result remains committed, but exact C10 scene creation is still unavailable/iu,
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open exact C10 scene job/iu })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Retry exact scene" })).toBeEnabled();
+
+  await session(context, "viewer-token");
+  await page.getByRole("button", { name: "Refresh all pins" }).click();
+  await expect(page.getByText("viewer · inspect-only", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry exact scene" })).toBeDisabled();
+  const state = await request.get(`${backend}/__state`);
+  await expect(state.json()).resolves.toMatchObject({
+    confirmations: 1,
+    sceneJobRetries: 0,
+  });
 });
 
 test("@cross-browser catalog and four schedule projections expose honest rights and quantity semantics", async ({

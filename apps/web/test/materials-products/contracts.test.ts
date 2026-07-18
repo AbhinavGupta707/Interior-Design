@@ -4,7 +4,10 @@ import {
   catalogArtifactResponseSchema,
   catalogAssetPageSchema,
   materialsProductsWorkspaceSchema,
+  sceneJobRequestSchema,
+  sceneRequestStateSchema,
   specificationScheduleLinesSchema,
+  substitutionConfirmationResultSchema,
 } from "../../src/features/materials-products/contracts";
 import { materialsProductsLaunchContextFromSearchParams } from "../../src/features/materials-products/launch-context";
 import {
@@ -15,6 +18,7 @@ import {
   releasesResponse,
   scheduleResponse,
   specificationsResponse,
+  retryRequiredConfirmation,
 } from "./fixtures";
 
 describe("C13 web projection contracts", () => {
@@ -110,5 +114,20 @@ describe("C13 web projection contracts", () => {
         url: `https://catalog.example.test/${"a".repeat(8_192)}`,
       }).success,
     ).toBe(false);
+  });
+
+  it("keeps scene dispatch state and retry job identity strict and local", () => {
+    expect(sceneRequestStateSchema.parse("requested")).toBe("requested");
+    expect(sceneRequestStateSchema.parse("retry-required")).toBe("retry-required");
+    expect(sceneRequestStateSchema.safeParse("ready").success).toBe(false);
+    expect(substitutionConfirmationResultSchema.parse(retryRequiredConfirmation)).toEqual(
+      retryRequiredConfirmation,
+    );
+    expect(sceneJobRequestSchema.parse({ sceneJobId: ids.sceneJob })).toEqual({
+      sceneJobId: ids.sceneJob,
+    });
+    expect(sceneJobRequestSchema.safeParse({ sceneJobId: ids.sceneJob, revision: 2 }).success).toBe(
+      false,
+    );
   });
 });

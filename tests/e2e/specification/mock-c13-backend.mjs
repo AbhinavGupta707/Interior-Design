@@ -31,6 +31,7 @@ let currentSpecification = structuredClone(specification);
 let confirmations = 0;
 let previewRequests = 0;
 let boardUpdates = 0;
+let sceneJobRetries = 0;
 
 function reset(value = "ready") {
   scenario = value;
@@ -38,12 +39,17 @@ function reset(value = "ready") {
   confirmations = 0;
   previewRequests = 0;
   boardUpdates = 0;
+  sceneJobRetries = 0;
 }
 
-function json(value, status = 200) {
+function json(value, status = 200, headers = {}) {
   return {
     body: JSON.stringify(value),
-    headers: { "cache-control": "no-store", "content-type": "application/json" },
+    headers: {
+      "cache-control": "no-store",
+      "content-type": "application/json",
+      ...headers,
+    },
     status,
   };
 }
@@ -140,6 +146,7 @@ const server = http.createServer(async (request, response) => {
       confirmations,
       existingProfileMutations: 0,
       previewRequests,
+      sceneJobRetries,
       specificationRevision: currentSpecification.currentRevision.revision,
     });
     response.writeHead(result.status, result.headers);
@@ -254,6 +261,24 @@ const server = http.createServer(async (request, response) => {
       result = json(currentSpecification);
     }
   } else if (
+    url.pathname ===
+      `${specificationPath}/${ids.specification}/revisions/${String(specificationRevisionTwo.currentRevision.revision)}/scene-jobs` &&
+    request.method === "POST"
+  ) {
+    const retryBody = await body(request);
+    if (retryBody?.sceneJobId !== ids.sceneJob || Object.keys(retryBody ?? {}).length !== 1) {
+      result = json({ detail: "invalid exact scene retry" }, 400);
+    } else if (role(request) === "viewer") {
+      result = json({ detail: "read only" }, 403);
+    } else if (scenario === "retry-failure") {
+      result = json({ detail: "PRIVATE_SCENE_DISPATCH" }, 503);
+    } else if (scenario === "malformed-scene-retry") {
+      result = json({ sceneJobId: ids.viewer }, 201);
+    } else {
+      sceneJobRetries += 1;
+      result = json({ sceneJobId: ids.sceneJob }, 201);
+    }
+  } else if (
     url.pathname === `${specificationPath}/${ids.specification}/substitutions` &&
     request.method === "POST"
   ) {
@@ -285,7 +310,13 @@ const server = http.createServer(async (request, response) => {
     } else {
       confirmations += 1;
       currentSpecification = structuredClone(specificationRevisionTwo);
-      result = json(confirmation, 201);
+      const sceneRequestState =
+        scenario === "retry-required" || scenario === "retry-failure"
+          ? "retry-required"
+          : scenario === "malformed-scene-header"
+            ? "queued"
+            : "requested";
+      result = json(confirmation, 201, { "scene-request-state": sceneRequestState });
     }
   } else {
     result = json({ detail: "Not found", status: 404, title: "Not found" }, 404);

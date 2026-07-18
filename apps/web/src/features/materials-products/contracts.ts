@@ -7,6 +7,7 @@ import {
   specificationLineSchema,
   specificationRevisionSchema,
   specificationSchema,
+  substitutionConfirmationSchema,
 } from "@interior-design/contracts";
 import { z } from "zod";
 
@@ -86,6 +87,18 @@ export const specificationScheduleLinesSchema = z
   })
   .strict();
 
+export const sceneRequestStateSchema = z.enum(["requested", "retry-required"]);
+
+export const substitutionConfirmationResultSchema = z
+  .object({
+    confirmation: substitutionConfirmationSchema,
+    sceneRequestState: sceneRequestStateSchema,
+  })
+  .strict();
+
+export const sceneJobRequestSchema = z.object({ sceneJobId: z.uuid() }).strict();
+export const sceneJobRequestResponseSchema = z.object({ sceneJobId: z.uuid() }).strict();
+
 export const materialsProductsWorkspaceSchema = z
   .object({
     evidenceClassification: catalogEvidenceClassificationSchema,
@@ -132,6 +145,9 @@ export type MaterialsProductsRecovery = z.infer<typeof materialsProductsRecovery
 export type MaterialsProductsLaunchContext = z.infer<typeof materialsProductsLaunchContextSchema>;
 export type MaterialsProductsWorkspaceData = z.infer<typeof materialsProductsWorkspaceSchema>;
 export type SpecificationScheduleLines = z.infer<typeof specificationScheduleLinesSchema>;
+export type SceneJobRequestResponse = z.infer<typeof sceneJobRequestResponseSchema>;
+export type SceneRequestState = z.infer<typeof sceneRequestStateSchema>;
+export type SubstitutionConfirmationResult = z.infer<typeof substitutionConfirmationResultSchema>;
 
 export function evidenceClassificationFromEnvironment(
   value: string | undefined,

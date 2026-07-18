@@ -3,7 +3,6 @@
 import type {
   CatalogAssetVersion,
   Specification,
-  SubstitutionConfirmation,
   SubstitutionPreview,
 } from "@interior-design/contracts";
 import Link from "next/link";
@@ -26,6 +25,7 @@ import type {
   MaterialsProductsLaunchContext,
   MaterialsProductsWorkspaceData,
   SpecificationScheduleLines,
+  SubstitutionConfirmationResult,
 } from "./contracts";
 import styles from "./materials-products.module.css";
 import { PreviewPanel } from "./preview-panel";
@@ -42,7 +42,7 @@ type LoadState =
   | { readonly kind: "error" | "forbidden" | "offline"; readonly message: string }
   | { readonly kind: "expired" | "loading" | "ready" };
 
-type BusyAction = "board" | "confirm" | "preview" | "refresh";
+type BusyAction = "board" | "confirm" | "preview" | "refresh" | "scene";
 
 function loadStateFrom(reason: unknown): LoadState {
   if (reason instanceof MaterialsProductsProblem || reason instanceof ClientProblem) {
@@ -109,7 +109,7 @@ export function MaterialsProductsWorkspace({
   const [selectedLineId, setSelectedLineId] = useState<string>();
   const [candidateAssetVersionId, setCandidateAssetVersionId] = useState<string>();
   const [preview, setPreview] = useState<SubstitutionPreview>();
-  const [confirmation, setConfirmation] = useState<SubstitutionConfirmation>();
+  const [confirmation, setConfirmation] = useState<SubstitutionConfirmationResult>();
   const [busy, setBusy] = useState<BusyAction>();
   const [alert, setAlert] = useState<string>();
   const [statusMessage, setStatusMessage] = useState("");
@@ -415,8 +415,11 @@ export function MaterialsProductsWorkspace({
         preview,
       );
       setConfirmation(next);
+      const committed = next.confirmation;
       setStatusMessage(
-        `Exact C5 candidate committed and specification revision ${String(next.specificationRevision)} created. Scene job ${next.sceneJobId} is now linked explicitly.`,
+        next.sceneRequestState === "requested"
+          ? `Exact C5 candidate committed and specification revision ${String(committed.specificationRevision)} created. Scene job ${committed.sceneJobId} was requested and is now linked explicitly.`
+          : `Exact C5 candidate committed and specification revision ${String(committed.specificationRevision)} created. Exact C10 scene dispatch is unavailable and requires an explicit retry.`,
       );
       await loadSpecification(specification.specificationId);
       setConfirmation(next);
@@ -429,6 +432,45 @@ export function MaterialsProductsWorkspace({
         setPreview(undefined);
         await loadSpecification(specification.specificationId, true);
       }
+    } finally {
+      setBusy(undefined);
+    }
+  }
+
+  async function retryExactScene(): Promise<void> {
+    if (
+      !confirmation ||
+      confirmation.sceneRequestState !== "retry-required" ||
+      !editable ||
+      busy ||
+      !online
+    )
+      return;
+    setBusy("scene");
+    setAlert(undefined);
+    const committed = confirmation.confirmation;
+    try {
+      await materialsProductsClient.requestExactScene(
+        projectId,
+        committed.specificationId,
+        committed.specificationRevision,
+        committed.sceneJobId,
+      );
+      const requested: SubstitutionConfirmationResult = {
+        confirmation: committed,
+        sceneRequestState: "requested",
+      };
+      setConfirmation(requested);
+      setStatusMessage(
+        `Exact C5 result remained committed. Exact C10 scene job ${committed.sceneJobId} was requested successfully and is now linked explicitly.`,
+      );
+    } catch (reason) {
+      setAlert(
+        `The exact C5 result remains committed, but exact C10 scene creation is still unavailable. ${actionMessage(reason)}`,
+      );
+      setStatusMessage(
+        "Exact C5 result remains committed. Exact scene creation was not requested; retry when the service is available.",
+      );
     } finally {
       setBusy(undefined);
     }
@@ -693,13 +735,14 @@ export function MaterialsProductsWorkspace({
                 {...(selectedLine ? { selectedLine } : {})}
               />
               <PreviewPanel
-                {...(busy === "preview" || busy === "confirm" ? { busy } : {})}
+                {...(busy === "preview" || busy === "confirm" || busy === "scene" ? { busy } : {})}
                 {...(candidate ? { candidate } : {})}
                 {...(confirmation ? { confirmation } : {})}
                 editable={editable && online}
                 onConfirm={() => void confirmPreview()}
                 onInterrupt={() => previewAbort.current?.abort()}
                 onPreview={() => void preparePreview()}
+                onRetryScene={() => void retryExactScene()}
                 {...(preview ? { preview } : {})}
                 projectId={projectId}
                 {...(selectedLine ? { selectedLine } : {})}

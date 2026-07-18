@@ -10,6 +10,8 @@ import {
   ids,
   preview,
   releasesResponse,
+  requestedConfirmation,
+  retryRequiredConfirmation,
   specification,
   specificationRevisionTwo,
   specificationsResponse,
@@ -41,7 +43,7 @@ describe("C13 typed browser client", () => {
       .fn()
       .mockResolvedValueOnce(Response.json(specificationRevisionTwo))
       .mockResolvedValueOnce(Response.json(preview))
-      .mockResolvedValueOnce(Response.json(confirmation));
+      .mockResolvedValueOnce(Response.json(requestedConfirmation));
     const client = createMaterialsProductsClient(transport, () => mutationId);
     await client.updateSelectionBoard(
       ids.project,
@@ -74,6 +76,56 @@ describe("C13 typed browser client", () => {
     for (const [, init] of transport.mock.calls) {
       expect(new Headers((init as RequestInit).headers).get("idempotency-key")).toBe(mutationId);
     }
+  });
+
+  it("distinguishes scene states and retries the committed exact scene ID in a strict body", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(requestedConfirmation))
+      .mockResolvedValueOnce(Response.json(retryRequiredConfirmation))
+      .mockResolvedValueOnce(Response.json({ sceneJobId: ids.sceneJob }));
+    const client = createMaterialsProductsClient(transport, () => mutationId);
+
+    await expect(client.confirmSubstitution(ids.project, specification, preview)).resolves.toEqual(
+      requestedConfirmation,
+    );
+    await expect(client.confirmSubstitution(ids.project, specification, preview)).resolves.toEqual(
+      retryRequiredConfirmation,
+    );
+    await expect(
+      client.requestExactScene(ids.project, ids.specification, 2, ids.sceneJob),
+    ).resolves.toEqual({ sceneJobId: ids.sceneJob });
+
+    const [retryUrl, retryInit] = transport.mock.calls[2] as [string, RequestInit];
+    expect(retryUrl).toContain(`/specifications/${ids.specification}/revisions/2/scene-jobs`);
+    expect(retryInit.method).toBe("POST");
+    expect(retryInit.body).toBe(JSON.stringify({ sceneJobId: ids.sceneJob }));
+    expect(new Headers(retryInit.headers).get("idempotency-key")).toBe(mutationId);
+  });
+
+  it("rejects raw or malformed confirmation envelopes and malformed or mismatched retry results", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(confirmation))
+      .mockResolvedValueOnce(
+        Response.json({ ...requestedConfirmation, sceneRequestState: "scene-ready" }),
+      )
+      .mockResolvedValueOnce(Response.json({ jobId: ids.sceneJob }))
+      .mockResolvedValueOnce(Response.json({ sceneJobId: ids.viewer }));
+    const client = createMaterialsProductsClient(transport);
+
+    await expect(
+      client.confirmSubstitution(ids.project, specification, preview),
+    ).rejects.toMatchObject({ kind: "invalid-response" });
+    await expect(
+      client.confirmSubstitution(ids.project, specification, preview),
+    ).rejects.toMatchObject({ kind: "invalid-response" });
+    await expect(
+      client.requestExactScene(ids.project, ids.specification, 2, ids.sceneJob),
+    ).rejects.toMatchObject({ kind: "invalid-response" });
+    await expect(
+      client.requestExactScene(ids.project, ids.specification, 2, ids.sceneJob),
+    ).rejects.toMatchObject({ kind: "invalid-response" });
   });
 
   it("validates release/specification collections and rejects malformed upstream data", async () => {
