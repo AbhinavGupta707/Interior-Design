@@ -53,6 +53,9 @@ importers:
       '@interior-design/model-operations':
         specifier: workspace:*
         version: link:../../packages/model-operations
+      '@interior-design/render-evaluation':
+        specifier: workspace:*
+        version: link:../../packages/render-evaluation
       '@interior-design/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -200,6 +203,24 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/render-evaluation:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      sharp:
+        specifier: ^0.35.3
+        version: 0.35.3(@types/node@26.1.1)
+
+  packages/render-scene:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+
   packages/scene-compiler:
     dependencies:
       '@interior-design/catalog':
@@ -298,6 +319,9 @@ importers:
       '@interior-design/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@interior-design/render-scene':
+        specifier: workspace:*
+        version: link:../../packages/render-scene
       '@interior-design/specification':
         specifier: workspace:*
         version: link:../../packages/specification
@@ -353,6 +377,9 @@ importers:
       '@interior-design/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@interior-design/render-scene':
+        specifier: workspace:*
+        version: link:../../packages/render-scene
       '@interior-design/scene-compiler':
         specifier: workspace:*
         version: link:../../packages/scene-compiler
@@ -369,6 +396,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@interior-design/blender-renderer':
+        specifier: workspace:*
+        version: link:../../workers/blender-renderer
       '@interior-design/model-operations':
         specifier: workspace:*
         version: link:../../packages/model-operations
@@ -378,6 +408,22 @@ importers:
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
+
+  workers/blender-renderer:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@interior-design/render-scene':
+        specifier: workspace:*
+        version: link:../../packages/render-scene
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
 
 packages:
 

@@ -20,6 +20,7 @@
     "@interior-design/contracts": "workspace:*",
     "@interior-design/editor-core": "workspace:*",
     "@interior-design/model-operations": "workspace:*",
+    "@interior-design/render-evaluation": "workspace:*",
     "@interior-design/ui": "workspace:*",
     "@react-three/fiber": "^9.6.1",
     "next": "^16.2.10",
