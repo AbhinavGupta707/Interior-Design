@@ -55,7 +55,7 @@ The worker atomically reserves its declared estimate before claim. Admission req
 
 `unreservedFreeBytes >= max(15 GiB + estimatedJobBytes, 3 × estimatedJobBytes)`
 
-It rechecks the invariant between stages, releases reservations on every terminal cleanup path, and preserves read access to existing results when new work is paused. Preflight on 2026-07-18 reclaimed only generated build/Homebrew caches and retired merged C13 worktrees; it left unrelated worktrees and user caches untouched and reached approximately 19.2 GiB free.
+It rechecks the invariant between stages, releases reservations on every terminal cleanup path, and preserves read access to existing results when new work is paused. The initial 2026-07-18 preflight reclaimed only generated build/Homebrew caches and retired merged C13 worktrees. On 2026-07-19 the user authorised a conservative second pass over regenerable package/tool caches; it left model caches, Codex runtimes, Playwright browsers, Docker volumes, other-project worktrees and user data untouched. C14 resumed with approximately 85 GiB free.
 
 The current Mac hardware hold overrides profile availability: no C14 worker, test, orchestrator gate or browser journey may launch Blender on this host. Subprocess behaviour is tested through inert fake executables and frozen artifact fixtures only. Those tests prove control-plane behaviour, not renderer correctness.
 

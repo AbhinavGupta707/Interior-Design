@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C13 are complete. The C14 prelude is frozen, but worker activation is paused; C15 remains closed, terminal for this run and C16 is not authorised.
+- Autonomous execution boundary: C0-C13 are complete. The user resumed the frozen C14 prelude on 2026-07-19 after conservative cache cleanup; C14 is active, C15 remains closed and terminal for this run, and C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -570,14 +570,16 @@
 
 ## C14 — Reproducible geometry-safe still rendering
 
-### Prepared prelude — activation paused
+### Master activation
 
-- Status: shared prelude committed on `main`; no implementation worktree has been launched, C14 is not complete and C15 remains closed.
+- Status: activation preparation in progress from clean pushed `main`; C14 is not complete and C15 remains closed.
 - Contract: `docs/orchestration/checkpoints/C14_CONTRACT.md` (`c14-render-scene-manifest-v1`, `c14-render-job-v1`, `c14-render-artifact-v1`, `c14-render-output-manifest-v1`, `c14-enhancement-result-v1`, `c14-geometry-guard-v1`).
 - Immutable predecessor/C13 ledger close: `ad161f4478c83f295f5cebcc5b3a8b622df31dab`.
 - Prelude commit: `8a5f483a4bced91eae25c8ff9d3ae652ea8f2ee9`.
 - Planned lanes: four, retained adaptively because deterministic scene construction, durable fenced render execution, optional enhancement isolation and independent browser/image evaluation have exclusive non-overlapping paths.
-- Planned worker runtime: exact `gpt-5.6-sol` / `xhigh` for all four lanes. No thread/client ID exists because activation has not occurred.
+- Planned worker runtime: exact `gpt-5.6-sol` / `xhigh` for all four lanes. Thread/client IDs will be recorded before implementation begins.
+- Resumption preflight: clean `main`/`origin/main` at `713c6f9fe5cac8c2b7471bd0f98a77887dc7e332`; only the primary project worktree exists; approximately 85 GiB is free on the Data volume; no unrelated repository changes are present.
+- Guardrail: task-attached 20-minute heartbeat `interior-design-c14-orchestration-guardrail` is active. It may resume only the current verified C14 state, cannot open C15 early and explicitly prohibits Blender on this Mac.
 - Current user constraint: no further Blender execution on this Mac. Earlier preflight capability/tiny-probe observations are not C14 acceptance evidence. Worker prompts will prohibit Blender invocation on this host; subprocess control can use inert fake executables only.
 - Honest checkpoint state: the code/control-plane may become `implementation-ready / hardware-gate-deferred`, but C14 cannot be marked complete until a real geometry-safe Blender render/pass bundle is produced and verified on an authorised render host. Under the strict sequential gate, C15 cannot open before that evidence unless the user explicitly changes the rule.
 
@@ -587,7 +589,7 @@
 - `packages/render-scene` is a declarative, non-executable boundary. The shared contract freezes source/camera/material/light/profile/segmentation schemas, safe job states, non-circular artifact/result manifests and separately terminal enhancement jobs.
 - A safe bundle requires lossless PNG, multilayer OpenEXR, depth, normal and segmentation outputs. Optional enhancement can never delay, replace or mutate it, and C14 makes no unsupported millimetre-depth claim from enhanced PNG pixels.
 - Disk admission uses reservation semantics: `unreservedFree >= max(15 GiB + estimated job bytes, 3 × estimated job bytes)`. The preflight archived completed C13 worktrees and reclaimed only reproducible repository/Homebrew caches. It deliberately left an unrelated eMed worktree, global pnpm/model/runtime caches and all user data untouched.
-- The machine had approximately 20 GiB free at ledger checkpoint, 96% utilisation. The repository is approximately 2 GiB; identified user/developer caches include about 10 GiB pnpm store, 4.5 GiB UV, 2.1 GiB Hugging Face, 1.5 GiB Whisper and 1.5 GiB Codex runtimes. No cache was removed without authorisation beyond the earlier explicitly scoped reproducible cleanup.
+- The initial pause occurred at approximately 20 GiB free and 96% utilisation. The user then authorised conservative cleanup of regenerable pnpm/UV/npm/NPX/pip/CocoaPods/Trivy caches; active dependencies/environments, model caches, Codex runtimes, Playwright browsers, Docker volumes/images, other worktrees and user data were preserved. Resumption preflight reports approximately 85 GiB free.
 - Root scaffolds and registers `packages/render-scene`, `packages/render-evaluation` and `workers/blender-renderer`, with exact shared package ownership ready for isolated lanes. C14 authz grants owner/editor create/read/cancel/retry/artifact access and viewer read/artifact access only.
 - Verified without Blender after the user's hold: C14 contracts/typecheck and all 80 contract tests passed; authz typecheck plus independent identity matrix and 555 tests passed; all three scaffold packages built; Prettier and `git diff --check` passed.
-- Activation remains paused to avoid four worktrees/builds consuming the narrow disk margin. No renderer, provider, GPU, browser or end-to-end artifact evidence is claimed by the prelude.
+- Four worktrees may now activate within the frozen ownership boundaries. No renderer, provider, GPU, browser or end-to-end artifact evidence is claimed by the prelude, and no worker may invoke Blender on this Mac.
