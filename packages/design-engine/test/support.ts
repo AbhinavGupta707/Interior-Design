@@ -7,10 +7,11 @@ import type {
 } from "@interior-design/contracts";
 import { validateAndCanonicalizeSnapshot } from "@interior-design/model-operations";
 
-import { sha256Canonical } from "../src/canonical.js";
+import { compareStrings, sha256Canonical } from "../src/canonical.js";
 import type {
   BriefConstraintFact,
   DesignCandidateTemplate,
+  DeterministicDesignConstraintRequest,
   DeterministicDesignEngineRequest,
   FinishTargetDeclaration,
   KeepOutDeclaration,
@@ -255,13 +256,40 @@ export function makeBrief(
 
 function briefContentSha256(brief: DesignBrief): string {
   return sha256Canonical({
-    entries: brief.entries,
+    entries: brief.entries
+      .map((entry) => ({
+        ...entry,
+        roomOrLevelElementIds: [...entry.roomOrLevelElementIds].sort(),
+      }))
+      .sort((left, right) => compareStrings(left.id, right.id)),
     id: brief.id,
     ...(brief.modelReference === undefined ? {} : { modelReference: brief.modelReference }),
     projectId: brief.projectId,
-    referenceBoard: brief.referenceBoard,
+    referenceBoard: [...brief.referenceBoard].sort((left, right) =>
+      compareStrings(left.id, right.id),
+    ),
     schemaVersion: brief.schemaVersion,
   });
+}
+
+export function constraintRequest(
+  request: DeterministicDesignEngineRequest,
+): DeterministicDesignConstraintRequest {
+  return {
+    acceptedBrief: request.acceptedBrief,
+    acceptedBriefContentSha256: request.acceptedBriefContentSha256,
+    briefConstraintFacts: request.briefConstraintFacts,
+    finishTargets: request.finishTargets,
+    keepOuts: request.keepOuts,
+    sourceModel: request.sourceModel,
+    sourceSnapshot: request.sourceSnapshot,
+    systemPolicy: {
+      boundaryTouch: request.configuration.boundaryTouch,
+      schemaVersion: request.configuration.schemaVersion,
+    },
+    workingModel: request.workingModel,
+    workingSnapshot: request.workingSnapshot,
+  };
 }
 
 export function makeRequest(

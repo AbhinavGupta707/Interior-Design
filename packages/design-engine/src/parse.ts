@@ -18,10 +18,12 @@ import {
   type CandidateAssetPlacementInput,
   type DesignCandidateTemplate,
   type DesignEngineAbstentionCode,
+  type DeterministicDesignConstraintRequest,
   type DeterministicDesignEngineFailure,
   type FinishFace,
   type FinishTargetDeclaration,
   type KeepOutDeclaration,
+  type ParsedDesignConstraintRequest,
   type ParsedDesignEngineRequest,
 } from "./types.js";
 
@@ -370,35 +372,33 @@ export function parseDesignEngineRequest(
   ) {
     return failure("INVALID_INPUT", "parse");
   }
-  const brief = designBriefSchema.safeParse(candidate.acceptedBrief);
-  const sourceModel = optionSourceModelReferenceSchema.safeParse(candidate.sourceModel);
-  const workingModel = optionWorkingModelReferenceSchema.safeParse(candidate.workingModel);
-  const sourceSnapshot = canonicalHomeSnapshotSchema.safeParse(candidate.sourceSnapshot);
-  const workingSnapshot = canonicalHomeSnapshotSchema.safeParse(candidate.workingSnapshot);
+  const constraintRequest = parseDesignConstraintRequest({
+    acceptedBrief: candidate.acceptedBrief,
+    acceptedBriefContentSha256: candidate.acceptedBriefContentSha256,
+    briefConstraintFacts: candidate.briefConstraintFacts,
+    finishTargets: candidate.finishTargets,
+    keepOuts: candidate.keepOuts,
+    sourceModel: candidate.sourceModel,
+    sourceSnapshot: candidate.sourceSnapshot,
+    systemPolicy: {
+      boundaryTouch: configuration.boundaryTouch,
+      schemaVersion: configuration.schemaVersion,
+    },
+    workingModel: candidate.workingModel,
+    workingSnapshot: candidate.workingSnapshot,
+  });
   if (
-    !brief.success ||
-    !sourceModel.success ||
-    !workingModel.success ||
-    !sourceSnapshot.success ||
-    !workingSnapshot.success ||
-    typeof candidate.acceptedBriefContentSha256 !== "string" ||
-    !sha256Pattern.test(candidate.acceptedBriefContentSha256) ||
+    "abstention" in constraintRequest ||
     typeof candidate.assetManifestSha256 !== "string" ||
     !sha256Pattern.test(candidate.assetManifestSha256)
   ) {
     return failure("INVALID_INPUT", "parse");
   }
   const assets = candidate.assets.map((asset) => interiorAssetRefSchema.safeParse(asset));
-  const facts = candidate.briefConstraintFacts.map(parseBriefFact);
   const templates = candidate.candidateTemplates.map(parseCandidateTemplate);
-  const finishTargets = candidate.finishTargets.map(parseFinishTarget);
-  const keepOuts = candidate.keepOuts.map(parseKeepOut);
   if (
     assets.some((asset) => !asset.success) ||
-    facts.some((fact) => fact === undefined) ||
-    templates.some((template) => template === undefined) ||
-    finishTargets.some((target) => target === undefined) ||
-    keepOuts.some((keepOut) => keepOut === undefined)
+    templates.some((template) => template === undefined)
   ) {
     return failure("INVALID_INPUT", "parse");
   }
@@ -425,26 +425,109 @@ export function parseDesignEngineRequest(
     return failure("INVALID_INPUT", "parse");
   }
   return {
-    acceptedBrief: brief.data,
-    acceptedBriefContentSha256: candidate.acceptedBriefContentSha256,
+    acceptedBrief: constraintRequest.acceptedBrief,
+    acceptedBriefContentSha256: constraintRequest.acceptedBriefContentSha256,
     assetManifestSha256: candidate.assetManifestSha256,
     assets: parsedAssets,
-    briefConstraintFacts: facts.flatMap((fact) => (fact === undefined ? [] : [fact])),
+    briefConstraintFacts: constraintRequest.briefConstraintFacts,
     candidateTemplates: templates.flatMap((template) => (template === undefined ? [] : [template])),
     configuration: {
       boundaryTouch,
       candidateBudget: configuration.candidateBudget,
       schemaVersion: deterministicSearchConfigurationVersion,
     },
-    finishTargets: finishTargets.flatMap((target) => (target === undefined ? [] : [target])),
-    keepOuts: keepOuts.flatMap((keepOut) => (keepOut === undefined ? [] : [keepOut])),
+    finishTargets: constraintRequest.finishTargets,
+    keepOuts: constraintRequest.keepOuts,
     requestedDirections: candidate.requestedDirections,
     requestedOptionCount: candidate.requestedOptionCount,
+    sourceModel: constraintRequest.sourceModel,
+    sourceSnapshot: constraintRequest.sourceSnapshot,
+    workingModel: constraintRequest.workingModel,
+    workingSnapshot: constraintRequest.workingSnapshot,
+  };
+}
+
+/** Runtime-validates the exact candidate-independent constraint-freezing port. */
+export function parseDesignConstraintRequest(
+  input: unknown,
+): DeterministicDesignEngineFailure | ParsedDesignConstraintRequest {
+  const candidate = record(input);
+  if (
+    candidate === undefined ||
+    !hasExactKeys(candidate, [
+      "acceptedBrief",
+      "acceptedBriefContentSha256",
+      "briefConstraintFacts",
+      "finishTargets",
+      "keepOuts",
+      "sourceModel",
+      "sourceSnapshot",
+      "systemPolicy",
+      "workingModel",
+      "workingSnapshot",
+    ]) ||
+    !Array.isArray(candidate.briefConstraintFacts) ||
+    !Array.isArray(candidate.finishTargets) ||
+    !Array.isArray(candidate.keepOuts)
+  ) {
+    return failure("INVALID_INPUT", "parse");
+  }
+  if (
+    candidate.briefConstraintFacts.length >
+      designEngineResourcePolicy.maximumBriefConstraintFacts ||
+    candidate.finishTargets.length > designEngineResourcePolicy.maximumFinishTargets ||
+    candidate.keepOuts.length > designEngineResourcePolicy.maximumKeepOuts
+  ) {
+    return failure("RESOURCE_LIMIT", "parse");
+  }
+  const brief = designBriefSchema.safeParse(candidate.acceptedBrief);
+  const systemPolicy = record(candidate.systemPolicy);
+  const boundaryTouch = parseBoundaryTouch(systemPolicy?.boundaryTouch);
+  const sourceModel = optionSourceModelReferenceSchema.safeParse(candidate.sourceModel);
+  const workingModel = optionWorkingModelReferenceSchema.safeParse(candidate.workingModel);
+  const sourceSnapshot = canonicalHomeSnapshotSchema.safeParse(candidate.sourceSnapshot);
+  const workingSnapshot = canonicalHomeSnapshotSchema.safeParse(candidate.workingSnapshot);
+  const facts = candidate.briefConstraintFacts.map(parseBriefFact);
+  const finishTargets = candidate.finishTargets.map(parseFinishTarget);
+  const keepOuts = candidate.keepOuts.map(parseKeepOut);
+  if (
+    !brief.success ||
+    !sourceModel.success ||
+    !workingModel.success ||
+    !sourceSnapshot.success ||
+    !workingSnapshot.success ||
+    systemPolicy === undefined ||
+    !hasExactKeys(systemPolicy, ["boundaryTouch", "schemaVersion"]) ||
+    boundaryTouch === undefined ||
+    systemPolicy.schemaVersion !== deterministicSearchConfigurationVersion ||
+    typeof candidate.acceptedBriefContentSha256 !== "string" ||
+    !sha256Pattern.test(candidate.acceptedBriefContentSha256) ||
+    facts.some((fact) => fact === undefined) ||
+    finishTargets.some((target) => target === undefined) ||
+    keepOuts.some((keepOut) => keepOut === undefined)
+  ) {
+    return failure("INVALID_INPUT", "parse");
+  }
+  const parsedKeepOuts = keepOuts.flatMap((keepOut) => (keepOut === undefined ? [] : [keepOut]));
+  if (new Set(parsedKeepOuts.map(({ id }) => id)).size !== parsedKeepOuts.length) {
+    return failure("INVALID_INPUT", "parse");
+  }
+  const parsed: DeterministicDesignConstraintRequest = {
+    acceptedBrief: brief.data,
+    acceptedBriefContentSha256: candidate.acceptedBriefContentSha256,
+    briefConstraintFacts: facts.flatMap((fact) => (fact === undefined ? [] : [fact])),
+    finishTargets: finishTargets.flatMap((target) => (target === undefined ? [] : [target])),
+    keepOuts: parsedKeepOuts,
     sourceModel: sourceModel.data,
     sourceSnapshot: sourceSnapshot.data,
+    systemPolicy: {
+      boundaryTouch,
+      schemaVersion: deterministicSearchConfigurationVersion,
+    },
     workingModel: workingModel.data,
     workingSnapshot: workingSnapshot.data,
   };
+  return parsed;
 }
 
 export function parseFailure(

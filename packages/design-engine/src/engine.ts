@@ -7,10 +7,7 @@ import {
   type ModelOperationRequest,
   type OptionOperationBundle,
 } from "@interior-design/contracts";
-import {
-  reduceModelOperations,
-  validateAndCanonicalizeSnapshot,
-} from "@interior-design/model-operations";
+import { reduceModelOperations } from "@interior-design/model-operations";
 
 import {
   canonicalJson,
@@ -19,7 +16,6 @@ import {
   seedFromSha256,
   sha256Canonical,
 } from "./canonical.js";
-import { deriveConstraints } from "./constraints.js";
 import { completePairwiseMatrix, paretoFrontier, selectDiverseCandidates } from "./diversity.js";
 import {
   normalizedRotationMilliDegrees,
@@ -32,6 +28,7 @@ import {
   type ScaledPolygon,
 } from "./geometry.js";
 import { parseDesignEngineRequest, parseFailure } from "./parse.js";
+import { deriveDeterministicDesignConstraints, validateConstraintContext } from "./preflight.js";
 import {
   designEngineResourcePolicy,
   deterministicLayoutEngineVersion,
@@ -39,6 +36,7 @@ import {
   type CandidateRejectionSummary,
   type DesignCandidateDeclaration,
   type DesignCandidateTemplate,
+  type DeterministicDesignConstraintRequest,
   type DesignEngineAbstentionCode,
   type DeterministicDesignEngineFailure,
   type DeterministicDesignEngineResult,
@@ -84,172 +82,6 @@ function allElements(snapshot: CanonicalHomeSnapshot): readonly CanonicalElement
 type CanonicalElement =
   CanonicalHomeSnapshot["elements"][keyof CanonicalHomeSnapshot["elements"]][number];
 
-function acceptedBriefContentSha256(request: ParsedDesignEngineRequest): string {
-  const brief = request.acceptedBrief;
-  const entries = brief.entries
-    .map((entry) => ({
-      ...entry,
-      roomOrLevelElementIds: [...entry.roomOrLevelElementIds].sort(compareStrings),
-    }))
-    .sort((left, right) => compareStrings(left.id, right.id));
-  const referenceBoard = [...brief.referenceBoard].sort((left, right) =>
-    compareStrings(left.id, right.id),
-  );
-  return sha256Canonical({
-    entries,
-    id: brief.id,
-    ...(brief.modelReference === undefined ? {} : { modelReference: brief.modelReference }),
-    projectId: brief.projectId,
-    referenceBoard,
-    schemaVersion: brief.schemaVersion,
-  });
-}
-
-function resourceLimitExceeded(request: ParsedDesignEngineRequest): boolean {
-  const elements = request.workingSnapshot.elements;
-  return (
-    elements.levels.length > designEngineResourcePolicy.maximumLevels ||
-    elements.spaces.length > designEngineResourcePolicy.maximumSpaces ||
-    elements.fixedObjects.length > designEngineResourcePolicy.maximumFixedObjects ||
-    elements.furnishings.length > designEngineResourcePolicy.maximumExistingFurnishings
-  );
-}
-
-function validateSourcePins(request: ParsedDesignEngineRequest):
-  | DeterministicDesignEngineFailure
-  | {
-      readonly sourceSnapshotSha256: string;
-      readonly workingSnapshotSha256: string;
-    } {
-  if (
-    request.acceptedBrief.status !== "accepted" ||
-    request.acceptedBrief.projectId !== request.sourceSnapshot.projectId ||
-    request.sourceSnapshot.projectId !== request.workingSnapshot.projectId
-  ) {
-    return parseFailure("SOURCE_PIN_MISMATCH", "validate");
-  }
-  let source: ReturnType<typeof validateAndCanonicalizeSnapshot>;
-  let working: ReturnType<typeof validateAndCanonicalizeSnapshot>;
-  try {
-    source = validateAndCanonicalizeSnapshot(request.sourceSnapshot);
-    working = validateAndCanonicalizeSnapshot(request.workingSnapshot);
-  } catch {
-    return parseFailure("MALFORMED_GEOMETRY", "validate");
-  }
-  if (source.hasBlockingFindings || working.hasBlockingFindings) {
-    return parseFailure("MALFORMED_GEOMETRY", "validate");
-  }
-  if (
-    acceptedBriefContentSha256(request) !== request.acceptedBriefContentSha256 ||
-    request.sourceModel.modelId !== source.snapshot.modelId ||
-    request.sourceModel.profile !== source.snapshot.profile ||
-    request.sourceModel.snapshotSha256 !== source.snapshotSha256 ||
-    request.workingModel.modelId !== working.snapshot.modelId ||
-    working.snapshot.profile !== "proposed" ||
-    request.workingModel.snapshotSha256 !== working.snapshotSha256 ||
-    source.snapshot.projectId !== working.snapshot.projectId ||
-    source.snapshot.modelId !== working.snapshot.modelId ||
-    (source.snapshot.profile === "existing" &&
-      working.snapshot.derivedFromSnapshotSha256 !== source.snapshotSha256) ||
-    (source.snapshot.profile === "proposed" && source.snapshotSha256 !== working.snapshotSha256)
-  ) {
-    return parseFailure("SOURCE_PIN_MISMATCH", "validate");
-  }
-  const modelReference = request.acceptedBrief.modelReference;
-  if (
-    modelReference !== undefined &&
-    (modelReference.modelId !== request.sourceModel.modelId ||
-      modelReference.snapshotId !== request.sourceModel.snapshotId ||
-      modelReference.snapshotSha256 !== request.sourceModel.snapshotSha256)
-  ) {
-    return parseFailure("SOURCE_PIN_MISMATCH", "validate");
-  }
-  return {
-    sourceSnapshotSha256: source.snapshotSha256,
-    workingSnapshotSha256: working.snapshotSha256,
-  };
-}
-
-function validateKnownBaseGeometry(
-  request: ParsedDesignEngineRequest,
-): DeterministicDesignEngineFailure | undefined {
-  const missing =
-    request.workingSnapshot.elements.levels.some(
-      (level) =>
-        knownValue(level.elevationMm) === undefined ||
-        knownValue(level.storeyHeightMm) === undefined,
-    ) ||
-    request.workingSnapshot.elements.spaces.some(
-      (space) => knownValue(space.boundary) === undefined,
-    ) ||
-    request.workingSnapshot.elements.fixedObjects.some(
-      (object) =>
-        knownValue(object.dimensions) === undefined ||
-        knownValue(object.placement.position) === undefined ||
-        knownValue(object.placement.rotationMilliDegrees) === undefined,
-    ) ||
-    request.workingSnapshot.elements.furnishings.some(
-      (furnishing) =>
-        knownValue(furnishing.dimensions) === undefined ||
-        knownValue(furnishing.placement.position) === undefined ||
-        knownValue(furnishing.placement.rotationMilliDegrees) === undefined,
-    );
-  return missing ? parseFailure("INSUFFICIENT_GEOMETRY", "validate") : undefined;
-}
-
-function validatePolicyGeometry(
-  request: ParsedDesignEngineRequest,
-): DeterministicDesignEngineFailure | ReadonlyMap<string, ScaledPolygon> {
-  const levels = new Set(request.workingSnapshot.elements.levels.map(({ id }) => id));
-  const polygons = new Map<string, ScaledPolygon>();
-  for (const keepOut of request.keepOuts) {
-    if (!levels.has(keepOut.levelId)) return parseFailure("INVALID_INPUT", "validate");
-    const validated = validateAndScalePolygon(
-      keepOut.polygon,
-      designEngineResourcePolicy.maximumPolygonVertices,
-    );
-    if (!validated.ok) return parseFailure(validated.code, "validate");
-    polygons.set(keepOut.id, validated.polygon);
-  }
-  const targetIds = request.finishTargets.map(({ targetElementId }) => targetElementId);
-  if (new Set(targetIds).size !== targetIds.length) {
-    return parseFailure("INVALID_INPUT", "validate");
-  }
-  const elements = new Map(
-    allElements(request.workingSnapshot).map((element) => [element.id, element]),
-  );
-  for (const target of request.finishTargets) {
-    const element = elements.get(target.targetElementId);
-    if (element === undefined) return parseFailure("INVALID_INPUT", "validate");
-    const validFaces = computationalFinishFaces(element);
-    if (target.allowedFaces.some((face) => !validFaces.has(face))) {
-      return parseFailure("INVALID_INPUT", "validate");
-    }
-  }
-  return polygons;
-}
-
-function computationalFinishFaces(element: CanonicalElement): ReadonlySet<string> {
-  if (element.elementType === "wall") return new Set(["all", "inside", "outside"]);
-  if (element.elementType === "fixed-object") {
-    return new Set(["all", "inside", "outside", "top"]);
-  }
-  if (element.elementType !== "surface") return new Set();
-  switch (element.kind) {
-    case "floor":
-      return new Set(["all", "top"]);
-    case "ceiling":
-      return new Set(["all", "bottom"]);
-    case "slab":
-    case "roof":
-      return new Set(["all", "bottom", "top"]);
-    case "wall-face":
-      return new Set(["all", "inside", "outside"]);
-    case "other":
-      return new Set(["all"]);
-  }
-}
-
 function exactAssetBinding(
   operation: Extract<
     ModelOperationRequest,
@@ -293,9 +125,12 @@ function operationForElement(
 function candidateClearance(
   request: ParsedDesignEngineRequest,
   elementId: string,
-  asset: InteriorAssetRef,
+  asset: InteriorAssetRef | undefined,
 ): ClearanceBySideMm {
-  const clearance = { ...asset.placementPolicy.clearanceMm };
+  const clearance =
+    asset === undefined
+      ? { back: 0, front: 0, left: 0, right: 0 }
+      : { ...asset.placementPolicy.clearanceMm };
   request.briefConstraintFacts.forEach((fact) => {
     if (fact.kind !== "minimum-clearance" || !fact.assetElementIds.includes(elementId)) return;
     if (fact.scope === "front-access")
@@ -415,10 +250,7 @@ function elementGeometry(
       return candidateFailure("HARD_CONSTRAINT_FAILED");
     }
     const asset = assetsByElement.get(furnishing.id);
-    const clearance =
-      asset === undefined
-        ? { back: 0, front: 0, left: 0, right: 0 }
-        : candidateClearance(request, furnishing.id, asset);
+    const clearance = candidateClearance(request, furnishing.id, asset);
     envelopes.push({
       clearance: rotatedRectangle(
         position,
@@ -534,6 +366,31 @@ function validateSpatialHardConstraints(
     }
     containmentPassed.add(placement.elementId);
   }
+  const commonClearanceIds = new Set(
+    request.briefConstraintFacts.flatMap((fact) =>
+      fact.kind === "minimum-clearance" ? fact.assetElementIds : [],
+    ),
+  );
+  for (const elementId of commonClearanceIds) {
+    const envelope = byId.get(elementId);
+    const contained =
+      envelope !== undefined &&
+      request.workingSnapshot.elements.spaces
+        .filter(({ levelId }) => levelId === envelope.levelId)
+        .some((space) => {
+          const room = rooms.rooms.get(space.id);
+          return (
+            room !== undefined &&
+            polygonContainsPolygon(
+              room,
+              envelope.clearance,
+              request.configuration.boundaryTouch.room,
+            )
+          );
+        });
+    if (!contained) return candidateFailure("CONTAINMENT");
+    containmentPassed.add(elementId);
+  }
   for (let leftIndex = 0; leftIndex < geometry.envelopes.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < geometry.envelopes.length; rightIndex += 1) {
       const left = geometry.envelopes[leftIndex];
@@ -545,13 +402,21 @@ function validateSpatialHardConstraints(
           right.physical,
           request.configuration.boundaryTouch.obstacle,
         ) ||
-        (assetsByElement.has(left.elementId) &&
+        ((assetsByElement.has(left.elementId) ||
+          request.briefConstraintFacts.some(
+            (fact) =>
+              fact.kind === "minimum-clearance" && fact.assetElementIds.includes(left.elementId),
+          )) &&
           convexPolygonsOverlap(
             left.clearance,
             right.physical,
             request.configuration.boundaryTouch.obstacle,
           )) ||
-        (assetsByElement.has(right.elementId) &&
+        ((assetsByElement.has(right.elementId) ||
+          request.briefConstraintFacts.some(
+            (fact) =>
+              fact.kind === "minimum-clearance" && fact.assetElementIds.includes(right.elementId),
+          )) &&
           convexPolygonsOverlap(
             right.clearance,
             left.physical,
@@ -594,7 +459,6 @@ function centreOfElement(
 function constraintResults(
   constraints: readonly DesignConstraint[],
   snapshot: CanonicalHomeSnapshot,
-  template: DesignCandidateTemplate,
   spatial: {
     readonly collisionPassed: boolean;
     readonly containmentPassed: ReadonlySet<string>;
@@ -606,11 +470,8 @@ function constraintResults(
   for (const constraint of constraints) {
     switch (constraint.kind) {
       case "space-containment": {
-        const applicable = constraint.assetElementIds.filter((id) =>
-          template.assetPlacements.some(({ elementId }) => elementId === id),
-        );
-        if (applicable.length === 0) continue;
-        const passed = applicable.every((id) => spatial.containmentPassed.has(id));
+        if (!constraint.assetElementIds.every((id) => present.has(id))) return undefined;
+        const passed = constraint.assetElementIds.every((id) => spatial.containmentPassed.has(id));
         results.push({
           constraintId: constraint.id,
           detail: "The exact clearance footprint was tested against the complete room polygon.",
@@ -620,21 +481,21 @@ function constraintResults(
         break;
       }
       case "minimum-clearance": {
-        const applicable = constraint.assetElementIds.some((id) =>
-          template.assetPlacements.some(({ elementId }) => elementId === id),
-        );
-        if (!applicable) continue;
+        if (!constraint.assetElementIds.every((id) => present.has(id))) return undefined;
+        const passed =
+          spatial.collisionPassed &&
+          constraint.assetElementIds.every((id) => spatial.containmentPassed.has(id));
         results.push({
           constraintId: constraint.id,
-          detail: "The exact per-side clearance envelope passed containment and collision tests.",
-          passed: spatial.collisionPassed,
+          detail: "The exact clearance envelope passed room containment and collision testing.",
+          passed,
           strength: constraint.strength,
           thresholdValue: constraint.clearanceMm,
         });
         break;
       }
       case "no-overlap":
-        if (!constraint.assetElementIds.some((id) => present.has(id))) continue;
+        if (!constraint.assetElementIds.every((id) => present.has(id))) return undefined;
         results.push({
           constraintId: constraint.id,
           detail: "All applicable furnishing and fixed-object footprints were pairwise tested.",
@@ -667,7 +528,7 @@ function constraintResults(
       case "adjacency-objective": {
         const left = centreOfElement(snapshot, constraint.assetElementId);
         const right = centreOfElement(snapshot, constraint.targetElementId);
-        if (left === undefined || right === undefined) continue;
+        if (left === undefined || right === undefined) return undefined;
         const distance = Math.abs(left.xMm - right.xMm) + Math.abs(left.yMm - right.yMm);
         results.push({
           constraintId: constraint.id,
@@ -681,9 +542,17 @@ function constraintResults(
       }
     }
   }
-  return results.some(({ passed, strength }) => strength === "hard" && !passed)
-    ? undefined
-    : results.sort((left, right) => compareStrings(left.constraintId, right.constraintId));
+  const sorted = results.sort((left, right) =>
+    compareStrings(left.constraintId, right.constraintId),
+  );
+  if (
+    sorted.length !== constraints.length ||
+    new Set(sorted.map(({ constraintId }) => constraintId)).size !== constraints.length ||
+    sorted.some(({ passed, strength }) => strength === "hard" && !passed)
+  ) {
+    return undefined;
+  }
+  return sorted;
 }
 
 function semanticOperation(
@@ -829,8 +698,8 @@ function evaluateCandidate(
     keepOutPolygons,
   );
   if (!("containmentPassed" in spatial)) return spatial;
-  const results = constraintResults(constraints, reduced.snapshot, template, spatial);
-  if (results === undefined) return candidateFailure("RETAINED_ELEMENT_CHANGED");
+  const results = constraintResults(constraints, reduced.snapshot, spatial);
+  if (results === undefined) return candidateFailure("HARD_CONSTRAINT_FAILED");
   const assetPlacements = template.assetPlacements
     .map((placement) => {
       const asset = assetValidation.assetsByElement.get(placement.elementId);
@@ -944,17 +813,39 @@ function candidateFailureResult(
   return parseFailure(truncated ? "RESOURCE_LIMIT" : code, "search");
 }
 
+function constraintRequest(
+  request: ParsedDesignEngineRequest,
+): DeterministicDesignConstraintRequest {
+  return {
+    acceptedBrief: request.acceptedBrief,
+    acceptedBriefContentSha256: request.acceptedBriefContentSha256,
+    briefConstraintFacts: request.briefConstraintFacts,
+    finishTargets: request.finishTargets,
+    keepOuts: request.keepOuts,
+    sourceModel: request.sourceModel,
+    sourceSnapshot: request.sourceSnapshot,
+    systemPolicy: {
+      boundaryTouch: request.configuration.boundaryTouch,
+      schemaVersion: request.configuration.schemaVersion,
+    },
+    workingModel: request.workingModel,
+    workingSnapshot: request.workingSnapshot,
+  };
+}
+
 function runValidatedDesignEngine(input: unknown): DeterministicDesignEngineResult {
   const parsed = parseDesignEngineRequest(input);
   if ("abstention" in parsed) return parsed;
-  const request = parsed;
-  if (resourceLimitExceeded(request)) return parseFailure("RESOURCE_LIMIT", "validate");
-  const pins = validateSourcePins(request);
-  if ("abstention" in pins) return pins;
-  const missingGeometry = validateKnownBaseGeometry(request);
-  if (missingGeometry !== undefined) return missingGeometry;
-  const policyGeometry = validatePolicyGeometry(request);
-  if ("abstention" in policyGeometry) return policyGeometry;
+  const frozenInput = constraintRequest(parsed);
+  const derived = deriveDeterministicDesignConstraints(frozenInput);
+  if (!derived.ok) return derived;
+  const validated = validateConstraintContext(frozenInput);
+  if ("abstention" in validated) return validated;
+  const request: ParsedDesignEngineRequest = {
+    ...parsed,
+    sourceSnapshot: validated.request.sourceSnapshot,
+    workingSnapshot: validated.request.workingSnapshot,
+  };
   const templates = [...request.candidateTemplates].sort((left, right) => {
     const semantic = compareStrings(templateSearchKey(left), templateSearchKey(right));
     return semantic === 0
@@ -964,8 +855,6 @@ function runValidatedDesignEngine(input: unknown): DeterministicDesignEngineResu
   const searchTruncated = templates.length > request.configuration.candidateBudget;
   const evaluatedTemplates = templates.slice(0, request.configuration.candidateBudget);
   const searchRequest = { ...request, candidateTemplates: evaluatedTemplates };
-  const derived = deriveConstraints(searchRequest);
-  if (!derived.ok) return { abstention: derived.abstention, ok: false };
   const assetSetSha256 = sha256Canonical(
     [...request.assets].sort((left, right) => compareStrings(left.versionId, right.versionId)),
   );
@@ -978,7 +867,7 @@ function runValidatedDesignEngine(input: unknown): DeterministicDesignEngineResu
     requestedDirections: [...request.requestedDirections].sort(compareStrings),
     requestedOptionCount: request.requestedOptionCount,
     schemaVersion: request.configuration.schemaVersion,
-    workingSnapshotSha256: pins.workingSnapshotSha256,
+    workingSnapshotSha256: validated.workingSnapshotSha256,
   });
   const rejections = new Map<CandidateRejectionCode, number>();
   const valid: CandidateEvaluationArtifacts[] = [];
@@ -987,7 +876,7 @@ function runValidatedDesignEngine(input: unknown): DeterministicDesignEngineResu
       searchRequest,
       derived.constraints,
       template,
-      policyGeometry,
+      validated.keepOutPolygons,
     );
     if (evaluated.ok) valid.push(evaluated);
     else rejections.set(evaluated.code, (rejections.get(evaluated.code) ?? 0) + 1);

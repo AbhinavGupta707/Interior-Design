@@ -4,7 +4,6 @@ import {
   designConstraintSchema,
   type CanonicalHomeSnapshot,
   type DesignConstraint,
-  type InteriorAssetRef,
 } from "@interior-design/contracts";
 
 import { compareStrings, deterministicUuid, sha256Canonical, sortedUnique } from "./canonical.js";
@@ -12,8 +11,7 @@ import type {
   DerivedConstraintSet,
   DesignEngineAbstention,
   DesignEngineAbstentionCode,
-  DesignCandidateTemplate,
-  ParsedDesignEngineRequest,
+  ParsedDesignConstraintRequest,
 } from "./types.js";
 
 export interface ConstraintDerivationFailure {
@@ -85,146 +83,36 @@ function constraint(value: ConstraintWithoutIdentity): DesignConstraint {
   return parsed.data;
 }
 
-function assetForPlacement(
-  template: DesignCandidateTemplate,
-  elementId: string,
-  assetsByVersion: ReadonlyMap<string, InteriorAssetRef>,
-): InteriorAssetRef | undefined {
-  const placement = template.assetPlacements.find((candidate) => candidate.elementId === elementId);
-  return placement === undefined ? undefined : assetsByVersion.get(placement.assetVersionId);
+function hasComputableCentre(snapshot: CanonicalHomeSnapshot, elementId: string): boolean {
+  const furnishing = snapshot.elements.furnishings.find(({ id }) => id === elementId);
+  if (furnishing !== undefined) return furnishing.placement.position.knowledge === "known";
+  const fixed = snapshot.elements.fixedObjects.find(({ id }) => id === elementId);
+  if (fixed !== undefined) return fixed.placement.position.knowledge === "known";
+  const light = snapshot.elements.lights.find(({ id }) => id === elementId);
+  return light?.position.knowledge === "known";
 }
 
-function candidatePlacementConstraints(
-  request: ParsedDesignEngineRequest,
-): readonly DesignConstraint[] {
-  const assetsByVersion = new Map(request.assets.map((asset) => [asset.versionId, asset]));
-  const constraints: DesignConstraint[] = [];
-  for (const template of request.candidateTemplates) {
-    const furnishingIds: string[] = [];
-    for (const placement of template.assetPlacements) {
-      const asset = assetForPlacement(template, placement.elementId, assetsByVersion);
-      if (asset?.kind === "finish") {
-        const operation = template.operations.find(
-          (
-            candidate,
-          ): candidate is Extract<
-            (typeof template.operations)[number],
-            { readonly type: "design.element.create.v1" | "design.element.replace.v1" }
-          > =>
-            (candidate.type === "design.element.create.v1" ||
-              candidate.type === "design.element.replace.v1") &&
-            candidate.element.id === placement.elementId &&
-            candidate.element.elementType === "finish",
-        );
-        const targetElementId =
-          operation?.element.elementType === "finish"
-            ? operation.element.targetElementId
-            : undefined;
-        const target = allElements(request.workingSnapshot).find(
-          ({ id }) => id === targetElementId,
-        );
-        if (target !== undefined && operation?.element.elementType === "finish") {
-          constraints.push(
-            constraint({
-              expectedElementSha256: sha256Canonical(target),
-              kind: "retain-element",
-              label: "Retain exact valid finish target content",
-              retainedElementId: target.id,
-              schemaVersion: c12DesignConstraintSchemaVersion,
-              source: source("system-geometry-policy", [], [target.id]),
-              strength: "hard",
-            }),
-          );
-        }
-        continue;
-      }
-      if (asset?.kind === "light") {
-        const operation = template.operations.find(
-          (
-            candidate,
-          ): candidate is Extract<
-            (typeof template.operations)[number],
-            { readonly type: "design.element.create.v1" | "design.element.replace.v1" }
-          > =>
-            (candidate.type === "design.element.create.v1" ||
-              candidate.type === "design.element.replace.v1") &&
-            candidate.element.id === placement.elementId &&
-            candidate.element.elementType === "light",
-        );
-        const levelId =
-          operation?.element.elementType === "light" ? operation.element.levelId : undefined;
-        const level = request.workingSnapshot.elements.levels.find(({ id }) => id === levelId);
-        if (level !== undefined) {
-          constraints.push(
-            constraint({
-              expectedElementSha256: sha256Canonical(level),
-              kind: "retain-element",
-              label: "Retain exact light host level content",
-              retainedElementId: level.id,
-              schemaVersion: c12DesignConstraintSchemaVersion,
-              source: source("system-geometry-policy", [], [level.id]),
-              strength: "hard",
-            }),
-          );
-        }
-        continue;
-      }
-      if (asset?.kind !== "furnishing" || placement.spaceId === undefined) continue;
-      furnishingIds.push(placement.elementId);
-      constraints.push(
-        constraint({
-          assetElementIds: [placement.elementId],
-          kind: "space-containment",
-          label: "Complete clearance footprint inside assigned room",
-          schemaVersion: c12DesignConstraintSchemaVersion,
-          source: source("system-geometry-policy", [], [placement.spaceId]),
-          spaceId: placement.spaceId,
-          strength: "hard",
-        }),
-      );
-      const clearances = asset.placementPolicy.clearanceMm;
-      constraints.push(
-        constraint({
-          assetElementIds: [placement.elementId],
-          clearanceMm: Math.max(
-            clearances.back,
-            clearances.front,
-            clearances.left,
-            clearances.right,
-          ),
-          kind: "minimum-clearance",
-          label: "Exact retained per-side placement-policy clearance",
-          schemaVersion: c12DesignConstraintSchemaVersion,
-          scope: "all-sides",
-          source: source("system-geometry-policy", [], [placement.elementId]),
-          strength: "hard",
-        }),
-      );
-    }
-    const collidableIds = sortedUnique([
-      ...furnishingIds,
-      ...request.workingSnapshot.elements.fixedObjects.map(({ id }) => id),
-      ...request.workingSnapshot.elements.furnishings.map(({ id }) => id),
-    ]);
-    for (let offset = 0; offset < collidableIds.length; offset += 50) {
-      const group = collidableIds.slice(offset, offset + 50);
-      if (group.length < 2) continue;
-      constraints.push(
-        constraint({
-          assetElementIds: group,
-          kind: "no-overlap",
-          label: "No furnishing or fixed-object footprint overlap",
-          schemaVersion: c12DesignConstraintSchemaVersion,
-          source: source("system-geometry-policy", [], group),
-          strength: "hard",
-        }),
-      );
-    }
-  }
-  return constraints;
+function systemRetainedElements(
+  request: ParsedDesignConstraintRequest,
+): readonly { readonly id: string }[] {
+  const candidates = [
+    ...request.workingSnapshot.elements.levels,
+    ...request.workingSnapshot.elements.spaces,
+    ...request.workingSnapshot.elements.fixedObjects,
+  ];
+  return [...new Map(candidates.map((element) => [element.id, element])).values()].sort(
+    (left, right) => compareStrings(left.id, right.id),
+  );
 }
 
-export function deriveConstraints(request: ParsedDesignEngineRequest): ConstraintDerivationResult {
+function systemPolicyLabel(request: ParsedDesignConstraintRequest): string {
+  const touch = request.systemPolicy.boundaryTouch;
+  return `room:${touch.room};obstacle:${touch.obstacle};keep-out:${touch.keepOut}`;
+}
+
+export function deriveConstraints(
+  request: ParsedDesignConstraintRequest,
+): ConstraintDerivationResult {
   const elements = new Map(
     allElements(request.workingSnapshot).map((element) => [element.id, element]),
   );
@@ -296,15 +184,13 @@ export function deriveConstraints(request: ParsedDesignEngineRequest): Constrain
         break;
       }
       case "minimum-clearance":
-        if (fact.assetElementIds.some((elementId) => !elements.has(elementId))) {
-          const candidateElementIds = new Set(
-            request.candidateTemplates.flatMap((template) =>
-              template.assetPlacements.map(({ elementId }) => elementId),
-            ),
-          );
-          if (fact.assetElementIds.some((elementId) => !candidateElementIds.has(elementId))) {
-            return abstention("CONTRADICTORY_REQUIREMENT");
-          }
+        if (
+          fact.assetElementIds.some(
+            (elementId) =>
+              !request.workingSnapshot.elements.furnishings.some(({ id }) => id === elementId),
+          )
+        ) {
+          return abstention("UNSUPPORTED_HARD_REQUIREMENT", ["insufficient-evidence"]);
         }
         constraints.push(
           constraint({
@@ -320,7 +206,12 @@ export function deriveConstraints(request: ParsedDesignEngineRequest): Constrain
         );
         break;
       case "adjacency-objective":
-        if (!elements.has(fact.targetElementId)) return abstention("CONTRADICTORY_REQUIREMENT");
+        if (
+          !hasComputableCentre(request.workingSnapshot, fact.assetElementId) ||
+          !hasComputableCentre(request.workingSnapshot, fact.targetElementId)
+        ) {
+          return abstention("UNSUPPORTED_HARD_REQUIREMENT", ["insufficient-evidence"]);
+        }
         constraints.push(
           constraint({
             assetElementId: fact.assetElementId,
@@ -340,11 +231,39 @@ export function deriveConstraints(request: ParsedDesignEngineRequest): Constrain
         break;
     }
   }
+  for (const retained of systemRetainedElements(request)) {
+    constraints.push(
+      constraint({
+        expectedElementSha256: sha256Canonical(retained),
+        kind: "retain-element",
+        label: `Retain exact common canonical geometry; ${systemPolicyLabel(request)}`,
+        retainedElementId: retained.id,
+        schemaVersion: c12DesignConstraintSchemaVersion,
+        source: source("system-geometry-policy", [], [retained.id]),
+        strength: "hard",
+      }),
+    );
+  }
+  for (const finishTarget of request.finishTargets) {
+    const retained = elements.get(finishTarget.targetElementId);
+    if (retained === undefined) return abstention("CONTRADICTORY_REQUIREMENT");
+    constraints.push(
+      constraint({
+        expectedElementSha256: sha256Canonical(retained),
+        kind: "retain-element",
+        label: `Retain common finish host; allowed faces: ${finishTarget.allowedFaces.join(",")}`,
+        retainedElementId: retained.id,
+        schemaVersion: c12DesignConstraintSchemaVersion,
+        source: source("system-geometry-policy", [], [retained.id]),
+        strength: "hard",
+      }),
+    );
+  }
   for (const keepOut of request.keepOuts) {
     constraints.push(
       constraint({
         kind: "keep-out-polygon",
-        label: "Explicit immutable keep-out polygon",
+        label: `Explicit immutable keep-out polygon; touch:${request.systemPolicy.boundaryTouch.keepOut}`,
         levelId: keepOut.levelId,
         polygon: keepOut.polygon.map((point) => ({ ...point })),
         schemaVersion: c12DesignConstraintSchemaVersion,
@@ -354,7 +273,6 @@ export function deriveConstraints(request: ParsedDesignEngineRequest): Constrain
       }),
     );
   }
-  constraints.push(...candidatePlacementConstraints(request));
   const unique = new Map(constraints.map((entry) => [entry.id, entry]));
   const sorted = [...unique.values()].sort((left, right) => compareStrings(left.id, right.id));
   if (sorted.length < 1 || sorted.length > c12OptionPolicy.maximumConstraints) {
