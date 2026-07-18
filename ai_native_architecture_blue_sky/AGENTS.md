@@ -4,10 +4,14 @@
 
 This repository defines an AI-native, full-stack residential architecture and renovation platform. The first executable objective is a provenance-aware plan-to-3D model and controlled design workspace, not autonomous construction.
 
+The controlling implementation scope is `docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`. It supersedes conflicting exclusions, sequencing and checkpoint numbers in older dossier files. The active checkpoint contract and orchestration ledger are authoritative for the current worker.
+
 ## Read order
 
 - `README.md`
 - `DECISIONS.md`
+- `docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
+- the active checkpoint contract and `../docs/orchestration/LEDGER.md`
 - `15_CODEX_CLAUDE_IMPLEMENTATION_BRIEF.md`
 - `06_CANONICAL_HOME_MODEL_AND_SYSTEM_ARCHITECTURE.md`
 - `16_API_AND_DOMAIN_SCHEMA_REFERENCE.md`

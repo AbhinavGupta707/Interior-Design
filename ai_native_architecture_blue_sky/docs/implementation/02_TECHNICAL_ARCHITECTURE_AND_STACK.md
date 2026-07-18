@@ -1,5 +1,7 @@
 # Production Technical Architecture and Stack
 
+> **Active-scope notice — 2026-07-18:** this architecture record predates the Complete Home Design System amendment. `08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md` controls whenever older M1/post-M1 or photoreal/video scope statements differ. The safety separation remains binding: deterministic geometry is authoritative, while enhanced images/video are derived, visibly labelled and never dimensional truth.
+
 ## 1. Architecture principles
 
 1. **The canonical model is authoritative.** UI state, renders, AI text and provider records are projections or evidence.

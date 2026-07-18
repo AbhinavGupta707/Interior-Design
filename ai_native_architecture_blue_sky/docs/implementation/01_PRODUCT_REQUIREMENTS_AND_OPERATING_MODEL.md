@@ -1,5 +1,7 @@
 # Product Requirements and Operating Model
 
+> **Active-scope notice — 2026-07-18:** this document predates the Complete Home Design System amendment. Where its M1 exclusions or sequencing conflict with `08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`, the active plan controls. Native capture, full-house reconstruction, interior-design options, geometry-safe stills and deterministic/enhanced design video are now active M1 scope, subject to the evidence and professional-boundary rules retained here.
+
 ## 1. Product definition
 
 ### 1.1 Problem

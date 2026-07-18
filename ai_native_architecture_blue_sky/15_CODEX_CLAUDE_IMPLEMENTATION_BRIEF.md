@@ -7,6 +7,8 @@ as_of: 2026-07-16
 
 # 15 — Codex and Claude Code Implementation Brief
 
+> **Historical implementation brief — 2026-07-18:** use `docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md` and the active checkpoint contract for execution. This brief's narrower exclusions and checkpoint assumptions have been superseded; its invariant, security and code-quality guidance remains applicable where compatible.
+
 ## 1. Mission for implementation agents
 
 Build the first trustworthy technical spine of an AI-native residential architecture platform. The initial system must take a UK property, source evidence, and a floor plan; create a versioned semantic model; allow controlled design edits; and produce a consistent 2D/3D result with complete provenance.

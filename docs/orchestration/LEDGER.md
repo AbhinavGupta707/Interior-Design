@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C10 are complete. C10 is the terminal user-authorised checkpoint; no C11 work may begin.
+- Autonomous execution boundary: C0-C10 are complete. The user subsequently authorised strict sequential execution of C11-C15; C11 is active, C15 is terminal and C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -431,3 +431,33 @@
 - Independent scene security passed 11/11. Browser semantics passed 5 with 2 actual-canvas skips across Chromium, Firefox and WebKit. The two desktop/mobile performance cases were skipped because the host reported a WebGL major caveat, so no numeric GPU claim is made. The in-app Browser failed before tab creation with `Cannot redefine property: process`; Playwright is the recorded fallback evidence.
 - Physical RoomPlan, genuine C8 COLMAP/Open3D/neural/CUDA execution, actual hardware-GPU performance, representative-home accuracy, cloud-provider delivery and professional review remain exactly `NOT RUN`. They are release/field evidence and are not missing scene architecture. No paid service, key, customer data or training permission was used.
 - Durable evidence: `docs/evaluation/viewer/C10_L3_ACCEPTANCE_2026-07-17.md`. C10 terminates the authorised programme; no C11 checkpoint is open.
+
+## C11 — Interior-design brief and agency workspace
+
+### Master activation
+
+- Status: prelude active; implementation lanes not yet launched
+- Subsequent authority: user authorised sequential C11-C15 execution on 2026-07-18 after the accepted C10 closure; C10's terminal statement above remains a truthful record of its closure-time boundary
+- Continuation control: `docs/orchestration/C11_C15_CONTINUATION.md`; C15 is terminal and C16 is not authorised
+- Contract: `docs/orchestration/checkpoints/C11_CONTRACT.md` (`c11-design-brief-v1`, `c11-brief-revision-v1`, `c11-consultation-session-v1`, `c11-brief-patch-proposal-v1`, `c11-reference-board-v1`)
+- Immutable predecessor: `2cfa04772493b8fd60446edf9dc75fced7b5557b`
+- Planned lanes: three, retained adaptively because attributable revisioned brief persistence, adversarial bounded model tooling and independent cross-surface consultation acceptance have clean exclusive ownership boundaries
+- Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning, recorded before launch because all three lanes include security, provenance, concurrency or adversarial integration work
+- Provider/data policy: deterministic local adapter and synthetic rights-cleared fixtures only; every external LLM/media provider is disabled, no customer data or training permission is used and accessibility/health/household content is excluded from logs
+- Mutation policy: C11 proposals are expiring typed brief patches only; explicit authorised confirmation and optimistic revision checks are mandatory, and no C4/C5/C9/C10 mutation is reachable
+
+| Lane                              | Task/thread | Model / reasoning       | Worker SHA | Merge SHA | State        | Exclusive roots                                                                             |
+| --------------------------------- | ----------- | ----------------------- | ---------- | --------- | ------------ | ------------------------------------------------------------------------------------------- |
+| C11-L1 brief domain/persistence   | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | design-brief package; platform briefs module/tests; migration `0011`; runbook               |
+| C11-L2 bounded design agent       | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | model-gateway package; platform design-agent module/tests; C11 threat model                 |
+| C11-L3 consultation UX/acceptance | pending     | `gpt-5.6-sol` / `xhigh` | pending    | pending   | not launched | isolated consultation web/BFF/tests; brief-assistant evaluation/security/E2E/evidence paths |
+
+### Prelude decisions
+
+- The active `08` plan now explicitly controls every conflicting historical scope/checkpoint statement. The historical post-M1 roadmap labels its reused C11-C19 identifiers non-executable, and stale product/architecture/agent briefs carry scope notices.
+- DQ-021 is conservatively frozen for this continuation: no outbound provider. The exact local adapter manifest records `externalNetworkUsed: false`; professional, regulatory, structural, cost-certainty, clinical-accessibility and live-availability questions route to typed review.
+- Shared C11 schemas freeze explicit preference/constraint/evidence/assertion/inference/conflict/unknown classification, attributable provenance, reference rights/hash linkage, bounded revisions/patches/sessions and exact routes. The authz registry freezes eight C11 actions before worker launch.
+- Migration `0011_design_briefs.sql` is reserved exclusively for C11-L1. Shared contracts/authz, the migration registry, root/workspace manifests and lockfile, central platform/web composition, accepted contract and ledger remain orchestrator-owned.
+- Preflight removed the only material future-runtime blocker before launch: Homebrew installed Blender 5.2.0 LTS and a real unsandboxed `--background --factory-startup` Eevee run produced a visually inspected 256×256 PNG (`0bae64fb860104596ef9f4a1ab68e176f3c6635fefe4aaf6fd322b1a2235ee20`). The sandboxed binary had crashed and is not counted; the host run is the evidence. FFmpeg/ffprobe 8.1, Xcode 26.4 and all Playwright engines remain available, while CUDA/NVIDIA and external media providers remain unavailable.
+- Obsolete C9/C10 managed worktrees were archived; only the primary worktree remains. Obsolete C6 gate containers were stopped without deleting volumes, then the standard repository PostGIS/object-storage/Temporal stack started healthy and passed its complete healthcheck.
+- `UV_CACHE_DIR=.cache/uv pnpm verify` passed formatting, all 15 package lint/typecheck/unit/build pipelines, Ruff, strict mypy and 117 Python tests with two explicitly unavailable COLMAP/Open3D runtime skips. The C11 shared contract passes 8 focused cases; the complete contract package passes 65 and authz passes 447, while the independent identity matrix passes 705. `git diff --check` is clean.

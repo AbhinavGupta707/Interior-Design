@@ -1,6 +1,6 @@
 # Historical Post-M1 and GPU Roadmap
 
-> **Scope amendment — 2026-07-17:** native iOS capture, plan/photo/video reconstruction and fusion, neural appearance research, interior-design options, photoreal stills and design video have moved into the active M1 programme in `08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`. The corresponding M2 and G0–G5 material below remains useful technical rationale, but it is not a separate active implementation plan. Post-M1 now begins with regulated professional/approval services and later procurement/delivery responsibility.
+> **Historical identifiers — do not execute:** native iOS capture, plan/photo/video reconstruction and fusion, neural appearance research, interior-design options, photoreal stills and design video have moved into the active M1 programme in `08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`. Every `C11`–`C19` label below is a legacy roadmap identifier, not an active checkpoint. The corresponding M2 and G0–G5 material remains technical rationale only. Post-M1 now begins with regulated professional/approval services and later procurement/delivery responsibility.
 
 ## 1. Principle
 

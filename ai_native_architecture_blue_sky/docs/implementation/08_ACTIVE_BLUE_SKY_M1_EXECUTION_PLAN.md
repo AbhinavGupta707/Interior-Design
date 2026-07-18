@@ -2,7 +2,7 @@
 
 ## 1. Status and controlling intent
 
-This is the single active implementation plan. It supersedes the narrower foundation-only execution sequence in `03_M1_CHECKPOINTED_WORKTREE_PLAN.md`.
+This is the single active implementation plan. It supersedes the narrower foundation-only execution sequence in `03_M1_CHECKPOINTED_WORKTREE_PLAN.md` and every conflicting scope statement or checkpoint number in the earlier dossier, including `01_PRODUCT_REQUIREMENTS_AND_OPERATING_MODEL.md`, `02_TECHNICAL_ARCHITECTURE_AND_STACK.md`, `04_POST_M1_AND_GPU_ROADMAP.md` and `15_CODEX_CLAUDE_IMPLEMENTATION_BRIEF.md`. Those files remain historical rationale; workers must use this plan plus the active checkpoint contract when scopes differ.
 
 M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its target user moment is:
 
@@ -285,9 +285,9 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 | Lane | Exclusive paths | Output and evidence |
 |---|---|---|
 | C14-L1 render-scene builder | `packages/render-scene/**` | canonical-to-Blender scene/material/camera/light manifest and deterministic fixtures |
-| C14-L2 Blender renderer | `workers/blender-renderer/**` | headless Eevee/Cycles jobs, Metal/CPU/CUDA device profiles, denoise and output manifests |
+| C14-L2 Blender renderer and durable render product | `workers/blender-renderer/**`, isolated platform render module/migration, spatial orchestration and storage paths | headless Eevee/Cycles jobs, Metal/CPU/CUDA device profiles, tenant-safe fenced jobs, denoise, immutable artifacts and output manifests |
 | C14-L3 enhancement adapter | `services/inference-worker/src/image-enhancement/**` | depth/normal/segmentation-conditioned optional enhancement/inpainting with provenance |
-| C14-L4 visual evaluation | `tests/evaluation/render-stills/**`, `tests/performance/rendering/**` | geometry-mask/camera/product consistency, perceptual regressions, time/memory tests |
+| C14-L4 render UX and independent visual evaluation | isolated web render-stills routes/features/tests plus `tests/{evaluation,performance,security,e2e}/render-stills/**` | generate/status/view/compare/failure UX, geometry-mask/camera/product consistency, perceptual regressions, accessibility and time/memory tests |
 
 **Gate:** a geometry-safe render always accompanies enhanced media; enhancements cannot move protected geometry unnoticed; jobs reproduce from a manifest.
 
@@ -297,8 +297,8 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 
 | Lane | Exclusive paths | Output and evidence |
 |---|---|---|
-| C15-L1 path/animation | `packages/camera-path/**`, `apps/web/src/features/video-path/**` | path editor/templates, collision/comfort checks, keyframes and preview |
-| C15-L2 frames/encode | `workers/blender-renderer/src/video/**`, `services/spatial-worker/src/video-encode/**` | deterministic frames, FFmpeg encode, resume/checkpoint and render manifest |
+| C15-L1 path/animation and authoring UX | `packages/camera-path/**`, isolated web video-path/studio routes/features/tests | path editor/templates, collision/comfort checks, keyframes, preview and accessible status/playback authoring |
+| C15-L2 durable video product, frames and encode | `workers/blender-renderer/src/video/**`, `services/spatial-worker/src/video-encode/**`, isolated platform video module/migration/storage/tests | tenant-safe fenced jobs, deterministic frames, FFmpeg encode, resume/checkpoint, immutable artifacts and render manifest |
 | C15-L3 enhancement/narration | `services/inference-worker/src/video-enhancement/**`, `services/platform-api/src/modules/narration/**` | optional temporal enhancement, voice/captions/music rights and provenance |
 | C15-L4 temporal/e2e QA | `tests/evaluation/video/**`, `tests/e2e/video/**` | geometry/camera/product/temporal consistency, accessibility, interruption and status comprehension |
 
