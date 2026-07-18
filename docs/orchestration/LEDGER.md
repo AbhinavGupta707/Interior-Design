@@ -530,16 +530,20 @@
 - Contract: `docs/orchestration/checkpoints/C13_CONTRACT.md` (`c13-catalog-artifact-v1`, `c13-catalog-rights-record-v1`, `c13-catalog-asset-version-v1`, `c13-catalog-release-v1`, `c13-specification-v1`, `c13-specification-revision-v1`, `c13-substitution-preview-v1`, `c13-substitution-confirmation-v1`)
 - Immutable predecessor/C12 ledger close: `c8f266e68fdd31402d49a9f12b80b5af21644ae6`
 - Prelude commit: `2a833ffc4d7ad17d8bc8692cc331b4aacb7aca9f`
+- Frozen worker base/activation: `ab9498dc45c45de8f6a155227ab01a6fb0203a6b`
 - Planned lanes: three, retained adaptively because hostile/right-sensitive asset ingestion, transactional C5/specification persistence with forced RLS, and independent cross-surface exact-version acceptance have clean exclusive ownership boundaries
 - Worker runtime: every lane will use exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because all three lanes include untrusted artifacts/licensing, concurrency/security or cross-domain C5/C10/browser integration.
 - Provider/data policy: creator-authored generic local assets and deterministic local workers only; no runtime URL ingestion, external provider, paid service, customer data, training permission, live price, supplier or availability source is activated
 - Mutation policy: C13 projects one exact confirmed C12 option into immutable specification revisions. Previews are non-canonical and labelled bounded; only an explicit owner/editor confirmation may reuse `design.element.replace.v1` on the exact proposed branch, after which C10 may compile the committed result.
 
-| Lane                           | Task/thread  | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                          |
-| ------------------------------ | ------------ | ----------------------- | ---------- | --------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| C13-L1 catalog pipeline        | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | catalog package; isolated catalog worker/API/tests/security/runbook paths                                |
-| C13-L2 specification domain    | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | specification package; isolated specification API/tests; migration `0013`; security/runbook/threat paths |
-| C13-L3 selection UX/acceptance | not launched | `gpt-5.6-sol` / `xhigh` | —          | —         | frozen | isolated materials-products web/BFF/tests and specification evaluation/performance/E2E paths             |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                          |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| C13-L1 catalog pipeline        | `019f73ea-d766-7ab1-b710-e022028ced42` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | catalog package; isolated catalog worker/API/tests/security/runbook paths                                |
+| C13-L2 specification domain    | `019f73ea-d765-7350-a7ff-1e4ff326dfd6` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | specification package; isolated specification API/tests; migration `0013`; security/runbook/threat paths |
+| C13-L3 selection UX/acceptance | `019f73ea-d766-7ab1-b710-e04953fa3191` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | isolated materials-products web/BFF/tests and specification evaluation/performance/E2E paths             |
+
+- Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/c9ff/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/0a74/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/cd11/Interior Design`.
+- Provisioning client IDs: L1 `client-new-thread:f04178cc-e480-45c4-928b-6029b5d85e7b`; L2 `client-new-thread:b9a12174-b879-45bb-897e-a2af6c8d2500`; L3 `client-new-thread:91a5c60f-bb02-4cbf-9fde-5859b8d6a12f`.
 
 ### Prelude decisions
 
