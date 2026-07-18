@@ -16,6 +16,7 @@ import { sceneClient, SceneProblem } from "./api";
 import { detectViewerCapabilities } from "./capabilities";
 import type { ViewerCapabilities } from "./capabilities";
 import type { SceneWorkspace as Workspace } from "./contracts";
+import { selectedSceneJobId } from "./deep-link";
 import { DomSceneFallback, ElementInspector, ElementList } from "./dom-fallback";
 import {
   canCancelScene,
@@ -149,11 +150,7 @@ export function ViewerWorkspace({
         setWorkspace(next);
         const exactJobAvailable =
           initialJobId !== undefined && next.jobs.some(({ id }) => id === initialJobId);
-        setSelectedJobId((current) => {
-          if (current !== undefined && next.jobs.some(({ id }) => id === current)) return current;
-          if (exactJobAvailable) return initialJobId;
-          return next.jobs[0]?.id;
-        });
+        setSelectedJobId((current) => selectedSceneJobId(next.jobs, current, initialJobId));
         if (initialJobId !== undefined && !exactJobAvailable) {
           setAlert(
             "The requested exact scene job is not available for this project. No substitute scene was presented as that result.",

@@ -12,3 +12,15 @@ export function exactSceneJobFromSearchParams(params: ViewerSearchParams): strin
 export function exactSceneJobHref(projectId: string, sceneJobId: string): string {
   return `/viewer/${encodeURIComponent(projectId)}?${new URLSearchParams({ jobId: sceneJobId }).toString()}`;
 }
+
+export function selectedSceneJobId(
+  jobs: readonly Readonly<{ readonly id: string }>[],
+  currentJobId: string | undefined,
+  exactJobId: string | undefined,
+): string | undefined {
+  if (currentJobId !== undefined && jobs.some(({ id }) => id === currentJobId)) {
+    return currentJobId;
+  }
+  if (exactJobId !== undefined && jobs.some(({ id }) => id === exactJobId)) return exactJobId;
+  return jobs[0]?.id;
+}
