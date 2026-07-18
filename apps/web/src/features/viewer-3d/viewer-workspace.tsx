@@ -108,7 +108,13 @@ function fallbackCode(reason: unknown): SceneFallbackCode {
   return "integrity";
 }
 
-export function ViewerWorkspace({ projectId }: { readonly projectId: string }) {
+export function ViewerWorkspace({
+  initialJobId,
+  projectId,
+}: {
+  readonly initialJobId?: string;
+  readonly projectId: string;
+}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
   const [workspace, setWorkspace] = useState<Workspace>();
   const [selectedJobId, setSelectedJobId] = useState<string>();
@@ -141,9 +147,18 @@ export function ViewerWorkspace({ projectId }: { readonly projectId: string }) {
       try {
         const next = await sceneClient.loadWorkspace(projectId);
         setWorkspace(next);
-        setSelectedJobId((current) =>
-          next.jobs.some(({ id }) => id === current) ? current : next.jobs[0]?.id,
-        );
+        const exactJobAvailable =
+          initialJobId !== undefined && next.jobs.some(({ id }) => id === initialJobId);
+        setSelectedJobId((current) => {
+          if (current !== undefined && next.jobs.some(({ id }) => id === current)) return current;
+          if (exactJobAvailable) return initialJobId;
+          return next.jobs[0]?.id;
+        });
+        if (initialJobId !== undefined && !exactJobAvailable) {
+          setAlert(
+            "The requested exact scene job is not available for this project. No substitute scene was presented as that result.",
+          );
+        }
         setSelectedSnapshotId((current) =>
           next.snapshots.some(({ snapshotId }) => snapshotId === current)
             ? current
@@ -157,7 +172,7 @@ export function ViewerWorkspace({ projectId }: { readonly projectId: string }) {
         setBusy(undefined);
       }
     },
-    [projectId],
+    [initialJobId, projectId],
   );
 
   useEffect(() => {
