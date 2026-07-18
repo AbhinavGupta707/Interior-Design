@@ -65,6 +65,10 @@ describe("C12 option semantics", () => {
     expect(rendered).toContain(confirmationA.branchId);
     expect(rendered).toContain(confirmationA.commitId);
     expect(rendered).toContain(confirmationA.resultSnapshotSha256);
+    expect(rendered).toContain("Build the room specification");
+    expect(rendered).toContain(
+      `/materials-products/${confirmationA.projectId}?confirmationId=${confirmationA.id}`,
+    );
   });
 
   it("counts UUID and narrative changes as zero semantic diversity", () => {

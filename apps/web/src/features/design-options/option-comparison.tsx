@@ -5,7 +5,7 @@ import type {
   OptionJob,
 } from "@interior-design/contracts";
 
-import { ActionButton } from "../../components/ui-primitives";
+import { ActionButton, ActionLink } from "../../components/ui-primitives";
 import {
   basisPointsLabel,
   millimetresLabel,
@@ -275,6 +275,11 @@ function OptionColumn({
                 </dd>
               </div>
             </dl>
+            <ActionLink
+              href={`/materials-products/${encodeURIComponent(confirmation.projectId)}?${new URLSearchParams({ confirmationId: confirmation.id }).toString()}`}
+            >
+              Build the room specification
+            </ActionLink>
           </div>
         ) : (
           <>
