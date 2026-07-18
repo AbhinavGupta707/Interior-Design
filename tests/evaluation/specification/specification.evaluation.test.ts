@@ -55,7 +55,20 @@ describe("C13 independent specification language evaluation", () => {
   it("uses bounded pre-confirmation language and an exact post-confirmation scene seam", () => {
     expect(previewTruth()).toContain("bounded catalog preview");
     expect(previewTruth(preview)).toContain("not canonical");
-    expect(previewSource).toContain("/viewer/${projectId}?jobId=${confirmation.sceneJobId}");
+    const sceneStateStart = previewSource.indexOf(
+      '{confirmation.sceneRequestState === "requested" ? (',
+    );
+    const sceneStateEnd = previewSource.indexOf("\n        </div>", sceneStateStart);
+    const [requestedStateSource, retryRequiredSource] = previewSource
+      .slice(sceneStateStart, sceneStateEnd)
+      .split(") : (");
+    expect(sceneStateStart).toBeGreaterThanOrEqual(0);
+    expect(sceneStateEnd).toBeGreaterThan(sceneStateStart);
+    expect(requestedStateSource).toContain(
+      "/viewer/${projectId}?jobId=${confirmation.confirmation.sceneJobId}",
+    );
+    expect(retryRequiredSource).toContain("Retry exact scene");
+    expect(retryRequiredSource).not.toContain("<Link");
     expect(workspaceSource).toContain('data-existing-mutations="0"');
     expect(workspaceSource).toContain('data-as-built-mutations="0"');
   });
