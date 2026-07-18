@@ -441,7 +441,7 @@
 - Continuation control: `docs/orchestration/C11_C15_CONTINUATION.md`; C15 is terminal and C16 is not authorised
 - Contract: `docs/orchestration/checkpoints/C11_CONTRACT.md` (`c11-design-brief-v1`, `c11-brief-revision-v1`, `c11-consultation-session-v1`, `c11-brief-patch-proposal-v1`, `c11-reference-board-v1`)
 - Immutable predecessor: `2cfa04772493b8fd60446edf9dc75fced7b5557b`
-- Prelude commit and frozen worker base: `bd578780e4d805b7bbf884cc21c4a36b72d86e4f`
+- Prelude commit and frozen worker base: `bd57878e0b5ac9f66c26a58f2dbbb406f8a5b3d6`
 - Planned lanes: three, retained adaptively because attributable revisioned brief persistence, adversarial bounded model tooling and independent cross-surface consultation acceptance have clean exclusive ownership boundaries
 - Worker runtime: every lane uses exact `gpt-5.6-sol` with `xhigh` reasoning, recorded before launch because all three lanes include security, provenance, concurrency or adversarial integration work
 - Provider/data policy: deterministic local adapter and synthetic rights-cleared fixtures only; every external LLM/media provider is disabled, no customer data or training permission is used and accessibility/health/household content is excluded from logs
