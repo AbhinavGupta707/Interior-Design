@@ -46,12 +46,15 @@ const extractedEnvironmentSchema = z
       .default("spatial-worker-local"),
     C10_SCENE_WORKER_ENABLED: z.enum(["true", "false"]).default("false"),
     C10_DATABASE_URL: z.string().trim().min(1).optional(),
+    C12_DESIGN_OPTION_WORKER_ENABLED: z.enum(["true", "false"]).default("false"),
+    C12_DATABASE_URL: z.string().trim().min(1).optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
   .strict();
 
 export interface WorkerConfig {
   readonly c10SceneWorkerEnabled: boolean;
+  readonly c12DesignOptionWorkerEnabled: boolean;
   readonly databaseUrl: string;
   readonly derivedBucket: "derived";
   readonly executables: {
@@ -151,10 +154,23 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     C2_WORKER_ID: environment.C2_WORKER_ID,
     C10_SCENE_WORKER_ENABLED: environment.C10_SCENE_WORKER_ENABLED,
     C10_DATABASE_URL: environment.C10_DATABASE_URL,
+    C12_DESIGN_OPTION_WORKER_ENABLED: environment.C12_DESIGN_OPTION_WORKER_ENABLED,
+    C12_DATABASE_URL: environment.C12_DATABASE_URL,
     NODE_ENV: environment.NODE_ENV,
   });
   const production = extracted.NODE_ENV === "production";
+  const c10Enabled = extracted.C10_SCENE_WORKER_ENABLED === "true";
+  const c12Enabled = extracted.C12_DESIGN_OPTION_WORKER_ENABLED === "true";
+  const activeDatabaseUrls = [
+    extracted.C2_DATABASE_URL,
+    extracted.C10_DATABASE_URL,
+    extracted.C12_DATABASE_URL,
+  ].filter((value): value is string => value !== undefined);
+  if (new Set(activeDatabaseUrls).size > 1) {
+    throw new Error("Spatial-worker database variables must identify one shared database URL.");
+  }
   const databaseUrl =
+    extracted.C12_DATABASE_URL ??
     extracted.C10_DATABASE_URL ??
     extracted.C2_DATABASE_URL ??
     (production ? undefined : localDatabaseUrl);
@@ -186,7 +202,8 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     throw new Error("C2_TEMP_ROOT must resolve to an absolute path.");
   }
   return {
-    c10SceneWorkerEnabled: extracted.C10_SCENE_WORKER_ENABLED === "true",
+    c10SceneWorkerEnabled: c10Enabled,
+    c12DesignOptionWorkerEnabled: c12Enabled,
     databaseUrl: validateDatabaseUrl(databaseUrl),
     derivedBucket: extracted.C2_DERIVED_BUCKET,
     executables: {

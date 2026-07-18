@@ -86,6 +86,11 @@ export class BriefService {
   }
 
   async get(tenantId: string, projectId: string): Promise<DesignBrief> {
+    const record = await this.getRecord(tenantId, projectId);
+    return designBriefSchema.parse(record.brief);
+  }
+
+  async getRecord(tenantId: string, projectId: string) {
     const record = await this.#repository.findCurrent(tenantId, projectId);
     if (record === undefined) throw notFound();
     this.#telemetry.record({
@@ -94,7 +99,7 @@ export class BriefService {
       referenceCount: record.brief.referenceBoard.length,
       stage: "read",
     });
-    return designBriefSchema.parse(record.brief);
+    return record;
   }
 
   async update(

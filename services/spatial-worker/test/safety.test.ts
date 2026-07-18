@@ -48,6 +48,30 @@ describe("strict worker configuration", () => {
     ).toThrow();
   });
 
+  it("enables C12 explicitly and rejects split databases in one worker process", () => {
+    expect(
+      parseWorkerConfig({ C12_DESIGN_OPTION_WORKER_ENABLED: "true", NODE_ENV: "test" }),
+    ).toMatchObject({ c12DesignOptionWorkerEnabled: true });
+    expect(() =>
+      parseWorkerConfig({ C12_DESIGN_OPTION_WORKER_ENABLED: "yes", NODE_ENV: "test" }),
+    ).toThrow();
+    expect(
+      parseWorkerConfig({
+        C12_DATABASE_URL: "postgresql://worker:secret@database.example.test/interior",
+        NODE_ENV: "test",
+      }).databaseUrl,
+    ).toBe("postgresql://worker:secret@database.example.test/interior");
+    expect(() =>
+      parseWorkerConfig({
+        C10_DATABASE_URL: "postgresql://worker:secret@database-a.example.test/interior",
+        C10_SCENE_WORKER_ENABLED: "true",
+        C12_DATABASE_URL: "postgresql://worker:secret@database-b.example.test/interior",
+        C12_DESIGN_OPTION_WORKER_ENABLED: "true",
+        NODE_ENV: "test",
+      }),
+    ).toThrow("must identify one shared database URL");
+  });
+
   it("accepts the platform API database and storage variable names for one C10 deployment", () => {
     expect(
       parseWorkerConfig({

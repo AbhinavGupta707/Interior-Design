@@ -5,7 +5,10 @@ import {
   designOptionsWorkspaceSchema,
   evidenceClassificationFromEnvironment,
 } from "../../src/features/design-options/contracts";
-import { designOptionLaunchContextFromSearchParams } from "../../src/features/design-options/launch-context";
+import {
+  designOptionLaunchContextFromSearchParams,
+  designOptionLaunchHref,
+} from "../../src/features/design-options/launch-context";
 import { job, launchContext, ownerSession, project } from "./fixtures";
 
 describe("C12 workspace contracts", () => {
@@ -52,5 +55,19 @@ describe("C12 workspace contracts", () => {
         briefSha256: "not-a-hash",
       }),
     ).toBeUndefined();
+  });
+
+  it("round-trips an accepted brief and exact model into the launch URL", () => {
+    const href = designOptionLaunchHref(
+      project.id,
+      designOptionLaunchContextSchema.parse(launchContext),
+    );
+    const parsedUrl = new URL(href, "https://interior-design.invalid");
+    expect(parsedUrl.pathname).toBe(`/design-options/${project.id}`);
+    expect(
+      designOptionLaunchContextFromSearchParams(
+        Object.fromEntries(parsedUrl.searchParams.entries()),
+      ),
+    ).toEqual(launchContext);
   });
 });

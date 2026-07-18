@@ -2,11 +2,17 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import {
+  CatalogDesignAssetVerifier,
+  DesignOptionWorkerRuntime,
+  PostgresDesignOptionRepository,
+} from "@interior-design/platform-api/design-options";
+import {
   PostgresSceneRepository,
   PostgresSceneSnapshotVerifier,
   S3SceneObjectStorage,
   SceneWorkerService,
 } from "@interior-design/platform-api/scenes";
+import { creatorOwnedSyntheticAssetCatalog } from "@interior-design/interior-assets";
 import { PostgresReconstructionRepository } from "@interior-design/platform-api/reconstruction";
 import postgres from "postgres";
 
@@ -37,6 +43,7 @@ import {
 } from "./reconstruction/index.js";
 import { SpatialWorkerRunner } from "./runner.js";
 import { SceneCompilationRunner } from "./scene-compile/index.js";
+import { DesignOptionProcessingRunner } from "./design-options/index.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
 
 export const spatialWorkerCheckpoint = "C2" as const;
@@ -59,6 +66,7 @@ export * from "./media-prep/index.js";
 export * from "./reconstruction/index.js";
 export * from "./model-fusion/index.js";
 export * from "./scene-compile/index.js";
+export * from "./design-options/index.js";
 
 export const spatialWorkerCapabilities = Object.freeze([
   "C2",
@@ -67,6 +75,7 @@ export const spatialWorkerCapabilities = Object.freeze([
   "C8",
   "C9",
   "C10",
+  "C12",
 ] as const);
 
 function defaultInferenceModuleRoot(): string {
@@ -189,6 +198,21 @@ export async function runSpatialWorker(
         workerId: `c10-${config.workerId}`.slice(0, 100),
       })
     : undefined;
+  const designOptionRunner = config.c12DesignOptionWorkerEnabled
+    ? new DesignOptionProcessingRunner({
+        leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
+        logger,
+        pollMilliseconds: config.pollMs,
+        worker: new DesignOptionWorkerRuntime(
+          new PostgresDesignOptionRepository(sql, {
+            assetVerifier: new CatalogDesignAssetVerifier({
+              catalog: creatorOwnedSyntheticAssetCatalog,
+            }),
+          }),
+        ),
+        workerId: `c12-${config.workerId}`.slice(0, 100),
+      })
+    : undefined;
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));
@@ -203,6 +227,7 @@ export async function runSpatialWorker(
       ...(reconstructionRunner === undefined ? [] : [reconstructionRunner.run(shutdown.signal)]),
       ...(fusionRunner === undefined ? [] : [fusionRunner.run(shutdown.signal)]),
       ...(sceneRunner === undefined ? [] : [sceneRunner.run(shutdown.signal)]),
+      ...(designOptionRunner === undefined ? [] : [designOptionRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);

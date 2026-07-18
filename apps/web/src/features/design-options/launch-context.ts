@@ -46,3 +46,23 @@ export function designOptionLaunchContextFromSearchParams(
   const parsed = designOptionLaunchContextSchema.safeParse(candidate);
   return parsed.success ? parsed.data : undefined;
 }
+
+export function designOptionLaunchHref(
+  projectId: string,
+  value: DesignOptionLaunchContext,
+): string {
+  const context = designOptionLaunchContextSchema.parse(value);
+  const query = new URLSearchParams({
+    briefId: context.baseBrief.briefId,
+    briefRevision: String(context.baseBrief.revision),
+    briefSha256: context.baseBrief.contentSha256,
+    directions: context.requestedDirections.join(","),
+    modelId: context.sourceModel.modelId,
+    modelProfile: context.sourceModel.profile,
+    optionCount: String(context.requestedOptionCount),
+    snapshotId: context.sourceModel.snapshotId,
+    snapshotSha256: context.sourceModel.snapshotSha256,
+    snapshotVersion: String(context.sourceModel.snapshotVersion),
+  });
+  return `/design-options/${encodeURIComponent(projectId)}?${query.toString()}`;
+}

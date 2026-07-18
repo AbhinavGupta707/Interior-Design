@@ -262,6 +262,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/viewer/${project.id}`}>
                     3D walkthrough
                   </Link>
+                  <Link className="project-row__action" href={`/design-options/${project.id}`}>
+                    Design options
+                  </Link>
                 </div>
               </article>
             ))}

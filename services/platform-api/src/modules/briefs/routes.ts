@@ -50,8 +50,10 @@ export function registerBriefRoutes(
       identity,
       projects,
     );
+    const record = await service.getRecord(actor.tenantId, params.projectId);
     reply.header("cache-control", "private, no-store");
-    return reply.send(designBriefSchema.parse(await service.get(actor.tenantId, params.projectId)));
+    reply.header("x-interior-design-brief-content-sha256", record.contentSha256);
+    return reply.send(designBriefSchema.parse(record.brief));
   });
 
   server.put(c11RouteContract.updateBrief, async (request, reply) => {
@@ -72,6 +74,7 @@ export function registerBriefRoutes(
     });
     if (result.replayed) reply.header("Idempotent-Replay", "true");
     reply.header("cache-control", "private, no-store");
+    reply.header("x-interior-design-brief-content-sha256", result.record.contentSha256);
     return reply.send(designBriefSchema.parse(result.record.brief));
   });
 
@@ -93,6 +96,7 @@ export function registerBriefRoutes(
     });
     if (result.replayed) reply.header("Idempotent-Replay", "true");
     reply.header("cache-control", "private, no-store");
+    reply.header("x-interior-design-brief-content-sha256", result.record.contentSha256);
     return reply.send(designBriefSchema.parse(result.record.brief));
   });
 }

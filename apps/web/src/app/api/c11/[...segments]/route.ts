@@ -120,6 +120,8 @@ async function workspace(base: C11RouteBase): Promise<NextResponse> {
     }
     const parsed = consultationWorkspaceSchema.safeParse({
       brief: brief?.data ?? null,
+      briefContentSha256:
+        brief === null ? null : briefResponse.headers.get("x-interior-design-brief-content-sha256"),
       capability: {
         activeAdapter: "deterministic-local-v1",
         evidenceClassification: evidenceClassification(),

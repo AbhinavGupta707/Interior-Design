@@ -17,6 +17,7 @@ import { registerC8Module, type C8ModuleOptions } from "./c8.js";
 import { registerC9Module, type C9ModuleOptions } from "./c9.js";
 import { registerC10Module, type C10ModuleOptions } from "./c10.js";
 import { registerC11Module, type C11ModuleOptions } from "./c11.js";
+import { registerC12Module, type C12ModuleOptions } from "./c12.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -42,6 +43,7 @@ export interface CreateServerOptions {
   readonly c9?: C9ModuleOptions;
   readonly c10?: C10ModuleOptions;
   readonly c11?: C11ModuleOptions;
+  readonly c12?: C12ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -119,6 +121,12 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "request.body.glb",
         "request.body.manifest",
         "request.body.leaseToken",
+        "request.body.acceptedBrief",
+        "request.body.constraints",
+        "request.body.optionSet",
+        "request.body.options",
+        "request.body.assetPlacements",
+        "request.body.workingSnapshot",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -129,6 +137,14 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.signedUrl",
         "*.leaseToken",
         "*.lease_token",
+        "*.acceptedBrief",
+        "*.constraints",
+        "*.constraintResults",
+        "*.optionSet",
+        "*.options",
+        "*.operations",
+        "*.assetPlacements",
+        "*.workingSnapshot",
         "*.manifest",
         "*.glb",
         "*.query",
@@ -266,6 +282,15 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c11,
         )
       : undefined;
+  const c12 =
+    options.c12 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC12Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c12,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
@@ -280,6 +305,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
       ...(c9?.readinessChecks ?? []),
       ...(c10?.readinessChecks ?? []),
       ...(c11?.readinessChecks ?? []),
+      ...(c12?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );

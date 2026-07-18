@@ -75,6 +75,13 @@ describe("C11 design-brief routes", () => {
     const replayed = await server.inject(request);
     expect(created.statusCode).toBe(200);
     expect(created.json()).toMatchObject({ id: briefId, revision: 1, status: "draft" });
+    const [createdRecord] = await repository.listHistory(
+      "10000000-0000-4000-8000-000000000001",
+      alphaProjectId,
+    );
+    expect(created.headers["x-interior-design-brief-content-sha256"]).toBe(
+      createdRecord?.contentSha256,
+    );
     expect(replayed.statusCode).toBe(200);
     expect(replayed.headers["idempotent-replay"]).toBe("true");
     expect(replayed.json()).toEqual(created.json());
@@ -85,6 +92,9 @@ describe("C11 design-brief routes", () => {
     });
     expect(read.statusCode).toBe(200);
     expect(read.headers["cache-control"]).toBe("private, no-store");
+    expect(read.headers["x-interior-design-brief-content-sha256"]).toBe(
+      createdRecord?.contentSha256,
+    );
     expect(read.json()).toEqual(created.json());
 
     const conflictingReplay = await server.inject(

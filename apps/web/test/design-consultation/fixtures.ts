@@ -236,6 +236,7 @@ export const proposal = briefPatchProposalSchema.parse({
 
 export const workspace = Object.freeze({
   brief,
+  briefContentSha256: "a".repeat(64),
   capability: {
     activeAdapter: "deterministic-local-v1" as const,
     evidenceClassification: "fixture-presentation" as const,

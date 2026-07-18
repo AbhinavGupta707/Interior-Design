@@ -30,6 +30,18 @@ describe("C11 consultation presentation contracts", () => {
         brief: { ...brief, projectId: "c1100000-0000-4000-8000-000000000098" },
       }).success,
     ).toBe(false);
+    expect(
+      consultationWorkspaceSchema.safeParse({
+        ...workspace,
+        briefContentSha256: null,
+      }).success,
+    ).toBe(false);
+    expect(
+      consultationWorkspaceSchema.safeParse({
+        ...workspace,
+        brief: null,
+      }).success,
+    ).toBe(false);
   });
 
   it("keeps every classification legible and independently counted", () => {

@@ -1,10 +1,10 @@
 # C12 durable design-option runtime
 
-## Purpose and current integration boundary
+## Purpose and production composition
 
 This runbook covers the C12-L3 backend that turns an exact accepted C11 brief and exact committed C4/C5 source snapshot into durable, immutable design proposals. Generation is proposal-only: it does not create a proposed C4 snapshot, C5 branch, preview, commit, operation envelope, or model audit event. Only an explicit human confirmation can do that work.
 
-The lane deliberately does not edit central server composition. The composition owner must instantiate `PostgresDesignOptionRepository`, `PostgresDesignOptionSourceVerifier`, `DesignOptionService`, and `DesignOptionWorkerRuntime`, then call `registerDesignOptionRoutes`. The constraint derivation and exact asset verification dependencies are narrow ports; they must be backed by the accepted C11 brief, exact canonical source, frozen C12 constraints, and versioned creator-owned or otherwise service-cleared assets. A missing provider is an explicit unavailable/abstain state, never a fabricated success.
+The root integration instantiates `PostgresDesignOptionRepository`, `PostgresDesignOptionSourceVerifier`, `DesignOptionService`, and `DesignOptionWorkerRuntime`, registers the frozen routes, and starts `DesignOptionProcessingRunner` when the C12 worker is enabled. Constraint derivation is backed by the accepted C11 brief and exact canonical source; exact asset verification uses the versioned creator-owned synthetic catalog. A missing dependency remains an explicit unavailable/abstain state, never a fabricated success.
 
 No external provider, GPU, paid service, customer data, external key, or training permission is needed for the local workflow. The live test uses synthetic fixtures with `trainingAllowed: false`.
 
@@ -144,6 +144,15 @@ C12_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:543
   test/c12/postgres.integration.test.ts
 ```
 
+Run the root production-composition gate against a disposable local database. It applies C1–C12, sends C12 actions through the actual Next BFF to a listening API, runs the real deterministic worker, confirms two isolated branches, preserves the existing profile, compiles one branch through C10, and validates the resulting GLB bytes and hash:
+
+```sh
+C12_PRODUCTION_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:54321/c12_disposable \
+  pnpm exec vitest run tests/integration/design-options/live-production.integration.test.ts
+```
+
+When a broad test command shares one database, serialize migration-bearing files (`--pool=forks --maxWorkers=1`). Concurrent idempotent DDL from separate Vitest workers can otherwise race in PostgreSQL before product tests begin.
+
 The live suite reapplies the migration idempotently, uses synthetic fixture identities/projects, proves exact brief/source/working payloads reach the leased worker, stale accepted inputs cannot be leased, expired leases are reclaimed and old workers fenced, cancel/retry/abstain remain durable, no proposed C4/C5 mutation occurs before confirmation, and stale confirmation rollback, exact replay, concurrent sibling confirmation, result-snapshot linkage, RLS activation, and append-only rejection all hold. Without `C12_TEST_DATABASE_URL`, it skips honestly.
 
 Finish with:
@@ -152,9 +161,9 @@ Finish with:
 git diff --check
 ```
 
-## Known integration limits
+## Known evidence limits
 
-- Central API composition and navigation are intentionally outside C12-L3 ownership; the orchestrator must wire the exported module.
-- A production constraint engine and catalog/asset verifier must implement the narrow ports. This lane ships deterministic synthetic test implementations only.
-- There is no provider/GPU generation path in this lane. Workers must abstain or fail with a safe code when those capabilities are unavailable.
-- Browser and product-surface evidence belongs to the consuming C12 UI/integration lane; this backend lane verifies routes through Fastify injection and PostgreSQL directly.
+- The production-composed local baseline is deterministic and uses creator-owned synthetic bounded-proxy assets. It is not evidence of human-rated design quality or real-product availability.
+- No external provider, GPU render, paid service, customer data, physical device, structural/regulatory review, or professional approval was exercised in C12.
+- The C12-derived GLB gate uses the already-verified local C10 compiler and an in-memory immutable object-store adapter; C10 separately retains its live S3-compatible storage evidence.
+- Connected Chrome and automated Chromium/Firefox/WebKit evidence cover the web surface. The Codex in-app Browser controller failed during bootstrap before tab acquisition and is recorded as unavailable, not as a pass.

@@ -14,6 +14,8 @@ export { applyC10Migration, registerC10Module } from "./c10.js";
 export type { C10Module, C10ModuleOptions } from "./c10.js";
 export { applyC11Migration, registerC11Module } from "./c11.js";
 export type { C11Module, C11ModuleOptions } from "./c11.js";
+export { applyC12Migration, registerC12Module } from "./c12.js";
+export type { C12Module, C12ModuleOptions } from "./c12.js";
 export type { SceneCompilerWorkerPort } from "./modules/scenes/types.js";
 export { ApiError, type ProblemDetails } from "./errors.js";
 export type { ReadinessCheck, ReadinessResponse } from "./health.js";

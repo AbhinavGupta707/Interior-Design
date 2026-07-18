@@ -27,6 +27,10 @@ export const consultationIntakeSeedSchema = z
 export const consultationWorkspaceSchema = z
   .object({
     brief: designBriefSchema.nullable(),
+    briefContentSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .nullable(),
     capability: consultationCapabilitySchema,
     intake: consultationIntakeSeedSchema.nullable(),
     project: projectSchema,
@@ -34,6 +38,13 @@ export const consultationWorkspaceSchema = z
   })
   .strict()
   .superRefine((workspace, context) => {
+    if ((workspace.brief === null) !== (workspace.briefContentSha256 === null)) {
+      context.addIssue({
+        code: "custom",
+        message: "The exact brief hash must be present if and only if a brief is present.",
+        path: ["briefContentSha256"],
+      });
+    }
     if (workspace.brief && workspace.brief.projectId !== workspace.project.id) {
       context.addIssue({
         code: "custom",

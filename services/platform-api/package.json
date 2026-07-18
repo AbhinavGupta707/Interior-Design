@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./design-options": {
+      "types": "./src/modules/design-options/index.ts",
+      "development": "./src/modules/design-options/index.ts",
+      "default": "./dist/src/modules/design-options/index.js"
+    },
     "./reconstruction": {
       "types": "./src/modules/reconstruction/index.ts",
       "development": "./src/modules/reconstruction/index.ts",

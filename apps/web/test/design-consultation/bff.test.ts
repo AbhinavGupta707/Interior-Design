@@ -30,11 +30,16 @@ describe("C11 same-origin BFF", () => {
       .fn()
       .mockResolvedValueOnce(Response.json(ownerSession))
       .mockResolvedValueOnce(Response.json(project))
-      .mockResolvedValueOnce(Response.json(brief));
+      .mockResolvedValueOnce(
+        Response.json(brief, {
+          headers: { "x-interior-design-brief-content-sha256": "a".repeat(64) },
+        }),
+      );
     vi.stubGlobal("fetch", fetchMock);
     const response = await GET(request(), context(["projects", ids.project, "workspace"]));
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(200);
+    expect(payload.briefContentSha256).toBe("a".repeat(64));
     expect(payload.capability).toEqual(
       expect.objectContaining({ externalNetworkUsed: false, externalProviders: "disabled" }),
     );
@@ -81,6 +86,7 @@ describe("C11 same-origin BFF", () => {
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(200);
     expect(payload.brief).toBeNull();
+    expect(payload.briefContentSha256).toBeNull();
     expect(payload.intake).toEqual({
       accessibilityNeeds: savedIntake.intake.accessibilityNeeds,
       goals: savedIntake.intake.goals,

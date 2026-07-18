@@ -29,11 +29,17 @@ import {
   saveConsultationRecovery,
 } from "./recovery";
 import { ReferenceBoard } from "./reference-board";
+import { editorClient } from "../editor-2d/api";
+import { designOptionLaunchHref } from "../design-options/launch-context";
 
 type LoadState =
   | { readonly kind: "error" | "forbidden" | "offline"; readonly message: string }
   | { readonly kind: "expired" | "loading" | "ready" };
 type BusyAction = "accept" | "cancel" | "confirm" | "refresh" | "send" | "start";
+type DesignOptionHandoff =
+  | { readonly kind: "idle" | "loading" }
+  | { readonly href: string; readonly kind: "ready"; readonly snapshotVersion: number }
+  | { readonly kind: "stale" | "unavailable"; readonly message: string };
 
 function loadStateFrom(reason: unknown): LoadState {
   if (reason instanceof ConsultationProblem) {
@@ -84,6 +90,9 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
   const [busy, setBusy] = useState<BusyAction>();
   const [alert, setAlert] = useState<string>();
   const [statusMessage, setStatusMessage] = useState("");
+  const [designOptionHandoff, setDesignOptionHandoff] = useState<DesignOptionHandoff>({
+    kind: "idle",
+  });
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const focusMessageAfterStartRef = useRef(false);
 
@@ -161,6 +170,67 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
 
   const editable = workspace ? workspace.session.actor.role !== "viewer" : false;
   const activeSession = consultation?.state === "active";
+  const acceptedBrief = workspace?.brief?.status === "accepted" ? workspace.brief : undefined;
+  const acceptedBriefContentSha256 = workspace?.briefContentSha256 ?? undefined;
+
+  useEffect(() => {
+    if (!acceptedBrief || !acceptedBriefContentSha256) {
+      setDesignOptionHandoff({ kind: "idle" });
+      return;
+    }
+    let active = true;
+    setDesignOptionHandoff({ kind: "loading" });
+    void editorClient
+      .getCurrentSnapshot(projectId, "existing")
+      .then((snapshot) => {
+        if (!active) return;
+        const reference = acceptedBrief.modelReference;
+        if (
+          reference &&
+          (reference.modelId !== snapshot.modelId ||
+            reference.snapshotId !== snapshot.id ||
+            reference.snapshotSha256 !== snapshot.snapshotSha256)
+        ) {
+          setDesignOptionHandoff({
+            kind: "stale",
+            message:
+              "The brief references an older model snapshot. Reconcile and accept a fresh brief revision before generating options.",
+          });
+          return;
+        }
+        setDesignOptionHandoff({
+          href: designOptionLaunchHref(projectId, {
+            baseBrief: {
+              briefId: acceptedBrief.id,
+              contentSha256: acceptedBriefContentSha256,
+              revision: acceptedBrief.revision,
+            },
+            requestedDirections: ["circulation-first", "conversation-first"],
+            requestedOptionCount: 2,
+            sourceModel: {
+              modelId: snapshot.modelId,
+              profile: "existing",
+              snapshotId: snapshot.id,
+              snapshotSha256: snapshot.snapshotSha256,
+              snapshotVersion: snapshot.version,
+            },
+          }),
+          kind: "ready",
+          snapshotVersion: snapshot.version,
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setDesignOptionHandoff({
+          kind: "unavailable",
+          message:
+            "The exact committed existing model is unavailable. Restore model access before generating options.",
+        });
+      });
+    return () => {
+      active = false;
+    };
+  }, [acceptedBrief, acceptedBriefContentSha256, projectId]);
 
   useEffect(() => {
     if (!activeSession || !focusMessageAfterStartRef.current) return;
@@ -343,6 +413,7 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
       setStatusMessage(
         `Brief revision ${String(next.revision)} accepted with accountable attribution.`,
       );
+      await loadWorkspace(false);
     } catch (reason) {
       setAlert(actionMessage(reason));
     } finally {
@@ -527,10 +598,34 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
                 structure, regulations, cost, availability or a future design option.
               </p>
               {workspace.brief.status === "accepted" ? (
-                <p className={styles.acceptedRecord}>
-                  Accepted by <code>{workspace.brief.acceptedBy}</code> at{" "}
-                  {formattedTime(workspace.brief.acceptedAt ?? workspace.brief.updatedAt)}.
-                </p>
+                <div>
+                  <p className={styles.acceptedRecord}>
+                    Accepted by <code>{workspace.brief.acceptedBy}</code> at{" "}
+                    {formattedTime(workspace.brief.acceptedAt ?? workspace.brief.updatedAt)}.
+                  </p>
+                  {designOptionHandoff.kind === "loading" ? (
+                    <p role="status">Checking the exact committed existing model…</p>
+                  ) : null}
+                  {designOptionHandoff.kind === "ready" ? (
+                    <p>
+                      <Link
+                        className="ui-action"
+                        data-tone="primary"
+                        href={designOptionHandoff.href}
+                      >
+                        Generate two valid design options
+                      </Link>{" "}
+                      from existing model snapshot version {designOptionHandoff.snapshotVersion}.
+                    </p>
+                  ) : null}
+                  {designOptionHandoff.kind === "stale" ||
+                  designOptionHandoff.kind === "unavailable" ? (
+                    <p role="note">
+                      {designOptionHandoff.message}{" "}
+                      <Link href={`/editor/${projectId}`}>Review the exact model</Link>.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </div>
             {workspace.brief.status === "draft" && editable ? (
