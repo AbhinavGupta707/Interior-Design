@@ -38,6 +38,12 @@ export function operationLabel(operation: ModelOperationRequest): string {
       return `Correct ${operation.target.field}`;
     case "element.provenance.correct.v1":
       return `Correct ${operation.target.field} provenance`;
+    case "design.element.create.v1":
+      return `Add ${operation.element.elementType}`;
+    case "design.element.replace.v1":
+      return `Replace ${operation.element.elementType}`;
+    case "design.element.remove.v1":
+      return `Remove ${operation.target.collection.replace(/s$/u, "")}`;
   }
 }
 

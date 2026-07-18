@@ -39,6 +39,9 @@ describe("C5 frozen contracts", () => {
       "space.rename.v1",
       "element.metadata.correct.v1",
       "element.provenance.correct.v1",
+      "design.element.create.v1",
+      "design.element.replace.v1",
+      "design.element.remove.v1",
     ]);
     expect(modelOperationRequestSchema.parse(rename)).toEqual(rename);
   });

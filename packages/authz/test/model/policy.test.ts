@@ -163,6 +163,9 @@ describe("model operation policy", () => {
       "space.rename.v1",
       "element.metadata.correct.v1",
       "element.provenance.correct.v1",
+      "design.element.create.v1",
+      "design.element.replace.v1",
+      "design.element.remove.v1",
     ]);
     expect(Object.isFrozen(modelActions)).toBe(true);
     expect(Object.isFrozen(publicModelOperationTypes)).toBe(true);

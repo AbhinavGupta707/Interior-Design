@@ -1,5 +1,6 @@
 import {
   c5OperationSchemaVersion,
+  c12DesignElementOperationSchemaVersion,
   modelOperationIdSchema,
   modelOperationRequestSchema,
   modelOperationTypeSchema,
@@ -25,6 +26,9 @@ export const operationRegistry = Object.freeze([
   { audience: "public", type: "space.rename.v1" },
   { audience: "public", type: "element.metadata.correct.v1" },
   { audience: "public", type: "element.provenance.correct.v1" },
+  { audience: "public", type: "design.element.create.v1" },
+  { audience: "public", type: "design.element.replace.v1" },
+  { audience: "public", type: "design.element.remove.v1" },
 ] as const satisfies readonly OperationRegistryEntry[]);
 
 export const registeredOperationTypes = Object.freeze(operationRegistry.map(({ type }) => type));
@@ -114,18 +118,22 @@ function parseInternalSnapshotOperation(input: unknown): InternalSnapshotOperati
  * repaired or interpreted as a newer shape.
  */
 export function upcastModelOperation(input: unknown): RetainedModelOperation {
-  const schemaVersion = recordValue(input, "schemaVersion");
-  if (schemaVersion !== c5OperationSchemaVersion) {
-    throw new ModelOperationError(
-      "UNKNOWN_OPERATION_VERSION",
-      "The retained model operation uses an unsupported schema version.",
-    );
-  }
   const parsedType = modelOperationTypeSchema.safeParse(recordValue(input, "type"));
   if (!parsedType.success) {
     throw new ModelOperationError(
       "UNKNOWN_OPERATION_TYPE",
       "The retained model operation type is not registered.",
+    );
+  }
+  const schemaVersion = recordValue(input, "schemaVersion");
+  const designOperation = parsedType.data.startsWith("design.element.");
+  if (
+    (designOperation && schemaVersion !== c12DesignElementOperationSchemaVersion) ||
+    (!designOperation && schemaVersion !== c5OperationSchemaVersion)
+  ) {
+    throw new ModelOperationError(
+      "UNKNOWN_OPERATION_VERSION",
+      "The retained model operation uses an unsupported schema version.",
     );
   }
   if (parsedType.data.startsWith("snapshot.")) return parseInternalSnapshotOperation(input);

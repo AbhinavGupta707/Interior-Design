@@ -66,6 +66,12 @@
       "checkpoint": "C11",
       "owner": "C11-L1",
       "path": "0011_design_briefs.sql"
+    },
+    {
+      "id": "0012",
+      "checkpoint": "C12",
+      "owner": "C12-L3",
+      "path": "0012_design_options.sql"
     }
   ]
 }

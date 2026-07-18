@@ -76,10 +76,13 @@ export interface OperationHistoryRecord {
   readonly projectId: string;
   readonly reason: string;
   readonly revision: number;
-  readonly schemaVersion: "c5-model-operation-v1";
+  readonly schemaVersion: "c5-model-operation-v1" | "c12-design-element-operation-v1";
   readonly type:
     | "element.metadata.correct.v1"
     | "element.provenance.correct.v1"
+    | "design.element.create.v1"
+    | "design.element.replace.v1"
+    | "design.element.remove.v1"
     | "level.create.v1"
     | "opening.insert.v1"
     | "snapshot.initialize.v1"

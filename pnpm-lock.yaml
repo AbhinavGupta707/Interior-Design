@@ -113,6 +113,18 @@ importers:
         specifier: ^26.1.1
         version: 26.1.1
 
+  packages/design-engine:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/geometry-kernel':
+        specifier: workspace:*
+        version: link:../geometry-kernel
+      '@interior-design/model-operations':
+        specifier: workspace:*
+        version: link:../model-operations
+
   packages/domain-model:
     dependencies:
       '@interior-design/contracts':
@@ -136,6 +148,15 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/interior-assets:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@interior-design/geometry-kernel':
+        specifier: workspace:*
+        version: link:../geometry-kernel
 
   packages/model-gateway:
     devDependencies:
@@ -217,12 +238,18 @@ importers:
       '@interior-design/design-brief':
         specifier: workspace:*
         version: link:../../packages/design-brief
+      '@interior-design/design-engine':
+        specifier: workspace:*
+        version: link:../../packages/design-engine
       '@interior-design/domain-model':
         specifier: workspace:*
         version: link:../../packages/domain-model
       '@interior-design/geometry-kernel':
         specifier: workspace:*
         version: link:../../packages/geometry-kernel
+      '@interior-design/interior-assets':
+        specifier: workspace:*
+        version: link:../../packages/interior-assets
       '@interior-design/model-gateway':
         specifier: workspace:*
         version: link:../../packages/model-gateway
@@ -269,9 +296,15 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/design-engine':
+        specifier: workspace:*
+        version: link:../../packages/design-engine
       '@interior-design/geometry-kernel':
         specifier: workspace:*
         version: link:../../packages/geometry-kernel
+      '@interior-design/interior-assets':
+        specifier: workspace:*
+        version: link:../../packages/interior-assets
       '@interior-design/platform-api':
         specifier: workspace:*
         version: link:../platform-api

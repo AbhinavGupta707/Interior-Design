@@ -19,7 +19,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1089.0",
     "@interior-design/contracts": "workspace:*",
+    "@interior-design/design-engine": "workspace:*",
     "@interior-design/geometry-kernel": "workspace:*",
+    "@interior-design/interior-assets": "workspace:*",
     "@interior-design/platform-api": "workspace:*",
     "@interior-design/provider-adapters": "workspace:*",
     "@interior-design/scene-compiler": "workspace:*",

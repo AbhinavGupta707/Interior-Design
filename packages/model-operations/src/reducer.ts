@@ -2,6 +2,7 @@ import {
   canonicalHomeSnapshotSchema,
   modelOperationRequestSchema,
   type CanonicalHomeSnapshot,
+  type DesignElement,
   type ModelOperationRequest,
 } from "@interior-design/contracts";
 import {
@@ -230,6 +231,78 @@ function correctProvenance(
   element[field] = { ...value, attribution: structuredClone(operation.attribution) };
 }
 
+type DesignElementCollection = "finishes" | "furnishings" | "lights";
+
+function designElementCollection(element: DesignElement): DesignElementCollection {
+  switch (element.elementType) {
+    case "finish":
+      return "finishes";
+    case "furnishing":
+      return "furnishings";
+    case "light":
+      return "lights";
+  }
+}
+
+function mutableDesignElements(
+  elements: MutableElements,
+  collection: DesignElementCollection,
+): DesignElement[] {
+  return elements[collection];
+}
+
+function requireProposedProfile(snapshot: MutableSnapshot, operationIndex: number): void {
+  if (snapshot.profile !== "proposed") {
+    throw new ModelOperationError(
+      "INVALID_OPERATION",
+      "Design elements may be changed only on the proposed model profile.",
+      { operationIndex },
+    );
+  }
+}
+
+function replaceDesignElement(
+  elements: MutableElements,
+  element: DesignElement,
+  operationIndex: number,
+): void {
+  const collection = designElementCollection(element);
+  const candidates = mutableDesignElements(elements, collection);
+  const index = candidates.findIndex(({ id }) => id === element.id);
+  if (index < 0) {
+    const other = allElements(elements).find(({ id }) => id === element.id);
+    throw new ModelOperationError(
+      other === undefined ? "TARGET_NOT_FOUND" : "TARGET_TYPE_MISMATCH",
+      other === undefined
+        ? "The design-element replacement target does not exist."
+        : "The replacement element type does not match the existing stable ID.",
+      { operationIndex },
+    );
+  }
+  candidates[index] = structuredClone(element);
+}
+
+function removeDesignElement(
+  elements: MutableElements,
+  collection: DesignElementCollection,
+  elementId: string,
+  operationIndex: number,
+): void {
+  const candidates = mutableDesignElements(elements, collection);
+  const index = candidates.findIndex(({ id }) => id === elementId);
+  if (index < 0) {
+    const other = allElements(elements).find(({ id }) => id === elementId);
+    throw new ModelOperationError(
+      other === undefined ? "TARGET_NOT_FOUND" : "TARGET_TYPE_MISMATCH",
+      other === undefined
+        ? "The design-element removal target does not exist."
+        : "The removal collection does not match the target element type.",
+      { operationIndex },
+    );
+  }
+  candidates.splice(index, 1);
+}
+
 function applyOperation(
   snapshot: MutableSnapshot,
   operation: ModelOperationRequest,
@@ -285,6 +358,27 @@ function applyOperation(
       return;
     case "element.provenance.correct.v1":
       correctProvenance(elements, operation, operationIndex);
+      return;
+    case "design.element.create.v1": {
+      requireProposedProfile(snapshot, operationIndex);
+      assertNewElementId(elements, operation.element.id, operationIndex);
+      mutableDesignElements(elements, designElementCollection(operation.element)).push(
+        structuredClone(operation.element),
+      );
+      return;
+    }
+    case "design.element.replace.v1":
+      requireProposedProfile(snapshot, operationIndex);
+      replaceDesignElement(elements, operation.element, operationIndex);
+      return;
+    case "design.element.remove.v1":
+      requireProposedProfile(snapshot, operationIndex);
+      removeDesignElement(
+        elements,
+        operation.target.collection,
+        operation.target.elementId,
+        operationIndex,
+      );
       return;
   }
 }

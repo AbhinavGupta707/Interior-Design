@@ -29,6 +29,9 @@ export const publicModelOperationTypes = Object.freeze([
   "space.rename.v1",
   "element.metadata.correct.v1",
   "element.provenance.correct.v1",
+  "design.element.create.v1",
+  "design.element.replace.v1",
+  "design.element.remove.v1",
 ] as const satisfies readonly ModelOperationType[]);
 
 export type PublicModelOperationType = (typeof publicModelOperationTypes)[number];

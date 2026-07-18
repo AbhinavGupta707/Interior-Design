@@ -17,8 +17,14 @@ const operationCore = (clientOperationId: string, reason = "Unit fixture correct
   schemaVersion: "c5-model-operation-v1" as const,
 });
 
+const designOperationCore = (clientOperationId: string, reason = "Unit fixture design") => ({
+  clientOperationId,
+  reason,
+  schemaVersion: "c12-design-element-operation-v1" as const,
+});
+
 describe("the frozen C5 registry and upcaster", () => {
-  it("registers exactly the eight public and two internal operation types", () => {
+  it("registers exactly the eleven public and two internal operation types", () => {
     expect(registeredOperationTypes).toEqual([
       "snapshot.initialize.v1",
       "snapshot.restore.v1",
@@ -30,8 +36,11 @@ describe("the frozen C5 registry and upcaster", () => {
       "space.rename.v1",
       "element.metadata.correct.v1",
       "element.provenance.correct.v1",
+      "design.element.create.v1",
+      "design.element.replace.v1",
+      "design.element.remove.v1",
     ]);
-    expect(operationRegistry.filter(({ audience }) => audience === "public")).toHaveLength(8);
+    expect(operationRegistry.filter(({ audience }) => audience === "public")).toHaveLength(11);
   });
 
   it("fails closed for unknown schema versions and operation names", () => {
@@ -203,6 +212,88 @@ describe("pure schema-safe operation reduction", () => {
       },
     ]);
     expect(corrected.snapshot.elements.walls[0]?.path.attribution).toEqual(newAttribution);
+  });
+
+  it("creates, replaces and removes proposed design elements while preserving stable IDs", () => {
+    const snapshot = {
+      ...baseSnapshot(),
+      derivedFromSnapshotSha256: "f".repeat(64),
+      profile: "proposed" as const,
+    };
+    const furnishingId = "30000000-0000-4000-8000-000000000101";
+    const furnishing = {
+      category: known("sofa"),
+      dimensions: known({ depthMm: 900, heightMm: 800, widthMm: 2100 }),
+      elementType: "furnishing" as const,
+      id: furnishingId,
+      levelId,
+      name: known("Creator-owned synthetic sofa"),
+      origin: attribution(),
+      placement: {
+        position: known({ xMm: 1200, yMm: 900, zMm: 0 }),
+        rotationMilliDegrees: known(0),
+      },
+    };
+    const assetBinding = {
+      assetId: "30000000-0000-4000-8000-000000000107",
+      assetVersionId: "30000000-0000-4000-8000-000000000108",
+      contentSha256: "a".repeat(64),
+      metadataSha256: "b".repeat(64),
+      placementPolicySha256: "c".repeat(64),
+      rightsRecordSha256: "d".repeat(64),
+    };
+    const created = reduceModelOperations(snapshot, [
+      {
+        ...designOperationCore("30000000-0000-4000-8000-000000000102"),
+        assetBinding,
+        element: furnishing,
+        type: "design.element.create.v1",
+      },
+    ]);
+    expect(created.snapshot.elements.furnishings[0]?.id).toBe(furnishingId);
+
+    const replaced = reduceModelOperations(created.snapshot, [
+      {
+        ...designOperationCore("30000000-0000-4000-8000-000000000103"),
+        assetBinding,
+        element: {
+          ...furnishing,
+          placement: {
+            ...furnishing.placement,
+            position: known({ xMm: 1600, yMm: 900, zMm: 0 }),
+          },
+        },
+        expectedElementId: furnishingId,
+        type: "design.element.replace.v1",
+      },
+    ]);
+    expect(replaced.snapshot.elements.furnishings[0]?.placement.position).toMatchObject({
+      value: { xMm: 1600 },
+    });
+
+    const removed = reduceModelOperations(replaced.snapshot, [
+      {
+        ...designOperationCore("30000000-0000-4000-8000-000000000104"),
+        target: { collection: "furnishings", elementId: furnishingId },
+        type: "design.element.remove.v1",
+      },
+    ]);
+    expect(removed.snapshot.elements.furnishings).toEqual([]);
+  });
+
+  it("rejects design-element operations outside the proposed profile", () => {
+    expect(() =>
+      reduceModelOperations(baseSnapshot(), [
+        {
+          ...designOperationCore("30000000-0000-4000-8000-000000000105"),
+          target: {
+            collection: "furnishings",
+            elementId: "30000000-0000-4000-8000-000000000106",
+          },
+          type: "design.element.remove.v1",
+        },
+      ]),
+    ).toThrow(expect.objectContaining({ code: "INVALID_OPERATION" }));
   });
 
   it("rejects duplicate IDs and wrong target types while accepting bounded integer movement", () => {

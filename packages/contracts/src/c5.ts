@@ -4,6 +4,9 @@ import {
   attributedValueSchema,
   knownAttributionSchema,
   modelElementIdSchema,
+  modelFinishSchema,
+  modelFurnishingSchema,
+  modelLightSchema,
   modelLevelSchema,
   modelOpeningSchema,
   modelPoint2Schema,
@@ -15,6 +18,7 @@ import {
 } from "./c4.js";
 
 export const c5OperationSchemaVersion = "c5-model-operation-v1" as const;
+export const c12DesignElementOperationSchemaVersion = "c12-design-element-operation-v1" as const;
 export const c5BranchSchemaVersion = "c5-model-branch-v1" as const;
 
 const projectIdSchema = z.uuid();
@@ -32,6 +36,12 @@ const operationCoreShape = {
   clientOperationId: z.uuid(),
   reason: z.string().trim().min(1).max(500),
   schemaVersion: z.literal(c5OperationSchemaVersion),
+};
+
+const designOperationCoreShape = {
+  clientOperationId: z.uuid(),
+  reason: z.string().trim().min(1).max(500),
+  schemaVersion: z.literal(c12DesignElementOperationSchemaVersion),
 };
 
 const nonZeroTranslationSchema = z
@@ -143,6 +153,61 @@ export const correctElementProvenanceOperationSchema = z
   })
   .strict();
 
+export const designElementSchema = z.discriminatedUnion("elementType", [
+  modelFurnishingSchema,
+  modelFinishSchema,
+  modelLightSchema,
+]);
+export type DesignElement = z.infer<typeof designElementSchema>;
+
+export const designAssetBindingSchema = z
+  .object({
+    assetId: z.uuid(),
+    assetVersionId: z.uuid(),
+    contentSha256: sha256HexSchema,
+    metadataSha256: sha256HexSchema,
+    placementPolicySha256: sha256HexSchema,
+    rightsRecordSha256: sha256HexSchema,
+  })
+  .strict();
+export type DesignAssetBinding = z.infer<typeof designAssetBindingSchema>;
+
+export const createDesignElementOperationSchema = z
+  .object({
+    ...designOperationCoreShape,
+    assetBinding: designAssetBindingSchema,
+    element: designElementSchema,
+    type: z.literal("design.element.create.v1"),
+  })
+  .strict();
+
+export const replaceDesignElementOperationSchema = z
+  .object({
+    ...designOperationCoreShape,
+    assetBinding: designAssetBindingSchema,
+    element: designElementSchema,
+    expectedElementId: modelElementIdSchema,
+    type: z.literal("design.element.replace.v1"),
+  })
+  .strict()
+  .refine(({ element, expectedElementId }) => element.id === expectedElementId, {
+    message: "A design-element replacement must retain its stable element ID.",
+    path: ["element", "id"],
+  });
+
+export const removeDesignElementOperationSchema = z
+  .object({
+    ...designOperationCoreShape,
+    target: z
+      .object({
+        collection: z.enum(["finishes", "furnishings", "lights"]),
+        elementId: modelElementIdSchema,
+      })
+      .strict(),
+    type: z.literal("design.element.remove.v1"),
+  })
+  .strict();
+
 export const modelOperationRequestSchema = z.discriminatedUnion("type", [
   createLevelOperationSchema,
   createWallOperationSchema,
@@ -152,6 +217,9 @@ export const modelOperationRequestSchema = z.discriminatedUnion("type", [
   renameSpaceOperationSchema,
   correctElementMetadataOperationSchema,
   correctElementProvenanceOperationSchema,
+  createDesignElementOperationSchema,
+  replaceDesignElementOperationSchema,
+  removeDesignElementOperationSchema,
 ]);
 export type ModelOperationRequest = z.infer<typeof modelOperationRequestSchema>;
 
@@ -166,6 +234,9 @@ export const modelOperationTypeSchema = z.enum([
   "space.rename.v1",
   "element.metadata.correct.v1",
   "element.provenance.correct.v1",
+  "design.element.create.v1",
+  "design.element.replace.v1",
+  "design.element.remove.v1",
 ]);
 export type ModelOperationType = z.infer<typeof modelOperationTypeSchema>;
 
@@ -290,10 +361,26 @@ export const modelOperationRecordSchema = z
     projectId: projectIdSchema,
     reason: z.string().trim().min(1).max(500),
     revision: z.int().positive(),
-    schemaVersion: z.literal(c5OperationSchemaVersion),
+    schemaVersion: z.union([
+      z.literal(c5OperationSchemaVersion),
+      z.literal(c12DesignElementOperationSchemaVersion),
+    ]),
     type: modelOperationTypeSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((record, context) => {
+    const designOperation = record.type.startsWith("design.element.");
+    if (
+      (designOperation && record.schemaVersion !== c12DesignElementOperationSchemaVersion) ||
+      (!designOperation && record.schemaVersion !== c5OperationSchemaVersion)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "The retained model-operation type and schema version must be a registered pair.",
+        path: ["schemaVersion"],
+      });
+    }
+  });
 
 export const commitModelOperationsResponseSchema = z
   .object({
