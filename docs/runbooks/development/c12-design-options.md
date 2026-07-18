@@ -133,7 +133,8 @@ pnpm --filter @interior-design/model-operations test:unit
 
 pnpm --filter @interior-design/platform-api typecheck
 pnpm --filter @interior-design/platform-api lint
-pnpm --filter @interior-design/platform-api exec vitest run test/c12
+pnpm --filter @interior-design/platform-api exec vitest run \
+  test/c12 test/c12-policy.test.ts test/c12/composition.test.ts
 ```
 
 Run the guarded PostgreSQL suite only against a disposable or synthetic local database with migrations 0001–0011 available:
@@ -144,7 +145,7 @@ C12_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:543
   test/c12/postgres.integration.test.ts
 ```
 
-Run the root production-composition gate against a disposable local database. It applies C1–C12, sends C12 actions through the actual Next BFF to a listening API, runs the real deterministic worker, confirms two isolated branches, preserves the existing profile, compiles one branch through C10, and validates the resulting GLB bytes and hash:
+Run the root production-composition gate after `pnpm --filter @interior-design/web build` and `pnpm --filter @interior-design/spatial-worker build`, against a disposable local database. It applies C1–C12, launches the built production Next server, drives the real C11-to-C12 browser handoff and BFF over HTTP, spawns the built spatial-worker executable with C12 environment activation, confirms two isolated branches, preserves the existing profile, compiles one branch through C10, validates stable furnishing/finish/light mappings in the GLB, and scans captured composed process logs for private markers:
 
 ```sh
 C12_PRODUCTION_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:54321/c12_disposable \
@@ -153,7 +154,9 @@ C12_PRODUCTION_TEST_DATABASE_URL=postgresql://localdev:local-development-only@12
 
 When a broad test command shares one database, serialize migration-bearing files (`--pool=forks --maxWorkers=1`). Concurrent idempotent DDL from separate Vitest workers can otherwise race in PostgreSQL before product tests begin.
 
-The live suite reapplies the migration idempotently, uses synthetic fixture identities/projects, proves exact brief/source/working payloads reach the leased worker, stale accepted inputs cannot be leased, expired leases are reclaimed and old workers fenced, cancel/retry/abstain remain durable, no proposed C4/C5 mutation occurs before confirmation, and stale confirmation rollback, exact replay, concurrent sibling confirmation, result-snapshot linkage, RLS activation, and append-only rejection all hold. Without `C12_TEST_DATABASE_URL`, it skips honestly.
+The `C12_TEST_DATABASE_URL` platform suite proves exact brief/source/working payloads reach the leased worker; stale accepted inputs cannot be leased; expired leases are reclaimed and old workers fenced; cancel/retry/abstain remain durable; and stale confirmation rollback, exact replay, concurrent sibling confirmation, result-snapshot linkage, RLS activation, and append-only rejection hold. It skips honestly without that variable.
+
+The separate root journey uses `C12_PRODUCTION_TEST_DATABASE_URL` and proves the actual production Next/browser/BFF, the built environment-activated spatial-worker executable and real planner, atomic branches, existing-profile preservation, C10 GLB, stable IDs, and marker-based log scan. It skips honestly without that variable.
 
 Finish with:
 

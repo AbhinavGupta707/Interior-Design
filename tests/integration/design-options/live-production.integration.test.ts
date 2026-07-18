@@ -1,4 +1,3 @@
-import { creatorOwnedSyntheticAssetCatalog } from "../../../packages/interior-assets/src/index.js";
 import { reduceModelOperations } from "../../../packages/model-operations/src/index.js";
 import { parseGlb, sceneCompilerVersion } from "../../../packages/scene-compiler/src/index.js";
 import { loadPlatformApiConfig } from "../../../packages/config/src/index.js";
@@ -15,15 +14,17 @@ import {
   type LocalPersona,
   type Project,
 } from "../../../packages/contracts/src/index.js";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { access } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { createServer as createTcpServer } from "node:net";
+import path from "node:path";
+import { Writable } from "node:stream";
+import { chromium } from "@playwright/test";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import {
-  GET as c12BffGet,
-  POST as c12BffPost,
-} from "../../../apps/web/src/app/api/c12/[...segments]/route.js";
-import type { C12RouteContext } from "../../../apps/web/src/app/api/c12/_shared/design-options-proxy.js";
-import { createServer } from "../../../services/platform-api/src/app.js";
+import { createServer, defaultLogger } from "../../../services/platform-api/src/app.js";
 import {
   applyC1Migration,
   bootstrapC1Fixtures,
@@ -40,14 +41,10 @@ import { applyC9Migration } from "../../../services/platform-api/src/c9.js";
 import { applyC10Migration } from "../../../services/platform-api/src/c10.js";
 import { applyC11Migration } from "../../../services/platform-api/src/c11.js";
 import { applyC12Migration } from "../../../services/platform-api/src/c12.js";
-import { CatalogDesignAssetVerifier } from "../../../services/platform-api/src/modules/design-options/catalog.js";
-import { PostgresDesignOptionRepository } from "../../../services/platform-api/src/modules/design-options/postgres.js";
-import { DesignOptionWorkerRuntime } from "../../../services/platform-api/src/modules/design-options/worker.js";
 import { PostgresSceneRepository } from "../../../services/platform-api/src/modules/scenes/postgres.js";
 import { SceneWorkerService } from "../../../services/platform-api/src/modules/scenes/service.js";
 import { PostgresSceneSnapshotVerifier } from "../../../services/platform-api/src/modules/scenes/snapshot.js";
 import { InMemorySceneObjectStorage } from "../../../services/platform-api/src/modules/scenes/storage.js";
-import { DesignOptionProcessingRunner } from "../../../services/spatial-worker/src/design-options/runner.js";
 import { createJsonLogger } from "../../../services/spatial-worker/src/logger.js";
 import { SceneCompilationRunner } from "../../../services/spatial-worker/src/scene-compile/runner.js";
 import { richLease } from "../../../services/spatial-worker/test/design-options/support.js";
@@ -64,47 +61,84 @@ const compiler = {
 };
 const config = loadPlatformApiConfig({
   NODE_ENV: "test",
-  PLATFORM_API_LOG_LEVEL: "silent",
+  PLATFORM_API_LOG_LEVEL: "info",
   PLATFORM_API_SHUTDOWN_TIMEOUT_MS: "2000",
 });
+const privateMarker = "PRIVATE_C12_HOUSEHOLD_ACCESSIBILITY_ASSET_MARKER";
 
 function authorization(token: string) {
   return { authorization: `Bearer ${token}` };
 }
 
-function c12BffContext(segments: readonly string[]): C12RouteContext {
-  return { params: Promise.resolve({ segments: [...segments] }) };
+function availableLoopbackPort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createTcpServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        server.close();
+        reject(new Error("Could not reserve a loopback port for the C12 Next server."));
+        return;
+      }
+      server.close((error) => {
+        if (error) reject(error);
+        else resolve(address.port);
+      });
+    });
+  });
 }
 
-function c12BffRequest(options: {
-  readonly body?: unknown;
-  readonly idempotencyKey?: string;
-  readonly method: "GET" | "POST";
-  readonly segments: readonly string[];
-  readonly token: string;
-}): Request {
-  const headers = new Headers();
-  if (options.body !== undefined) headers.set("content-type", "application/json");
-  if (options.idempotencyKey) headers.set("idempotency-key", options.idempotencyKey);
-  const request = new Request(`http://127.0.0.1/api/c12/${options.segments.join("/")}`, {
-    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
-    headers,
-    method: options.method,
+async function waitForHttp(
+  url: string,
+  child: ChildProcess,
+  output: readonly string[],
+): Promise<void> {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) {
+      throw new Error(`The C12 Next server exited before readiness. ${output.join("")}`);
+    }
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(1_000) });
+      if (response.ok) return;
+    } catch {
+      // The production Next server is still starting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`The C12 Next server did not become ready. ${output.join("")}`);
+}
+
+function stopChild(child: ChildProcess | undefined): Promise<void> {
+  if (child === undefined || child.exitCode !== null) return Promise.resolve();
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => child.kill("SIGKILL"), 5_000);
+    child.once("exit", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    child.kill("SIGTERM");
   });
-  Object.defineProperty(request, "cookies", {
-    value: {
-      get(name: string) {
-        return name === "hds_c1_session" ? { value: options.token } : undefined;
-      },
-    },
-  });
-  return request;
 }
 
 describeLive("C12 production API, deterministic worker, atomic branches and C10 GLB", () => {
-  const previousApiBaseUrl = process.env.HOME_DESIGN_API_BASE_URL;
+  const composedLogChunks: string[] = [];
+  const logStream = new Writable({
+    write(chunk, _encoding, callback) {
+      composedLogChunks.push(String(chunk));
+      callback();
+    },
+  });
+  const logger = defaultLogger(config);
+  if (typeof logger !== "object") throw new Error("C12 live logging configuration is unavailable.");
   const sql = createC1Sql(databaseUrl);
   const storage = new InMemorySceneObjectStorage();
+  const nextOutput: string[] = [];
+  const workerOutput: string[] = [];
+  let nextBaseUrl = "";
+  let nextProcess: ChildProcess | undefined;
+  let workerProcess: ChildProcess | undefined;
   const server = createServer({
     c1: { database: sql },
     c4: { database: sql },
@@ -113,7 +147,7 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     c12: { database: sql },
     config,
     environment: { C1_LOCAL_SESSION_SECRET: sessionSecret, NODE_ENV: "test" },
-    logger: false,
+    logger: { ...logger, stream: logStream },
   });
 
   beforeAll(async () => {
@@ -131,13 +165,36 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     await applyC11Migration(sql);
     await applyC12Migration(sql);
     await storage.readiness();
-    const address = await server.listen({ host: "127.0.0.1", port: 0 });
-    process.env.HOME_DESIGN_API_BASE_URL = address;
+    const apiBaseUrl = await server.listen({ host: "127.0.0.1", port: 0 });
+    const webRoot = path.resolve(process.cwd(), "apps/web");
+    await access(path.join(webRoot, ".next", "BUILD_ID"));
+    const nextPort = await availableLoopbackPort();
+    nextBaseUrl = `http://127.0.0.1:${String(nextPort)}`;
+    const nextCli = createRequire(path.resolve(process.cwd(), "package.json")).resolve(
+      "next/dist/bin/next",
+    );
+    nextProcess = spawn(
+      process.execPath,
+      [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(nextPort)],
+      {
+        cwd: webRoot,
+        env: {
+          ...process.env,
+          C12_OPTION_EVIDENCE_CLASSIFICATION: "production-composed",
+          HOME_DESIGN_API_BASE_URL: apiBaseUrl,
+          NODE_ENV: "production",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    nextProcess.stdout?.on("data", (chunk) => nextOutput.push(String(chunk)));
+    nextProcess.stderr?.on("data", (chunk) => nextOutput.push(String(chunk)));
+    await waitForHttp(`${nextBaseUrl}/sign-in`, nextProcess, nextOutput);
   });
 
   afterAll(async () => {
-    if (previousApiBaseUrl === undefined) delete process.env.HOME_DESIGN_API_BASE_URL;
-    else process.env.HOME_DESIGN_API_BASE_URL = previousApiBaseUrl;
+    await stopChild(workerProcess);
+    await stopChild(nextProcess);
     await server.close();
     await sql.end({ timeout: 5 });
   });
@@ -150,6 +207,18 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     });
     expect(response.statusCode).toBe(201);
     return response.json<{ readonly accessToken: string }>().accessToken;
+  }
+
+  async function signInNext(persona: LocalPersona): Promise<string> {
+    const response = await fetch(`${nextBaseUrl}/api/c1/session`, {
+      body: JSON.stringify({ persona }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    expect(response.status).toBe(200);
+    const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+    if (cookie === undefined) throw new Error("The production Next sign-in cookie is missing.");
+    return cookie;
   }
 
   async function createProject(token: string): Promise<Project> {
@@ -165,6 +234,7 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
 
   it("generates two replayable options, confirms isolated siblings, preserves existing and compiles one branch", async () => {
     const ownerToken = await signIn("homeowner-alpha");
+    const ownerCookie = await signInNext("homeowner-alpha");
     const project = await createProject(ownerToken);
     const sessionResponse = await server.inject({
       headers: authorization(ownerToken),
@@ -212,7 +282,7 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
                 statedByUserId: session.actor.userId,
               },
               roomOrLevelElementIds: [space.id],
-              statement: "Create two distinct, usable living-room arrangements.",
+              statement: privateMarker,
               status: "active",
             },
             kind: "entry.add",
@@ -237,6 +307,71 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     expect(briefContentSha256).toMatch(/^[a-f0-9]{64}$/u);
     if (briefContentSha256 === undefined) throw new Error("Accepted brief hash is missing.");
 
+    const liveWorkspaceResponse = await fetch(
+      `${nextBaseUrl}/api/c11/projects/${project.id}/workspace`,
+      { headers: { cookie: ownerCookie } },
+    );
+    expect(liveWorkspaceResponse.status).toBe(200);
+    const liveWorkspace = (await liveWorkspaceResponse.json()) as {
+      readonly brief?: {
+        readonly id?: unknown;
+        readonly revision?: unknown;
+        readonly status?: unknown;
+      };
+      readonly briefContentSha256?: unknown;
+    };
+    expect(liveWorkspace).toMatchObject({
+      brief: { id: accepted.id, revision: accepted.revision, status: "accepted" },
+      briefContentSha256,
+    });
+
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const context = await browser.newContext();
+      const separator = ownerCookie.indexOf("=");
+      await context.addCookies([
+        {
+          name: ownerCookie.slice(0, separator),
+          url: nextBaseUrl,
+          value: ownerCookie.slice(separator + 1),
+        },
+      ]);
+      const page = await context.newPage();
+      const browserErrors: string[] = [];
+      page.on("console", (message) => {
+        if (message.type() === "error") browserErrors.push(message.text());
+      });
+      await page.goto(`${nextBaseUrl}/design-consultation/${project.id}`, {
+        waitUntil: "networkidle",
+      });
+      const handoff = page.getByRole("link", { name: "Generate two valid design options" });
+      await handoff.waitFor({ state: "visible", timeout: 15_000 });
+      const href = await handoff.getAttribute("href");
+      if (href === null) throw new Error("The production C11-to-C12 handoff URL is missing.");
+      const launch = new URL(href, nextBaseUrl);
+      expect(launch.pathname).toBe(`/design-options/${project.id}`);
+      expect(Object.fromEntries(launch.searchParams.entries())).toMatchObject({
+        briefId: accepted.id,
+        briefRevision: String(accepted.revision),
+        briefSha256: briefContentSha256,
+        modelId,
+        modelProfile: "existing",
+        optionCount: "2",
+        snapshotId: existing.id,
+        snapshotSha256: existing.snapshotSha256,
+        snapshotVersion: String(existing.version),
+      });
+      await handoff.click();
+      await page.getByRole("heading", { name: "Compare what actually changes" }).waitFor({
+        state: "visible",
+        timeout: 15_000,
+      });
+      expect(browserErrors).toEqual([]);
+      await context.close();
+    } finally {
+      await browser.close();
+    }
+
     const beforeJob = await sql<
       Array<{ readonly branches: number; readonly commits: number; readonly proposed: number }>
     >`
@@ -251,68 +386,102 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     expect(beforeJob[0]).toEqual({ branches: 0, commits: 0, proposed: 0 });
 
     const createJobKey = randomUUID();
-    const createJobSegments = ["projects", project.id, "design-option-jobs"] as const;
-    const jobResponse = await c12BffPost(
-      c12BffRequest({
-        body: {
-          baseBrief: {
-            briefId: accepted.id,
-            contentSha256: briefContentSha256,
-            revision: accepted.revision,
-          },
-          requestedDirections: ["circulation-first", "conversation-first"],
-          requestedOptionCount: 2,
-          sourceModel: {
-            modelId,
-            profile: "existing",
-            snapshotId: existing.id,
-            snapshotSha256: existing.snapshotSha256,
-            snapshotVersion: existing.version,
-          },
+    const createJobPath = `/api/c12/projects/${project.id}/design-option-jobs`;
+    const jobResponse = await fetch(`${nextBaseUrl}${createJobPath}`, {
+      body: JSON.stringify({
+        baseBrief: {
+          briefId: accepted.id,
+          contentSha256: briefContentSha256,
+          revision: accepted.revision,
         },
-        idempotencyKey: createJobKey,
-        method: "POST",
-        segments: createJobSegments,
-        token: ownerToken,
+        requestedDirections: ["circulation-first", "conversation-first"],
+        requestedOptionCount: 2,
+        sourceModel: {
+          modelId,
+          profile: "existing",
+          snapshotId: existing.id,
+          snapshotSha256: existing.snapshotSha256,
+          snapshotVersion: existing.version,
+        },
       }),
-      c12BffContext(createJobSegments),
-    );
+      headers: {
+        "content-type": "application/json",
+        cookie: ownerCookie,
+        "idempotency-key": createJobKey,
+      },
+      method: "POST",
+    });
     expect(jobResponse.status).toBe(201);
     const queued = optionJobSchema.parse(await jobResponse.json());
     expect(queued).toMatchObject({ optionCount: 0, state: "queued" });
     expect(beforeJob[0]).toEqual({ branches: 0, commits: 0, proposed: 0 });
 
-    const assetVerifier = new CatalogDesignAssetVerifier({
-      catalog: creatorOwnedSyntheticAssetCatalog,
+    const completedPath = `${createJobPath}/${queued.id}`;
+    const workerEntry = path.resolve(process.cwd(), "services/spatial-worker/dist/src/index.js");
+    await access(workerEntry);
+    workerProcess = spawn(process.execPath, [workerEntry], {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        C2_DATABASE_URL: databaseUrl,
+        C2_POLL_MS: "100",
+        C2_WORKER_ID: "c12-live-production-runner",
+        C6_PLAN_WORKER_ENABLED: "false",
+        C7_ROOMPLAN_WORKER_ENABLED: "false",
+        C8_RECONSTRUCTION_WORKER_ENABLED: "false",
+        C9_FUSION_WORKER_ENABLED: "false",
+        C10_DATABASE_URL: databaseUrl,
+        C10_SCENE_WORKER_ENABLED: "false",
+        C12_DATABASE_URL: databaseUrl,
+        C12_DESIGN_OPTION_WORKER_ENABLED: "true",
+        NODE_ENV: "test",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    const optionRunner = new DesignOptionProcessingRunner({
-      logger: createJsonLogger(),
-      pollMilliseconds: 100,
-      worker: new DesignOptionWorkerRuntime(
-        new PostgresDesignOptionRepository(sql, { assetVerifier }),
-      ),
-      workerId: "c12-live-production-runner",
-    });
-    await expect(optionRunner.processNext()).resolves.toBe("processed");
+    workerProcess.stdout?.on("data", (chunk) => workerOutput.push(String(chunk)));
+    workerProcess.stderr?.on("data", (chunk) => workerOutput.push(String(chunk)));
 
-    const completedSegments = [...createJobSegments, queued.id] as const;
-    const completedResponse = await c12BffGet(
-      c12BffRequest({ method: "GET", segments: completedSegments, token: ownerToken }),
-      c12BffContext(completedSegments),
-    );
-    expect(completedResponse.status).toBe(200);
-    const completed = optionJobSchema.parse(await completedResponse.json());
+    let completed: ReturnType<typeof optionJobSchema.parse> | undefined;
+    const workerDeadline = Date.now() + 45_000;
+    try {
+      while (Date.now() < workerDeadline) {
+        if (workerProcess.exitCode !== null) {
+          throw new Error(
+            `The built C12 spatial worker exited before completion. ${workerOutput.join("")}`,
+          );
+        }
+        const completedResponse = await fetch(`${nextBaseUrl}${completedPath}`, {
+          headers: { cookie: ownerCookie },
+        });
+        expect(completedResponse.status).toBe(200);
+        const current = optionJobSchema.parse(await completedResponse.json());
+        if (current.state === "succeeded") {
+          completed = current;
+          break;
+        }
+        if (current.state === "failed" || current.state === "cancelled") {
+          throw new Error(
+            `The built C12 spatial worker reached ${current.state}. ${workerOutput.join("")}`,
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    } finally {
+      await stopChild(workerProcess);
+      workerProcess = undefined;
+    }
+    if (completed === undefined) {
+      throw new Error(`The built C12 spatial worker timed out. ${workerOutput.join("")}`);
+    }
     expect(completed).toMatchObject({
       attempt: 1,
       optionCount: 2,
       stage: "complete",
       state: "succeeded",
     });
-    const optionsSegments = [...completedSegments, "options"] as const;
-    const optionsResponse = await c12BffGet(
-      c12BffRequest({ method: "GET", segments: optionsSegments, token: ownerToken }),
-      c12BffContext(optionsSegments),
-    );
+    const optionsResponse = await fetch(`${nextBaseUrl}${completedPath}/options`, {
+      headers: { cookie: ownerCookie },
+    });
     expect(optionsResponse.status).toBe(200);
     const proposals = listDesignOptionsResponseSchema.parse(await optionsResponse.json());
     expect(proposals.options).toHaveLength(2);
@@ -370,16 +539,17 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     });
     const firstKey = randomUUID();
     const firstPayload = confirmationPayload(firstKey);
-    const firstSegments = [...completedSegments, "options", first.id, "confirm"] as const;
-    const firstConfirmationResponse = await c12BffPost(
-      c12BffRequest({
-        body: firstPayload,
-        idempotencyKey: firstKey,
+    const firstConfirmationResponse = await fetch(
+      `${nextBaseUrl}${completedPath}/options/${first.id}/confirm`,
+      {
+        body: JSON.stringify(firstPayload),
+        headers: {
+          "content-type": "application/json",
+          cookie: ownerCookie,
+          "idempotency-key": firstKey,
+        },
         method: "POST",
-        segments: firstSegments,
-        token: ownerToken,
-      }),
-      c12BffContext(firstSegments),
+      },
     );
     const firstUrl = `/v1/projects/${project.id}/design-option-jobs/${completed.id}/options/${first.id}/confirm`;
     const firstReplayResponse = await server.inject({
@@ -396,16 +566,17 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     const firstConfirmation = optionConfirmationSchema.parse(firstConfirmationPayload);
 
     const secondKey = randomUUID();
-    const secondSegments = [...completedSegments, "options", second.id, "confirm"] as const;
-    const secondConfirmationResponse = await c12BffPost(
-      c12BffRequest({
-        body: confirmationPayload(secondKey),
-        idempotencyKey: secondKey,
+    const secondConfirmationResponse = await fetch(
+      `${nextBaseUrl}${completedPath}/options/${second.id}/confirm`,
+      {
+        body: JSON.stringify(confirmationPayload(secondKey)),
+        headers: {
+          "content-type": "application/json",
+          cookie: ownerCookie,
+          "idempotency-key": secondKey,
+        },
         method: "POST",
-        segments: secondSegments,
-        token: ownerToken,
-      }),
-      c12BffContext(secondSegments),
+      },
     );
     expect(secondConfirmationResponse.status).toBe(201);
     const secondConfirmation = optionConfirmationSchema.parse(
@@ -528,7 +699,7 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     const sceneRunner = new SceneCompilationRunner({
       heartbeatMilliseconds: 1_000,
       leaseSeconds: 30,
-      logger: createJsonLogger(),
+      logger: createJsonLogger(logStream),
       pollMilliseconds: 100,
       worker: new SceneWorkerService({
         repository: new PostgresSceneRepository(sql),
@@ -563,5 +734,71 @@ describeLive("C12 production API, deterministic worker, atomic branches and C10 
     expect((parsed.json.asset as { readonly version?: unknown }).version).toBe("2.0");
     expect(parsed.json.extensionsRequired ?? []).toEqual([]);
     expect(JSON.stringify(parsed.json)).not.toMatch(/"uri"/u);
+
+    const c12Elements = first.operationBundle.operations.flatMap((operation) =>
+      "element" in operation ? [operation.element] : [],
+    );
+    expect(new Set(c12Elements.map(({ elementType }) => elementType))).toEqual(
+      new Set(["finish", "furnishing", "light"]),
+    );
+    const nodes = parsed.json.nodes as readonly {
+      readonly extensions?: { readonly KHR_lights_punctual?: { readonly light?: unknown } };
+      readonly extras?: { readonly canonicalElementId?: unknown };
+    }[];
+    const materials = parsed.json.materials as readonly {
+      readonly extras?: { readonly canonicalElementId?: unknown };
+    }[];
+    const punctualLights = (
+      parsed.json.extensions as
+        | {
+            readonly KHR_lights_punctual?: {
+              readonly lights?: readonly {
+                readonly extras?: { readonly canonicalElementId?: unknown };
+              }[];
+            };
+          }
+        | undefined
+    )?.KHR_lights_punctual?.lights;
+    for (const element of c12Elements) {
+      const mapping = published.manifest.elementMappings.find(
+        ({ elementId }) => elementId === element.id,
+      );
+      expect(mapping).toMatchObject({
+        elementId: element.id,
+        elementType: element.elementType,
+        status: "mapped",
+      });
+      if (mapping === undefined) throw new Error("A confirmed C12 scene mapping is missing.");
+      if (element.elementType === "finish") {
+        expect(mapping.materialIndices.length).toBeGreaterThan(0);
+        for (const materialIndex of mapping.materialIndices) {
+          expect(materials[materialIndex]?.extras?.canonicalElementId).toBe(element.id);
+        }
+      } else {
+        expect(mapping.nodeIndices.length).toBeGreaterThan(0);
+        for (const nodeIndex of mapping.nodeIndices) {
+          expect(nodes[nodeIndex]?.extras?.canonicalElementId).toBe(element.id);
+        }
+      }
+      if (element.elementType === "furnishing")
+        expect(mapping.meshIndices.length).toBeGreaterThan(0);
+      if (element.elementType === "light") {
+        const lightIndex =
+          nodes[mapping.nodeIndices[0] ?? -1]?.extensions?.KHR_lights_punctual?.light;
+        expect(typeof lightIndex).toBe("number");
+        if (typeof lightIndex === "number") {
+          expect(punctualLights?.[lightIndex]?.extras?.canonicalElementId).toBe(element.id);
+        }
+      }
+    }
+
+    const composedLogs = `${composedLogChunks.join("")}\n${nextOutput.join("")}\n${workerOutput.join("")}`;
+    expect(composedLogs).toContain("design-options.published");
+    expect(composedLogs).toContain("scene.compiled");
+    expect(composedLogs).not.toContain(privateMarker);
+    expect(composedLogs).not.toContain(ownerToken);
+    expect(composedLogs).not.toContain(first.summary);
+    expect(composedLogs).not.toContain(first.operationBundle.assetPlacements[0]?.asset.id);
+    expect(composedLogs).not.toMatch(/acceptedBrief|assetPlacements|leaseToken|operations/iu);
   }, 120_000);
 });
