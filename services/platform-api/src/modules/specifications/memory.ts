@@ -428,12 +428,14 @@ export class InMemorySpecificationRepository implements SpecificationRepository 
     const sceneRequest = {
       branchId: nextRevision.branchId,
       branchRevision: nextRevision.branchRevision,
+      modelId: retained.command.verified.snapshot.modelId,
       modelSnapshotId: nextRevision.modelSnapshotId,
       modelSnapshotSha256: nextRevision.modelSnapshotSha256,
       projectId: command.projectId,
       sceneJobId: command.sceneJobId,
       specificationId: command.specificationId,
       specificationRevision: nextRevision.revision,
+      specificationRevisionSha256: nextRevision.revisionSha256,
     };
     this.specifications.set(specKey, next);
     this.revisions.set(specKey, [...(this.revisions.get(specKey) ?? []), nextRevision]);
@@ -444,6 +446,7 @@ export class InMemorySpecificationRepository implements SpecificationRepository 
       catalogReleaseId: nextRevision.catalogReleaseId,
       catalogReleaseSha256: nextRevision.catalogReleaseSha256,
       lines: nextRevision.lines,
+      modelId: retained.command.verified.snapshot.modelId,
       modelSnapshotId: nextRevision.modelSnapshotId,
       modelSnapshotSha256: nextRevision.modelSnapshotSha256,
       projectId: command.projectId,

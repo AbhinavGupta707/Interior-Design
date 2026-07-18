@@ -6,6 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { compileCanonicalScene, parseGlb, sha256Hex } from "../src/index.js";
+import type { SceneSpecificationBinding } from "../src/types.js";
 import { canonicalFixture, fixtureIds, fixtureReference, unknown } from "./fixture.js";
 
 function arrayMember(
@@ -13,6 +14,33 @@ function arrayMember(
   key: string,
 ): Record<string, unknown>[] {
   return json[key] as Record<string, unknown>[];
+}
+
+function specificationBinding(snapshotSha256: string): SceneSpecificationBinding {
+  const hash = (digit: string) => digit.repeat(64);
+  return {
+    catalogReleaseId: "30000000-0000-4000-8000-000000000001",
+    catalogReleaseSha256: hash("1"),
+    lines: [
+      { elementId: fixtureIds.finish, kind: "finish" as const },
+      { elementId: fixtureIds.furnishing, kind: "furnishing" as const },
+      { elementId: fixtureIds.light, kind: "light" as const },
+    ].map((line, index) => ({
+      ...line,
+      assetContentSha256: hash("2"),
+      assetMetadataSha256: hash("3"),
+      assetVersionId: `30000000-0000-4000-8000-${String(index + 2).padStart(12, "0")}`,
+      assetVersionSha256: hash("4"),
+      placementPolicySha256: hash("5"),
+      placementProjectionSha256: hash("6"),
+      rightsRecordSha256: hash("7"),
+    })),
+    modelSnapshotSha256: snapshotSha256,
+    projectId: fixtureIds.project,
+    specificationId: "30000000-0000-4000-8000-000000000005",
+    specificationRevision: 2,
+    specificationRevisionSha256: hash("8"),
+  };
 }
 
 describe("canonical scene compiler", () => {
@@ -104,6 +132,72 @@ describe("canonical scene compiler", () => {
     expect(
       new Set(result.manifest.elementMappings.flatMap(({ nodeIndices }) => nodeIndices)).size,
     ).toBe(result.manifest.elementMappings.flatMap(({ nodeIndices }) => nodeIndices).length);
+  });
+
+  it("retains exact C13 catalog pins on a validator-clean parametric GLB without claiming vendor fidelity", async () => {
+    const snapshot = canonicalFixture();
+    const sourceSnapshot = fixtureReference(snapshot);
+    const binding = specificationBinding(sourceSnapshot.snapshotSha256);
+    const result = await compileCanonicalScene({
+      configuration: c10DefaultCompileConfiguration,
+      snapshot,
+      sourceSnapshot,
+      specificationBinding: binding,
+    });
+    expect(result.validation).toMatchObject({ numErrors: 0, numWarnings: 0 });
+    const parsed = parseGlb(result.glb);
+    expect(
+      ((parsed.json.asset as Record<string, unknown>).extras as Record<string, unknown>)
+        .c13SpecificationBinding,
+    ).toMatchObject({
+      authority: "catalog-metadata-on-parametric-scene",
+      catalogReleaseSha256: binding.catalogReleaseSha256,
+      specificationRevisionSha256: binding.specificationRevisionSha256,
+    });
+    const furnishing = arrayMember(parsed.json, "nodes").find(
+      (node) =>
+        (node.extras as Record<string, unknown>).canonicalElementId === fixtureIds.furnishing,
+    );
+    expect((furnishing?.extras as Record<string, unknown>).c13CatalogBinding).toMatchObject({
+      assetVersionId: binding.lines[1]?.assetVersionId,
+      representation: "parametric-bounded-not-vendor-fidelity",
+      rightsRecordSha256: binding.lines[1]?.rightsRecordSha256,
+    });
+    const finishMaterial = arrayMember(parsed.json, "materials").find(
+      (material) =>
+        (
+          (material.extras as Record<string, unknown> | undefined)?.c13CatalogBinding as
+            Record<string, unknown> | undefined
+        )?.assetVersionId === binding.lines[0]?.assetVersionId,
+    );
+    expect(finishMaterial).toBeDefined();
+    const light = arrayMember(parsed.json, "nodes").find(
+      (node) => (node.extras as Record<string, unknown>).canonicalElementId === fixtureIds.light,
+    );
+    expect((light?.extras as Record<string, unknown>).c13CatalogBinding).toMatchObject({
+      assetVersionId: binding.lines[2]?.assetVersionId,
+      representation: "parametric-bounded-not-vendor-fidelity",
+      rightsRecordSha256: binding.lines[2]?.rightsRecordSha256,
+    });
+  });
+
+  it("rejects a forged cross-kind C13 catalog binding", async () => {
+    const snapshot = canonicalFixture();
+    const sourceSnapshot = fixtureReference(snapshot);
+    const binding = specificationBinding(sourceSnapshot.snapshotSha256);
+    await expect(
+      compileCanonicalScene({
+        configuration: c10DefaultCompileConfiguration,
+        snapshot,
+        sourceSnapshot,
+        specificationBinding: {
+          ...binding,
+          lines: binding.lines.map((line, index) =>
+            index === 1 ? { ...line, kind: "light" as const } : line,
+          ),
+        },
+      }),
+    ).rejects.toMatchObject({ code: "INPUT_INVALID" });
   });
 
   it("respects left-face and right-face wall alignment", async () => {

@@ -7,6 +7,7 @@ import {
   assetSelectable,
   commercialUnknowns,
   rightsLabel,
+  shortHash,
   sourceLabel,
 } from "./presentation";
 
@@ -141,9 +142,12 @@ export function CatalogPanel({
             const selectable = assetSelectable(asset);
             const sameKind = !selectedLine || selectedLine.kind === asset.kind;
             const selected = candidateAssetVersionId === asset.versionId;
+            const candidateActionable = editable && selectable && sameKind;
+            const versionLabel = `${asset.displayName} version ${asset.version} (${shortHash(asset.versionId)})`;
             return (
               <li
                 className={styles.assetCard}
+                data-asset-version-id={asset.versionId}
                 data-selected={String(selected)}
                 key={asset.versionId}
               >
@@ -160,6 +164,9 @@ export function CatalogPanel({
                     <div>
                       <h3>{asset.displayName}</h3>
                       <p>{asset.category}</p>
+                      <p>
+                        Version {asset.version} · <code>{shortHash(asset.versionId)}</code>
+                      </p>
                     </div>
                     <span data-state={selectable ? "ready" : "blocked"}>
                       {selectable ? "Selectable" : "Inspect only"}
@@ -188,9 +195,17 @@ export function CatalogPanel({
                     <p className={styles.incompatibility}>Cross-kind replacement is not allowed.</p>
                   ) : null}
                   <button
+                    aria-label={
+                      selected
+                        ? `Selected ${versionLabel} as candidate`
+                        : candidateActionable
+                          ? `Use ${versionLabel} as candidate`
+                          : `Inspect-only ${versionLabel}`
+                    }
                     aria-pressed={selected}
                     className={styles.selectCandidate}
-                    disabled={!editable || !selectable || !sameKind}
+                    data-asset-version-id={asset.versionId}
+                    disabled={!candidateActionable}
                     onClick={() => {
                       onCandidateChange(asset.versionId);
                     }}
@@ -198,7 +213,7 @@ export function CatalogPanel({
                   >
                     {selected
                       ? "Candidate selected"
-                      : editable
+                      : candidateActionable
                         ? "Use as candidate"
                         : "Inspect-only candidate"}
                   </button>

@@ -15,6 +15,7 @@ export interface GltfMeshInput {
 }
 
 export interface GltfDocumentInput {
+  readonly assetExtras?: Readonly<Record<string, unknown>>;
   readonly cameras: readonly Readonly<Record<string, unknown>>[];
   readonly extensions?: Readonly<Record<string, unknown>>;
   readonly extensionsUsed?: readonly string[];
@@ -276,7 +277,11 @@ export function writeGlb(input: GltfDocumentInput): WrittenGlb {
   const binaryBytes = binary.finish();
   const rawDocument: Record<string, unknown> = {
     ...(accessors.length === 0 ? {} : { accessors }),
-    asset: { generator: "interior-design-scene-compiler/1.0.0", version: "2.0" },
+    asset: {
+      generator: "interior-design-scene-compiler/1.0.0",
+      ...(input.assetExtras === undefined ? {} : { extras: input.assetExtras }),
+      version: "2.0",
+    },
     ...(binaryBytes.byteLength === 0
       ? {}
       : { bufferViews, buffers: [{ byteLength: binaryBytes.byteLength }] }),

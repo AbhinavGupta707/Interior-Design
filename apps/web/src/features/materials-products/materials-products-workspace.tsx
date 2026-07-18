@@ -240,6 +240,21 @@ export function MaterialsProductsWorkspace({
           ),
         );
         setSpecification(nextSpecification);
+        setWorkspace((current) =>
+          current === undefined
+            ? current
+            : {
+                ...current,
+                specifications: {
+                  ...current.specifications,
+                  specifications: current.specifications.specifications.map((item) =>
+                    item.specificationId === nextSpecification.specificationId
+                      ? nextSpecification
+                      : item,
+                  ),
+                },
+              },
+        );
         setSchedule(nextSchedule);
         setRevisionCount(revisions.revisions.length);
         setAssetDetails(new Map(assets.map((asset) => [asset.versionId, asset])));

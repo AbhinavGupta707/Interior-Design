@@ -3,7 +3,12 @@ import {
   type SceneCompilerWorkerPort,
   type SceneWorkerStage,
 } from "@interior-design/platform-api/scenes";
-import { compileCanonicalScene, sceneCompilerVersion } from "@interior-design/scene-compiler";
+import type { SpecificationSceneBindingResolver } from "@interior-design/platform-api/specifications";
+import {
+  compileCanonicalScene,
+  sceneCompilerVersion,
+  type SceneSpecificationBinding,
+} from "@interior-design/scene-compiler";
 
 import type { SafeLogger } from "../logger.js";
 import { runSceneCompilation } from "./runtime.js";
@@ -23,6 +28,7 @@ export interface SceneCompilationRunnerOptions {
   readonly logger: SafeLogger;
   readonly pollMilliseconds: number;
   readonly runCompilation?: RunCompilation;
+  readonly specifications?: SpecificationSceneBindingResolver;
   readonly worker: SceneCompilerWorkerPort;
   readonly workerId: string;
 }
@@ -76,6 +82,46 @@ function leaseCommand(lease: LeasedSceneAttempt, workerId: string) {
     tenantId: lease.tenantId,
     workerId,
   } as const;
+}
+
+function sceneSpecificationBinding(
+  binding: Awaited<ReturnType<SpecificationSceneBindingResolver["resolveConfirmedSceneBinding"]>>,
+  lease: LeasedSceneAttempt,
+): SceneSpecificationBinding | undefined {
+  if (binding === undefined) return undefined;
+  if (
+    binding.projectId !== lease.projectId ||
+    binding.sceneJobId !== lease.jobId ||
+    binding.modelId !== lease.request.sourceSnapshot.modelId ||
+    binding.modelSnapshotId !== lease.request.sourceSnapshot.snapshotId ||
+    binding.modelSnapshotSha256 !== lease.request.sourceSnapshot.snapshotSha256
+  ) {
+    throw new Error("The C13 specification binding does not match the exact C10 lease.");
+  }
+  return {
+    catalogReleaseId: binding.catalogReleaseId,
+    catalogReleaseSha256: binding.catalogReleaseSha256,
+    lines: binding.lines
+      .map((line) => ({
+        assetContentSha256: line.assetContentSha256,
+        assetMetadataSha256: line.assetMetadataSha256,
+        assetVersionId: line.assetVersionId,
+        assetVersionSha256: line.assetVersionSha256,
+        elementId: line.elementId,
+        kind: line.kind,
+        placementPolicySha256: line.placementPolicySha256,
+        placementProjectionSha256: line.placementProjectionSha256,
+        rightsRecordSha256: line.rightsRecordSha256,
+      }))
+      .sort((left, right) =>
+        left.elementId < right.elementId ? -1 : left.elementId > right.elementId ? 1 : 0,
+      ),
+    modelSnapshotSha256: binding.modelSnapshotSha256,
+    projectId: binding.projectId,
+    specificationId: binding.specificationId,
+    specificationRevision: binding.specificationRevision,
+    specificationRevisionSha256: binding.revisionSha256,
+  };
 }
 
 export class SceneCompilationRunner {
@@ -157,7 +203,18 @@ export class SceneCompilationRunner {
       compile:
         this.#options.compile ??
         (async (input) => {
-          const compiled = await compileCanonicalScene(input);
+          const specificationBinding = sceneSpecificationBinding(
+            await this.#options.specifications?.resolveConfirmedSceneBinding(
+              lease.tenantId,
+              lease.projectId,
+              lease.jobId,
+            ),
+            lease,
+          );
+          const compiled = await compileCanonicalScene({
+            ...input,
+            ...(specificationBinding === undefined ? {} : { specificationBinding }),
+          });
           return {
             artifact: compiled.artifact,
             glb: compiled.glb,

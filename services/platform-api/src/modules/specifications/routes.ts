@@ -280,7 +280,8 @@ export function registerSpecificationRoutes(
     if (/^(?:machine|service):/u.test(actor.subject)) throw forbidden();
     const body = parseRequest(sceneRetrySchema, request.body);
     const result = await service.retryScene(
-      actor.tenantId,
+      actor,
+      getRequestCorrelation(request),
       params.projectId,
       params.specificationId,
       params.revision,

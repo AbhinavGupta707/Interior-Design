@@ -48,6 +48,12 @@ const extractedEnvironmentSchema = z
     C10_DATABASE_URL: z.string().trim().min(1).optional(),
     C12_DESIGN_OPTION_WORKER_ENABLED: z.enum(["true", "false"]).default("false"),
     C12_DATABASE_URL: z.string().trim().min(1).optional(),
+    C13_CATALOG_INGEST_ENABLED: z.enum(["true", "false"]).default("false"),
+    C13_CATALOG_PROJECT_ID: z.uuid().optional(),
+    C13_CATALOG_PUBLISHED_BY_USER_ID: z.uuid().optional(),
+    C13_CATALOG_SOURCE_ROOT: z.string().trim().min(1).optional(),
+    C13_CATALOG_TENANT_ID: z.uuid().optional(),
+    C13_DATABASE_URL: z.string().trim().min(1).optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
   .strict();
@@ -55,6 +61,12 @@ const extractedEnvironmentSchema = z
 export interface WorkerConfig {
   readonly c10SceneWorkerEnabled: boolean;
   readonly c12DesignOptionWorkerEnabled: boolean;
+  readonly c13CatalogIngestion?: {
+    readonly projectId: string;
+    readonly publishedByUserId: string;
+    readonly sourceRoot: string;
+    readonly tenantId: string;
+  };
   readonly databaseUrl: string;
   readonly derivedBucket: "derived";
   readonly executables: {
@@ -156,20 +168,29 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     C10_DATABASE_URL: environment.C10_DATABASE_URL,
     C12_DESIGN_OPTION_WORKER_ENABLED: environment.C12_DESIGN_OPTION_WORKER_ENABLED,
     C12_DATABASE_URL: environment.C12_DATABASE_URL,
+    C13_CATALOG_INGEST_ENABLED: environment.C13_CATALOG_INGEST_ENABLED,
+    C13_CATALOG_PROJECT_ID: environment.C13_CATALOG_PROJECT_ID,
+    C13_CATALOG_PUBLISHED_BY_USER_ID: environment.C13_CATALOG_PUBLISHED_BY_USER_ID,
+    C13_CATALOG_SOURCE_ROOT: environment.C13_CATALOG_SOURCE_ROOT,
+    C13_CATALOG_TENANT_ID: environment.C13_CATALOG_TENANT_ID,
+    C13_DATABASE_URL: environment.C13_DATABASE_URL,
     NODE_ENV: environment.NODE_ENV,
   });
   const production = extracted.NODE_ENV === "production";
   const c10Enabled = extracted.C10_SCENE_WORKER_ENABLED === "true";
   const c12Enabled = extracted.C12_DESIGN_OPTION_WORKER_ENABLED === "true";
+  const c13CatalogEnabled = extracted.C13_CATALOG_INGEST_ENABLED === "true";
   const activeDatabaseUrls = [
     extracted.C2_DATABASE_URL,
     extracted.C10_DATABASE_URL,
     extracted.C12_DATABASE_URL,
+    extracted.C13_DATABASE_URL,
   ].filter((value): value is string => value !== undefined);
   if (new Set(activeDatabaseUrls).size > 1) {
     throw new Error("Spatial-worker database variables must identify one shared database URL.");
   }
   const databaseUrl =
+    extracted.C13_DATABASE_URL ??
     extracted.C12_DATABASE_URL ??
     extracted.C10_DATABASE_URL ??
     extracted.C2_DATABASE_URL ??
@@ -201,9 +222,34 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
   if (!path.isAbsolute(temporaryRoot)) {
     throw new Error("C2_TEMP_ROOT must resolve to an absolute path.");
   }
+  const catalogSourceRoot =
+    extracted.C13_CATALOG_SOURCE_ROOT === undefined
+      ? undefined
+      : path.resolve(extracted.C13_CATALOG_SOURCE_ROOT);
+  if (
+    c13CatalogEnabled &&
+    (catalogSourceRoot === undefined ||
+      extracted.C13_CATALOG_TENANT_ID === undefined ||
+      extracted.C13_CATALOG_PROJECT_ID === undefined ||
+      extracted.C13_CATALOG_PUBLISHED_BY_USER_ID === undefined)
+  ) {
+    throw new Error(
+      "C13 catalog ingestion requires source root, tenant, project and publisher identifiers.",
+    );
+  }
   return {
     c10SceneWorkerEnabled: c10Enabled,
     c12DesignOptionWorkerEnabled: c12Enabled,
+    ...(c13CatalogEnabled
+      ? {
+          c13CatalogIngestion: {
+            projectId: extracted.C13_CATALOG_PROJECT_ID as string,
+            publishedByUserId: extracted.C13_CATALOG_PUBLISHED_BY_USER_ID as string,
+            sourceRoot: catalogSourceRoot as string,
+            tenantId: extracted.C13_CATALOG_TENANT_ID as string,
+          },
+        }
+      : {}),
     databaseUrl: validateDatabaseUrl(databaseUrl),
     derivedBucket: extracted.C2_DERIVED_BUCKET,
     executables: {

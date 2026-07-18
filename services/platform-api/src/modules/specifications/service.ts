@@ -270,7 +270,11 @@ export class SpecificationService {
     }
     let sceneState: "requested" | "retry-required" = "requested";
     try {
-      await this.#sceneJobs.requestExactRevision(persisted.sceneRequest);
+      await this.#sceneJobs.requestExactRevision(
+        persisted.sceneRequest,
+        command.actor,
+        command.correlation,
+      );
       await this.#repository.recordSceneRequest(
         command.actor.tenantId,
         command.projectId,
@@ -300,14 +304,15 @@ export class SpecificationService {
   }
 
   async retryScene(
-    tenantId: string,
+    actor: Parameters<SpecificationSceneJobPort["requestExactRevision"]>[1],
+    correlation: Parameters<SpecificationSceneJobPort["requestExactRevision"]>[2],
     projectId: string,
     specificationId: string,
     specificationRevision: number,
     sceneJobId: string,
   ) {
     const binding = await this.#repository.resolveConfirmedSceneBinding(
-      tenantId,
+      actor.tenantId,
       projectId,
       sceneJobId,
     );
@@ -321,15 +326,17 @@ export class SpecificationService {
     const sceneRequest = {
       branchId: binding.branchId,
       branchRevision: binding.branchRevision,
+      modelId: binding.modelId,
       modelSnapshotId: binding.modelSnapshotId,
       modelSnapshotSha256: binding.modelSnapshotSha256,
       projectId,
       sceneJobId,
       specificationId: binding.specificationId,
       specificationRevision: binding.specificationRevision,
+      specificationRevisionSha256: binding.revisionSha256,
     };
-    await this.#sceneJobs.requestExactRevision(sceneRequest);
-    await this.#repository.recordSceneRequest(tenantId, projectId, sceneJobId, "requested");
+    await this.#sceneJobs.requestExactRevision(sceneRequest, actor, correlation);
+    await this.#repository.recordSceneRequest(actor.tenantId, projectId, sceneJobId, "requested");
     return { sceneJobId, state: "requested" as const };
   }
 }

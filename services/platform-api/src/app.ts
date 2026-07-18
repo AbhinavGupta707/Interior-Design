@@ -18,6 +18,7 @@ import { registerC9Module, type C9ModuleOptions } from "./c9.js";
 import { registerC10Module, type C10ModuleOptions } from "./c10.js";
 import { registerC11Module, type C11ModuleOptions } from "./c11.js";
 import { registerC12Module, type C12ModuleOptions } from "./c12.js";
+import { registerC13Module, type C13ModuleOptions } from "./c13.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -44,6 +45,7 @@ export interface CreateServerOptions {
   readonly c10?: C10ModuleOptions;
   readonly c11?: C11ModuleOptions;
   readonly c12?: C12ModuleOptions;
+  readonly c13?: C13ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -95,6 +97,13 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "body.prompt",
         "body.accessibilityNeeds",
         "body.healthDetails",
+        "body.notes",
+        "body.lines",
+        "body.schedule",
+        "body.artifacts",
+        "body.manifest",
+        "body.licenceText",
+        "body.sourceReceipt",
         "req.body.query",
         "req.body.address",
         "req.body.displayAddress",
@@ -108,6 +117,12 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "req.body.glb",
         "req.body.manifest",
         "req.body.leaseToken",
+        "req.body.notes",
+        "req.body.lines",
+        "req.body.schedule",
+        "req.body.artifacts",
+        "req.body.licenceText",
+        "req.body.sourceReceipt",
         "request.body.query",
         "request.body.address",
         "request.body.displayAddress",
@@ -127,6 +142,12 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "request.body.options",
         "request.body.assetPlacements",
         "request.body.workingSnapshot",
+        "request.body.notes",
+        "request.body.lines",
+        "request.body.schedule",
+        "request.body.artifacts",
+        "request.body.licenceText",
+        "request.body.sourceReceipt",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -145,6 +166,12 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.operations",
         "*.assetPlacements",
         "*.workingSnapshot",
+        "*.notes",
+        "*.lines",
+        "*.schedule",
+        "*.licenceText",
+        "*.sourceReceipt",
+        "*.attributionContact",
         "*.manifest",
         "*.glb",
         "*.query",
@@ -291,6 +318,13 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c12,
         )
       : undefined;
+  const c13 =
+    options.c13 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC13Module(server, config.runtimeEnvironment, options.environment ?? process.env, {
+          ...(c10 === undefined ? {} : { sceneService: c10.service }),
+          ...(options.c13 ?? {}),
+        })
+      : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
@@ -306,6 +340,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
       ...(c10?.readinessChecks ?? []),
       ...(c11?.readinessChecks ?? []),
       ...(c12?.readinessChecks ?? []),
+      ...(c13?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );

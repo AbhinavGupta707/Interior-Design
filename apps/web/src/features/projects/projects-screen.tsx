@@ -265,6 +265,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/design-options/${project.id}`}>
                     Design options
                   </Link>
+                  <Link className="project-row__action" href={`/materials-products/${project.id}`}>
+                    Materials &amp; room specification
+                  </Link>
                 </div>
               </article>
             ))}

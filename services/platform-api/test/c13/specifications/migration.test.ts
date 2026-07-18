@@ -13,6 +13,7 @@ describe("C13 specification migration contract", () => {
       "catalog_releases",
       "catalog_asset_versions",
       "catalog_release_assets",
+      "catalog_access_events",
       "specifications",
       "specification_revisions",
       "specification_lines",

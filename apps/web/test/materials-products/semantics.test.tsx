@@ -9,6 +9,7 @@ import {
   artifactReadiness,
   assetSelectable,
   rightsLabel,
+  shortHash,
 } from "../../src/features/materials-products/presentation";
 import {
   assetsResponse,
@@ -58,6 +59,15 @@ describe("C13 selection semantics", () => {
     expect(rendered).toContain("Delivery not provided");
     expect(rendered).toContain("Rights withdrawn");
     expect(rendered).toContain("Use as candidate");
+    expect(rendered).toContain(`Version ${chairAsset.version}`);
+    expect(rendered).toContain(shortHash(chairAsset.versionId));
+    expect(rendered).toContain(
+      `Use ${chairAsset.displayName} version ${chairAsset.version} (${shortHash(chairAsset.versionId)}) as candidate`,
+    );
+    expect(rendered).toContain(
+      `Selected ${sofaAsset.displayName} version ${sofaAsset.version} (${shortHash(sofaAsset.versionId)}) as candidate`,
+    );
+    expect(rendered).toContain(`data-asset-version-id="${sofaAsset.versionId}"`);
     expect(rendered).not.toContain("draggable");
   });
 

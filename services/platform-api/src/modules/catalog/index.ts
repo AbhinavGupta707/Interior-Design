@@ -1,4 +1,5 @@
 export { InMemoryCatalogRepository } from "./memory.js";
+export { PostgresCatalogRepository } from "./postgres.js";
 export { registerCatalogRoutes } from "./routes.js";
 export { CatalogService } from "./service.js";
 export {

@@ -102,12 +102,14 @@ export interface ConfirmSubstitutionCommand extends ActorCommand {
 export interface SpecificationSceneRequest {
   readonly branchId: string;
   readonly branchRevision: number;
+  readonly modelId: string;
   readonly modelSnapshotId: string;
   readonly modelSnapshotSha256: string;
   readonly projectId: string;
   readonly sceneJobId: string;
   readonly specificationId: string;
   readonly specificationRevision: number;
+  readonly specificationRevisionSha256: string;
 }
 
 export interface SpecificationSceneBinding {
@@ -116,6 +118,7 @@ export interface SpecificationSceneBinding {
   readonly catalogReleaseId: string;
   readonly catalogReleaseSha256: string;
   readonly lines: readonly SpecificationLine[];
+  readonly modelId: string;
   readonly modelSnapshotId: string;
   readonly modelSnapshotSha256: string;
   readonly projectId: string;
@@ -134,7 +137,11 @@ export interface SpecificationSceneBindingResolver {
 }
 
 export interface SpecificationSceneJobPort {
-  requestExactRevision(input: SpecificationSceneRequest): Promise<void>;
+  requestExactRevision(
+    input: SpecificationSceneRequest,
+    actor: Actor,
+    correlation: RequestCorrelation,
+  ): Promise<void>;
 }
 
 export interface ConfirmationPersistenceResult {

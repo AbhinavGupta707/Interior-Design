@@ -8,10 +8,34 @@ import type {
 
 export const sceneCompilerVersion = "1.0.0" as const;
 
+export interface SceneCatalogLineBinding {
+  readonly assetContentSha256: string;
+  readonly assetMetadataSha256: string;
+  readonly assetVersionId: string;
+  readonly assetVersionSha256: string;
+  readonly elementId: string;
+  readonly kind: "finish" | "furnishing" | "light";
+  readonly placementPolicySha256: string;
+  readonly placementProjectionSha256: string;
+  readonly rightsRecordSha256: string;
+}
+
+export interface SceneSpecificationBinding {
+  readonly catalogReleaseId: string;
+  readonly catalogReleaseSha256: string;
+  readonly lines: readonly SceneCatalogLineBinding[];
+  readonly modelSnapshotSha256: string;
+  readonly projectId: string;
+  readonly specificationId: string;
+  readonly specificationRevision: number;
+  readonly specificationRevisionSha256: string;
+}
+
 export interface SceneCompileInput {
   readonly configuration: SceneCompileConfiguration;
   readonly signal?: AbortSignal;
   readonly snapshot: unknown;
+  readonly specificationBinding?: SceneSpecificationBinding;
   readonly sourceSnapshot: SceneSnapshotReference;
 }
 

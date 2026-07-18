@@ -41,7 +41,13 @@ import {
 } from "./geometry.js";
 import { parseGlb } from "./glb-parser.js";
 import { writeGlb, type GltfMeshInput } from "./glb-writer.js";
-import { sceneCompilerVersion, type CompiledScene, type SceneCompileInput } from "./types.js";
+import {
+  sceneCompilerVersion,
+  type CompiledScene,
+  type SceneCatalogLineBinding,
+  type SceneCompileInput,
+  type SceneSpecificationBinding,
+} from "./types.js";
 
 type Elements = CanonicalHomeSnapshot["elements"];
 type ModelElement = Elements[keyof Elements][number];
@@ -73,6 +79,79 @@ interface Counts {
   nodes: number;
   triangles: number;
   vertices: number;
+}
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const sha256Pattern = /^[a-f0-9]{64}$/u;
+
+function catalogBindingExtras(binding: SceneCatalogLineBinding): Readonly<Record<string, unknown>> {
+  return {
+    assetContentSha256: binding.assetContentSha256,
+    assetMetadataSha256: binding.assetMetadataSha256,
+    assetVersionId: binding.assetVersionId,
+    assetVersionSha256: binding.assetVersionSha256,
+    placementPolicySha256: binding.placementPolicySha256,
+    placementProjectionSha256: binding.placementProjectionSha256,
+    representation: "parametric-bounded-not-vendor-fidelity",
+    rightsRecordSha256: binding.rightsRecordSha256,
+  };
+}
+
+function specificationBindingByElement(
+  candidate: SceneSpecificationBinding | undefined,
+  snapshot: CanonicalHomeSnapshot,
+  sourceSnapshotSha256: string,
+): ReadonlyMap<string, SceneCatalogLineBinding> {
+  if (candidate === undefined) return new Map();
+  assertPlainIJson(candidate);
+  if (
+    !uuidPattern.test(candidate.specificationId) ||
+    !uuidPattern.test(candidate.catalogReleaseId) ||
+    !uuidPattern.test(candidate.projectId) ||
+    candidate.projectId !== snapshot.projectId ||
+    candidate.modelSnapshotSha256 !== sourceSnapshotSha256 ||
+    !sha256Pattern.test(candidate.modelSnapshotSha256) ||
+    !sha256Pattern.test(candidate.catalogReleaseSha256) ||
+    !sha256Pattern.test(candidate.specificationRevisionSha256) ||
+    !Number.isSafeInteger(candidate.specificationRevision) ||
+    candidate.specificationRevision < 1 ||
+    candidate.lines.length > c10ScenePolicy.maximumElementMappings
+  ) {
+    throw new SceneCompileError(
+      "INPUT_INVALID",
+      "The exact C13 specification binding is malformed or outside the scene source scope.",
+    );
+  }
+  const elements = new Map(allElements(snapshot.elements).map((element) => [element.id, element]));
+  const result = new Map<string, SceneCatalogLineBinding>();
+  let previousElementId: string | undefined;
+  for (const line of candidate.lines) {
+    const element = elements.get(line.elementId);
+    if (
+      !uuidPattern.test(line.elementId) ||
+      !uuidPattern.test(line.assetVersionId) ||
+      [
+        line.assetContentSha256,
+        line.assetMetadataSha256,
+        line.assetVersionSha256,
+        line.placementPolicySha256,
+        line.placementProjectionSha256,
+        line.rightsRecordSha256,
+      ].some((value) => !sha256Pattern.test(value)) ||
+      element === undefined ||
+      element.elementType !== line.kind ||
+      result.has(line.elementId) ||
+      (previousElementId !== undefined && compareStrings(previousElementId, line.elementId) >= 0)
+    ) {
+      throw new SceneCompileError(
+        "INPUT_INVALID",
+        "A C13 catalog binding is forged, duplicated, unsorted, or attached to the wrong element kind.",
+      );
+    }
+    previousElementId = line.elementId;
+    result.set(line.elementId, line);
+  }
+  return result;
 }
 
 class FindingCollector {
@@ -904,6 +983,7 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
   assertPlainIJson(input.sourceSnapshot);
   assertPlainIJson(input.configuration);
   assertPlainIJson(input.snapshot);
+  if (input.specificationBinding !== undefined) assertPlainIJson(input.specificationBinding);
   preflightRawElementCount(input.snapshot);
   const sourceResult = sceneSnapshotReferenceSchema.safeParse(input.sourceSnapshot);
   const configurationResult = sceneCompileConfigurationSchema.safeParse(input.configuration);
@@ -930,6 +1010,11 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
       "The exact canonical snapshot does not match its immutable source reference.",
     );
   }
+  const catalogBindings = specificationBindingByElement(
+    input.specificationBinding,
+    snapshot,
+    sourceSnapshot.snapshotSha256,
+  );
 
   const elements = allElements(snapshot.elements);
   if (elements.length > c10ScenePolicy.maximumElementMappings) {
@@ -1063,11 +1148,15 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
     }
     const element = plan.element;
     const levelId = elementLevelId(element, snapshot);
+    const catalogBinding = catalogBindings.get(element.id);
     const node: Record<string, unknown> = {
       extras: {
         authority: "derived-visualisation-only",
         canonicalElementId: element.id,
         canonicalElementType: element.elementType,
+        ...(catalogBinding === undefined
+          ? {}
+          : { c13CatalogBinding: catalogBindingExtras(catalogBinding) }),
         ...(levelId === undefined ? {} : { levelId }),
         provenanceState: element.origin.state,
       },
@@ -1245,6 +1334,20 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
   });
   throwIfCancelled(input.signal);
   const written = writeGlb({
+    ...(input.specificationBinding === undefined
+      ? {}
+      : {
+          assetExtras: {
+            c13SpecificationBinding: {
+              authority: "catalog-metadata-on-parametric-scene",
+              catalogReleaseId: input.specificationBinding.catalogReleaseId,
+              catalogReleaseSha256: input.specificationBinding.catalogReleaseSha256,
+              specificationId: input.specificationBinding.specificationId,
+              specificationRevision: input.specificationBinding.specificationRevision,
+              specificationRevisionSha256: input.specificationBinding.specificationRevisionSha256,
+            },
+          },
+        }),
     cameras,
     ...(lights.length === 0
       ? {}
@@ -1252,7 +1355,18 @@ export async function compileCanonicalScene(input: SceneCompileInput): Promise<C
           extensions: { KHR_lights_punctual: { lights } },
           extensionsUsed: ["KHR_lights_punctual"],
         }),
-    materials: materials.map(({ json }) => json),
+    materials: materials.map(({ finishId, json }) => {
+      const binding = finishId === undefined ? undefined : catalogBindings.get(finishId);
+      return binding === undefined
+        ? json
+        : {
+            ...json,
+            extras: {
+              ...(json.extras ?? {}),
+              c13CatalogBinding: catalogBindingExtras(binding),
+            },
+          };
+    }),
     meshes: gltfMeshes,
     nodes,
   });

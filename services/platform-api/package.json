@@ -18,6 +18,11 @@
       "types": "./src/modules/scenes/index.ts",
       "development": "./src/modules/scenes/index.ts",
       "default": "./dist/src/modules/scenes/index.js"
+    },
+    "./specifications": {
+      "types": "./src/modules/specifications/index.ts",
+      "development": "./src/modules/specifications/index.ts",
+      "default": "./dist/src/modules/specifications/index.js"
     }
   },
   "scripts": {

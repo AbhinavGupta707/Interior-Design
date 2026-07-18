@@ -14,6 +14,8 @@ export type {
   ParsedGlb,
   ParsedGlbCounts,
   SceneCompileInput,
+  SceneCatalogLineBinding,
+  SceneSpecificationBinding,
   SceneValidatorEvidence,
 } from "./types.js";
 

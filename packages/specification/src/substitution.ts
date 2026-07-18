@@ -223,6 +223,8 @@ export function buildCatalogReplacementOperation(
     clientOperationId: deterministicSpecificationUuid(
       "c13-substitution-operation-v1",
       input.currentLine.lineId,
+      input.currentLine.selectionSource.kind,
+      input.currentLine.selectionSource.confirmationId,
       asset.versionId,
     ),
     element: replacementElement(current, asset),

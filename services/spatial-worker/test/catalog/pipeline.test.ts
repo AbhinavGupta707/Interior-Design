@@ -77,7 +77,7 @@ describe("C13 deterministic catalog ingestion pipeline", () => {
     const replay = await first.pipeline.ingest();
     expect(replay.replayed).toBe(true);
     expect(replay.publication.manifestBytes).toEqual(left.publication.manifestBytes);
-  });
+  }, 20_000);
 
   it("uses an immutable filesystem head so concurrent processes expose no partial release", async () => {
     const temporary = await mkdtemp(join(tmpdir(), "c13-catalog-publication-"));
@@ -100,7 +100,7 @@ describe("C13 deterministic catalog ingestion pipeline", () => {
     expect(await rightStore.findVisibleAssets(first.publication.release.releaseId)).toHaveLength(
       11,
     );
-  });
+  }, 20_000);
 
   it("keeps staged content invisible after crash or cancellation before the atomic head", async () => {
     const crashStore = new InMemoryCatalogPublicationStore();

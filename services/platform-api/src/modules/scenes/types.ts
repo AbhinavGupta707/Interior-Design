@@ -42,10 +42,12 @@ interface UserMutationCommand {
 
 export interface CreateSceneJobCommand extends UserMutationCommand {
   readonly cacheKeySha256: string;
+  readonly cacheContextSha256?: string;
   readonly compiler: SceneCompilerDescriptor;
   readonly configurationSha256: string;
   readonly request: CreateSceneJobRequest;
   readonly requestSha256: string;
+  readonly requestedJobId?: string;
   readonly sourceSnapshotVersion: number;
 }
 

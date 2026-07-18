@@ -1171,8 +1171,10 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
             readonly branch_id: string;
             readonly branch_revision: number;
             readonly confirmation_payload: unknown;
+            readonly model_id: string;
             readonly model_snapshot_id: string;
             readonly model_snapshot_sha256: string;
+            readonly revision_sha256: string;
             readonly scene_job_id: string;
             readonly specification_revision: number;
           }>
@@ -1180,8 +1182,12 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
           SELECT c.confirmation_payload, c.scene_job_id, c.branch_id, c.branch_revision,
             c.result_snapshot_id AS model_snapshot_id,
             c.result_snapshot_sha256 AS model_snapshot_sha256,
-            c.specification_revision
+            c.specification_revision, r.model_id, r.revision_sha256
           FROM specification_substitution_confirmations c
+          JOIN specification_revisions r
+            ON r.tenant_id = c.tenant_id AND r.project_id = c.project_id
+            AND r.specification_id = c.specification_id
+            AND r.revision = c.specification_revision
           WHERE c.tenant_id = ${command.actor.tenantId}::uuid
             AND c.project_id = ${command.projectId}::uuid
             AND c.specification_id = ${command.specificationId}::uuid
@@ -1196,12 +1202,14 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
           sceneRequest: {
             branchId: row.branch_id,
             branchRevision: row.branch_revision,
+            modelId: row.model_id,
             modelSnapshotId: row.model_snapshot_id,
             modelSnapshotSha256: row.model_snapshot_sha256,
             projectId: command.projectId,
             sceneJobId: row.scene_job_id,
             specificationId: command.specificationId,
             specificationRevision: row.specification_revision,
+            specificationRevisionSha256: row.revision_sha256,
           },
         };
       }
@@ -1694,12 +1702,14 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
         sceneRequest: {
           branchId: preview.branch_id,
           branchRevision: nextBranchRevision,
+          modelId: branch.model_id,
           modelSnapshotId: resultSnapshotId,
           modelSnapshotSha256: recalculated.result.snapshotSha256,
           projectId: command.projectId,
           sceneJobId: command.sceneJobId,
           specificationId: command.specificationId,
           specificationRevision: nextRevision.revision,
+          specificationRevisionSha256: nextRevision.revisionSha256,
         },
       };
     });
@@ -1713,6 +1723,7 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
           readonly branch_revision: number;
           readonly catalog_release_id: string;
           readonly catalog_release_sha256: string;
+          readonly model_id: string;
           readonly model_snapshot_id: string;
           readonly model_snapshot_sha256: string;
           readonly revision_sha256: string;
@@ -1724,7 +1735,7 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
         SELECT l.scene_job_id, l.specification_id, l.specification_revision,
           r.branch_id, r.branch_revision,
           r.revision_sha256, r.catalog_release_id, r.catalog_release_sha256,
-          r.model_snapshot_id, r.model_snapshot_sha256
+          r.model_id, r.model_snapshot_id, r.model_snapshot_sha256
         FROM specification_scene_links l
         JOIN specification_substitution_confirmations c
           ON c.tenant_id = l.tenant_id AND c.project_id = l.project_id
@@ -1750,6 +1761,7 @@ export class PostgresSpecificationRepository implements SpecificationRepository 
           row.specification_id,
           row.specification_revision,
         ),
+        modelId: row.model_id,
         modelSnapshotId: row.model_snapshot_id,
         modelSnapshotSha256: row.model_snapshot_sha256,
         projectId,

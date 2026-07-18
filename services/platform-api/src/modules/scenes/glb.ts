@@ -487,11 +487,13 @@ export function configurationSha256(
 export function sceneDeterminismKey(input: {
   readonly compiler: SceneCompilerDescriptor;
   readonly configurationSha256: string;
+  readonly contextSha256?: string;
   readonly snapshotSha256: string;
 }): string {
   return requestHash({
     compiler: input.compiler,
     configurationSha256: input.configurationSha256,
+    ...(input.contextSha256 === undefined ? {} : { contextSha256: input.contextSha256 }),
     snapshotSha256: input.snapshotSha256,
   });
 }

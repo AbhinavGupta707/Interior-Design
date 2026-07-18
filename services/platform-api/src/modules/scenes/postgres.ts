@@ -15,6 +15,7 @@ import {
   type IdempotencyClaim,
 } from "../projects/idempotency.js";
 import { sceneConflict } from "./errors.js";
+import { sceneDeterminismKey } from "./glb.js";
 import type {
   AcknowledgeSceneCancellationCommand,
   ClaimSceneAttemptCommand,
@@ -309,7 +310,7 @@ export class PostgresSceneRepository implements SceneRepository {
         return { job: sceneJobSchema.parse(idempotency.body), replayed: true };
       }
       const timestamp = nextTimestamp(this.#clock);
-      const jobId = this.#uuid.randomUUID();
+      const jobId = command.requestedJobId ?? this.#uuid.randomUUID();
       const inserted = await transaction<JobRow[]>`
         INSERT INTO scene_jobs (
           tenant_id, project_id, id, request_payload, request_sha256, cache_key_sha256,
@@ -774,7 +775,12 @@ export class PostgresSceneRepository implements SceneRepository {
         command.manifest.sourceSnapshot.snapshotSha256 !== job.source_snapshot_sha256 ||
         command.manifest.compiler.configurationSha256 !== job.configuration_sha256 ||
         command.manifest.compiler.version !== job.compiler_version ||
-        command.manifest.determinismKeySha256 !== job.cache_key_sha256
+        command.manifest.determinismKeySha256 !==
+          sceneDeterminismKey({
+            compiler: { name: job.compiler_name, version: job.compiler_version },
+            configurationSha256: job.configuration_sha256,
+            snapshotSha256: job.source_snapshot_sha256,
+          })
       ) {
         throw sceneConflict(
           "SCENE_PUBLICATION_SCOPE_MISMATCH",

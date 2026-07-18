@@ -100,6 +100,21 @@ CREATE TABLE IF NOT EXISTS catalog_release_assets (
     REFERENCES catalog_asset_versions(tenant_id, project_id, id, version_sha256) ON DELETE RESTRICT
 );
 
+CREATE TABLE IF NOT EXISTS catalog_access_events (
+  id uuid PRIMARY KEY,
+  tenant_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  artifact_id uuid NOT NULL,
+  actor_user_id uuid NOT NULL REFERENCES identity_users(id),
+  request_id text NOT NULL CHECK (char_length(request_id) BETWEEN 1 AND 128),
+  trace_id text NOT NULL CHECK (trace_id ~ '^[0-9a-f]{32}$'),
+  occurred_at timestamptz NOT NULL,
+  FOREIGN KEY (tenant_id, project_id) REFERENCES projects(tenant_id, id) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS catalog_access_events_scope_idx
+  ON catalog_access_events (tenant_id, project_id, occurred_at DESC, id);
+
 CREATE TABLE IF NOT EXISTS specifications (
   tenant_id uuid NOT NULL,
   project_id uuid NOT NULL,
@@ -555,6 +570,7 @@ DECLARE table_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'catalog_releases', 'catalog_asset_versions', 'catalog_release_assets',
+    'catalog_access_events',
     'specification_revisions', 'specification_lines', 'specification_substitution_previews',
     'specification_substitution_confirmations', 'specification_scene_events',
     'specification_audit_events', 'specification_outbox'
@@ -574,6 +590,7 @@ DECLARE table_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'catalog_releases', 'catalog_asset_versions', 'catalog_release_assets',
+    'catalog_access_events',
     'specifications', 'specification_revisions', 'specification_lines',
     'specification_substitution_previews', 'specification_substitution_heads',
     'specification_substitution_confirmations', 'specification_scene_links',

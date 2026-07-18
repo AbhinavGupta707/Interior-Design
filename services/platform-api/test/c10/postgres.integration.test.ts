@@ -1,5 +1,6 @@
 import { loadPlatformApiConfig } from "@interior-design/config";
 import {
+  c10DefaultCompileConfiguration,
   modelSnapshotRecordSchema,
   sceneAccessResponseSchema,
   type LocalPersona,
@@ -22,15 +23,16 @@ import { applyC8Migration } from "../../src/c8.js";
 import { applyC9Migration } from "../../src/c9.js";
 import { applyC10Migration } from "../../src/c10.js";
 import { DomainCanonicalSnapshotCodec } from "../../src/modules/models/core/canonical.js";
+import { configurationSha256, sceneDeterminismKey } from "../../src/modules/scenes/glb.js";
 import { PostgresSceneRepository } from "../../src/modules/scenes/postgres.js";
-import { SceneWorkerService } from "../../src/modules/scenes/service.js";
+import { SceneService, SceneWorkerService } from "../../src/modules/scenes/service.js";
 import { PostgresSceneSnapshotVerifier } from "../../src/modules/scenes/snapshot.js";
 import {
   InMemorySceneObjectStorage,
   S3SceneObjectStorage,
   type SceneObjectStorage,
 } from "../../src/modules/scenes/storage.js";
-import { canonicalSnapshotFixture } from "../c4/fixtures.js";
+import { canonicalSnapshotFixture, ownerUserId } from "../c4/fixtures.js";
 import { compiler } from "./support.js";
 
 const databaseUrl = process.env.C10_TEST_DATABASE_URL ?? "";
@@ -480,5 +482,120 @@ describeWithPostgres("C10 live Postgres workflow and immutable publication", () 
       operation_commits: 0,
       snapshots: 2,
     });
+  });
+
+  it("publishes a base C10 manifest under an exact contextual cache identity", async () => {
+    const storage = sceneStorage();
+    const server = createServer({
+      c1: { closeDatabase: true, database: createC1Sql(databaseUrl) },
+      c4: {
+        closeDatabase: true,
+        codec: new DomainCanonicalSnapshotCodec(),
+        database: createC1Sql(databaseUrl),
+        geometryValidator: () => [],
+      },
+      config,
+      environment: { C1_LOCAL_SESSION_SECRET: sessionSecret, NODE_ENV: "test" },
+      logger: false,
+    });
+    activeServers.add(server);
+    const ownerToken = await signIn(server, "homeowner-alpha");
+    const project = await createProject(server, ownerToken);
+    const modelId = randomUUID();
+    const snapshotResponse = await server.inject({
+      headers: {
+        ...authorization(ownerToken),
+        "idempotency-key": `c10-context-snapshot-${randomUUID()}`,
+      },
+      method: "POST",
+      payload: {
+        expectedCurrentSnapshotSha256: null,
+        snapshot: canonicalSnapshotFixture({ modelId, projectId: project.id }),
+      },
+      url: `/v1/projects/${project.id}/models/existing/snapshots`,
+    });
+    expect(snapshotResponse.statusCode).toBe(201);
+    const snapshot = modelSnapshotRecordSchema.parse(snapshotResponse.json());
+    const request = {
+      configuration: c10DefaultCompileConfiguration,
+      label: "Synthetic contextual C13 scene",
+      sourceSnapshot: {
+        modelId,
+        profile: "existing" as const,
+        projectId: project.id,
+        schemaVersion: "c4-canonical-home-v1" as const,
+        snapshotId: snapshot.id,
+        snapshotSha256: snapshot.snapshotSha256,
+      },
+    };
+    const contextSha256 = "d".repeat(64);
+    const expectedContextualCacheKey = sceneDeterminismKey({
+      compiler,
+      configurationSha256: configurationSha256(request.configuration),
+      contextSha256,
+      snapshotSha256: snapshot.snapshotSha256,
+    });
+    const repository = new PostgresSceneRepository(administration);
+    const snapshotVerifier = new PostgresSceneSnapshotVerifier(administration);
+    const service = new SceneService({
+      compiler,
+      repository,
+      snapshotVerifier,
+      storage,
+    });
+    const created = await service.createJob({
+      actor: {
+        displayName: "Synthetic C10 contextual owner",
+        role: "owner",
+        subject: "synthetic:c10-context-owner",
+        tenantId: project.tenantId,
+        userId: ownerUserId,
+      },
+      cacheContextSha256: contextSha256,
+      correlation: {
+        requestId: `c10-context-${randomUUID()}`,
+        spanId: "c".repeat(16),
+        traceId: "c".repeat(32),
+        traceParent: `00-${"c".repeat(32)}-${"c".repeat(16)}-01`,
+      },
+      idempotencyKey: `c10-context-job-${randomUUID()}`,
+      projectId: project.id,
+      request,
+      requestedJobId: randomUUID(),
+    });
+    expect(created.job.state).toBe("queued");
+
+    const worker = new SceneWorkerService({ repository, snapshotVerifier, storage });
+    const lease = await worker.claimNext({ compiler, workerId: "context-scene-worker" });
+    if (lease === undefined) throw new Error("Contextual scene lease is missing.");
+    expect(lease.cacheKeySha256).toBe(expectedContextualCacheKey);
+    const scope = {
+      attempt: lease.attempt,
+      jobId: lease.jobId,
+      leaseToken: lease.leaseToken,
+      projectId: lease.projectId,
+      tenantId: lease.tenantId,
+      workerId: "context-scene-worker",
+    };
+    const exactSource = await worker.loadSource(scope);
+    await worker.heartbeat({ ...scope, stage: "compiling" });
+    const compiled = await compileCanonicalScene({
+      configuration: request.configuration,
+      snapshot: exactSource.snapshot,
+      sourceSnapshot: request.sourceSnapshot,
+    });
+    expect(compiled.manifest.determinismKeySha256).not.toBe(expectedContextualCacheKey);
+    await worker.heartbeat({ ...scope, stage: "publishing" });
+    const published = await worker.publish({
+      ...scope,
+      output: { glb: compiled.glb, manifest: compiled.manifest },
+    });
+    expect(published.state).toBe("succeeded");
+    const persisted = await administration<{ readonly cache_key_sha256: string }[]>`
+      SELECT cache_key_sha256 FROM scenes
+      WHERE tenant_id = ${project.tenantId}::uuid AND project_id = ${project.id}::uuid
+        AND publishing_job_id = ${created.job.id}::uuid
+    `;
+    expect(persisted).toEqual([{ cache_key_sha256: expectedContextualCacheKey }]);
   });
 });

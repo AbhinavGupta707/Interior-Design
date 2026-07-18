@@ -44,7 +44,7 @@ test.beforeEach(async ({ context, request }) => {
 
 async function confirmSofaCandidate(page: Page) {
   const sofa = page.locator("li").filter({ hasText: "Generic compact sofa" });
-  await sofa.getByRole("button", { name: "Use as candidate" }).click();
+  await sofa.getByRole("button", { name: /^Use Generic compact sofa version/iu }).click();
   await page.getByRole("button", { name: "Prepare bounded preview" }).click();
   await expect(page.getByText("Bounded catalog preview prepared", { exact: true })).toBeVisible();
   await page
@@ -177,7 +177,9 @@ test("@status viewer is inspect-only and cannot edit, select a candidate, previe
   await expect(page.getByText("Viewer access is inspect-only.").first()).toBeVisible();
   await expect(page.getByLabel("Decision note")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Shortlist" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Inspect-only candidate" }).first()).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /^Inspect-only .+ version/iu }).first(),
+  ).toBeDisabled();
   await expect(page.getByRole("button", { name: "Prepare bounded preview" })).toBeDisabled();
 
   await session(context, "editor-token");
@@ -205,7 +207,7 @@ test("@status stale rights, malformed missing artifacts, expiry, and service fai
   await request.get(`${backend}/__scenario?value=stale-preview`);
   await page.goto(route);
   const sofa = page.locator("li").filter({ hasText: "Generic compact sofa" });
-  await sofa.getByRole("button", { name: "Use as candidate" }).click();
+  await sofa.getByRole("button", { name: /^Use Generic compact sofa version/iu }).click();
   await page.getByRole("button", { name: "Prepare bounded preview" }).click();
   await expect(page.getByText(/catalog, rights record, or preview became stale/iu)).toBeVisible();
 
@@ -252,7 +254,7 @@ test("@status offline and interrupted preview preserve inspectable state without
   await request.get(`${backend}/__scenario?value=slow-preview`);
   await page.reload();
   const sofa = page.locator("li").filter({ hasText: "Generic compact sofa" });
-  await sofa.getByRole("button", { name: "Use as candidate" }).click();
+  await sofa.getByRole("button", { name: /^Use Generic compact sofa version/iu }).click();
   await page.getByRole("button", { name: "Prepare bounded preview" }).click();
   await page.getByRole("button", { name: "Stop preview setup" }).click();
   await expect(page.getByText(/Preview preparation was interrupted/iu)).toBeVisible();

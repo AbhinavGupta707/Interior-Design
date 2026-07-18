@@ -12,6 +12,7 @@ import {
   S3SceneObjectStorage,
   SceneWorkerService,
 } from "@interior-design/platform-api/scenes";
+import { PostgresSpecificationRepository } from "@interior-design/platform-api/specifications";
 import { creatorOwnedSyntheticAssetCatalog } from "@interior-design/interior-assets";
 import { PostgresReconstructionRepository } from "@interior-design/platform-api/reconstruction";
 import postgres from "postgres";
@@ -45,6 +46,13 @@ import { SpatialWorkerRunner } from "./runner.js";
 import { SceneCompilationRunner } from "./scene-compile/index.js";
 import { DesignOptionProcessingRunner } from "./design-options/index.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
+import {
+  CatalogIngestionPipeline,
+  PinnedKhronosValidator,
+  PostgresCatalogPublicationStore,
+  RepositoryCatalogSource,
+  S3CatalogPublicationStore,
+} from "./catalog/index.js";
 
 export const spatialWorkerCheckpoint = "C2" as const;
 
@@ -67,6 +75,7 @@ export * from "./reconstruction/index.js";
 export * from "./model-fusion/index.js";
 export * from "./scene-compile/index.js";
 export * from "./design-options/index.js";
+export * from "./catalog/index.js";
 
 export const spatialWorkerCapabilities = Object.freeze([
   "C2",
@@ -76,6 +85,7 @@ export const spatialWorkerCapabilities = Object.freeze([
   "C9",
   "C10",
   "C12",
+  "C13",
 ] as const);
 
 function defaultInferenceModuleRoot(): string {
@@ -190,6 +200,7 @@ export async function runSpatialWorker(
         leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
         logger,
         pollMilliseconds: config.pollMs,
+        specifications: new PostgresSpecificationRepository(sql),
         worker: new SceneWorkerService({
           repository: new PostgresSceneRepository(sql),
           snapshotVerifier: new PostgresSceneSnapshotVerifier(sql),
@@ -213,6 +224,35 @@ export async function runSpatialWorker(
         workerId: `c12-${config.workerId}`.slice(0, 100),
       })
     : undefined;
+  if (config.c13CatalogIngestion !== undefined) {
+    const source = await RepositoryCatalogSource.create(config.c13CatalogIngestion.sourceRoot);
+    const pipeline = new CatalogIngestionPipeline({
+      publication: new PostgresCatalogPublicationStore({
+        objects: new S3CatalogPublicationStore(s3Client),
+        scope: {
+          projectId: config.c13CatalogIngestion.projectId,
+          publishedByUserId: config.c13CatalogIngestion.publishedByUserId,
+          tenantId: config.c13CatalogIngestion.tenantId,
+        },
+        sql,
+      }),
+      source,
+      validator: new PinnedKhronosValidator(),
+    });
+    const result = await pipeline.execute();
+    if (!result.ok) {
+      logger.error("catalog.ingestion-failed", {
+        safeCode: result.diagnostic.code,
+      });
+      throw new Error("C13 catalog ingestion failed closed.");
+    }
+    logger.info("catalog.release-published", {
+      assetCount: result.result.publication.assets.length,
+      manifestSha256: result.result.publication.release.manifestSha256,
+      releaseId: result.result.publication.release.releaseId,
+      replayed: result.result.replayed,
+    });
+  }
   const shutdown = new AbortController();
   const requestShutdown = (): void => {
     shutdown.abort(new Error("shutdown-requested"));

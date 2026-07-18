@@ -142,6 +142,9 @@ export class SceneService {
     const cacheKey = sceneDeterminismKey({
       compiler,
       configurationSha256: configurationHash,
+      ...(command.cacheContextSha256 === undefined
+        ? {}
+        : { contextSha256: command.cacheContextSha256 }),
       snapshotSha256: request.sourceSnapshot.snapshotSha256,
     });
     const result = await this.#repository.createJob({
