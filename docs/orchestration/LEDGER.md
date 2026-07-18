@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C12 are complete. The user subsequently authorised strict sequential execution through C15; C13 is in prelude, C15 is terminal and C16 is not authorised.
+- Autonomous execution boundary: C0-C13 are complete. The user authorised strict sequential execution through C15; C14 is next, C15 is terminal and C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -526,7 +526,7 @@
 
 ### Master prelude
 
-- Status: activated on `main`; the three frozen C13 lanes may launch from the activation commit and C14 remains closed
+- Status: complete and exhaustively verified on `main`; C14 remains closed until this C13 ledger-close state is pushed
 - Contract: `docs/orchestration/checkpoints/C13_CONTRACT.md` (`c13-catalog-artifact-v1`, `c13-catalog-rights-record-v1`, `c13-catalog-asset-version-v1`, `c13-catalog-release-v1`, `c13-specification-v1`, `c13-specification-revision-v1`, `c13-substitution-preview-v1`, `c13-substitution-confirmation-v1`)
 - Immutable predecessor/C12 ledger close: `c8f266e68fdd31402d49a9f12b80b5af21644ae6`
 - Prelude commit: `2a833ffc4d7ad17d8bc8692cc331b4aacb7aca9f`
@@ -536,11 +536,11 @@
 - Provider/data policy: creator-authored generic local assets and deterministic local workers only; no runtime URL ingestion, external provider, paid service, customer data, training permission, live price, supplier or availability source is activated
 - Mutation policy: C13 projects one exact confirmed C12 option into immutable specification revisions. Previews are non-canonical and labelled bounded; only an explicit owner/editor confirmation may reuse `design.element.replace.v1` on the exact proposed branch, after which C10 may compile the committed result.
 
-| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State  | Exclusive roots                                                                                          |
-| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| C13-L1 catalog pipeline        | `019f73ea-d766-7ab1-b710-e022028ced42` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | catalog package; isolated catalog worker/API/tests/security/runbook paths                                |
-| C13-L2 specification domain    | `019f73ea-d765-7350-a7ff-1e4ff326dfd6` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | specification package; isolated specification API/tests; migration `0013`; security/runbook/threat paths |
-| C13-L3 selection UX/acceptance | `019f73ea-d766-7ab1-b710-e04953fa3191` | `gpt-5.6-sol` / `xhigh` | —          | —         | active | isolated materials-products web/BFF/tests and specification evaluation/performance/E2E paths             |
+| Lane                           | Task/thread                            | Model / reasoning       | Worker SHA | Merge SHA | State      | Exclusive roots                                                                                          |
+| ------------------------------ | -------------------------------------- | ----------------------- | ---------- | --------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| C13-L1 catalog pipeline        | `019f73ea-d766-7ab1-b710-e022028ced42` | `gpt-5.6-sol` / `xhigh` | `39051d5`  | `4f52ce9` | integrated | catalog package; isolated catalog worker/API/tests/security/runbook paths                                |
+| C13-L2 specification domain    | `019f73ea-d765-7350-a7ff-1e4ff326dfd6` | `gpt-5.6-sol` / `xhigh` | `314a3e9`  | `5022143` | integrated | specification package; isolated specification API/tests; migration `0013`; security/runbook/threat paths |
+| C13-L3 selection UX/acceptance | `019f73ea-d766-7ab1-b710-e04953fa3191` | `gpt-5.6-sol` / `xhigh` | `0f9918a`  | `d19b058` | integrated | isolated materials-products web/BFF/tests and specification evaluation/performance/E2E paths             |
 
 - Worktree paths: L1 `/Users/abhinavgupta/.codex/worktrees/c9ff/Interior Design`; L2 `/Users/abhinavgupta/.codex/worktrees/0a74/Interior Design`; L3 `/Users/abhinavgupta/.codex/worktrees/cd11/Interior Design`.
 - Provisioning client IDs: L1 `client-new-thread:f04178cc-e480-45c4-928b-6029b5d85e7b`; L2 `client-new-thread:b9a12174-b879-45bb-897e-a2af6c8d2500`; L3 `client-new-thread:91a5c60f-bb02-4cbf-9fde-5859b8d6a12f`.
@@ -555,3 +555,15 @@
 - Root owns shared contracts/authz/tests, migration registry, manifests/lockfile, central composition/navigation/C12-C13-C10 seams, accepted contract and ledger. The exact three `gpt-5.6-sol` / `xhigh` assignments and non-overlapping paths are frozen before task creation.
 - The complete prelude `UV_CACHE_DIR=.cache/uv pnpm verify` passed all 21 workspace format/lint/typecheck/unit/build pipelines, Ruff, strict MyPy and Python 117 passed / two honest unavailable COLMAP/Open3D skips. C13 contracts passed 4 focused and 76 complete cases; authz passed 525 plus its independent identity matrix; `git diff --check` passed.
 - Node 22.22.2/pnpm 10.33, local PostGIS/object storage/Temporal, Blender 5.2.0, FFmpeg 8.1 and every Playwright engine remain available. C13 needs none of Blender/GPU/provider/physical-device execution. Free disk was 18 GiB at preflight; C14 must re-check its greater-of-15-GiB-or-three-times-job estimate gate before opening.
+
+### Completion evidence
+
+- Product integration commit: `fd1f64108119b046677cc74b7f641ca8c8089d6d`. The orchestrator composed the durable catalog publisher/read API, immutable specification service, exact C12 → C13 → C5 → C10 bridge, contextual scene-cache identity, catalog metadata in validator-clean GLB, navigation/deep links and production worker activation. It also fixed stale revision selection, indistinguishable catalog-version controls, repeated substitution operation identity and local visible-browser hydration.
+- A built production worker published 11 real creator-authored GLB/PNG/text assets to loopback S3 from a fresh C1-C13 database: release `bca5a238-9b84-535c-ac16-2baedcda8178`, manifest `967044cd15e2224093414638fa45fbc835ff32e021f561b953e013f23a48ff87`, first `replayed:false`, exact second run `replayed:true`. Independently downloaded manifest/model bytes matched their SHA-256 values; Khronos validator 2.0.0-dev.3.10 reported zero errors and zero warnings.
+- The visible in-app Browser completed the real owner journey on project `066d4993-faeb-46fa-ad8b-956b6db9c341`: exact C12 confirmation → revisioned specification → bounded preview → explicit substitution confirmation → C10 job `d296fc0d-34c0-4b5d-8f24-ef96dd50f785` → checksum/semantic-verified interactive GLB. Current specification revision 5 is pinned by hash `e35dc7a1674632d5083d9531bcfe20d16b7e82cffa90677d9c1e882461795c5b`; stable furnishing ID and exact catalog/rights metadata survived compilation.
+- The visible fixture contains one furnishing, so finish/light were not fabricated into it. Explicit production-kernel tests now preview/reduce furnishing, finish and light through C5 while preserving stable identity and kind, and C10 verifies all three metadata bindings. The final live database shows existing branch source=head at revision 1, all C13-driven commits only on proposed, no as-built profile, and immutable C12 source/confirmation rows.
+- Fresh migration and constrained-role C13 PostgreSQL suites passed 4/4 with forced RLS, tenant isolation, append-only records, generic foreign-key failure, replay, rollback and one-winner concurrency. The real contextual C10/Postgres/S3 regression passed 3/3. Catalog/specification security, severe-input, withdrawal, expiry, stale, idempotency, concurrency and crash-before-head cases pass.
+- Playwright passed 18/18 across Chromium 149.0.7827.55, Firefox 151.0 and WebKit 26.5 on desktop/mobile, including keyboard, owner/editor/viewer/foreign, missing/stale/offline/session/service/interruption/retry states, no overflow and no unexpected console/page/network failure. A built-API hostile-marker probe showed `url:"[REDACTED]"` and none of its query, bearer, note, object-key or signed-URL markers in structured process logs.
+- Final `UV_CACHE_DIR=.cache/uv pnpm verify` passed 21/21 lint, 21/21 typecheck, 39/39 JavaScript unit tasks, 21/21 builds, Ruff, strict MyPy and Python 117 passed / two honest unavailable COLMAP/Open3D skips. `pnpm test:contract`, `pnpm test:integration`, `pnpm test:security`, `pnpm test:geometry` and `git diff --check` passed. The two catalogue real-validator concurrency tests use an explicit 20-second bound and complete in about 5-7 seconds under full-suite load.
+- Durable acceptance: `docs/evaluation/specification/C13_INTEGRATION_ACCEPTANCE_2026-07-18.md`. It records exact IDs/hashes, browser matrix, commands, non-evidence and inherited risks. Root `dependency:boundaries` and `api:check` still execute zero tasks and are explicitly not counted as evidence.
+- No GPU, Blender, Xcode, physical device, provider key, paid service, customer/third-party asset, price, supplier, stock, delivery, cost, finish-quantity, structural/regulatory or professional-certainty evidence is claimed. C13 output remains creator-owned generic catalog plus parametric/bounded scene truth; catalog/vendor appearance fidelity belongs to later rendering work.
