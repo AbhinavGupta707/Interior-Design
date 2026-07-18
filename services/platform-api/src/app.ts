@@ -16,6 +16,7 @@ import { registerC7Module, type C7ModuleOptions } from "./c7.js";
 import { registerC8Module, type C8ModuleOptions } from "./c8.js";
 import { registerC9Module, type C9ModuleOptions } from "./c9.js";
 import { registerC10Module, type C10ModuleOptions } from "./c10.js";
+import { registerC11Module, type C11ModuleOptions } from "./c11.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -40,6 +41,7 @@ export interface CreateServerOptions {
   readonly c8?: C8ModuleOptions;
   readonly c9?: C9ModuleOptions;
   readonly c10?: C10ModuleOptions;
+  readonly c11?: C11ModuleOptions;
   readonly config?: PlatformApiConfig;
   readonly environment?: EnvironmentSource;
   readonly logger?: LoggerSetting;
@@ -87,12 +89,20 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "body.snapshot",
         "body.operations",
         "body.previewId",
+        "body.message",
+        "body.prompt",
+        "body.accessibilityNeeds",
+        "body.healthDetails",
         "req.body.query",
         "req.body.address",
         "req.body.displayAddress",
         "req.body.snapshot",
         "req.body.operations",
         "req.body.previewId",
+        "req.body.message",
+        "req.body.prompt",
+        "req.body.accessibilityNeeds",
+        "req.body.healthDetails",
         "req.body.glb",
         "req.body.manifest",
         "req.body.leaseToken",
@@ -102,6 +112,10 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "request.body.snapshot",
         "request.body.operations",
         "request.body.previewId",
+        "request.body.message",
+        "request.body.prompt",
+        "request.body.accessibilityNeeds",
+        "request.body.healthDetails",
         "request.body.glb",
         "request.body.manifest",
         "request.body.leaseToken",
@@ -120,6 +134,10 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.query",
         "*.address",
         "*.displayAddress",
+        "*.message",
+        "*.prompt",
+        "*.accessibilityNeeds",
+        "*.healthDetails",
         "*.canonical_snapshot",
         "*.body.query",
         "*.body.address",
@@ -239,6 +257,15 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c10,
         )
       : undefined;
+  const c11 =
+    options.c11 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC11Module(
+          server,
+          config.runtimeEnvironment,
+          options.environment ?? process.env,
+          options.c11,
+        )
+      : undefined;
   registerHealthRoutes(
     server,
     options.readinessChecks ?? [
@@ -252,6 +279,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
       ...(c8?.readinessChecks ?? []),
       ...(c9?.readinessChecks ?? []),
       ...(c10?.readinessChecks ?? []),
+      ...(c11?.readinessChecks ?? []),
     ],
     config.readinessTimeoutMs,
   );

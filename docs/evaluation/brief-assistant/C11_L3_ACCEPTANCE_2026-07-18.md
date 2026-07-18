@@ -2,7 +2,7 @@
 
 - Date: 2026-07-18
 - Immutable prelude: bd57878e0b5ac9f66c26a58f2dbbb406f8a5b3d6
-- Evidence classification: deterministic synthetic fixture presentation
+- Evidence classification: deterministic synthetic fixture presentation plus production-composed local integration
 - External providers and external network: disabled
 
 ## Outcome
@@ -102,9 +102,45 @@ The desktop full-page capture contains a known sticky-header stitching artefact 
 - upstream response identity matching and hostile diagnostic redaction;
 - zero canonical C4/C5/C9/C10 mutation instrumentation.
 
+## Orchestrator production-composed integration
+
+After the three isolated lanes were merged, the orchestrator completed the required producer-live local gate against disposable Postgres databases and the production C11 composition.
+
+### Database, API and redaction evidence
+
+- A clean C1-C11 migration chain applied successfully through `0011_design_briefs.sql`.
+- The production integration test passed 1/1 against `c11_production_gate_20260718_0405`. It exercised owner, editor, viewer and foreign-tenant access; project and intake creation; deterministic revision-1 initialization and replay; local session/turn creation; unedited atomic confirmation and replay; direct user correction; exact cancellation; proposal rejection; acceptance; and optimistic-revision enforcement.
+- Live structured logs were captured in-process and proved that both actor tokens, private consultation messages, the synthetic address marker and the synthetic accessibility marker were absent while redaction markers remained present.
+- C4 snapshot and C5 commit counts and hashes were unchanged across the consultation workflow. C11 created only audited brief/session/proposal revisions; it did not mutate C4, C5, C9 or C10 state.
+
+### Production-composed browser evidence
+
+The production-composed Playwright command used the real Next same-origin BFF, real C11 API, deterministic local model gateway and disposable Postgres database `c11_live_bff_20260718_0350`:
+
+    pnpm exec playwright test --config tests/e2e/brief-assistant/playwright.live.config.ts
+
+Result: 3 passed in 35.3 seconds.
+
+The owner journey signed in, created a project, saved a complete synthetic intake, initialized an address-free brief, ran a real local consultation, atomically confirmed the proposal and accepted revision 3. The viewer journey proved the accepted brief remained read-only. The mobile journey proved no horizontal overflow at 390 x 844. The resulting database contained one accepted revision-3 brief with nine entries, one session and one confirmed proposal, with zero C4 snapshots and zero C5 commits.
+
+Visible Chrome extension verification then opened the same persisted project in the actual local app. It showed the accepted revision, `deterministic-local-v1`, external providers disabled, a backend-composed workspace, assistant-message provenance, four constraints, two household assertions, three preferences and explicit acceptance. DOM inspection found zero canonical mutations, no horizontal overflow and no console warning/error. The full-page capture was visually inspected:
+
+- `/tmp/c11-brief-assistant-live-evidence/producer-live-owner-accepted.png`
+- `/tmp/c11-brief-assistant-live-evidence/producer-live-viewer-mobile.png`
+- `/tmp/c11-producer-live-chrome-accepted.png`
+
+The in-app Browser controller was attempted first but failed during controller setup before acquiring a tab (`nameSession` state failure followed by `Cannot redefine property: process`). It is recorded as a controller limitation, not product evidence. The connected Chrome extension supplied the required visible-browser evidence without using customer data or an external provider.
+
+### Integrated regression evidence
+
+- `UV_CACHE_DIR=.cache/uv pnpm verify`: passed all 17 workspace format/lint/typecheck/unit/build pipelines, Ruff, strict MyPy and 117 Python tests with two correctly skipped optional COLMAP/Open3D runtime cases.
+- Brief-assistant evaluation/security: 11/11 passed.
+- Synthetic cross-browser consultation matrix: 13/13 passed across Chromium, Firefox and WebKit desktop/mobile, keyboard, viewer, correction, cancellation/recovery, hostile text and degraded states.
+- iOS Simulator regression on Xcode 26.4 and iOS 26.4: 29 XCTest cases, 96 Swift Testing cases and 18 UI tests passed (143 logical cases total). This validates shared API/auth/navigation regressions only; it is not physical sensor evidence.
+- `git diff --check`: passed.
+
 ## NOT RUN and limitations
 
-- Producer-live L1/L2 backend, Postgres and migration integration: NOT RUN in this isolated lane.
 - Real provider/model execution: NOT RUN; external capability is explicitly disabled.
 - Customer data, customer addresses and customer media: NOT USED.
 - Physical mobile devices, touch hardware, GPU, LiDAR and camera hardware: NOT RUN.
@@ -112,9 +148,9 @@ The desktop full-page capture contains a known sticky-header stitching artefact 
 - Professional structural, regulatory, clinical-accessibility, cost or product-availability review: NOT RUN. The UI routes these questions and makes no such claims.
 - Representative household study and agency design-quality scoring: NOT RUN.
 
-## Required producer-live integration gate
+## Producer-live integration gate disposition
 
-After C11-L1/L2 integration, the orchestrator must run a production-composed local journey using the real BFF, real C11 API and Postgres:
+The orchestrator completed the production-composed local journey using the real BFF, real C11 API and Postgres:
 
 1. Create and save a C1 project intake whose brief does not yet exist.
 2. Open C11 and prove GET performs no mutation and exposes only the selected address-free intake fields.
@@ -125,4 +161,4 @@ After C11-L1/L2 integration, the orchestrator must run a production-composed loc
 7. Capture C4/C5/C9/C10 canonical counts and canonical snapshot/content hashes before and after; all must remain unchanged. Only audited C11 brief revision operations may change.
 8. Inspect server logs/traces for tenant isolation, idempotency replay, redaction, accountable actor attribution and absence of address, message or token leakage.
 
-Until that producer-live gate passes, this record is independent synthetic fixture evidence, not integrated checkpoint acceptance.
+All eight requirements above passed through the combined production integration test, production-composed Playwright journey, connected Chrome inspection and structured-log assertions. C11 therefore has integrated local checkpoint evidence. The remaining NOT RUN items are external provider, hardware, formal conformance and human/professional evidence and are not relabelled as software evidence.

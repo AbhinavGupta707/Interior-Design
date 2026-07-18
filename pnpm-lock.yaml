@@ -103,6 +103,16 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  packages/design-brief:
+    dependencies:
+      '@interior-design/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
+
   packages/domain-model:
     dependencies:
       '@interior-design/contracts':
@@ -126,6 +136,12 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/model-gateway:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
 
   packages/model-operations:
     dependencies:
@@ -198,12 +214,18 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@interior-design/design-brief':
+        specifier: workspace:*
+        version: link:../../packages/design-brief
       '@interior-design/domain-model':
         specifier: workspace:*
         version: link:../../packages/domain-model
       '@interior-design/geometry-kernel':
         specifier: workspace:*
         version: link:../../packages/geometry-kernel
+      '@interior-design/model-gateway':
+        specifier: workspace:*
+        version: link:../../packages/model-gateway
       '@interior-design/model-operations':
         specifier: workspace:*
         version: link:../../packages/model-operations
@@ -229,6 +251,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@interior-design/scene-compiler':
+        specifier: workspace:*
+        version: link:../../packages/scene-compiler
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1

@@ -238,6 +238,9 @@ export function ProjectsScreen() {
                   <Link className="project-row__action" href={`/onboarding/${project.id}`}>
                     Resume intake
                   </Link>
+                  <Link className="project-row__action" href={`/design-consultation/${project.id}`}>
+                    Design consultation
+                  </Link>
                   <Link className="project-row__action" href={`/evidence/${project.id}`}>
                     Evidence
                   </Link>
