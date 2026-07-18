@@ -526,10 +526,10 @@
 
 ### Master prelude
 
-- Status: prelude frozen on `main`; no C13 implementation lane launched yet and C14 remains closed
+- Status: activated on `main`; the three frozen C13 lanes may launch from the activation commit and C14 remains closed
 - Contract: `docs/orchestration/checkpoints/C13_CONTRACT.md` (`c13-catalog-artifact-v1`, `c13-catalog-rights-record-v1`, `c13-catalog-asset-version-v1`, `c13-catalog-release-v1`, `c13-specification-v1`, `c13-specification-revision-v1`, `c13-substitution-preview-v1`, `c13-substitution-confirmation-v1`)
 - Immutable predecessor/C12 ledger close: `c8f266e68fdd31402d49a9f12b80b5af21644ae6`
-- Prelude commit: pending this gate; the subsequent activation record will freeze the exact worker base before launch
+- Prelude commit: `2a833ffc4d7ad17d8bc8692cc331b4aacb7aca9f`
 - Planned lanes: three, retained adaptively because hostile/right-sensitive asset ingestion, transactional C5/specification persistence with forced RLS, and independent cross-surface exact-version acceptance have clean exclusive ownership boundaries
 - Worker runtime: every lane will use exact `gpt-5.6-sol` with `xhigh` reasoning. This is recorded before launch because all three lanes include untrusted artifacts/licensing, concurrency/security or cross-domain C5/C10/browser integration.
 - Provider/data policy: creator-authored generic local assets and deterministic local workers only; no runtime URL ingestion, external provider, paid service, customer data, training permission, live price, supplier or availability source is activated
@@ -549,3 +549,5 @@
 - Migration `0013_specifications.sql` is allocated exclusively to C13-L2. C13 tables must force RLS and prove tenant isolation through a non-owner/no-`BYPASSRLS` application role with transaction-local tenant context. Retrospective C1-C12 table-owner hardening remains an inherited dedicated-hardening risk rather than silent scope expansion.
 - Catalog ingestion accepts repository-local artifacts only and enforces frozen byte/graph/texture/time/memory limits, official Khronos validation plus stricter URI/resource/geometry/rights rules, deterministic publication and no partial release head.
 - Root owns shared contracts/authz/tests, migration registry, manifests/lockfile, central composition/navigation/C12-C13-C10 seams, accepted contract and ledger. The exact three `gpt-5.6-sol` / `xhigh` assignments and non-overlapping paths are frozen before task creation.
+- The complete prelude `UV_CACHE_DIR=.cache/uv pnpm verify` passed all 21 workspace format/lint/typecheck/unit/build pipelines, Ruff, strict MyPy and Python 117 passed / two honest unavailable COLMAP/Open3D skips. C13 contracts passed 4 focused and 76 complete cases; authz passed 525 plus its independent identity matrix; `git diff --check` passed.
+- Node 22.22.2/pnpm 10.33, local PostGIS/object storage/Temporal, Blender 5.2.0, FFmpeg 8.1 and every Playwright engine remain available. C13 needs none of Blender/GPU/provider/physical-device execution. Free disk was 18 GiB at preflight; C14 must re-check its greater-of-15-GiB-or-three-times-job estimate gate before opening.

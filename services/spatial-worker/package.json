@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1089.0",
+    "@interior-design/catalog": "workspace:*",
     "@interior-design/contracts": "workspace:*",
     "@interior-design/design-engine": "workspace:*",
     "@interior-design/geometry-kernel": "workspace:*",

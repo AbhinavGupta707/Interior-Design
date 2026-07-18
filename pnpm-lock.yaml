@@ -96,6 +96,12 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@interior-design/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+      '@interior-design/interior-assets':
+        specifier: workspace:*
+        version: link:../interior-assets
 
   packages/config:
     dependencies:
@@ -196,12 +202,18 @@ importers:
 
   packages/scene-compiler:
     dependencies:
+      '@interior-design/catalog':
+        specifier: workspace:*
+        version: link:../catalog
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@interior-design/geometry-kernel':
         specifier: workspace:*
         version: link:../geometry-kernel
+      '@interior-design/specification':
+        specifier: workspace:*
+        version: link:../specification
       earcut:
         specifier: ^3.2.3
         version: 3.2.3
@@ -214,6 +226,15 @@ importers:
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@interior-design/design-engine':
+        specifier: workspace:*
+        version: link:../design-engine
+      '@interior-design/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+      '@interior-design/model-operations':
+        specifier: workspace:*
+        version: link:../model-operations
 
   packages/test-fixtures:
     dependencies:
@@ -241,6 +262,9 @@ importers:
       '@interior-design/authz':
         specifier: workspace:*
         version: link:../../packages/authz
+      '@interior-design/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
       '@interior-design/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -274,6 +298,9 @@ importers:
       '@interior-design/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@interior-design/specification':
+        specifier: workspace:*
+        version: link:../../packages/specification
       '@opentelemetry/api':
         specifier: ^1.9.1
         version: 1.9.1
@@ -305,6 +332,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1089.0
         version: 3.1089.0
+      '@interior-design/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
       '@interior-design/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

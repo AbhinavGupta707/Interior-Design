@@ -17,6 +17,9 @@
     "test:unit": "vitest run --passWithNoTests --exclude 'dist/**'"
   },
   "dependencies": {
-    "@interior-design/contracts": "workspace:*"
+    "@interior-design/contracts": "workspace:*",
+    "@interior-design/design-engine": "workspace:*",
+    "@interior-design/domain-model": "workspace:*",
+    "@interior-design/model-operations": "workspace:*"
   }
 }
