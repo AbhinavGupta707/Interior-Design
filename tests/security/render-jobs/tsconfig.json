@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": "../../..",
+    "ignoreDeprecations": "6.0",
+    "noEmit": true,
+    "paths": {
+      "@interior-design/authz": ["packages/authz/src/index.ts"],
+      "@interior-design/contracts": ["packages/contracts/src/index.ts"]
+    },
+    "rootDir": "../../..",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["./**/*.ts"]
+}
