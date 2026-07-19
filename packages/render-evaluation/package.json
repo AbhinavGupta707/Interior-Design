@@ -8,6 +8,11 @@
       "types": "./src/index.ts",
       "development": "./src/index.ts",
       "default": "./dist/src/index.js"
+    },
+    "./browser": {
+      "types": "./src/browser.ts",
+      "development": "./src/browser.ts",
+      "default": "./dist/src/browser.js"
     }
   },
   "scripts": {

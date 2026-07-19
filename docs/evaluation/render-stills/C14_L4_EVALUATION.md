@@ -1,0 +1,87 @@
+# C14-L4 render-stills UX and independent evaluation
+
+## Outcome
+
+The owned C14-L4 lane provides an accessible `/render-stills/:projectId` workspace, an isolated strict-schema C14 BFF, fresh artifact access and byte verification, and an independent Sharp-backed artifact evaluator.
+
+The product truth boundary is explicit:
+
+- “Geometry-locked deterministic render” is derived visualisation only.
+- “Illustrative optional enhancement” is never canonical.
+- The current Mac remains a real-render hardware hold. No Blender process was invoked and no fixture image is presented as a real render.
+- The safe result remains visible when enhancement is disabled, fails, or is rejected.
+
+No frozen contract, generated client, migration, shared navigation, global CSS, render worker, or provider configuration changed.
+
+## Evidence boundary
+
+The browser matrix uses only deterministic synthetic PNG and bounded EXR-header fixtures created by `tests/e2e/render-stills/mock-c14-backend.mjs`. Fixture capability is labelled `synthetic-fixture` and states that no Blender process or real render is involved. Product code obtains capability state and frozen C14 data through the isolated BFF; it contains no deterministic render fallback.
+
+Independent evaluation provides:
+
+- PNG signature, declared bytes, SHA-256, dimensions, and complete Sharp pixel decode;
+- EXR magic, bounded attribute parsing, channel metadata, data-window shape, declared bytes, and SHA-256;
+- exact segmentation-palette contamination reporting;
+- bounded edit-mask, changed-pixel, protected-edge, and segmentation-IoU comparisons;
+- aggregate encoded-byte and decoded-pixel budgets for the five-image geometry comparison.
+
+EXR evaluation is deliberately labelled `container-header-only-no-pixel-validation`. Image comparisons are deliberately labelled `bounded-png-pixel-comparison-no-camera-or-blender-validation`. These checks do not validate Blender, camera projection, scene geometry, or EXR channel pixels.
+
+## Accessibility and responsive review
+
+Automated and independent in-app browser inspection confirmed:
+
+- one main landmark and no duplicate IDs;
+- exact job focus after keyboard selection;
+- polite lifecycle updates and focused alerts;
+- inspect-only viewer controls and owner/editor action boundaries;
+- reduced-motion handling;
+- no horizontal overflow at 390×844 in Chromium, Firefox, or WebKit;
+- visible controls and the checkbox label target are at least 43 CSS pixels high in the browser matrix;
+- safe and segmentation object images decode to the declared 96×64 fixture dimensions;
+- no page console warnings or errors during the independent render-workspace inspection.
+
+Responsive screenshot evidence: `/tmp/c14-render-stills-evidence/render-stills-390x844.jpg`.
+
+The static website-quality audit reported no P0/P1 findings and five P2 tight-gap heuristics. Those gaps bind eyebrow/title or title/metadata pairs rather than independent touch targets; browser checks confirmed the interactive target sizing and overflow requirements.
+
+## Security and privacy findings
+
+- The BFF accepts only the HTTP-only C1 session cookie, exact frozen C14 routes, strict request bodies, and UUID idempotency keys.
+- Caller-supplied authority, traversal-shaped routes, extra path segments, foreign-tenant data, malformed responses, oversized JSON, and private upstream detail fail closed.
+- Artifact access permits HTTPS or explicit loopback development only and rejects credentials/fragments.
+- Type, declared byte length, SHA-256, role, manifest hash, and dimensions are checked before object URL creation.
+- Verification is generation-fenced; stale async work cannot publish state after job/artifact switching.
+- Object URLs are revoked on switch, retry, decode failure, and unmount.
+- Signed URLs, blobs, private artifacts, and source payloads are not persisted in local storage, session storage, or IndexedDB.
+
+## Performance and resource findings
+
+- Browser preview verification is capped at 64 MiB and streams only up to the immutable declared byte length.
+- The independent evaluator defaults to 64 MiB encoded input, 16,777,216 aggregate comparison pixels, a 1 MiB EXR-header ceiling, and 128 EXR channels.
+- The independent regression suite keeps a 1024×1024 PNG inspection and a five-image 256×256 geometry comparison below a 3-second local ceiling; heap growth is capped below 128 MiB.
+- The workspace polls only non-terminal durable jobs, does not load artifact bytes until verification is requested, and creates no persistent client cache.
+
+## Verification
+
+- `pnpm --filter @interior-design/render-evaluation lint`: passed.
+- `pnpm --filter @interior-design/render-evaluation typecheck`: passed.
+- `pnpm --filter @interior-design/render-evaluation test:unit`: 2 files, 8 tests passed.
+- `pnpm --filter @interior-design/render-evaluation build`: passed.
+- `pnpm --filter @interior-design/web lint`: passed.
+- `pnpm --filter @interior-design/web typecheck`: passed.
+- `pnpm exec vitest run apps/web/test/render-stills`: 4 files, 9 tests passed.
+- independent evaluation/performance/security TypeScript checks: passed.
+- `pnpm exec vitest run tests/evaluation/render-stills tests/performance/render-stills tests/security/render-stills`: 3 files, 10 tests passed.
+- `pnpm --filter @interior-design/editor-core build && pnpm --filter @interior-design/web build`: passed; `/render-stills/[projectId]` and `/api/c14/[...segments]` are present in the production route table.
+- `pnpm exec playwright test --config tests/e2e/render-stills/playwright.config.ts`: 22 passed across Chromium, Firefox, and WebKit desktop plus 390×844 mobile projects.
+- `git diff --check`: required at final handoff.
+
+The Playwright matrix covers exact deep links, all durable lifecycle stages, keyboard workflow, owner/editor/viewer/foreign access, provider disabled, enhancement failed/rejected, offline, session expiry, stale jobs, malformed/private responses, tampered bytes, expired access, decode failure, diagnostics, fresh access, and responsive overflow/target sizing. No Blender executable or render provider is called.
+
+## Integration steps and remaining limitations
+
+1. The orchestrator should wire project navigation/composition to `/render-stills/:projectId`; this lane intentionally did not edit shared navigation.
+2. Deploy the frozen C14 backend routes behind the existing `HOME_DESIGN_API_BASE_URL` and return production capability evidence. Keep `C14_RENDER_EVIDENCE_CLASSIFICATION` unset for production-capability presentation; `synthetic-fixture` is for fixture tests only.
+3. Satisfy and record the C14 hardware/provider gate on an authorised render host before claiming a real geometry-safe render. This Mac provides no real-render evidence.
+4. Pixel-level OpenEXR and Blender/scene/camera validation remain outside this evaluator. They require separately authorised host evidence and must not be inferred from these header and PNG checks.
