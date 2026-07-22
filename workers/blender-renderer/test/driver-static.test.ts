@@ -17,5 +17,8 @@ describe("C14 Blender driver static contract", () => {
     expect(source).toContain('("VECTOR", "Normal", "Normal")');
     expect(source).toContain('("RGBA", "CryptoObject00", "CryptoObject00")');
     expect(source).toContain('for role in ("multilayer", "depth", "normal")');
+    expect(source).toContain("def configure_materials(manifest: dict[str, object])");
+    expect(source).toContain("def configure_lights(manifest: dict[str, object])");
+    expect(source).toContain('entry["conversionPolicy"] != "c14-photometric-to-blender-v1"');
   });
 });

@@ -106,6 +106,84 @@ def configure_camera(manifest: dict[str, object]) -> None:
     bpy.context.scene.camera = camera
 
 
+def srgb8_to_scene_linear(value: int) -> float:
+    channel = value / 255.0
+    return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+
+
+def colour_temperature_rgb(kelvin: int) -> tuple[float, float, float]:
+    # This is intentionally identical to the pinned C10 compiler conversion.
+    temperature = kelvin / 100.0
+    red = 255.0 if temperature <= 66 else 329.698727446 * (temperature - 60) ** -0.1332047592
+    green = (
+        99.4708025861 * math.log(temperature) - 161.1195681661
+        if temperature <= 66
+        else 288.1221695283 * (temperature - 60) ** -0.0755148492
+    )
+    blue = (
+        255.0
+        if temperature >= 66
+        else 0.0
+        if temperature <= 19
+        else 138.5177312231 * math.log(temperature - 10) - 305.0447927307
+    )
+    return tuple(min(255.0, max(0.0, channel)) / 255.0 for channel in (red, green, blue))
+
+
+def configure_materials(manifest: dict[str, object]) -> None:
+    values = manifest["materials"]
+    assert isinstance(values, list)
+    objects = imported_objects_by_element()
+    for entry in values:
+        assert isinstance(entry, dict)
+        element_id = entry["elementId"]
+        item = objects.get(element_id)
+        if item is None or item.type != "MESH":
+            raise RuntimeError("C14_MATERIAL_TARGET_MISSING")
+        base_colour = entry["baseColourSrgb8"]
+        emissive = entry["emissiveSrgb8"]
+        if not isinstance(base_colour, list) or not isinstance(emissive, list):
+            raise RuntimeError("C14_MATERIAL_INVALID")
+        material = bpy.data.materials.new(f"C14Material-{entry['materialId']}")
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+        output = nodes.new("ShaderNodeOutputMaterial")
+        material.node_tree.links.new(shader.outputs["BSDF"], output.inputs["Surface"])
+        shader.inputs["Base Color"].default_value = tuple(
+            srgb8_to_scene_linear(int(channel)) for channel in base_colour
+        ) + (1.0,)
+        shader.inputs["Metallic"].default_value = entry["metallicBasisPoints"] / 10_000.0
+        shader.inputs["Roughness"].default_value = entry["roughnessBasisPoints"] / 10_000.0
+        emission_colour = tuple(srgb8_to_scene_linear(int(channel)) for channel in emissive) + (1.0,)
+        if "Emission Color" in shader.inputs:
+            shader.inputs["Emission Color"].default_value = emission_colour
+        elif "Emission" in shader.inputs:
+            shader.inputs["Emission"].default_value = emission_colour
+        item.data.materials.clear()
+        item.data.materials.append(material)
+
+
+def configure_lights(manifest: dict[str, object]) -> None:
+    values = manifest["lights"]
+    assert isinstance(values, list)
+    scene = bpy.context.scene
+    for item in list(scene.objects):
+        if item.type == "LIGHT":
+            bpy.data.objects.remove(item, do_unlink=True)
+    for entry in values:
+        assert isinstance(entry, dict)
+        if entry["kind"] != "point" or entry["conversionPolicy"] != "c14-photometric-to-blender-v1":
+            raise RuntimeError("C14_LIGHT_POLICY_INVALID")
+        light_data = bpy.data.lights.new(f"C14Light-{entry['lightId']}", "POINT")
+        light_data.energy = entry["luminousFluxLumens"] / (4.0 * math.pi)
+        light_data.color = colour_temperature_rgb(entry["colourTemperatureKelvin"])
+        light = bpy.data.objects.new(f"C14Light-{entry['lightId']}", light_data)
+        bpy.context.collection.objects.link(light)
+        light.location = point_metres(entry["position"])
+
+
 def configure_scene(manifest: dict[str, object], output: Path) -> None:
     profile = manifest["profile"]
     assert isinstance(profile, dict)
@@ -277,6 +355,8 @@ def main() -> None:
     bpy.ops.import_scene.gltf(filepath=str(glb_path), import_pack_images=False)
     configure_camera(manifest)
     configure_scene(manifest, output)
+    configure_materials(manifest)
+    configure_lights(manifest)
     configure_diagnostic_outputs(output)
     bpy.ops.render.render(write_still=True)
     rename_diagnostic_outputs(output)
