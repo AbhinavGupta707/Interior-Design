@@ -51,6 +51,17 @@ export interface ExrInspectionPort {
   ): Promise<ExrInspection>;
 }
 
+/**
+ * A separately pinned Blender/OIIO inspection script. It is deliberately not
+ * the render driver: publication must not trust a renderer's own assertions.
+ */
+export interface ExrInspectorExecutableDescriptor {
+  readonly executablePath: string;
+  readonly executableSha256: string;
+  readonly inspectorScriptPath: string;
+  readonly inspectorScriptSha256: string;
+}
+
 export interface ProtectedObjectBounds {
   readonly elementId: string;
   readonly maximumMetres: readonly [number, number, number];
