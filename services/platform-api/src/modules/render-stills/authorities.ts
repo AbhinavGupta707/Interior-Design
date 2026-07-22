@@ -1,0 +1,176 @@
+import { parseProtectedC10Glb } from "@interior-design/render-scene";
+import { createHash } from "node:crypto";
+
+import type { CatalogRepository } from "../catalog/types.js";
+import type { SceneRepository } from "../scenes/types.js";
+import type { SpecificationSceneBindingResolver } from "../specifications/types.js";
+import type {
+  AuthoritativeScenePort,
+  AuthoritativeSpecificationPort,
+  EmbeddedC13BindingPort,
+  RenderProfileAuthority,
+} from "./source.js";
+
+export interface ExactSceneGlbReader {
+  read(input: { readonly byteSize: number; readonly glbSha256: string }): Promise<Uint8Array>;
+}
+
+function sha256(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+/** Loads only the exact succeeded C10 scene selected by server-owned persistence. */
+export class C10RenderSceneAuthority implements AuthoritativeScenePort {
+  readonly #reader: ExactSceneGlbReader;
+  readonly #scenes: SceneRepository;
+
+  constructor(options: { readonly reader: ExactSceneGlbReader; readonly scenes: SceneRepository }) {
+    this.#reader = options.reader;
+    this.#scenes = options.scenes;
+  }
+
+  async findSucceededScene(tenantId: string, projectId: string, sceneJobId: string) {
+    const [job, scene] = await Promise.all([
+      this.#scenes.findJob(tenantId, projectId, sceneJobId),
+      this.#scenes.findScene(tenantId, projectId, sceneJobId),
+    ]);
+    if (
+      job === undefined ||
+      job.state !== "succeeded" ||
+      scene === undefined ||
+      scene.projectId !== projectId
+    ) {
+      return undefined;
+    }
+    const glbBytes = await this.#reader.read({
+      byteSize: scene.artifact.byteSize,
+      glbSha256: scene.artifact.glbSha256,
+    });
+    if (glbBytes.byteLength !== scene.artifact.byteSize || sha256(glbBytes) !== scene.artifact.glbSha256) {
+      return undefined;
+    }
+    return {
+      glbBytes,
+      projectId,
+      sceneArtifactId: scene.artifact.id,
+      sceneGlbSha256: scene.artifact.glbSha256,
+      sceneId: scene.id,
+      sceneJobId,
+      sceneManifestSha256: scene.artifact.manifestSha256,
+      sourceSnapshotSha256: scene.manifest.sourceSnapshot.snapshotSha256,
+    };
+  }
+}
+
+function activeRenderRights(asset: Awaited<ReturnType<CatalogRepository["findAsset"]>>): boolean {
+  return (
+    asset !== undefined &&
+    asset.lifecycle === "approved" &&
+    asset.rights.review.state === "approved" &&
+    asset.rights.policy.serviceProcessingAllowed &&
+    asset.rights.grants.derivatives &&
+    asset.rights.grants.renderedOutputDistribution
+  );
+}
+
+/** Rechecks the exact C13 lines against their live release and rights records for every render. */
+export class C13RenderSpecificationAuthority implements AuthoritativeSpecificationPort {
+  readonly #catalog: CatalogRepository;
+  readonly #specifications: SpecificationSceneBindingResolver;
+
+  constructor(options: {
+    readonly catalog: CatalogRepository;
+    readonly specifications: SpecificationSceneBindingResolver;
+  }) {
+    this.#catalog = options.catalog;
+    this.#specifications = options.specifications;
+  }
+
+  async resolveSceneBinding(tenantId: string, projectId: string, sceneJobId: string) {
+    const binding = await this.#specifications.resolveConfirmedSceneBinding(
+      tenantId,
+      projectId,
+      sceneJobId,
+    );
+    if (binding === undefined) return undefined;
+    const assets = await Promise.all(
+      binding.lines.map((line) =>
+        this.#catalog.findAsset(tenantId, projectId, line.catalogReleaseId, line.assetVersionId),
+      ),
+    );
+    const allReferencedRightsActive = assets.every((asset, index) => {
+      const line = binding.lines[index];
+      return (
+        line !== undefined &&
+        activeRenderRights(asset) &&
+        asset !== undefined &&
+        asset.versionSha256 === line.assetVersionSha256 &&
+        asset.rights.recordSha256 === line.rightsRecordSha256
+      );
+    });
+    return {
+      allReferencedRightsActive,
+      catalogReleaseId: binding.catalogReleaseId,
+      catalogReleaseSha256: binding.catalogReleaseSha256,
+      specificationId: binding.specificationId,
+      specificationRevision: binding.specificationRevision,
+      specificationRevisionSha256: binding.revisionSha256,
+    };
+  }
+}
+
+/** Parses C10's protected GLB rather than trusting a request-body C13 binding. */
+export class C10EmbeddedC13BindingInspector implements EmbeddedC13BindingPort {
+  inspect(bytes: Uint8Array) {
+    try {
+      const binding = parseProtectedC10Glb(bytes).specificationBinding;
+      if (
+        typeof binding.catalogReleaseId !== "string" ||
+        typeof binding.catalogReleaseSha256 !== "string" ||
+        typeof binding.specificationId !== "string" ||
+        !Number.isSafeInteger(binding.specificationRevision) ||
+        typeof binding.specificationRevisionSha256 !== "string"
+      ) {
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve({
+        catalogReleaseId: binding.catalogReleaseId,
+        catalogReleaseSha256: binding.catalogReleaseSha256,
+        specificationId: binding.specificationId,
+        specificationRevision: binding.specificationRevision as number,
+        specificationRevisionSha256: binding.specificationRevisionSha256,
+      });
+    } catch {
+      return Promise.resolve(undefined);
+    }
+  }
+}
+
+const profiles = Object.freeze({
+  "cycles-cpu-geometry-safe-v1": {
+    estimatedJobBytes: 268_435_456,
+    requiredCapability: "render.cycles.cpu.v1",
+  },
+  "cycles-cuda-high-resolution-v1": {
+    estimatedJobBytes: 1_073_741_824,
+    requiredCapability: "render.cycles.cuda.v1",
+  },
+  "cycles-metal-geometry-safe-v1": {
+    estimatedJobBytes: 536_870_912,
+    requiredCapability: "render.cycles.metal.v1",
+  },
+  "cycles-optix-high-resolution-v1": {
+    estimatedJobBytes: 1_073_741_824,
+    requiredCapability: "render.cycles.optix.v1",
+  },
+  "eevee-local-preview-v1": {
+    estimatedJobBytes: 134_217_728,
+    requiredCapability: "render.eevee.host-gpu.v1",
+  },
+});
+
+export class FrozenRenderProfileAuthority implements RenderProfileAuthority {
+  resolve(profileId: Parameters<RenderProfileAuthority["resolve"]>[0]) {
+    return profiles[profileId];
+  }
+}
