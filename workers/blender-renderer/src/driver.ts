@@ -122,6 +122,17 @@ export class IsolatedStillRenderer {
     try {
       await stagePrivateFile(workspace, "scene.glb", input.glbBytes);
       await stagePrivateFile(workspace, "render-scene.json", input.renderSceneManifestBytes);
+      await stagePrivateFile(
+        workspace,
+        "protected-objects.json",
+        Buffer.from(
+          canonicalJson({
+            objectBounds: inspection.objectBounds,
+            objectIds: inspection.objectIds,
+          }),
+          "utf8",
+        ),
+      );
       const processResult = await this.#options.process.run(
         {
           descriptor: this.#options.descriptor,

@@ -30,6 +30,7 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("--render-scene", required=True)
     parser.add_argument("--source-glb", required=True)
+    parser.add_argument("--protected-objects", required=True)
     parser.add_argument("--output-directory", required=True)
     arguments, unknown = parser.parse_known_args(sys.argv[separator + 1 :])
     if unknown:
@@ -81,6 +82,49 @@ def load_manifest(path: Path) -> dict[str, object]:
     if forbidden.intersection(serialized_keys):
         raise RuntimeError("C14_MANIFEST_EXECUTABLE_FIELD")
     return payload
+
+
+def load_protected_objects(path: Path, manifest: dict[str, object]) -> dict[str, object]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+    object_ids = payload.get("objectIds")
+    object_bounds = payload.get("objectBounds")
+    protected_ids = manifest.get("protectedElementIds")
+    if (
+        not isinstance(object_ids, list)
+        or not isinstance(object_bounds, list)
+        or not isinstance(protected_ids, list)
+        or any(not isinstance(item, str) or not item for item in object_ids)
+        or sorted(object_ids) != object_ids
+        or sorted(protected_ids) != protected_ids
+        or object_ids != protected_ids
+        or len(object_ids) != len(set(object_ids))
+        or len(object_bounds) != len(object_ids)
+    ):
+        raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+    bounds_by_id: dict[str, tuple[Vector, Vector]] = {}
+    for entry in object_bounds:
+        if not isinstance(entry, dict):
+            raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+        element_id = entry.get("elementId")
+        minimum = entry.get("minimumMetres")
+        maximum = entry.get("maximumMetres")
+        if (
+            not isinstance(element_id, str)
+            or element_id in bounds_by_id
+            or not isinstance(minimum, list)
+            or not isinstance(maximum, list)
+            or len(minimum) != 3
+            or len(maximum) != 3
+            or any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in minimum + maximum)
+            or any(minimum[index] > maximum[index] for index in range(3))
+        ):
+            raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+        bounds_by_id[element_id] = (Vector(minimum), Vector(maximum))
+    if sorted(bounds_by_id) != object_ids:
+        raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+    return {"bounds": bounds_by_id, "objectIds": object_ids}
 
 
 def point_metres(point: dict[str, int]) -> Vector:
@@ -293,8 +337,49 @@ def imported_objects_by_element() -> dict[str, bpy.types.Object]:
     for item in bpy.context.scene.objects:
         element_id = item.get("canonicalElementId") or item.name
         if isinstance(element_id, str) and element_id:
+            if element_id in result:
+                raise RuntimeError("C14_PROTECTED_OBJECT_DUPLICATE")
             result[element_id] = item
     return result
+
+
+def object_bounds(item: bpy.types.Object) -> tuple[Vector, Vector]:
+    if item.type != "MESH":
+        return (item.matrix_world.translation.copy(), item.matrix_world.translation.copy())
+    corners = [item.matrix_world @ Vector(corner) for corner in item.bound_box]
+    if len(corners) != 8 or any(not all(math.isfinite(value) for value in point) for point in corners):
+        raise RuntimeError("C14_IMPORTED_BOUNDS_INVALID")
+    return (
+        Vector(tuple(min(point[index] for point in corners) for index in range(3))),
+        Vector(tuple(max(point[index] for point in corners) for index in range(3))),
+    )
+
+
+def verify_imported_protected_objects(manifest: dict[str, object], protected: dict[str, object]) -> None:
+    expected_ids = protected["objectIds"]
+    expected_bounds = protected["bounds"]
+    assert isinstance(expected_ids, list)
+    assert isinstance(expected_bounds, dict)
+    imported = imported_objects_by_element()
+    if any(element_id not in imported for element_id in expected_ids):
+        raise RuntimeError("C14_PROTECTED_OBJECT_MISSING")
+    # glTF source values are float32. Two millimetres matches the frozen C13/C14
+    # import tolerance while still rejecting a geometry translation or scale drift.
+    tolerance_metres = 0.002
+    for element_id in expected_ids:
+        item = imported[element_id]
+        expected = expected_bounds[element_id]
+        if not isinstance(expected, tuple) or len(expected) != 2:
+            raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
+        actual_minimum, actual_maximum = object_bounds(item)
+        expected_minimum, expected_maximum = expected
+        differences = [
+            abs(actual_minimum[index] - expected_minimum[index]) for index in range(3)
+        ] + [
+            abs(actual_maximum[index] - expected_maximum[index]) for index in range(3)
+        ]
+        if any(not math.isfinite(value) or value > tolerance_metres for value in differences):
+            raise RuntimeError("C14_IMPORTED_BOUNDS_MISMATCH")
 
 
 def render_segmentation(manifest: dict[str, object], output: Path) -> None:
@@ -349,10 +434,13 @@ def main() -> None:
     workspace = Path.cwd().resolve(strict=True)
     manifest_path = require_workspace_path(arguments.render_scene, workspace, directory=False)
     glb_path = require_workspace_path(arguments.source_glb, workspace, directory=False)
+    protected_path = require_workspace_path(arguments.protected_objects, workspace, directory=False)
     output = require_workspace_path(arguments.output_directory, workspace, directory=True)
     manifest = load_manifest(manifest_path)
+    protected = load_protected_objects(protected_path, manifest)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(glb_path), import_pack_images=False)
+    verify_imported_protected_objects(manifest, protected)
     configure_camera(manifest)
     configure_scene(manifest, output)
     configure_materials(manifest)

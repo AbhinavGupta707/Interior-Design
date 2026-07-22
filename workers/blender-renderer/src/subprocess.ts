@@ -53,6 +53,7 @@ export async function verifyRendererDescriptor(
 export function rendererArguments(descriptor: RendererExecutableDescriptor, workspacePath: string) {
   const scene = path.join(workspacePath, "render-scene.json");
   const glb = path.join(workspacePath, "scene.glb");
+  const protectedObjects = path.join(workspacePath, "protected-objects.json");
   const output = path.join(workspacePath, "output");
   return [
     "--background",
@@ -68,6 +69,8 @@ export function rendererArguments(descriptor: RendererExecutableDescriptor, work
     scene,
     "--source-glb",
     glb,
+    "--protected-objects",
+    protectedObjects,
     "--output-directory",
     output,
   ] as const;
