@@ -7,3 +7,4 @@ export * from "./workspace.js";
 export * from "./canonical.js";
 export * from "./driver.js";
 export * from "./exr-inspector.js";
+export * from "./glb-inspector.js";
