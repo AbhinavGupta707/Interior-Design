@@ -1,25 +1,7 @@
 import { parseProtectedC10Glb } from "@interior-design/render-scene";
 
 import { rendererFailure } from "./errors.js";
-import type { GlbInspection, GlbInspectionPort, ProtectedObjectBounds } from "./types.js";
-
-function record(value: unknown): Readonly<Record<string, unknown>> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    rendererFailure("RENDER_GLB_UNSAFE");
-  }
-  return value as Readonly<Record<string, unknown>>;
-}
-
-function point(value: unknown): readonly [number, number, number] {
-  if (
-    !Array.isArray(value) ||
-    value.length !== 3 ||
-    value.some((coordinate) => typeof coordinate !== "number" || !Number.isFinite(coordinate))
-  ) {
-    rendererFailure("RENDER_GLB_UNSAFE");
-  }
-  return value as unknown as readonly [number, number, number];
-}
+import type { GlbInspection, GlbInspectionPort } from "./types.js";
 
 function binding(
   value: Readonly<Record<string, unknown>>,
@@ -59,32 +41,15 @@ export class C10ProtectedGlbInspector implements GlbInspectionPort {
     } catch {
       rendererFailure("RENDER_GLB_UNSAFE");
     }
-    const nodes = parsed.json.nodes;
-    if (!Array.isArray(nodes)) rendererFailure("RENDER_GLB_UNSAFE");
-    const objectIds: string[] = [];
-    const objectBounds: ProtectedObjectBounds[] = [];
-    for (const rawNode of nodes) {
-      const node = record(rawNode);
-      const extras = record(node.extras);
-      if (typeof extras.canonicalElementId !== "string" || extras.canonicalElementId.length === 0) {
-        rendererFailure("RENDER_GLB_UNSAFE");
-      }
-      const translation =
-        node.translation === undefined ? ([0, 0, 0] as const) : point(node.translation);
-      objectIds.push(extras.canonicalElementId);
-      objectBounds.push({
-        elementId: extras.canonicalElementId,
-        maximumMetres: translation,
-        minimumMetres: translation,
-      });
-    }
+    const objectBounds = parsed.objectBounds;
+    const objectIds = objectBounds.map(({ elementId }) => elementId);
     if (new Set(objectIds).size !== objectIds.length) rendererFailure("RENDER_GLB_UNSAFE");
     const c13SpecificationBinding = binding(parsed.specificationBinding);
     return {
       c13SpecificationBinding,
       containsDriversOrScripts: false,
       externalResourceCount: 0,
-      objectBounds: objectBounds.sort((left, right) => left.elementId.localeCompare(right.elementId)),
+      objectBounds,
       objectIds: objectIds.sort((left, right) => left.localeCompare(right)),
       unsafeExtensionNames: [],
     };

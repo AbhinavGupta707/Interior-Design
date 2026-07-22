@@ -23,11 +23,20 @@ export interface ParsedRenderGlbCounts {
   readonly vertices: number;
 }
 
+export interface ParsedRenderGlbObjectBounds {
+  readonly elementId: string;
+  /** C4/Blender (+X east, +Y north, +Z up) metres, not raw glTF coordinates. */
+  readonly maximumMetres: readonly [number, number, number];
+  readonly minimumMetres: readonly [number, number, number];
+}
+
 export interface ParsedRenderGlb {
   readonly catalogBindingsByElement: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
   readonly counts: ParsedRenderGlbCounts;
   readonly json: Readonly<Record<string, unknown>>;
   readonly meshHasUv: readonly boolean[];
+  /** Exact protected geometry bounds before Blender imports the GLB. */
+  readonly objectBounds: readonly ParsedRenderGlbObjectBounds[];
   readonly specificationBinding: Readonly<Record<string, unknown>>;
 }
 
@@ -37,6 +46,29 @@ interface AccessorRange {
   readonly componentCount: number;
   readonly componentType: number;
   readonly count: number;
+}
+
+type Vector3 = readonly [number, number, number];
+
+interface Matrix4 {
+  readonly values: readonly [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -163,6 +195,241 @@ function readUnsignedIndex(view: DataView, offset: number, componentType: number
     default:
       return failRenderScene("GLB_INVALID");
   }
+}
+
+function vector3(value: unknown, fallback: Vector3): Vector3 {
+  if (value === undefined) return fallback;
+  if (
+    !Array.isArray(value) ||
+    value.length !== 3 ||
+    value.some((coordinate) => typeof coordinate !== "number" || !Number.isFinite(coordinate))
+  ) {
+    return failRenderScene("GLB_INVALID");
+  }
+  return value as unknown as Vector3;
+}
+
+function quaternion(value: unknown): readonly [number, number, number, number] {
+  if (value === undefined) return [0, 0, 0, 1];
+  if (
+    !Array.isArray(value) ||
+    value.length !== 4 ||
+    value.some((coordinate) => typeof coordinate !== "number" || !Number.isFinite(coordinate))
+  ) {
+    return failRenderScene("GLB_INVALID");
+  }
+  const raw = value as unknown as readonly [number, number, number, number];
+  const magnitude = Math.hypot(...raw);
+  if (!Number.isFinite(magnitude) || magnitude < 1e-12) return failRenderScene("GLB_INVALID");
+  return [raw[0] / magnitude, raw[1] / magnitude, raw[2] / magnitude, raw[3] / magnitude];
+}
+
+function identityMatrix(): Matrix4 {
+  return {
+    values: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+  };
+}
+
+/** glTF matrices are column-major and transforms use T * R * S. */
+function localNodeMatrix(node: Readonly<Record<string, unknown>>): Matrix4 {
+  const [x, y, z, w] = quaternion(node.rotation);
+  const [sx, sy, sz] = vector3(node.scale, [1, 1, 1]);
+  const [tx, ty, tz] = vector3(node.translation, [0, 0, 0]);
+  const xx = x * x;
+  const yy = y * y;
+  const zz = z * z;
+  const xy = x * y;
+  const xz = x * z;
+  const yz = y * z;
+  const wx = w * x;
+  const wy = w * y;
+  const wz = w * z;
+  return {
+    values: [
+      (1 - 2 * (yy + zz)) * sx,
+      2 * (xy + wz) * sx,
+      2 * (xz - wy) * sx,
+      0,
+      2 * (xy - wz) * sy,
+      (1 - 2 * (xx + zz)) * sy,
+      2 * (yz + wx) * sy,
+      0,
+      2 * (xz + wy) * sz,
+      2 * (yz - wx) * sz,
+      (1 - 2 * (xx + yy)) * sz,
+      0,
+      tx,
+      ty,
+      tz,
+      1,
+    ],
+  };
+}
+
+function multiplyMatrices(left: Matrix4, right: Matrix4): Matrix4 {
+  const result = new Array<number>(16).fill(0);
+  for (let column = 0; column < 4; column += 1) {
+    for (let row = 0; row < 4; row += 1) {
+      let value = 0;
+      for (let index = 0; index < 4; index += 1) {
+        value +=
+          (left.values[index * 4 + row] ?? Number.NaN) *
+          (right.values[column * 4 + index] ?? Number.NaN);
+      }
+      result[column * 4 + row] = value;
+    }
+  }
+  if (result.some((value) => !Number.isFinite(value))) return failRenderScene("GLB_INVALID");
+  return { values: result as unknown as Matrix4["values"] };
+}
+
+function transformPoint(matrix: Matrix4, point: Vector3): Vector3 {
+  const values = matrix.values;
+  const x = values[0] * point[0] + values[4] * point[1] + values[8] * point[2] + values[12];
+  const y = values[1] * point[0] + values[5] * point[1] + values[9] * point[2] + values[13];
+  const z = values[2] * point[0] + values[6] * point[1] + values[10] * point[2] + values[14];
+  const w = values[3] * point[0] + values[7] * point[1] + values[11] * point[2] + values[15];
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) || w !== 1) {
+    return failRenderScene("GLB_INVALID");
+  }
+  return [x, y, z];
+}
+
+function gltfPointToBlender(point: Vector3): Vector3 {
+  // C10 emits [Xmm/1000, Zmm/1000, -Ymm/1000] in glTF. Blender's importer
+  // restores the canonical Z-up basis, yielding [x, -z, y].
+  return [point[0], -point[2], point[1]];
+}
+
+function meshBounds(
+  mesh: Readonly<Record<string, unknown>>,
+  ranges: readonly AccessorRange[],
+  binaryView: DataView,
+): { readonly maximum: Vector3; readonly minimum: Vector3 } {
+  const minimum: [number, number, number] = [Infinity, Infinity, Infinity];
+  const maximum: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+  for (const rawPrimitive of arrayMember(mesh, "primitives", 2_000)) {
+    const attributes = record(record(rawPrimitive).attributes);
+    const position = ranges[integerMember(attributes, "POSITION")];
+    if (position === undefined || position.componentType !== 5_126 || position.componentCount !== 3) {
+      return failRenderScene("GLB_INVALID");
+    }
+    for (let index = 0; index < position.count; index += 1) {
+      for (let axis = 0; axis < 3; axis += 1) {
+        const value = binaryView.getFloat32(
+          position.byteOffset + index * position.byteStride + axis * 4,
+          true,
+        );
+        minimum[axis] = Math.min(minimum[axis] ?? Number.NaN, value);
+        maximum[axis] = Math.max(maximum[axis] ?? Number.NaN, value);
+      }
+    }
+  }
+  if ([...minimum, ...maximum].some((value) => !Number.isFinite(value))) {
+    return failRenderScene("GLB_INVALID");
+  }
+  return { maximum, minimum };
+}
+
+function transformBounds(
+  bounds: { readonly maximum: Vector3; readonly minimum: Vector3 },
+  matrix: Matrix4,
+): { readonly maximum: Vector3; readonly minimum: Vector3 } {
+  const minimum: [number, number, number] = [Infinity, Infinity, Infinity];
+  const maximum: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+  for (const x of [bounds.minimum[0], bounds.maximum[0]]) {
+    for (const y of [bounds.minimum[1], bounds.maximum[1]]) {
+      for (const z of [bounds.minimum[2], bounds.maximum[2]]) {
+        const point = gltfPointToBlender(transformPoint(matrix, [x, y, z]));
+        for (let axis = 0; axis < 3; axis += 1) {
+          minimum[axis] = Math.min(minimum[axis] ?? Number.NaN, point[axis] ?? Number.NaN);
+          maximum[axis] = Math.max(maximum[axis] ?? Number.NaN, point[axis] ?? Number.NaN);
+        }
+      }
+    }
+  }
+  return { maximum, minimum };
+}
+
+function protectedObjectBounds(input: {
+  readonly binaryView: DataView;
+  readonly meshes: readonly unknown[];
+  readonly nodes: readonly unknown[];
+  readonly ranges: readonly AccessorRange[];
+  readonly scenes: readonly unknown[];
+}): readonly ParsedRenderGlbObjectBounds[] {
+  const nodes = input.nodes.map(record);
+  const parents = new Array<number | undefined>(nodes.length);
+  for (const [parentIndex, node] of nodes.entries()) {
+    if (node.children === undefined) continue;
+    const children = arrayMember(node, "children", nodes.length);
+    const seen = new Set<number>();
+    for (const rawChild of children) {
+      const child = integer(rawChild);
+      if (child >= nodes.length || child === parentIndex || seen.has(child) || parents[child] !== undefined) {
+        return failRenderScene("GLB_INVALID");
+      }
+      seen.add(child);
+      parents[child] = parentIndex;
+    }
+  }
+  const roots = new Set<number>();
+  for (const rawScene of input.scenes) {
+    const rawRoots = arrayMember(record(rawScene), "nodes", nodes.length);
+    for (const rawRoot of rawRoots) {
+      const root = integer(rawRoot);
+      if (root >= nodes.length || parents[root] !== undefined) return failRenderScene("GLB_INVALID");
+      roots.add(root);
+    }
+  }
+  if (nodes.length > 0 && roots.size === 0) return failRenderScene("GLB_INVALID");
+  const world = new Array<Matrix4 | undefined>(nodes.length);
+  const visit = (index: number, inherited: Matrix4, visiting: Set<number>): void => {
+    if (visiting.has(index) || world[index] !== undefined) return failRenderScene("GLB_INVALID");
+    visiting.add(index);
+    const node = nodes[index];
+    if (node === undefined) return failRenderScene("GLB_INVALID");
+    const current = multiplyMatrices(inherited, localNodeMatrix(node));
+    world[index] = current;
+    if (node.children !== undefined) {
+      for (const rawChild of arrayMember(node, "children", nodes.length)) {
+        visit(integer(rawChild), current, visiting);
+      }
+    }
+    visiting.delete(index);
+  };
+  for (const root of roots) visit(root, identityMatrix(), new Set<number>());
+  if (world.some((value) => value === undefined) || world.filter(Boolean).length !== nodes.length) {
+    return failRenderScene("GLB_INVALID");
+  }
+  const byMesh = input.meshes.map((mesh) => meshBounds(record(mesh), input.ranges, input.binaryView));
+  const result: ParsedRenderGlbObjectBounds[] = [];
+  const ids = new Set<string>();
+  for (const [index, node] of nodes.entries()) {
+    const extras = record(node.extras);
+    const elementId = extras.canonicalElementId;
+    if (typeof elementId !== "string" || elementId.length === 0 || ids.has(elementId)) {
+      return failRenderScene("GLB_UNSAFE_CONTENT");
+    }
+    ids.add(elementId);
+    const matrix = world[index];
+    if (matrix === undefined) return failRenderScene("GLB_INVALID");
+    const bounds =
+      node.mesh === undefined
+        ? transformBounds(
+            { maximum: [0, 0, 0], minimum: [0, 0, 0] },
+            matrix,
+          )
+        : byMesh[integer(node.mesh)];
+    if (bounds === undefined) return failRenderScene("GLB_INVALID");
+    const transformed = node.mesh === undefined ? bounds : transformBounds(bounds, matrix);
+    result.push({
+      elementId,
+      maximumMetres: transformed.maximum,
+      minimumMetres: transformed.minimum,
+    });
+  }
+  return result.sort((left, right) => left.elementId.localeCompare(right.elementId));
 }
 
 function assertSafeTree(value: unknown, budget = { nodes: 0 }, depth = 0): void {
@@ -588,7 +855,8 @@ export function parseProtectedC10Glb(bytes: Uint8Array): ParsedRenderGlb {
     }
   }
 
-  for (const scene of arrayMember(json, "scenes", 64)) {
+  const scenes = arrayMember(json, "scenes", 64);
+  for (const scene of scenes) {
     const roots = arrayMember(record(scene), "nodes", c10ScenePolicy.maximumNodes);
     for (const root of roots) {
       if (integer(root) >= nodes.length) return failRenderScene("GLB_INVALID");
@@ -598,7 +866,14 @@ export function parseProtectedC10Glb(bytes: Uint8Array): ParsedRenderGlb {
   assertNoExtras(bufferViews);
   assertNoExtras(accessors);
   assertNoExtras(meshes);
-  assertNoExtras(arrayMember(json, "scenes", 64));
+  assertNoExtras(scenes);
+  const objectBounds = protectedObjectBounds({
+    binaryView,
+    meshes,
+    nodes,
+    ranges,
+    scenes,
+  });
 
   return Object.freeze({
     catalogBindingsByElement: collectCatalogBindings(json),
@@ -611,6 +886,7 @@ export function parseProtectedC10Glb(bytes: Uint8Array): ParsedRenderGlb {
     }),
     json,
     meshHasUv: Object.freeze(meshHasUv),
+    objectBounds: Object.freeze(objectBounds),
     specificationBinding,
   });
 }
