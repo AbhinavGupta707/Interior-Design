@@ -1,4 +1,5 @@
 import { runtimeEnvironmentSchema, type RuntimeEnvironment } from "@interior-design/config";
+import { S3Client } from "@aws-sdk/client-s3";
 import type { FastifyInstance } from "fastify";
 import { access } from "node:fs/promises";
 import path from "node:path";
@@ -11,16 +12,19 @@ import {
   C10EmbeddedC13BindingInspector,
   C10RenderSceneAuthority,
   C13RenderSpecificationAuthority,
+  EncryptedRenderArtifactBroker,
   FrozenRenderProfileAuthority,
   PortBackedRenderSourceResolver,
   PostgresRenderRepository,
   RenderStillService,
   RenderStillWorkerService,
+  S3RenderObjectStorage,
   S3ExactSceneGlbReader,
   registerRenderStillRoutes,
   type ExactSceneGlbReader,
   type RenderCapabilities,
   type RenderObjectStorage,
+  type RenderArtifactBroker,
   type RenderRepository,
   type RenderSourceResolver,
 } from "./modules/render-stills/index.js";
@@ -196,6 +200,66 @@ function defaultResolver(options: C14ModuleOptions): RenderSourceResolver {
   });
 }
 
+function configuredObjectStorage(
+  runtimeEnvironment: RuntimeEnvironment,
+  environment: C14EnvironmentSource,
+  options: C14ModuleOptions,
+): { readonly broker?: RenderArtifactBroker; readonly storage: RenderObjectStorage } {
+  if (options.storage !== undefined) return { storage: options.storage };
+  const encodedKey = environment.C14_RENDER_ACCESS_KEY_BASE64;
+  const baseUrl = environment.C14_RENDER_ARTIFACT_BASE_URL;
+  if (encodedKey === undefined && baseUrl === undefined) return { storage: new UnavailableRenderObjectStorage() };
+  if (encodedKey === undefined || baseUrl === undefined) {
+    throw new Error("C14 render artifact access requires both key material and a public API base URL.");
+  }
+  let key: Buffer;
+  let parsedBaseUrl: URL;
+  try {
+    key = Buffer.from(encodedKey, "base64");
+    parsedBaseUrl = new URL(baseUrl);
+  } catch {
+    throw new Error("C14 render artifact access configuration is invalid.");
+  }
+  const loopback = ["127.0.0.1", "localhost", "::1", "[::1]"].includes(parsedBaseUrl.hostname);
+  if (
+    key.byteLength !== 32 ||
+    parsedBaseUrl.username ||
+    parsedBaseUrl.password ||
+    parsedBaseUrl.search ||
+    parsedBaseUrl.hash ||
+    !["http:", "https:"].includes(parsedBaseUrl.protocol) ||
+    (runtimeEnvironment === "production" && (parsedBaseUrl.protocol !== "https:" || loopback)) ||
+    (runtimeEnvironment !== "production" && parsedBaseUrl.protocol !== "https:" && !loopback)
+  ) {
+    throw new Error("C14 render artifact access configuration is unsafe.");
+  }
+  const config = loadS3AssetStorageConfig(runtimeEnvironment, environment);
+  const client = new S3Client({
+    credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
+    endpoint: config.endpoint,
+    forcePathStyle: config.forcePathStyle,
+    region: config.region,
+  });
+  const broker = new EncryptedRenderArtifactBroker({ baseUrl, client, key });
+  return {
+    broker,
+    storage: new S3RenderObjectStorage(config, broker, { client }),
+  };
+}
+
+function registerRenderArtifactBrokerRoute(server: FastifyInstance, broker: RenderArtifactBroker): void {
+  server.get("/v1/render-artifact-access/:token", async (request, reply) => {
+    const { token } = request.params as { readonly token?: unknown };
+    if (typeof token !== "string" || token.length > 12_288) return reply.status(404).send();
+    const artifact = await broker.open(token);
+    if (artifact === undefined) return reply.status(404).send();
+    reply.header("cache-control", "private, no-store");
+    reply.header("content-disposition", "inline");
+    reply.header("x-content-type-options", "nosniff");
+    return reply.type(artifact.mediaType).send(artifact.bytes);
+  });
+}
+
 function configuredSceneReader(
   runtimeEnvironment: RuntimeEnvironment,
   environment: C14EnvironmentSource,
@@ -230,7 +294,8 @@ export function registerC14Module(
     );
   const projects = options.projects ?? new PostgresProjectRepository(sql as Sql);
   const repository = options.repository ?? new PostgresRenderRepository(sql as Sql);
-  const storage = options.storage ?? new UnavailableRenderObjectStorage();
+  const storageConfiguration = configuredObjectStorage(runtimeEnvironment, environment, options);
+  const storage = storageConfiguration.storage;
   const configuredReader = configuredSceneReader(runtimeEnvironment, environment, options);
   const resolver =
     options.resolver ??
@@ -242,6 +307,9 @@ export function registerC14Module(
   const service = new RenderStillService({ capabilities, repository, resolver, storage });
   const worker = new RenderStillWorkerService({ repository, resolver, storage });
   registerRenderStillRoutes(server, identity, projects, service);
+  if (storageConfiguration.broker !== undefined) {
+    registerRenderArtifactBrokerRoute(server, storageConfiguration.broker);
+  }
 
   if (sql !== undefined && (ownsDatabase || options.closeDatabase === true)) {
     server.addHook("onClose", async () => {
