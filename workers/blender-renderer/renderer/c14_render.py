@@ -1,8 +1,9 @@
 """C14 authorised-host Blender driver.
 
-This file is deliberately not executed by repository tests. The Mac checkpoint gate is on hold;
-tests exercise the TypeScript subprocess boundary with inert fixtures. On an authorised render
-host Blender imports this script via the fixed, offline argument array.
+The TypeScript subprocess boundary is covered by inert-fixture tests. This driver is run only
+through the fixed, offline argument array after its hash has been pinned in a render-scene
+manifest. The C14 local acceptance profile uses a repository-owned synthetic scene and records
+the exact Blender build and output inspection separately from those unit tests.
 """
 
 from __future__ import annotations
@@ -10,14 +11,12 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import os
-from pathlib import Path
 import shutil
 import sys
+from pathlib import Path
 
 import bpy
 from mathutils import Vector
-
 
 REQUIRED_SCHEMA = "c14-render-scene-manifest-v1"
 SAFE_WORLD = "neutral-studio-no-address-or-daylight-inference-v1"
@@ -46,7 +45,11 @@ def require_workspace_path(value: str, workspace: Path, *, directory: bool) -> P
     if resolved.parent != workspace and not (directory and resolved == workspace / "output"):
         raise RuntimeError("C14_PATH_OUTSIDE_WORKSPACE")
     stat = resolved.lstat()
-    if resolved.is_symlink() or (directory and not resolved.is_dir()) or (not directory and not resolved.is_file()):
+    if (
+        resolved.is_symlink()
+        or (directory and not resolved.is_dir())
+        or (not directory and not resolved.is_file())
+    ):
         raise RuntimeError("C14_PATH_TYPE_INVALID")
     if stat.st_size > 100 * 1024 * 1024 and not directory:
         raise RuntimeError("C14_INPUT_TOO_LARGE")
@@ -57,7 +60,10 @@ def load_manifest(path: Path) -> dict[str, object]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise RuntimeError("C14_MANIFEST_INVALID")
-    if payload.get("schemaVersion") != REQUIRED_SCHEMA or payload.get("worldAssumption") != SAFE_WORLD:
+    if (
+        payload.get("schemaVersion") != REQUIRED_SCHEMA
+        or payload.get("worldAssumption") != SAFE_WORLD
+    ):
         raise RuntimeError("C14_MANIFEST_POLICY_INVALID")
     forbidden = {"blend", "python", "driver", "expression", "path", "uri", "environment"}
     serialized_keys: list[str] = []
@@ -104,7 +110,11 @@ def configure_scene(manifest: dict[str, object], output: Path) -> None:
     profile = manifest["profile"]
     assert isinstance(profile, dict)
     scene = bpy.context.scene
-    scene.render.engine = "BLENDER_EEVEE_NEXT" if profile["engine"] == "eevee" else "CYCLES"
+    # Blender 5.2 exposes the maintained Eevee engine as ``BLENDER_EEVEE``.
+    # Earlier 4.x/5.0-era builds used ``BLENDER_EEVEE_NEXT``; selecting that
+    # retired identifier makes the otherwise deterministic acceptance profile
+    # fail before it can create any controlled artifact.
+    scene.render.engine = "BLENDER_EEVEE" if profile["engine"] == "eevee" else "CYCLES"
     scene.render.resolution_x = profile["widthPx"]
     scene.render.resolution_y = profile["heightPx"]
     scene.render.resolution_percentage = 100
@@ -113,8 +123,13 @@ def configure_scene(manifest: dict[str, object], output: Path) -> None:
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - Medium High Contrast"
     scene.display_settings.display_device = "sRGB"
-    scene.render.filepath = str(output / "multilayer.exr")
-    scene.render.image_settings.file_format = "OPEN_EXR_MULTILAYER"
+    # The render-result file is only a compositor input. The compositor below writes
+    # the published multilayer artifact; this transient is deleted after the pass.
+    scene.render.filepath = str(output / "render-result.exr")
+    # Blender 5.2 removed the legacy ``OPEN_EXR_MULTILAYER`` enum value from
+    # Scene.render image settings. The compositor file-output node still supports
+    # it and is therefore the only source of the published diagnostic EXR.
+    scene.render.image_settings.file_format = "OPEN_EXR"
     scene.render.image_settings.color_depth = "32"
     scene.render.image_settings.exr_codec = "ZIP"
     view_layer = scene.view_layers[0]
@@ -132,19 +147,67 @@ def configure_scene(manifest: dict[str, object], output: Path) -> None:
 
 def configure_diagnostic_outputs(output: Path) -> None:
     scene = bpy.context.scene
-    scene.use_nodes = True
-    nodes = scene.node_tree.nodes
-    links = scene.node_tree.links
+    # Blender 5.2 moved compositor state from ``Scene.node_tree`` to a named
+    # compositor node group. Keep the legacy branch for pinned pre-5.2 hosts
+    # because the render manifest records the exact Blender build.
+    if bpy.app.version >= (5, 2, 0):
+        tree = bpy.data.node_groups.new("C14DiagnosticCompositor", "CompositorNodeTree")
+        scene.compositing_node_group = tree
+        tree.interface.new_socket(name="Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+        nodes = tree.nodes
+        links = tree.links
+    else:
+        scene.use_nodes = True
+        nodes = scene.node_tree.nodes
+        links = scene.node_tree.links
     nodes.clear()
+    final_output = nodes.new(
+        "NodeGroupOutput" if bpy.app.version >= (5, 2, 0) else "CompositorNodeComposite"
+    )
     layers = nodes.new("CompositorNodeRLayers")
+    links.new(layers.outputs["Image"], final_output.inputs[0])
+    # Blender 5.2 removed ``OPEN_EXR_MULTILAYER`` from Scene.render settings,
+    # but retains it for a compositor file-output node. One compositor target
+    # owns the exact Combined, depth, normal and Cryptomatte channel bundle.
+    # It is separate from the scene render-result file, which is never published.
+    multilayer = nodes.new("CompositorNodeOutputFile")
+    multilayer.format.file_format = "OPEN_EXR_MULTILAYER"
+    multilayer.format.color_depth = "32"
+    multilayer.format.exr_codec = "ZIP"
+    if bpy.app.version >= (5, 2, 0):
+        multilayer.directory = str(output)
+        multilayer.file_name = "multilayer"
+        for socket_type, name, source in (
+            ("RGBA", "Combined", "Image"),
+            ("FLOAT", "Z", "Depth"),
+            ("VECTOR", "Normal", "Normal"),
+            ("RGBA", "CryptoObject00", "CryptoObject00"),
+        ):
+            multilayer.file_output_items.new(socket_type, name)
+            links.new(layers.outputs[source], multilayer.inputs[name])
+    else:
+        multilayer.base_path = str(output)
+        multilayer.file_slots[0].path = "multilayer"
+        links.new(layers.outputs["Image"], multilayer.inputs[0])
     for name, socket in (("depth", "Depth"), ("normal", "Normal")):
         target = nodes.new("CompositorNodeOutputFile")
-        target.base_path = str(output)
-        target.file_slots[0].path = name
-        target.format.file_format = "OPEN_EXR"
+        # The Blender 5.2 render-result enum and compositor file-output enum
+        # intentionally differ: ``OPEN_EXR`` versus
+        # ``OPEN_EXR_MULTILAYER``. This node emits one typed diagnostic pass.
+        target.format.file_format = (
+            "OPEN_EXR_MULTILAYER" if bpy.app.version >= (5, 2, 0) else "OPEN_EXR"
+        )
         target.format.color_depth = "32"
         target.format.exr_codec = "ZIP"
-        links.new(layers.outputs[socket], target.inputs[0])
+        if bpy.app.version >= (5, 2, 0):
+            target.directory = str(output)
+            target.file_name = name
+            target.file_output_items.new("FLOAT" if socket == "Depth" else "VECTOR", name)
+            links.new(layers.outputs[socket], target.inputs[name])
+        else:
+            target.base_path = str(output)
+            target.file_slots[0].path = name
+            links.new(layers.outputs[socket], target.inputs[0])
 
 
 def imported_objects_by_element() -> dict[str, bpy.types.Object]:
@@ -179,7 +242,10 @@ def render_segmentation(manifest: dict[str, object], output: Path) -> None:
         item.data.materials.clear()
         item.data.materials.append(material)
     scene = bpy.context.scene
-    scene.use_nodes = False
+    if bpy.app.version >= (5, 2, 0):
+        scene.compositing_node_group = None
+    else:
+        scene.use_nodes = False
     scene.view_settings.view_transform = "Standard"
     scene.view_settings.look = "Medium High Contrast"
     scene.render.image_settings.file_format = "PNG"
@@ -193,7 +259,7 @@ def render_segmentation(manifest: dict[str, object], output: Path) -> None:
 
 
 def rename_diagnostic_outputs(output: Path) -> None:
-    for role in ("depth", "normal"):
+    for role in ("multilayer", "depth", "normal"):
         candidates = sorted(output.glob(f"{role}*.exr"))
         if len(candidates) != 1:
             raise RuntimeError("C14_DIAGNOSTIC_OUTPUT_MISSING")
@@ -214,8 +280,13 @@ def main() -> None:
     configure_diagnostic_outputs(output)
     bpy.ops.render.render(write_still=True)
     rename_diagnostic_outputs(output)
+    for transient in output.glob("render-result*.exr"):
+        transient.unlink()
     scene = bpy.context.scene
-    scene.use_nodes = False
+    if bpy.app.version >= (5, 2, 0):
+        scene.compositing_node_group = None
+    else:
+        scene.use_nodes = False
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - Medium High Contrast"
     scene.render.image_settings.file_format = "PNG"
