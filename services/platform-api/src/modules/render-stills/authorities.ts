@@ -1,9 +1,13 @@
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { c13CatalogPolicy } from "@interior-design/contracts";
 import { parseProtectedC10Glb } from "@interior-design/render-scene";
 import { createHash } from "node:crypto";
 
 import type { CatalogRepository } from "../catalog/types.js";
+import { sceneObjectKey } from "../scenes/storage.js";
 import type { SceneRepository } from "../scenes/types.js";
 import type { SpecificationSceneBindingResolver } from "../specifications/types.js";
+import type { S3AssetStorageConfig } from "../../storage/config.js";
 import type {
   AuthoritativeScenePort,
   AuthoritativeSpecificationPort,
@@ -13,6 +17,74 @@ import type {
 
 export interface ExactSceneGlbReader {
   read(input: { readonly byteSize: number; readonly glbSha256: string }): Promise<Uint8Array>;
+}
+
+interface S3GetClient {
+  send(command: object): Promise<unknown>;
+}
+
+function boundedGlbInput(input: { readonly byteSize: number; readonly glbSha256: string }): void {
+  if (
+    !Number.isSafeInteger(input.byteSize) ||
+    input.byteSize < 20 ||
+    input.byteSize > c13CatalogPolicy.maximumGlbBytes ||
+    !/^[a-f0-9]{64}$/u.test(input.glbSha256)
+  ) {
+    throw new Error("The exact C10 GLB reference is invalid.");
+  }
+}
+
+/**
+ * Reads only C10's internal content-addressed scene object. It derives the key
+ * from the C10 authority record, bounds the stream before allocating, and
+ * rechecks the immutable hash before a render authority sees any bytes.
+ */
+export class S3ExactSceneGlbReader implements ExactSceneGlbReader {
+  readonly #client: S3GetClient;
+
+  constructor(config: S3AssetStorageConfig, options: { readonly client?: S3GetClient } = {}) {
+    this.#client =
+      options.client ??
+      new S3Client({
+        credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
+        endpoint: config.endpoint,
+        forcePathStyle: config.forcePathStyle,
+        region: config.region,
+      });
+  }
+
+  async read(input: { readonly byteSize: number; readonly glbSha256: string }): Promise<Uint8Array> {
+    boundedGlbInput(input);
+    let response: { readonly Body?: AsyncIterable<Uint8Array>; readonly ContentLength?: unknown };
+    try {
+      response = (await this.#client.send(
+        new GetObjectCommand({ Bucket: "derived", Key: sceneObjectKey(input.glbSha256) }),
+      )) as typeof response;
+    } catch {
+      throw new Error("The exact C10 GLB could not be read.");
+    }
+    if (response.ContentLength !== input.byteSize || response.Body === undefined) {
+      throw new Error("The exact C10 GLB metadata does not match its authority record.");
+    }
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    try {
+      for await (const chunk of response.Body) {
+        if (!(chunk instanceof Uint8Array) || chunk.byteLength < 1) {
+          throw new Error("Invalid C10 GLB stream chunk.");
+        }
+        total += chunk.byteLength;
+        if (total > input.byteSize) throw new Error("C10 GLB stream exceeds its authority record.");
+        chunks.push(Uint8Array.from(chunk));
+      }
+    } catch {
+      throw new Error("The exact C10 GLB stream could not be read.");
+    }
+    if (total !== input.byteSize) throw new Error("The C10 GLB length is not exact.");
+    const bytes = Buffer.concat(chunks, total);
+    if (sha256(bytes) !== input.glbSha256) throw new Error("The C10 GLB hash is not exact.");
+    return bytes;
+  }
 }
 
 function sha256(bytes: Uint8Array): string {

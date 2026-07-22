@@ -45,7 +45,7 @@ function safeStorageError(): Error {
   return new Error("The scene object-storage operation failed.");
 }
 
-function objectKey(sha256: string): string {
+export function sceneObjectKey(sha256: string): string {
   if (!/^[a-f0-9]{64}$/u.test(sha256)) throw safeStorageError();
   return `scenes/sha256/${sha256.slice(0, 2)}/${sha256}.glb`;
 }
@@ -109,7 +109,7 @@ export class S3SceneObjectStorage implements SceneObjectStorage {
     ) {
       throw safeStorageError();
     }
-    const key = objectKey(input.glbSha256);
+    const key = sceneObjectKey(input.glbSha256);
     try {
       await this.#client.send(
         new PutObjectCommand({
@@ -165,7 +165,7 @@ export class S3SceneObjectStorage implements SceneObjectStorage {
       const expiresIn = ttlSeconds(this.#now(), input.expiresAt);
       const command = new GetObjectCommand({
         Bucket: "derived",
-        Key: objectKey(input.glbSha256),
+        Key: sceneObjectKey(input.glbSha256),
         ResponseContentDisposition: "inline",
         ResponseContentType: input.mimeType,
       });

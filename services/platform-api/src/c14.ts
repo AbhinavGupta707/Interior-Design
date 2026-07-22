@@ -16,6 +16,7 @@ import {
   PostgresRenderRepository,
   RenderStillService,
   RenderStillWorkerService,
+  S3ExactSceneGlbReader,
   registerRenderStillRoutes,
   type ExactSceneGlbReader,
   type RenderCapabilities,
@@ -39,6 +40,7 @@ import {
 import type { CatalogRepository } from "./modules/catalog/types.js";
 import type { SceneRepository } from "./modules/scenes/types.js";
 import type { SpecificationSceneBindingResolver } from "./modules/specifications/types.js";
+import { loadS3AssetStorageConfig } from "./storage/config.js";
 
 const LOCAL_DATABASE_URL =
   "postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design";
@@ -194,6 +196,17 @@ function defaultResolver(options: C14ModuleOptions): RenderSourceResolver {
   });
 }
 
+function configuredSceneReader(
+  runtimeEnvironment: RuntimeEnvironment,
+  environment: C14EnvironmentSource,
+  options: C14ModuleOptions,
+): ExactSceneGlbReader | undefined {
+  if (options.sceneReader !== undefined) return options.sceneReader;
+  return options.sceneRepository === undefined
+    ? undefined
+    : new S3ExactSceneGlbReader(loadS3AssetStorageConfig(runtimeEnvironment, environment));
+}
+
 export function registerC14Module(
   server: FastifyInstance,
   runtimeEnvironment: RuntimeEnvironment,
@@ -218,7 +231,13 @@ export function registerC14Module(
   const projects = options.projects ?? new PostgresProjectRepository(sql as Sql);
   const repository = options.repository ?? new PostgresRenderRepository(sql as Sql);
   const storage = options.storage ?? new UnavailableRenderObjectStorage();
-  const resolver = options.resolver ?? defaultResolver(options);
+  const configuredReader = configuredSceneReader(runtimeEnvironment, environment, options);
+  const resolver =
+    options.resolver ??
+    defaultResolver({
+      ...options,
+      ...(configuredReader === undefined ? {} : { sceneReader: configuredReader }),
+    });
   const capabilities = options.capabilities ?? unavailableCapabilities();
   const service = new RenderStillService({ capabilities, repository, resolver, storage });
   const worker = new RenderStillWorkerService({ repository, resolver, storage });

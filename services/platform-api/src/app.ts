@@ -336,6 +336,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
                 catalogRepository: c13.catalogRepository,
                 specificationRepository: c13.specificationRepository,
               }),
+          ...(c10 === undefined ? {} : { sceneRepository: c10.repository }),
           ...(options.c14 ?? {}),
         })
       : undefined;
