@@ -67,7 +67,12 @@ const extractedEnvironmentSchema = z
       .regex(/^[a-f0-9]{64}$/u)
       .optional(),
     C14_RENDER_HEIGHT_PX: positiveInteger(64, 4_096).optional(),
+    C14_RENDER_HARDWARE_EVIDENCE: z.literal("verified-authorised-host").optional(),
     C14_RENDER_HOST_FINGERPRINT_SHA256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .optional(),
+    C14_RENDER_HOST_ACCEPTANCE_SHA256: z
       .string()
       .regex(/^[a-f0-9]{64}$/u)
       .optional(),
@@ -116,6 +121,9 @@ export interface WorkerConfig {
     readonly blenderVersion: string;
     readonly executable: { readonly path: string; readonly sha256: string };
     readonly exrInspectorScript: { readonly path: string; readonly sha256: string };
+    /** Matches the deployment-only API acceptance pin; never reaches a render manifest or log. */
+    readonly hardwareEvidence: "verified-authorised-host";
+    readonly hostAcceptanceSha256: string;
     readonly hostFingerprintSha256: string;
     readonly maximumOutputBytes: number;
     readonly profile: {
@@ -251,6 +259,8 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     C14_RENDER_EXECUTABLE_PATH: environment.C14_RENDER_EXECUTABLE_PATH,
     C14_RENDER_EXECUTABLE_SHA256: environment.C14_RENDER_EXECUTABLE_SHA256,
     C14_RENDER_HEIGHT_PX: environment.C14_RENDER_HEIGHT_PX,
+    C14_RENDER_HARDWARE_EVIDENCE: environment.C14_RENDER_HARDWARE_EVIDENCE,
+    C14_RENDER_HOST_ACCEPTANCE_SHA256: environment.C14_RENDER_HOST_ACCEPTANCE_SHA256,
     C14_RENDER_HOST_FINGERPRINT_SHA256: environment.C14_RENDER_HOST_FINGERPRINT_SHA256,
     C14_RENDER_MAX_OUTPUT_BYTES: environment.C14_RENDER_MAX_OUTPUT_BYTES,
     C14_RENDER_PROFILE_ID: environment.C14_RENDER_PROFILE_ID,
@@ -316,6 +326,8 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
         extracted.C14_RENDER_EXECUTABLE_PATH,
         extracted.C14_RENDER_EXECUTABLE_SHA256,
         extracted.C14_RENDER_HEIGHT_PX,
+        extracted.C14_RENDER_HARDWARE_EVIDENCE,
+        extracted.C14_RENDER_HOST_ACCEPTANCE_SHA256,
         extracted.C14_RENDER_HOST_FINGERPRINT_SHA256,
         extracted.C14_RENDER_MAX_OUTPUT_BYTES,
         extracted.C14_RENDER_PROFILE_ID,
@@ -358,6 +370,8 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
           ),
           sha256: extracted.C14_EXR_INSPECTOR_SCRIPT_SHA256 as string,
         },
+        hardwareEvidence: extracted.C14_RENDER_HARDWARE_EVIDENCE as "verified-authorised-host",
+        hostAcceptanceSha256: extracted.C14_RENDER_HOST_ACCEPTANCE_SHA256 as string,
         hostFingerprintSha256: extracted.C14_RENDER_HOST_FINGERPRINT_SHA256 as string,
         maximumOutputBytes: extracted.C14_RENDER_MAX_OUTPUT_BYTES as number,
         profile: {

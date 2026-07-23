@@ -28,12 +28,17 @@ describe("C14 API composition", () => {
     server = Fastify({ logger: false });
     registerRequestCorrelation(server);
     registerErrorHandling(server);
-    const module = registerC14Module(server, "test", {}, {
-      identity: fixtureIdentity(),
-      projects: new FixtureProjectRepository(),
-      repository: new StubRenderRepository(),
-      storage: new InMemoryRenderObjectStorage(),
-    });
+    const module = registerC14Module(
+      server,
+      "test",
+      {},
+      {
+        identity: fixtureIdentity(),
+        projects: new FixtureProjectRepository(),
+        repository: new StubRenderRepository(),
+        storage: new InMemoryRenderObjectStorage(),
+      },
+    );
 
     for (const readiness of module.readinessChecks) {
       await readiness.check({ signal: new AbortController().signal });
@@ -49,9 +54,68 @@ describe("C14 API composition", () => {
     expect(body).toMatchObject({
       acceptingNewJobs: false,
       enhancementProvider: "disabled",
-      hardwareEvidence: "verified-authorised-host",
+      hardwareEvidence: "deferred",
     });
     expect(body.profiles).toHaveLength(5);
     expect(body.profiles.every((profile) => !profile.available)).toBe(true);
+  });
+
+  it("advertises exactly one profile only with complete authorised-host pins", async () => {
+    server = Fastify({ logger: false });
+    registerRequestCorrelation(server);
+    registerErrorHandling(server);
+    registerC14Module(
+      server,
+      "test",
+      {
+        C14_BLENDER_BUILD_HASH: "fbe6228777e7",
+        C14_BLENDER_VERSION: "5.2.0 LTS",
+        C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
+        C14_RENDER_HARDWARE_EVIDENCE: "verified-authorised-host",
+        C14_RENDER_HOST_ACCEPTANCE_SHA256: "b".repeat(64),
+        C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),
+        C14_RENDER_PROFILE_ID: "cycles-cpu-geometry-safe-v1",
+        C14_RENDERER_SCRIPT_SHA256: "d".repeat(64),
+        C14_RENDER_WORKER_ENABLED: "true",
+      },
+      {
+        identity: fixtureIdentity(),
+        projects: new FixtureProjectRepository(),
+        repository: new StubRenderRepository(),
+        storage: new InMemoryRenderObjectStorage(),
+      },
+    );
+
+    const response = await server.inject({
+      headers: { authorization: `Bearer ${tokenFor("fixture|owner-alpha")}` },
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/render-capabilities`,
+    });
+
+    const body = capabilityResponseSchema.parse(response.json());
+    expect(body).toMatchObject({
+      acceptingNewJobs: true,
+      enhancementProvider: "disabled",
+      hardwareEvidence: "verified-authorised-host",
+    });
+    expect(body.profiles.filter((profile) => profile.available)).toEqual([
+      expect.objectContaining({ profileId: "cycles-cpu-geometry-safe-v1" }),
+    ]);
+  });
+
+  it("fails closed when an enabled worker lacks an authorised-host acceptance pin", () => {
+    const incomplete = {
+      C14_RENDER_PROFILE_ID: "cycles-cpu-geometry-safe-v1",
+      C14_RENDER_WORKER_ENABLED: "true",
+    };
+    server = Fastify({ logger: false });
+    expect(() =>
+      registerC14Module(server as FastifyInstance, "test", incomplete, {
+        identity: fixtureIdentity(),
+        projects: new FixtureProjectRepository(),
+        repository: new StubRenderRepository(),
+        storage: new InMemoryRenderObjectStorage(),
+      }),
+    ).toThrow(/verified authorised-host acceptance pins/u);
   });
 });

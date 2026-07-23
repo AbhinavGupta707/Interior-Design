@@ -228,6 +228,42 @@ def configure_lights(manifest: dict[str, object]) -> None:
         light.location = point_metres(entry["position"])
 
 
+def configure_cycles_device(requested_device: object) -> None:
+    """Select the exact declared Cycles device or fail before any render starts.
+
+    In particular, do not accept Blender's CPU fallback for a declared Metal,
+    CUDA or OptiX profile: the profile is part of the immutable result manifest.
+    """
+    if requested_device == "cpu":
+        bpy.context.scene.cycles.device = "CPU"
+        return
+    backends = {"metal": "METAL", "cuda": "CUDA", "optix": "OPTIX"}
+    backend = backends.get(str(requested_device))
+    if backend is None:
+        raise RuntimeError("C14_RENDER_DEVICE_INVALID")
+    addon = bpy.context.preferences.addons.get("cycles")
+    if addon is None or not hasattr(addon, "preferences"):
+        raise RuntimeError("C14_RENDER_DEVICE_UNAVAILABLE")
+    preferences = addon.preferences
+    try:
+        preferences.compute_device_type = backend
+        preferences.get_devices()
+        candidates = [
+            device
+            for device in preferences.devices
+            if str(getattr(device, "type", "")).upper() == backend
+        ]
+        if not candidates:
+            raise RuntimeError("C14_RENDER_DEVICE_UNAVAILABLE")
+        for device in candidates:
+            device.use = True
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        raise RuntimeError("C14_RENDER_DEVICE_UNAVAILABLE") from exc
+    bpy.context.scene.cycles.device = "GPU"
+
+
 def configure_scene(manifest: dict[str, object], output: Path) -> None:
     profile = manifest["profile"]
     assert isinstance(profile, dict)
@@ -260,6 +296,7 @@ def configure_scene(manifest: dict[str, object], output: Path) -> None:
     view_layer.use_pass_cryptomatte_object = True
     view_layer.pass_cryptomatte_depth = 6
     if profile["engine"] == "cycles":
+        configure_cycles_device(profile["device"])
         scene.cycles.samples = profile["samples"]
         scene.cycles.seed = profile["seed"]
         scene.cycles.use_denoising = profile["denoise"] != "none"

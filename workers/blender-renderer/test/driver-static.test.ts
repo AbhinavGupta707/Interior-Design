@@ -19,6 +19,11 @@ describe("C14 Blender driver static contract", () => {
     expect(source).toContain('for role in ("multilayer", "depth", "normal")');
     expect(source).toContain("def configure_materials(manifest: dict[str, object])");
     expect(source).toContain("def configure_lights(manifest: dict[str, object])");
+    expect(source).toContain("def configure_cycles_device(requested_device: object)");
+    expect(source).toContain('bpy.context.scene.cycles.device = "CPU"');
+    expect(source).toContain('bpy.context.scene.cycles.device = "GPU"');
+    expect(source).toContain('raise RuntimeError("C14_RENDER_DEVICE_UNAVAILABLE")');
+    expect(source).toContain('configure_cycles_device(profile["device"])');
     expect(source).toContain('entry["conversionPolicy"] != "c14-photometric-to-blender-v1"');
   });
 });

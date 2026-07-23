@@ -120,23 +120,79 @@ function configuredTokenProvider(
   throw new Error("C1_AUTH_MODE must be local or oidc.");
 }
 
+const renderProfileCapabilities = [
+  ["eevee-local-preview-v1", "render.eevee.host-gpu.v1"],
+  ["cycles-cpu-geometry-safe-v1", "render.cycles.cpu.v1"],
+  ["cycles-metal-geometry-safe-v1", "render.cycles.metal.v1"],
+  ["cycles-cuda-high-resolution-v1", "render.cycles.cuda.v1"],
+  ["cycles-optix-high-resolution-v1", "render.cycles.optix.v1"],
+] as const;
+
+type RenderProfileId = (typeof renderProfileCapabilities)[number][0];
+
 function unavailableCapabilities(): RenderCapabilities {
-  const profiles = [
-    ["eevee-local-preview-v1", "render.eevee.host-gpu.v1"],
-    ["cycles-cpu-geometry-safe-v1", "render.cycles.cpu.v1"],
-    ["cycles-metal-geometry-safe-v1", "render.cycles.metal.v1"],
-    ["cycles-cuda-high-resolution-v1", "render.cycles.cuda.v1"],
-    ["cycles-optix-high-resolution-v1", "render.cycles.optix.v1"],
-  ] as const;
   return {
     acceptingNewJobs: false,
     enhancementProvider: "disabled",
-    hardwareEvidence: "verified-authorised-host",
-    profiles: profiles.map(([profileId, capability]) => ({
+    hardwareEvidence: "deferred",
+    profiles: renderProfileCapabilities.map(([profileId, capability]) => ({
       available: false,
       capability,
       profileId,
       reason: "No configured render worker is accepting new jobs.",
+    })),
+  };
+}
+
+function isSha256(value: string | undefined): value is string {
+  return value !== undefined && /^[a-f0-9]{64}$/u.test(value);
+}
+
+function configuredProfileId(value: string | undefined): RenderProfileId | undefined {
+  return renderProfileCapabilities.find(([profileId]) => profileId === value)?.[0];
+}
+
+/**
+ * C14 deliberately defaults to unavailable.  Enabling a queue requires the API
+ * and the separately configured spatial worker to share the same explicit
+ * operator-attested profile pins.  The attestation value itself is never sent
+ * to the browser or persisted in a render job; it is deployment evidence only.
+ */
+function configuredCapabilities(environment: C14EnvironmentSource): RenderCapabilities {
+  const enabled = environment.C14_RENDER_WORKER_ENABLED;
+  if (enabled === undefined || enabled === "false") return unavailableCapabilities();
+  if (enabled !== "true") {
+    throw new Error("C14_RENDER_WORKER_ENABLED must be true or false.");
+  }
+  const profileId = configuredProfileId(environment.C14_RENDER_PROFILE_ID);
+  const requiredHashes = [
+    environment.C14_RENDER_EXECUTABLE_SHA256,
+    environment.C14_RENDERER_SCRIPT_SHA256,
+    environment.C14_RENDER_HOST_FINGERPRINT_SHA256,
+    environment.C14_RENDER_HOST_ACCEPTANCE_SHA256,
+  ];
+  if (
+    profileId === undefined ||
+    environment.C14_RENDER_HARDWARE_EVIDENCE !== "verified-authorised-host" ||
+    environment.C14_BLENDER_BUILD_HASH?.trim().length === 0 ||
+    environment.C14_BLENDER_VERSION?.trim().length === 0 ||
+    requiredHashes.some((value) => !isSha256(value))
+  ) {
+    throw new Error(
+      "An enabled C14 render worker requires an exact profile and verified authorised-host acceptance pins.",
+    );
+  }
+  return {
+    acceptingNewJobs: true,
+    enhancementProvider: "disabled",
+    hardwareEvidence: "verified-authorised-host",
+    profiles: renderProfileCapabilities.map(([candidateProfileId, capability]) => ({
+      available: candidateProfileId === profileId,
+      capability,
+      profileId: candidateProfileId,
+      ...(candidateProfileId === profileId
+        ? { reason: "An authorised render host is configured for this exact profile." }
+        : { reason: "This profile is not configured on the authorised render host." }),
     })),
   };
 }
@@ -208,9 +264,12 @@ function configuredObjectStorage(
   if (options.storage !== undefined) return { storage: options.storage };
   const encodedKey = environment.C14_RENDER_ACCESS_KEY_BASE64;
   const baseUrl = environment.C14_RENDER_ARTIFACT_BASE_URL;
-  if (encodedKey === undefined && baseUrl === undefined) return { storage: new UnavailableRenderObjectStorage() };
+  if (encodedKey === undefined && baseUrl === undefined)
+    return { storage: new UnavailableRenderObjectStorage() };
   if (encodedKey === undefined || baseUrl === undefined) {
-    throw new Error("C14 render artifact access requires both key material and a public API base URL.");
+    throw new Error(
+      "C14 render artifact access requires both key material and a public API base URL.",
+    );
   }
   let key: Buffer;
   let parsedBaseUrl: URL;
@@ -247,7 +306,10 @@ function configuredObjectStorage(
   };
 }
 
-function registerRenderArtifactBrokerRoute(server: FastifyInstance, broker: RenderArtifactBroker): void {
+function registerRenderArtifactBrokerRoute(
+  server: FastifyInstance,
+  broker: RenderArtifactBroker,
+): void {
   server.get("/v1/render-artifact-access/:token", async (request, reply) => {
     const { token } = request.params as { readonly token?: unknown };
     if (typeof token !== "string" || token.length > 12_288) return reply.status(404).send();
@@ -283,7 +345,8 @@ export function registerC14Module(
     options.projects === undefined;
   const ownsDatabase = needsDatabase && options.database === undefined;
   const sql = needsDatabase
-    ? (options.database ?? createC1Sql(databaseUrl(runtimeEnvironment, environment, options.databaseUrl)))
+    ? (options.database ??
+      createC1Sql(databaseUrl(runtimeEnvironment, environment, options.databaseUrl)))
     : options.database;
   const identity =
     options.identity ??
@@ -303,7 +366,7 @@ export function registerC14Module(
       ...options,
       ...(configuredReader === undefined ? {} : { sceneReader: configuredReader }),
     });
-  const capabilities = options.capabilities ?? unavailableCapabilities();
+  const capabilities = options.capabilities ?? configuredCapabilities(environment);
   const service = new RenderStillService({ capabilities, repository, resolver, storage });
   const worker = new RenderStillWorkerService({ repository, resolver, storage });
   registerRenderStillRoutes(server, identity, projects, service);

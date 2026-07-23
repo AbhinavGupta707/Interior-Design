@@ -106,6 +106,8 @@ describe("strict worker configuration", () => {
         C14_RENDER_EXECUTABLE_PATH: "/opt/c14/blender-wrapper",
         C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
         C14_RENDER_HEIGHT_PX: "256",
+        C14_RENDER_HARDWARE_EVIDENCE: "verified-authorised-host",
+        C14_RENDER_HOST_ACCEPTANCE_SHA256: "e".repeat(64),
         C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),
         C14_RENDER_MAX_OUTPUT_BYTES: "65536",
         C14_RENDER_PROFILE_ID: "cycles-cpu-geometry-safe-v1",
