@@ -60,6 +60,7 @@ export interface RenderStillRunnerOptions {
   readonly heartbeatMilliseconds?: number;
   readonly leaseSeconds?: number;
   readonly logger?: SafeRenderLogger;
+  readonly pollMilliseconds?: number;
   readonly renderer: GeometrySafeRendererPort;
   readonly sceneBuilder: RenderSceneBuilderPort;
   readonly source: RenderSourceMaterialPort;

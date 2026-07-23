@@ -35,8 +35,33 @@ export class RenderStillRunner {
   readonly #logger: SafeRenderLogger;
 
   constructor(options: RenderStillRunnerOptions) {
+    if (
+      options.pollMilliseconds !== undefined &&
+      (!Number.isInteger(options.pollMilliseconds) ||
+        options.pollMilliseconds < 100 ||
+        options.pollMilliseconds > 60_000)
+    ) {
+      throw new Error("The C14 poll interval must be 100 through 60000 milliseconds.");
+    }
     this.#options = options;
     this.#logger = options.logger ?? quietLogger;
+  }
+
+  async run(signal: AbortSignal): Promise<void> {
+    while (!signal.aborted) {
+      const result = await this.runOnce();
+      if (result === "processed") continue;
+      await new Promise<void>((resolve) => {
+        const finish = () => {
+          clearTimeout(timer);
+          signal.removeEventListener("abort", finish);
+          resolve();
+        };
+        const timer = setTimeout(finish, this.#options.pollMilliseconds ?? 1_000);
+        timer.unref();
+        signal.addEventListener("abort", finish, { once: true });
+      });
+    }
   }
 
   async runOnce(): Promise<"idle" | "processed"> {

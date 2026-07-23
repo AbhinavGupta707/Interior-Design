@@ -9,6 +9,11 @@
       "development": "./src/modules/design-options/index.ts",
       "default": "./dist/src/modules/design-options/index.js"
     },
+    "./catalog": {
+      "types": "./src/modules/catalog/index.ts",
+      "development": "./src/modules/catalog/index.ts",
+      "default": "./dist/src/modules/catalog/index.js"
+    },
     "./reconstruction": {
       "types": "./src/modules/reconstruction/index.ts",
       "development": "./src/modules/reconstruction/index.ts",

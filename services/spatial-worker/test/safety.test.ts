@@ -92,6 +92,43 @@ describe("strict worker configuration", () => {
       },
     });
   });
+
+  it("keeps the C14 renderer disabled unless every local executable, hash, bound and profile is pinned", () => {
+    expect(() =>
+      parseWorkerConfig({ C14_RENDER_WORKER_ENABLED: "true", NODE_ENV: "test" }),
+    ).toThrow("complete pinned local renderer profile");
+    expect(
+      parseWorkerConfig({
+        C14_BLENDER_BUILD_HASH: "fbe6228777e7",
+        C14_BLENDER_VERSION: "5.2.0 LTS",
+        C14_EXR_INSPECTOR_SCRIPT_PATH: "/opt/c14/exr-inspector.py",
+        C14_EXR_INSPECTOR_SCRIPT_SHA256: "b".repeat(64),
+        C14_RENDER_EXECUTABLE_PATH: "/opt/c14/blender-wrapper",
+        C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
+        C14_RENDER_HEIGHT_PX: "256",
+        C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),
+        C14_RENDER_MAX_OUTPUT_BYTES: "65536",
+        C14_RENDER_PROFILE_ID: "cycles-cpu-geometry-safe-v1",
+        C14_RENDER_SAMPLES: "16",
+        C14_RENDER_SEED: "1",
+        C14_RENDER_THREADS: "1",
+        C14_RENDER_TIMEOUT_MS: "45000",
+        C14_RENDER_VOLUME_ID: "local-c14-volume",
+        C14_RENDER_VOLUME_PATH: "/private/tmp",
+        C14_RENDER_WIDTH_PX: "256",
+        C14_RENDER_WORKER_ENABLED: "true",
+        C14_RENDER_WORKSPACE_ROOT: "/private/tmp",
+        C14_RENDERER_SCRIPT_PATH: "/opt/c14/render.py",
+        C14_RENDERER_SCRIPT_SHA256: "d".repeat(64),
+        NODE_ENV: "test",
+      }),
+    ).toMatchObject({
+      c14Render: {
+        profile: { profileId: "cycles-cpu-geometry-safe-v1", samples: 16 },
+        timeoutMilliseconds: 45_000,
+      },
+    });
+  });
 });
 
 describe("bounded subprocess execution", () => {

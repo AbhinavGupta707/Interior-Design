@@ -45,6 +45,7 @@ import {
 import { SpatialWorkerRunner } from "./runner.js";
 import { SceneCompilationRunner } from "./scene-compile/index.js";
 import { DesignOptionProcessingRunner } from "./design-options/index.js";
+import { composeC14RenderRunner } from "./render-stills/index.js";
 import { createS3Client, S3ObjectStorage } from "./storage.js";
 import {
   CatalogIngestionPipeline,
@@ -76,6 +77,7 @@ export * from "./model-fusion/index.js";
 export * from "./scene-compile/index.js";
 export * from "./design-options/index.js";
 export * from "./catalog/index.js";
+export * from "./render-stills/index.js";
 
 export const spatialWorkerCapabilities = Object.freeze([
   "C2",
@@ -224,6 +226,12 @@ export async function runSpatialWorker(
         workerId: `c12-${config.workerId}`.slice(0, 100),
       })
     : undefined;
+  const renderStillRunner = composeC14RenderRunner({
+    config,
+    logger,
+    s3Client,
+    sql,
+  });
   if (config.c13CatalogIngestion !== undefined) {
     const source = await RepositoryCatalogSource.create(config.c13CatalogIngestion.sourceRoot);
     const pipeline = new CatalogIngestionPipeline({
@@ -268,6 +276,7 @@ export async function runSpatialWorker(
       ...(fusionRunner === undefined ? [] : [fusionRunner.run(shutdown.signal)]),
       ...(sceneRunner === undefined ? [] : [sceneRunner.run(shutdown.signal)]),
       ...(designOptionRunner === undefined ? [] : [designOptionRunner.run(shutdown.signal)]),
+      ...(renderStillRunner === undefined ? [] : [renderStillRunner.run(shutdown.signal)]),
     ]);
   } finally {
     process.removeListener("SIGINT", requestShutdown);

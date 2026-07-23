@@ -54,6 +54,50 @@ const extractedEnvironmentSchema = z
     C13_CATALOG_SOURCE_ROOT: z.string().trim().min(1).optional(),
     C13_CATALOG_TENANT_ID: z.uuid().optional(),
     C13_DATABASE_URL: z.string().trim().min(1).optional(),
+    C14_BLENDER_BUILD_HASH: z.string().trim().min(1).max(120).optional(),
+    C14_BLENDER_VERSION: z.string().trim().min(1).max(120).optional(),
+    C14_EXR_INSPECTOR_SCRIPT_PATH: z.string().trim().min(1).optional(),
+    C14_EXR_INSPECTOR_SCRIPT_SHA256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .optional(),
+    C14_RENDER_EXECUTABLE_PATH: z.string().trim().min(1).optional(),
+    C14_RENDER_EXECUTABLE_SHA256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .optional(),
+    C14_RENDER_HEIGHT_PX: positiveInteger(64, 4_096).optional(),
+    C14_RENDER_HOST_FINGERPRINT_SHA256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .optional(),
+    C14_RENDER_MAX_OUTPUT_BYTES: positiveInteger(4_096, 1_048_576).optional(),
+    C14_RENDER_PROFILE_ID: z
+      .enum([
+        "eevee-local-preview-v1",
+        "cycles-cpu-geometry-safe-v1",
+        "cycles-metal-geometry-safe-v1",
+        "cycles-cuda-high-resolution-v1",
+        "cycles-optix-high-resolution-v1",
+      ])
+      .optional(),
+    C14_RENDER_SAMPLES: positiveInteger(1, 4_096).optional(),
+    C14_RENDER_SEED: z.coerce.number().int().min(0).max(2_147_483_647).optional(),
+    C14_RENDER_THREADS: positiveInteger(1, 256).optional(),
+    C14_RENDER_TIMEOUT_MS: positiveInteger(100, 7_200_000).optional(),
+    C14_RENDER_VOLUME_ID: z
+      .string()
+      .regex(/^[A-Za-z0-9_.:-]{3,120}$/u)
+      .optional(),
+    C14_RENDER_VOLUME_PATH: z.string().trim().min(1).optional(),
+    C14_RENDER_WIDTH_PX: positiveInteger(64, 4_096).optional(),
+    C14_RENDER_WORKER_ENABLED: z.enum(["true", "false"]).default("false"),
+    C14_RENDER_WORKSPACE_ROOT: z.string().trim().min(1).optional(),
+    C14_RENDERER_SCRIPT_PATH: z.string().trim().min(1).optional(),
+    C14_RENDERER_SCRIPT_SHA256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
   .strict();
@@ -66,6 +110,32 @@ export interface WorkerConfig {
     readonly publishedByUserId: string;
     readonly sourceRoot: string;
     readonly tenantId: string;
+  };
+  readonly c14Render?: {
+    readonly blenderBuildHash: string;
+    readonly blenderVersion: string;
+    readonly executable: { readonly path: string; readonly sha256: string };
+    readonly exrInspectorScript: { readonly path: string; readonly sha256: string };
+    readonly hostFingerprintSha256: string;
+    readonly maximumOutputBytes: number;
+    readonly profile: {
+      readonly heightPx: number;
+      readonly profileId:
+        | "eevee-local-preview-v1"
+        | "cycles-cpu-geometry-safe-v1"
+        | "cycles-metal-geometry-safe-v1"
+        | "cycles-cuda-high-resolution-v1"
+        | "cycles-optix-high-resolution-v1";
+      readonly samples: number;
+      readonly seed: number;
+      readonly threads: number;
+      readonly widthPx: number;
+    };
+    readonly rendererScript: { readonly path: string; readonly sha256: string };
+    readonly timeoutMilliseconds: number;
+    readonly volumeId: string;
+    readonly volumePath: string;
+    readonly workspaceRoot: string;
   };
   readonly databaseUrl: string;
   readonly derivedBucket: "derived";
@@ -174,12 +244,34 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
     C13_CATALOG_SOURCE_ROOT: environment.C13_CATALOG_SOURCE_ROOT,
     C13_CATALOG_TENANT_ID: environment.C13_CATALOG_TENANT_ID,
     C13_DATABASE_URL: environment.C13_DATABASE_URL,
+    C14_BLENDER_BUILD_HASH: environment.C14_BLENDER_BUILD_HASH,
+    C14_BLENDER_VERSION: environment.C14_BLENDER_VERSION,
+    C14_EXR_INSPECTOR_SCRIPT_PATH: environment.C14_EXR_INSPECTOR_SCRIPT_PATH,
+    C14_EXR_INSPECTOR_SCRIPT_SHA256: environment.C14_EXR_INSPECTOR_SCRIPT_SHA256,
+    C14_RENDER_EXECUTABLE_PATH: environment.C14_RENDER_EXECUTABLE_PATH,
+    C14_RENDER_EXECUTABLE_SHA256: environment.C14_RENDER_EXECUTABLE_SHA256,
+    C14_RENDER_HEIGHT_PX: environment.C14_RENDER_HEIGHT_PX,
+    C14_RENDER_HOST_FINGERPRINT_SHA256: environment.C14_RENDER_HOST_FINGERPRINT_SHA256,
+    C14_RENDER_MAX_OUTPUT_BYTES: environment.C14_RENDER_MAX_OUTPUT_BYTES,
+    C14_RENDER_PROFILE_ID: environment.C14_RENDER_PROFILE_ID,
+    C14_RENDER_SAMPLES: environment.C14_RENDER_SAMPLES,
+    C14_RENDER_SEED: environment.C14_RENDER_SEED,
+    C14_RENDER_THREADS: environment.C14_RENDER_THREADS,
+    C14_RENDER_TIMEOUT_MS: environment.C14_RENDER_TIMEOUT_MS,
+    C14_RENDER_VOLUME_ID: environment.C14_RENDER_VOLUME_ID,
+    C14_RENDER_VOLUME_PATH: environment.C14_RENDER_VOLUME_PATH,
+    C14_RENDER_WIDTH_PX: environment.C14_RENDER_WIDTH_PX,
+    C14_RENDER_WORKER_ENABLED: environment.C14_RENDER_WORKER_ENABLED,
+    C14_RENDER_WORKSPACE_ROOT: environment.C14_RENDER_WORKSPACE_ROOT,
+    C14_RENDERER_SCRIPT_PATH: environment.C14_RENDERER_SCRIPT_PATH,
+    C14_RENDERER_SCRIPT_SHA256: environment.C14_RENDERER_SCRIPT_SHA256,
     NODE_ENV: environment.NODE_ENV,
   });
   const production = extracted.NODE_ENV === "production";
   const c10Enabled = extracted.C10_SCENE_WORKER_ENABLED === "true";
   const c12Enabled = extracted.C12_DESIGN_OPTION_WORKER_ENABLED === "true";
   const c13CatalogEnabled = extracted.C13_CATALOG_INGEST_ENABLED === "true";
+  const c14RenderEnabled = extracted.C14_RENDER_WORKER_ENABLED === "true";
   const activeDatabaseUrls = [
     extracted.C2_DATABASE_URL,
     extracted.C10_DATABASE_URL,
@@ -215,6 +307,88 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
   ) {
     throw new Error("Production requires the C2 database, S3 endpoint and S3 credentials.");
   }
+  const c14Required = c14RenderEnabled
+    ? [
+        extracted.C14_BLENDER_BUILD_HASH,
+        extracted.C14_BLENDER_VERSION,
+        extracted.C14_EXR_INSPECTOR_SCRIPT_PATH,
+        extracted.C14_EXR_INSPECTOR_SCRIPT_SHA256,
+        extracted.C14_RENDER_EXECUTABLE_PATH,
+        extracted.C14_RENDER_EXECUTABLE_SHA256,
+        extracted.C14_RENDER_HEIGHT_PX,
+        extracted.C14_RENDER_HOST_FINGERPRINT_SHA256,
+        extracted.C14_RENDER_MAX_OUTPUT_BYTES,
+        extracted.C14_RENDER_PROFILE_ID,
+        extracted.C14_RENDER_SAMPLES,
+        extracted.C14_RENDER_SEED,
+        extracted.C14_RENDER_THREADS,
+        extracted.C14_RENDER_TIMEOUT_MS,
+        extracted.C14_RENDER_VOLUME_ID,
+        extracted.C14_RENDER_VOLUME_PATH,
+        extracted.C14_RENDER_WIDTH_PX,
+        extracted.C14_RENDER_WORKSPACE_ROOT,
+        extracted.C14_RENDERER_SCRIPT_PATH,
+        extracted.C14_RENDERER_SCRIPT_SHA256,
+      ]
+    : [];
+  if (c14Required.some((value) => value === undefined)) {
+    throw new Error("C14 render worker requires a complete pinned local renderer profile.");
+  }
+  const absoluteC14Path = (value: string, variable: string): string => {
+    const resolved = path.resolve(value);
+    if (!path.isAbsolute(resolved))
+      throw new Error(`${variable} must resolve to an absolute path.`);
+    return resolved;
+  };
+  const c14Render = c14RenderEnabled
+    ? {
+        blenderBuildHash: extracted.C14_BLENDER_BUILD_HASH as string,
+        blenderVersion: extracted.C14_BLENDER_VERSION as string,
+        executable: {
+          path: absoluteC14Path(
+            extracted.C14_RENDER_EXECUTABLE_PATH as string,
+            "C14_RENDER_EXECUTABLE_PATH",
+          ),
+          sha256: extracted.C14_RENDER_EXECUTABLE_SHA256 as string,
+        },
+        exrInspectorScript: {
+          path: absoluteC14Path(
+            extracted.C14_EXR_INSPECTOR_SCRIPT_PATH as string,
+            "C14_EXR_INSPECTOR_SCRIPT_PATH",
+          ),
+          sha256: extracted.C14_EXR_INSPECTOR_SCRIPT_SHA256 as string,
+        },
+        hostFingerprintSha256: extracted.C14_RENDER_HOST_FINGERPRINT_SHA256 as string,
+        maximumOutputBytes: extracted.C14_RENDER_MAX_OUTPUT_BYTES as number,
+        profile: {
+          heightPx: extracted.C14_RENDER_HEIGHT_PX as number,
+          profileId: extracted.C14_RENDER_PROFILE_ID as NonNullable<
+            typeof extracted.C14_RENDER_PROFILE_ID
+          >,
+          samples: extracted.C14_RENDER_SAMPLES as number,
+          seed: extracted.C14_RENDER_SEED as number,
+          threads: extracted.C14_RENDER_THREADS as number,
+          widthPx: extracted.C14_RENDER_WIDTH_PX as number,
+        },
+        rendererScript: {
+          path: absoluteC14Path(
+            extracted.C14_RENDERER_SCRIPT_PATH as string,
+            "C14_RENDERER_SCRIPT_PATH",
+          ),
+          sha256: extracted.C14_RENDERER_SCRIPT_SHA256 as string,
+        },
+        timeoutMilliseconds: extracted.C14_RENDER_TIMEOUT_MS as number,
+        volumeId: extracted.C14_RENDER_VOLUME_ID as string,
+        volumePath: absoluteC14Path(
+          extracted.C14_RENDER_VOLUME_PATH as string,
+          "C14_RENDER_VOLUME_PATH",
+        ),
+        workspaceRoot: absoluteC14Path(
+          extracted.C14_RENDER_WORKSPACE_ROOT as string,
+          "C14_RENDER_WORKSPACE_ROOT",
+        ),
+      }
+    : undefined;
   if (extracted.C2_HEARTBEAT_MS * 2 >= extracted.C2_LEASE_MS) {
     throw new Error("C2_HEARTBEAT_MS must be less than half C2_LEASE_MS.");
   }
@@ -240,6 +414,7 @@ export function parseWorkerConfig(environment: EnvironmentSource): WorkerConfig 
   return {
     c10SceneWorkerEnabled: c10Enabled,
     c12DesignOptionWorkerEnabled: c12Enabled,
+    ...(c14Render === undefined ? {} : { c14Render }),
     ...(c13CatalogEnabled
       ? {
           c13CatalogIngestion: {
