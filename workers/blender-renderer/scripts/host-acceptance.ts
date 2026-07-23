@@ -29,6 +29,7 @@ import {
   rendererArtifactFileNames,
 } from "../src/index.js";
 import { buildRenderScene } from "@interior-design/render-scene";
+import { compareProtectedImageGeometry } from "../../../packages/render-evaluation/src/index.js";
 import type { RenderArtifactRole, RenderProfile } from "@interior-design/contracts";
 import { renderFixture } from "../../../packages/render-scene/test/support.js";
 
@@ -283,12 +284,39 @@ async function main(): Promise<void> {
       resultId: randomUUID(),
       settings: acceptanceProfile,
     });
-    for (const role of artifactRoles) {
-      const first = primary.artifactBytes.get(role);
-      const second = replay.artifactBytes.get(role);
-      assert(first !== undefined && second !== undefined, "C14_REPLAY_ARTIFACT_MISSING");
-      assert(sha256(first) === sha256(second), `C14_REPLAY_BYTES_DIFFER:${role}`);
-    }
+    const replayByteEquality = Object.fromEntries(
+      artifactRoles.map((role) => {
+        const first = primary.artifactBytes.get(role);
+        const second = replay.artifactBytes.get(role);
+        assert(first !== undefined && second !== undefined, "C14_REPLAY_ARTIFACT_MISSING");
+        return [role, sha256(first) === sha256(second)];
+      }),
+    );
+    const primarySafe = primary.artifactBytes.get("geometry-safe-png");
+    const replaySafe = replay.artifactBytes.get("geometry-safe-png");
+    const primarySegmentation = primary.artifactBytes.get("segmentation-png");
+    const replaySegmentation = replay.artifactBytes.get("segmentation-png");
+    assert(
+      primarySafe !== undefined &&
+        replaySafe !== undefined &&
+        primarySegmentation !== undefined &&
+        replaySegmentation !== undefined,
+      "C14_REPLAY_PNG_ARTIFACT_MISSING",
+    );
+    const geometryReplay = await compareProtectedImageGeometry({
+      allowedEditMaskPng: primarySegmentation,
+      basePng: primarySafe,
+      baseSegmentationPng: primarySegmentation,
+      candidatePng: replaySafe,
+      candidateSegmentationPng: replaySegmentation,
+      channelTolerance: 0,
+    });
+    assert(
+      geometryReplay.changedOutsideAllowedMaskPixels === 0 &&
+        geometryReplay.protectedEdgeAgreementBasisPoints === 10_000 &&
+        geometryReplay.segmentationIoUBasisPoints === 10_000,
+      "C14_REPLAY_GEOMETRY_MISMATCH",
+    );
     const stageDirectory = await mkdtemp(path.join(tmpdir(), "c14-host-evidence-"));
     try {
       const fixture = renderFixture({ cameraTarget: { xMm: 0, yMm: 0, zMm: 500 } });
@@ -323,7 +351,12 @@ async function main(): Promise<void> {
           rendererScriptSha256: common.rendererScriptSha256,
         },
         replay: {
-          artifactByteHashesEqual: true,
+          artifactByteHashesEqual: replayByteEquality,
+          geometrySafeComparison: geometryReplay,
+          manifestSourceAndRenderSceneMatch:
+            primary.manifest.renderSceneManifestSha256 ===
+              replay.manifest.renderSceneManifestSha256 &&
+            primary.manifest.source.sceneGlbSha256 === replay.manifest.source.sceneGlbSha256,
           outputManifestSha256: sha256(replay.manifestBytes),
         },
         smoke: {
