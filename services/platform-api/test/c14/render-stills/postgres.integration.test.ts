@@ -6,7 +6,20 @@ import { createHash, randomUUID } from "node:crypto";
 import type { JSONValue, Sql, TransactionSql } from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { createC1Sql } from "../../../src/c1.js";
+import { applyC1Migration, bootstrapC1Fixtures, createC1Sql } from "../../../src/c1.js";
+import { applyC2Migration } from "../../../src/c2.js";
+import { applyC3Migration } from "../../../src/c3.js";
+import { applyC4Migration } from "../../../src/c4.js";
+import { applyC5Migration } from "../../../src/c5.js";
+import { applyC6Migration } from "../../../src/c6.js";
+import { applyC7Migration } from "../../../src/c7.js";
+import { applyC8Migration } from "../../../src/c8.js";
+import { applyC9Migration } from "../../../src/c9.js";
+import { applyC10Migration } from "../../../src/c10.js";
+import { applyC11Migration } from "../../../src/c11.js";
+import { applyC12Migration } from "../../../src/c12.js";
+import { applyC13Migration } from "../../../src/c13.js";
+import { applyC14Migration } from "../../../src/c14.js";
 import { PostgresRenderRepository } from "../../../src/modules/render-stills/postgres.js";
 
 const databaseUrl = process.env.C14_TEST_DATABASE_URL ?? "";
@@ -129,6 +142,21 @@ describeWithPostgres("C14 live PostgreSQL queue, RLS and append-only controls", 
 
   beforeAll(async () => {
     sql = createC1Sql(databaseUrl);
+    await applyC1Migration(sql);
+    await bootstrapC1Fixtures(sql, "test");
+    await applyC2Migration(sql);
+    await applyC3Migration(sql);
+    await applyC4Migration(sql);
+    await applyC5Migration(sql);
+    await applyC6Migration(sql);
+    await applyC7Migration(sql);
+    await applyC8Migration(sql);
+    await applyC9Migration(sql);
+    await applyC10Migration(sql);
+    await applyC11Migration(sql);
+    await applyC12Migration(sql);
+    await applyC13Migration(sql);
+    await applyC14Migration(sql);
     tenantA = randomUUID();
     tenantB = randomUUID();
     projectA = randomUUID();
