@@ -86,6 +86,12 @@ function parseArguments(arguments_: readonly string[]): AcceptanceArguments {
     relative.length > 0 && !relative.startsWith(`..${path.sep}`) && relative !== "..",
     "C14_OUTPUT_DIRECTORY_OUTSIDE_REPOSITORY",
   );
+  const outputParent = path.dirname(outputDirectory);
+  const parentRelative = path.relative(root, outputParent);
+  assert(
+    !parentRelative.startsWith(`..${path.sep}`) && parentRelative !== "..",
+    "C14_OUTPUT_DIRECTORY_OUTSIDE_REPOSITORY",
+  );
   return {
     blenderPath:
       process.env.C14_ACCEPTANCE_BLENDER_PATH ??
@@ -225,6 +231,7 @@ async function writePrimaryBundle(
 
 async function main(): Promise<void> {
   const arguments_ = parseArguments(process.argv.slice(2));
+  await mkdir(path.dirname(arguments_.outputDirectory), { mode: 0o700, recursive: true });
   await access(arguments_.outputDirectory)
     .then(() => Promise.reject(new Error("C14_OUTPUT_DIRECTORY_EXISTS")))
     .catch((error: unknown) => {
