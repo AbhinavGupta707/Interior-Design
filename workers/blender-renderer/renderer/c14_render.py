@@ -2,8 +2,8 @@
 
 The TypeScript subprocess boundary is covered by inert-fixture tests. This driver is run only
 through the fixed, offline argument array after its hash has been pinned in a render-scene
-manifest. The C14 local acceptance profile uses a repository-owned synthetic scene and records
-the exact Blender build and output inspection separately from those unit tests.
+manifest. The authorised-host C14 acceptance profile uses a repository-owned synthetic scene and
+records the exact Blender build and output inspection separately from those unit tests.
 """
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ import shutil
 import sys
 from pathlib import Path
 
-import bpy
-from mathutils import Vector
+import bpy  # type: ignore[import-not-found]  # Blender-only runtime module.
+from mathutils import Vector  # type: ignore[import-not-found]  # Blender-only runtime module.
 
 REQUIRED_SCHEMA = "c14-render-scene-manifest-v1"
 SAFE_WORLD = "neutral-studio-no-address-or-daylight-inference-v1"
@@ -117,7 +117,10 @@ def load_protected_objects(path: Path, manifest: dict[str, object]) -> dict[str,
             or not isinstance(maximum, list)
             or len(minimum) != 3
             or len(maximum) != 3
-            or any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in minimum + maximum)
+            or any(
+                not isinstance(value, (int, float)) or not math.isfinite(value)
+                for value in minimum + maximum
+            )
             or any(minimum[index] > maximum[index] for index in range(3))
         ):
             raise RuntimeError("C14_PROTECTED_OBJECTS_INVALID")
@@ -171,7 +174,10 @@ def colour_temperature_rgb(kelvin: int) -> tuple[float, float, float]:
         if temperature <= 19
         else 138.5177312231 * math.log(temperature - 10) - 305.0447927307
     )
-    return tuple(min(255.0, max(0.0, channel)) / 255.0 for channel in (red, green, blue))
+    def normalise(channel: float) -> float:
+        return min(255.0, max(0.0, channel)) / 255.0
+
+    return (normalise(red), normalise(green), normalise(blue))
 
 
 def configure_materials(manifest: dict[str, object]) -> None:
@@ -200,7 +206,9 @@ def configure_materials(manifest: dict[str, object]) -> None:
         ) + (1.0,)
         shader.inputs["Metallic"].default_value = entry["metallicBasisPoints"] / 10_000.0
         shader.inputs["Roughness"].default_value = entry["roughnessBasisPoints"] / 10_000.0
-        emission_colour = tuple(srgb8_to_scene_linear(int(channel)) for channel in emissive) + (1.0,)
+        emission_colour = tuple(
+            srgb8_to_scene_linear(int(channel)) for channel in emissive
+        ) + (1.0,)
         if "Emission Color" in shader.inputs:
             shader.inputs["Emission Color"].default_value = emission_colour
         elif "Emission" in shader.inputs:
@@ -384,7 +392,9 @@ def object_bounds(item: bpy.types.Object) -> tuple[Vector, Vector]:
     if item.type != "MESH":
         return (item.matrix_world.translation.copy(), item.matrix_world.translation.copy())
     corners = [item.matrix_world @ Vector(corner) for corner in item.bound_box]
-    if len(corners) != 8 or any(not all(math.isfinite(value) for value in point) for point in corners):
+    if len(corners) != 8 or any(
+        not all(math.isfinite(value) for value in point) for point in corners
+    ):
         raise RuntimeError("C14_IMPORTED_BOUNDS_INVALID")
     return (
         Vector(tuple(min(point[index] for point in corners) for index in range(3))),
@@ -392,7 +402,9 @@ def object_bounds(item: bpy.types.Object) -> tuple[Vector, Vector]:
     )
 
 
-def verify_imported_protected_objects(manifest: dict[str, object], protected: dict[str, object]) -> None:
+def verify_imported_protected_objects(
+    manifest: dict[str, object], protected: dict[str, object]
+) -> None:
     expected_ids = protected["objectIds"]
     expected_bounds = protected["bounds"]
     assert isinstance(expected_ids, list)

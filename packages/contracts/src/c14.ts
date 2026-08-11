@@ -250,10 +250,11 @@ export const renderSceneManifestSchema = z
               ? value.elementId
               : "",
       );
-      if (
-        new Set(ids).size !== ids.length ||
-        ids.some((id, index) => index > 0 && ids[index - 1]! >= id)
-      ) {
+      const isNotStrictlySorted = ids.some((id, index) => {
+        const previousId = ids[index - 1];
+        return previousId !== undefined && previousId >= id;
+      });
+      if (new Set(ids).size !== ids.length || isNotStrictlySorted) {
         context.addIssue({ code: "custom", message: `${field} must be unique and sorted.` });
       }
     }

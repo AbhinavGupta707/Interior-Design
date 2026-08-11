@@ -92,10 +92,13 @@ function parseArguments(arguments_: readonly string[]): AcceptanceArguments {
     !parentRelative.startsWith(`..${path.sep}`) && parentRelative !== "..",
     "C14_OUTPUT_DIRECTORY_OUTSIDE_REPOSITORY",
   );
+  const blenderPath = process.env.C14_ACCEPTANCE_BLENDER_PATH;
+  assert(
+    typeof blenderPath === "string" && path.isAbsolute(blenderPath),
+    "C14_AUTHORISED_HOST_BLENDER_PATH_REQUIRED",
+  );
   return {
-    blenderPath:
-      process.env.C14_ACCEPTANCE_BLENDER_PATH ??
-      "/opt/homebrew/Caskroom/blender/5.2.0/blender.wrapper.sh",
+    blenderPath,
     outputDirectory,
   };
 }

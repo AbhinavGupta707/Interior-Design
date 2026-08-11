@@ -24,7 +24,8 @@ records; client-supplied hashes are not authority:
 1. one succeeded C10 `SceneJob`, its `SceneRecord`, exact GLB bytes, and C10 manifest/artifact
    hashes;
 2. the exact C4 canonical snapshot referenced by that C10 manifest;
-3. one working C13 specification whose current immutable revision targets that exact snapshot;
+3. one working C13 specification whose current immutable revision targets that exact snapshot and
+   whose immutable C12 source-confirmation origin belongs to the same canonical model;
 4. the published C13 catalog release, its exact canonical release-manifest bytes, and the complete
    set of asset-version records named by the release;
 5. an explicit canonical C4 camera ID and integer near/far clip planes;
@@ -33,7 +34,10 @@ records; client-supplied hashes are not authority:
 The package validates, rather than assumes, the entire chain. It recomputes the C10 manifest and
 GLB hashes, C4 snapshot hash, C13 revision hash, catalog release-manifest hash, asset-version hashes,
 placement-projection hashes, and all cross-record project/model/snapshot/release/specification
-references. A release must be active and every referenced catalog asset must remain approved for
+references. A C13 substitution legitimately retains its immutable C12 source-confirmation snapshot
+while its current revision points at the later substituted model snapshot; therefore the origin is
+required to match the canonical model, while the current revision/model pins must match the exact C10
+snapshot. A release must be active and every referenced catalog asset must remain approved for
 service processing, commercial use, derivatives, and rendered-output distribution. Training
 permission remains denied.
 

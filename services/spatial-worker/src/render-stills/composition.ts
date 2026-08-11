@@ -50,6 +50,12 @@ import type {
 } from "./types.js";
 
 type C14RenderConfig = NonNullable<WorkerConfig["c14Render"]>;
+type C14RenderSceneConfig = Pick<
+  C14RenderConfig,
+  "blenderBuildHash" | "blenderVersion" | "profile"
+> & {
+  readonly rendererScript: Pick<C14RenderConfig["rendererScript"], "sha256">;
+};
 
 function fail(code: string): never {
   throw Object.assign(new Error(code), { code });
@@ -195,7 +201,7 @@ export class S3ExactCatalogManifestReader implements CatalogManifestReader {
   }
 }
 
-function renderProfile(config: C14RenderConfig): RenderProfile {
+function renderProfile(config: C14RenderSceneConfig): RenderProfile {
   const profileId = config.profile.profileId;
   const engine = profileId === "eevee-local-preview-v1" ? "eevee" : "cycles";
   const device =
@@ -233,7 +239,7 @@ function renderProfile(config: C14RenderConfig): RenderProfile {
 export class ExactC14RenderSceneBuilder implements RenderSceneBuilderPort {
   readonly #catalog: PostgresCatalogRepository;
   readonly #catalogManifest: CatalogManifestReader;
-  readonly #config: C14RenderConfig;
+  readonly #config: C14RenderSceneConfig;
   readonly #scenes: PostgresSceneRepository;
   readonly #snapshots: PostgresSceneSnapshotVerifier;
   readonly #specifications: PostgresSpecificationRepository;
@@ -241,7 +247,7 @@ export class ExactC14RenderSceneBuilder implements RenderSceneBuilderPort {
   constructor(options: {
     readonly catalog: PostgresCatalogRepository;
     readonly catalogManifest: CatalogManifestReader;
-    readonly config: C14RenderConfig;
+    readonly config: C14RenderSceneConfig;
     readonly scenes: PostgresSceneRepository;
     readonly snapshots: PostgresSceneSnapshotVerifier;
     readonly specifications: PostgresSpecificationRepository;

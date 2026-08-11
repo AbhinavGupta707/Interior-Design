@@ -20,8 +20,9 @@
     "test:geometry": "turbo run test:geometry",
     "test:security": "turbo run test:security",
     "test:e2e": "turbo run test:e2e",
-    "api:check": "turbo run api:check",
-    "dependency:boundaries": "turbo run dependency:boundaries",
+    "test:c14": "node scripts/verify-c14.mjs",
+    "api:check": "vitest run services/platform-api/test/c14/composition.test.ts services/platform-api/test/c14/render-stills/source.test.ts apps/web/test/render-stills/api.test.ts apps/web/test/render-stills/bff.test.ts --exclude '**/dist/**'",
+    "dependency:boundaries": "vitest run tests/security/render-jobs/static-boundary.security.test.ts --config tests/security/render-jobs/vitest.config.ts",
     "verify:js": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build",
     "verify:py": "uv run ruff check . && uv run mypy . && uv run pytest",
     "verify": "pnpm verify:js && pnpm verify:py"

@@ -39,7 +39,7 @@ test("signs in, creates a project, saves, edits and resumes structured intake", 
   const alphaHomeowner = page.getByRole("radio", { name: /Alpha homeowner/u });
   await alphaHomeowner.focus();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("radio", { name: /Beta homeowner/u })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /Alpha editor/u })).toBeChecked();
   await alphaHomeowner.check();
   await page.getByRole("button", { name: "Continue as Alpha homeowner" }).click();
 
@@ -62,6 +62,10 @@ test("signs in, creates a project, saves, edits and resumes structured intake", 
 
   await page.getByRole("link", { name: "Projects", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Sample terrace refresh" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Geometry-safe stills" })).toHaveAttribute(
+    "href",
+    "/render-stills/33333333-3333-4333-8333-000000000001",
+  );
   await page.getByRole("link", { name: "Resume intake" }).click();
   await expect(page.getByLabel("Goals *")).toHaveValue("Improve daylight\nAdd better storage");
 

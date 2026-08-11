@@ -32,9 +32,9 @@ describe("C14 exact C10 GLB reader", () => {
         send: () => Promise.resolve({ Body: chunks(bytes), ContentLength: bytes.byteLength }),
       },
     });
-    await expect(reader.read({ byteSize: bytes.byteLength, glbSha256: digest(bytes) })).resolves.toEqual(
-      bytes,
-    );
+    await expect(
+      reader.read({ byteSize: bytes.byteLength, glbSha256: digest(bytes) }),
+    ).resolves.toEqual(bytes);
   });
 
   it("fails closed when object metadata or streamed bytes diverge from C10 authority", async () => {
@@ -42,12 +42,15 @@ describe("C14 exact C10 GLB reader", () => {
     const reader = new S3ExactSceneGlbReader(storage, {
       client: {
         send: () =>
-          Promise.resolve({ Body: chunks(Buffer.from("forged protected GLB bytes")), ContentLength: bytes.byteLength }),
+          Promise.resolve({
+            Body: chunks(Buffer.from("forged protected GLB bytes")),
+            ContentLength: bytes.byteLength,
+          }),
       },
     });
-    await expect(reader.read({ byteSize: bytes.byteLength, glbSha256: digest(bytes) })).rejects.toThrow(
-      "C10 GLB",
-    );
+    await expect(
+      reader.read({ byteSize: bytes.byteLength, glbSha256: digest(bytes) }),
+    ).rejects.toThrow("C10 GLB");
   });
 });
 

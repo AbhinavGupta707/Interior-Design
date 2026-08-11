@@ -53,7 +53,10 @@ export class S3ExactSceneGlbReader implements ExactSceneGlbReader {
       });
   }
 
-  async read(input: { readonly byteSize: number; readonly glbSha256: string }): Promise<Uint8Array> {
+  async read(input: {
+    readonly byteSize: number;
+    readonly glbSha256: string;
+  }): Promise<Uint8Array> {
     boundedGlbInput(input);
     let response: { readonly Body?: AsyncIterable<Uint8Array>; readonly ContentLength?: unknown };
     try {
@@ -118,7 +121,10 @@ export class C10RenderSceneAuthority implements AuthoritativeScenePort {
       byteSize: scene.artifact.byteSize,
       glbSha256: scene.artifact.glbSha256,
     });
-    if (glbBytes.byteLength !== scene.artifact.byteSize || sha256(glbBytes) !== scene.artifact.glbSha256) {
+    if (
+      glbBytes.byteLength !== scene.artifact.byteSize ||
+      sha256(glbBytes) !== scene.artifact.glbSha256
+    ) {
       return undefined;
     }
     return {

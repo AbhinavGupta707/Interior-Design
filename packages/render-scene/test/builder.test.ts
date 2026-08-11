@@ -1,4 +1,6 @@
 import { c10ScenePolicy } from "@interior-design/contracts";
+import { canonicalizeIJson } from "@interior-design/domain-model";
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -143,6 +145,35 @@ describe("deterministic declarative render-scene builder", () => {
 });
 
 describe("C10/C13/GLB trust boundary", () => {
+  it("accepts a confirmed substitution revision while retaining its immutable C12 origin", () => {
+    const fixture = renderFixture();
+    const specification = clonedRecord(fixture.input.specification);
+    const revision = specification.currentRevision as typeof specification.currentRevision & {
+      revisionSha256: string;
+      sourceConfirmation: {
+        resultSnapshotId: string;
+        resultSnapshotSha256: string;
+      };
+    };
+    revision.sourceConfirmation.resultSnapshotId = ids.commit;
+    revision.sourceConfirmation.resultSnapshotSha256 = hash("originating-c12-snapshot");
+    const revisionBody = { ...revision } as { revisionSha256?: string };
+    delete revisionBody.revisionSha256;
+    revision.revisionSha256 = createHash("sha256")
+      .update(canonicalizeIJson(revisionBody), "utf8")
+      .digest("hex");
+    const glbJson = clonedRecord(fixture.glbJson);
+    const binding = (
+      glbJson.asset as {
+        extras: { c13SpecificationBinding: { specificationRevisionSha256: string } };
+      }
+    ).extras.c13SpecificationBinding;
+    binding.specificationRevisionSha256 = revision.revisionSha256;
+    const replaced = replaceFixtureGlb(fixture, glbFromJsonAndBinary(glbJson, fixture.binary));
+
+    expect(() => buildRenderScene({ ...replaced.input, specification })).not.toThrow();
+  });
+
   it("rejects forged and stale C10 and C13 pins", () => {
     const fixture = renderFixture();
     const forgedScene = clonedRecord(fixture.input.scene);

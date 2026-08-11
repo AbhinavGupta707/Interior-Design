@@ -27,6 +27,22 @@ const describeWithPostgres = databaseUrl.length === 0 ? describe.skip : describe
 const appRole = "c14_render_app_probe";
 const workerRole = "c14_render_worker_probe";
 const diskFloorBytes = 15 * 1024 * 1024 * 1024;
+const expectedMigrationIds = [
+  "0001_identity_projects_intake",
+  "0002_assets_evidence",
+  "0003_property_dossier",
+  "0004_canonical_models",
+  "0005_model_operations",
+  "0006_plan_processing",
+  "0007_native_capture",
+  "0008_reconstruction",
+  "0009_model_fusion",
+  "0010_scenes",
+  "0011_design_briefs",
+  "0012_design_options",
+  "0013_specifications",
+  "0014_render_stills",
+] as const;
 
 interface FixtureJob {
   readonly cacheHash: string;
@@ -49,6 +65,58 @@ interface ClaimRow {
 
 function json(value: unknown): JSONValue {
   return JSON.parse(JSON.stringify(value)) as JSONValue;
+}
+
+async function dropProbeRoles(sql: Sql): Promise<void> {
+  await sql.unsafe(`
+    DO $roles$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${appRole}') THEN
+        EXECUTE 'DROP OWNED BY ${appRole}';
+        EXECUTE 'DROP ROLE ${appRole}';
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${workerRole}') THEN
+        EXECUTE 'DROP OWNED BY ${workerRole}';
+        EXECUTE 'DROP ROLE ${workerRole}';
+      END IF;
+    END
+    $roles$;
+  `);
+}
+
+async function ensureExactMigrations(sql: Sql): Promise<void> {
+  const [registry] = await sql<{ readonly exists: boolean }[]>`
+    SELECT to_regclass('public.platform_schema_migrations') IS NOT NULL AS exists
+  `;
+  if (registry?.exists === true) {
+    const rows = await sql<{ readonly id: string }[]>`
+      SELECT id FROM platform_schema_migrations ORDER BY id
+    `;
+    const actual = rows.map(({ id }) => id);
+    if (
+      actual.length !== expectedMigrationIds.length ||
+      actual.some((id, index) => id !== expectedMigrationIds[index])
+    ) {
+      throw new Error(`C14_DISPOSABLE_DATABASE_PARTIALLY_MIGRATED:${actual.join(",")}`);
+    }
+    return;
+  }
+
+  await applyC1Migration(sql);
+  await bootstrapC1Fixtures(sql, "test");
+  await applyC2Migration(sql);
+  await applyC3Migration(sql);
+  await applyC4Migration(sql);
+  await applyC5Migration(sql);
+  await applyC6Migration(sql);
+  await applyC7Migration(sql);
+  await applyC8Migration(sql);
+  await applyC9Migration(sql);
+  await applyC10Migration(sql);
+  await applyC11Migration(sql);
+  await applyC12Migration(sql);
+  await applyC13Migration(sql);
+  await applyC14Migration(sql);
 }
 
 async function seedJob(sql: Sql, fixture: FixtureJob): Promise<void> {
@@ -142,21 +210,8 @@ describeWithPostgres("C14 live PostgreSQL queue, RLS and append-only controls", 
 
   beforeAll(async () => {
     sql = createC1Sql(databaseUrl);
-    await applyC1Migration(sql);
-    await bootstrapC1Fixtures(sql, "test");
-    await applyC2Migration(sql);
-    await applyC3Migration(sql);
-    await applyC4Migration(sql);
-    await applyC5Migration(sql);
-    await applyC6Migration(sql);
-    await applyC7Migration(sql);
-    await applyC8Migration(sql);
-    await applyC9Migration(sql);
-    await applyC10Migration(sql);
-    await applyC11Migration(sql);
-    await applyC12Migration(sql);
-    await applyC13Migration(sql);
-    await applyC14Migration(sql);
+    await ensureExactMigrations(sql);
+    await dropProbeRoles(sql);
     tenantA = randomUUID();
     tenantB = randomUUID();
     projectA = randomUUID();
@@ -226,10 +281,11 @@ describeWithPostgres("C14 live PostgreSQL queue, RLS and append-only controls", 
   });
 
   afterAll(async () => {
-    await sql.unsafe(
-      `DROP OWNED BY ${appRole}; DROP OWNED BY ${workerRole}; DROP ROLE ${appRole}; DROP ROLE ${workerRole};`,
-    );
-    await sql.end({ timeout: 5 });
+    try {
+      await dropProbeRoles(sql);
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
   });
 
   it("forces tenant RLS for a non-owner app role and rejects cross-tenant inserts", async () => {

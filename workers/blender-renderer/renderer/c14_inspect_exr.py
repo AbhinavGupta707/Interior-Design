@@ -7,9 +7,9 @@ import json
 import sys
 from pathlib import Path
 
-import bpy  # Blender bundles the exact OpenImageIO/Python ABI used by this inspector.
-import numpy as np
-import OpenImageIO as oiio
+import bpy  # type: ignore[import-not-found]  # Blender-only runtime module.
+import numpy as np  # type: ignore[import-not-found]  # Authorised-host dependency.
+import OpenImageIO as oiio  # type: ignore[import-not-found]  # Authorised-host dependency.
 
 MAX_CHANNELS = 128
 MAX_SUBIMAGES = 16
@@ -22,7 +22,11 @@ def parse_arguments() -> argparse.Namespace:
         raise RuntimeError("C14_EXR_ARGUMENT_SEPARATOR_MISSING") from exc
     parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("--input", required=True)
-    parser.add_argument("--role", required=True, choices=("depth-exr", "multilayer-exr", "normal-exr"))
+    parser.add_argument(
+        "--role",
+        required=True,
+        choices=("depth-exr", "multilayer-exr", "normal-exr"),
+    )
     arguments, unknown = parser.parse_known_args(sys.argv[separator + 1 :])
     if unknown:
         raise RuntimeError("C14_EXR_ARGUMENT_UNKNOWN")

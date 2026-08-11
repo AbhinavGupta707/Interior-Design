@@ -311,7 +311,11 @@ function meshBounds(
   for (const rawPrimitive of arrayMember(mesh, "primitives", 2_000)) {
     const attributes = record(record(rawPrimitive).attributes);
     const position = ranges[integerMember(attributes, "POSITION")];
-    if (position === undefined || position.componentType !== 5_126 || position.componentCount !== 3) {
+    if (
+      position === undefined ||
+      position.componentType !== 5_126 ||
+      position.componentCount !== 3
+    ) {
       return failRenderScene("GLB_INVALID");
     }
     for (let index = 0; index < position.count; index += 1) {
@@ -366,7 +370,12 @@ function protectedObjectBounds(input: {
     const seen = new Set<number>();
     for (const rawChild of children) {
       const child = integer(rawChild);
-      if (child >= nodes.length || child === parentIndex || seen.has(child) || parents[child] !== undefined) {
+      if (
+        child >= nodes.length ||
+        child === parentIndex ||
+        seen.has(child) ||
+        parents[child] !== undefined
+      ) {
         return failRenderScene("GLB_INVALID");
       }
       seen.add(child);
@@ -378,7 +387,8 @@ function protectedObjectBounds(input: {
     const rawRoots = arrayMember(record(rawScene), "nodes", nodes.length);
     for (const rawRoot of rawRoots) {
       const root = integer(rawRoot);
-      if (root >= nodes.length || parents[root] !== undefined) return failRenderScene("GLB_INVALID");
+      if (root >= nodes.length || parents[root] !== undefined)
+        return failRenderScene("GLB_INVALID");
       roots.add(root);
     }
   }
@@ -402,7 +412,9 @@ function protectedObjectBounds(input: {
   if (world.some((value) => value === undefined) || world.filter(Boolean).length !== nodes.length) {
     return failRenderScene("GLB_INVALID");
   }
-  const byMesh = input.meshes.map((mesh) => meshBounds(record(mesh), input.ranges, input.binaryView));
+  const byMesh = input.meshes.map((mesh) =>
+    meshBounds(record(mesh), input.ranges, input.binaryView),
+  );
   const result: ParsedRenderGlbObjectBounds[] = [];
   const ids = new Set<string>();
   for (const [index, node] of nodes.entries()) {
@@ -416,10 +428,7 @@ function protectedObjectBounds(input: {
     if (matrix === undefined) return failRenderScene("GLB_INVALID");
     const bounds =
       node.mesh === undefined
-        ? transformBounds(
-            { maximum: [0, 0, 0], minimum: [0, 0, 0] },
-            matrix,
-          )
+        ? transformBounds({ maximum: [0, 0, 0], minimum: [0, 0, 0] }, matrix)
         : byMesh[integer(node.mesh)];
     if (bounds === undefined) return failRenderScene("GLB_INVALID");
     const transformed = node.mesh === undefined ? bounds : transformBounds(bounds, matrix);

@@ -7,6 +7,11 @@ Image enhancement is disabled by default. `EnhancementService()` constructs only
 key, contact a network, download a model, invoke Blender, or delay the already-published geometry-safe
 result.
 
+The 2026-08-11 integrated close-out keeps that default in executable C14 composition. The disposable
+C1-C14 journey publishes only the geometry-safe parent through `FrozenInertRenderer`; it does not
+activate this fixture or any external provider. The repository-wide `pnpm test:c14` gate includes the
+enhancement unit and standalone security suites so this boundary is not silently omitted.
+
 The `DeterministicLocalTestAdapter` is an explicitly opt-in validation fixture. Callers must construct
 it in code and pass `allow_test_adapter=True`. Its manifest states:
 
@@ -60,15 +65,15 @@ dimensions or metrics are never trusted.
 
 The service exposes explicit states:
 
-| State | Presentable enhancement | Geometry-safe result |
-| --- | --- | --- |
-| `disabled` | no | unchanged and readable |
-| `cancelled` | no | unchanged and readable |
-| `timed-out` | no | unchanged and readable |
-| `resource-limited` | no | unchanged and readable |
-| `failed` | no | unchanged and readable |
-| `rejected` | no; candidate remains quarantine-only | unchanged and readable |
-| `succeeded` | one separately labelled `illustrative-enhancement-png` | unchanged and primary |
+| State              | Presentable enhancement                                | Geometry-safe result   |
+| ------------------ | ------------------------------------------------------ | ---------------------- |
+| `disabled`         | no                                                     | unchanged and readable |
+| `cancelled`        | no                                                     | unchanged and readable |
+| `timed-out`        | no                                                     | unchanged and readable |
+| `resource-limited` | no                                                     | unchanged and readable |
+| `failed`           | no                                                     | unchanged and readable |
+| `rejected`         | no; candidate remains quarantine-only                  | unchanged and readable |
+| `succeeded`        | one separately labelled `illustrative-enhancement-png` | unchanged and primary  |
 
 Every `EnhancementOutcome` hard-codes `safe_result_affected=False`. Only `succeeded` may contain an
 artifact, and only an accepted geometry guard may produce `succeeded`. Storage/public-access

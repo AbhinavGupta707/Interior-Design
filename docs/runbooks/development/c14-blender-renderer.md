@@ -2,11 +2,11 @@
 
 ## Evidence boundary
 
-This runbook covers the isolated C14-L2 durable still-render job product: PostgreSQL persistence, tenant-safe API module, content-addressed artifact publication, spatial-worker lifecycle, and the fixed renderer subprocess boundary.
+This runbook covers the integrated C14 durable still-render product: PostgreSQL persistence, tenant-safe API composition, exact C10/C13 authority resolution, content-addressed artifact publication, spatial-worker lifecycle, and the fixed renderer subprocess boundary.
 
-No Blender executable, Blender version command, capability probe, render, GPU, Metal, CUDA, OptiX, or Cycles workload was invoked on the development Mac. Automated subprocess evidence uses only `workers/blender-renderer/test/fixtures/inert-renderer.mjs`, an inert repository fixture which records the argument vector and runs inert marker scripts. The checked-in `renderer/c14_render.py` is an authorised-host integration driver, not locally executed render evidence.
+No Blender executable, Blender version command, capability probe, render, GPU, Metal, CUDA, OptiX, or Cycles workload was invoked on the development Mac during the 2026-08-11 close-out. Automated subprocess evidence uses only `workers/blender-renderer/test/fixtures/inert-renderer.mjs`, an inert repository fixture which records the argument vector and runs inert marker scripts. The disposable C1-C14 integration uses the separately named `FrozenInertRenderer`, which emits bounded synthetic fixture bytes. The checked-in `renderer/c14_render.py` is an authorised-host integration driver, not locally executed render evidence.
 
-This lane is deliberately uncomposed. Root integration must register the module, supply C10/C13 and render-scene adapters, configure object access, and run real renderer acceptance on an authorised host before any profile is advertised as available.
+The product is now composed in the executable platform API and spatial worker. The API registers the C14 routes, resolves C10 scenes and C13 specification/catalog authority, constructs the render-scene boundary, brokers opaque access, and keeps the worker absent when C14 is disabled. Enabling a production renderer still requires the complete immutable authorised-host pin set. Local inert evidence proves the control plane only; it does not make a renderer profile production-available.
 
 ## Authority and data flow
 
@@ -121,46 +121,52 @@ Safe artifact bytes are uploaded first under content-addressed internal keys usi
 
 If any upload or transaction loses its fence, no partial result is visible. Uploaded content-addressed bytes may be an orphan and are safe to retain because they are immutable and unaddressable through the API. Operations may garbage-collect only objects that have no retained `render_artifacts` or enhancement-artifact reference after a conservative age window. Never delete by job prefix and never delete an object merely because one publication attempt failed; another exact result may share its hash.
 
-## Composition checklist
+## Integrated composition and activation checklist
 
-The orchestrator must complete these root-owned steps after merge:
+The following root integration is complete:
 
-1. Add migration 0014 to the central migration registry and clean-bootstrap path.
-2. Create separate API and renderer-worker roles; grant the worker only constrained claim execution and the exact repository operations required by its private control-plane adapter.
-3. Instantiate `PostgresRenderRepository`, `RenderStillService`, `RenderStillWorkerService`, storage, opaque access signer, capabilities, and route registration in the platform API.
-4. Adapt authoritative C10 succeeded-scene bytes and C13 revision/catalog/rights reads to `PortBackedRenderSourceResolver`.
-5. Adapt C14-L1 render-scene construction to `RenderSceneBuilderPort`; preserve all exact source pins.
-6. Configure a dedicated workspace volume, stable volume ID, worker identity, capability list, lease/heartbeat values, and immutable executable/script descriptors on an authorised renderer host.
-7. Supply production GLB and OpenEXR inspectors and the derived-object access gateway.
-8. Keep every profile `available: false`, `acceptingNewJobs: false`, and hardware evidence `deferred` until authorised-host acceptance proves that exact build/script/profile/host combination.
-9. Connect the later enhancement lane only through the persisted child job; never replace the geometry-safe artifact.
+1. Migration 0014 is in the central registry and the empty C1-C14 bootstrap path.
+2. The executable API instantiates `PostgresRenderRepository`, `RenderStillService`, storage, exact C10/C13 authority adapters, opaque access signing and route registration.
+3. The worker composition adapts C14-L1 render-scene construction while preserving the exact source, specification and catalog pins.
+4. Production GLB/OpenEXR inspectors, content-addressed derived storage and post-download hash/size/type verification are wired behind narrow ports.
+5. Optional enhancement remains a persisted child that can never replace or hide the geometry-safe result.
 
-Environment variable names and central configuration are intentionally not introduced here because those files are outside this lane. Root integration should map its validated configuration into the typed constructors rather than reading environment variables inside the renderer or worker modules.
+Before an authorised renderer host may accept jobs, all of these remain mandatory:
+
+1. Create separate API, renderer-worker and protected claim-function-owner roles; grant the worker only constrained claim execution and its exact private repository operations.
+2. Configure a dedicated workspace volume, stable volume ID, worker identity, capability list and lease/heartbeat values.
+3. Set explicit absolute executable and script paths plus their SHA-256 values, renderer build/version, host fingerprint and authorised-host acceptance hash. Discovery, a PATH fallback and a hard-coded Mac path are forbidden.
+4. Keep every production profile `available: false`, `acceptingNewJobs: false`, and hardware evidence `deferred` until acceptance proves that exact build/script/profile/host combination.
+
+The executable application maps validated central configuration into typed constructors. The renderer and worker modules do not discover environment state themselves. `workers/blender-renderer/scripts/host-acceptance.ts` also requires an explicit absolute `C14_ACCEPTANCE_BLENDER_PATH`; the local close-out does not execute that script.
 
 ## Verification
 
-The default suites use only the inert fake executable:
+The repeatable source/control-plane gate uses only inert or frozen fixtures:
 
 ```sh
-pnpm --filter @interior-design/blender-renderer typecheck
-pnpm --filter @interior-design/blender-renderer test:unit
-pnpm --filter @interior-design/platform-api typecheck
-pnpm --filter @interior-design/platform-api exec vitest run test/c14/render-stills
-pnpm --filter @interior-design/spatial-worker typecheck
-pnpm --filter @interior-design/spatial-worker exec vitest run test/render-stills
-pnpm exec tsc --noEmit -p tests/security/render-jobs/tsconfig.json
-pnpm exec vitest run tests/security/render-jobs
+pnpm test:c14
 git diff --check
 ```
 
-Run live migration/RLS/claim tests only against an explicitly disposable database with migrations 0001–0014 applied:
+`pnpm test:c14` runs source-only render-scene, inert renderer, API, worker, web, evaluation, performance, security and enhancement suites; six standalone TypeScript checks; C14 Python lint/typechecking; the disposable integration; and meaningful API/dependency-boundary checks. Generated `dist/test/**` copies are excluded. Without the two live environment variables, only the disposable integration case is intentionally skipped.
+
+Run live migration/RLS/claim and C1-C14 control-plane tests only against explicitly disposable database and S3 scopes:
 
 ```sh
 C14_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:54321/c14_disposable \
-  pnpm --filter @interior-design/platform-api exec vitest run \
-  test/c14/render-stills/postgres.integration.test.ts
+C14_RUNNER_TEST_DATABASE_URL=postgresql://localdev:local-development-only@127.0.0.1:54321/c14_control \
+C14_RUNNER_TEST_STORAGE_ENDPOINT=http://127.0.0.1:8333 \
+  pnpm test:c14
 ```
 
-The live suite creates and removes constrained probe roles. It proves forced tenant isolation, no worker table access, one concurrent claim winner, exact disk threshold admission, stale-cancellation release, append-only rejection, exact replay, and changed-body conflict. Use no non-disposable database.
+The C14 PostgreSQL suite creates and removes constrained probe roles. It proves forced tenant isolation, no worker table access, one concurrent claim winner, exact disk threshold admission, stale-cancellation release, append-only rejection, exact replay, and changed-body conflict. The full-chain test starts at empty migrations, creates real C1-C13 records, compiles an exact C10 GLB, resolves a current C13 substitution revision, claims and fences the C14 job, publishes five immutable synthetic artifacts, brokers access, re-downloads and verifies every byte/hash/type, confirms redacted logs and proves canonical model counts are unchanged. It reuses only a database containing exactly migrations 0001-0014 and can run repeatedly. `FrozenInertRenderer` is never Blender evidence.
+
+Browser acceptance is separate and also fixture-labelled:
+
+```sh
+pnpm exec playwright test --config tests/e2e/render-stills/playwright.config.ts
+pnpm exec playwright test --config apps/web/playwright.config.ts
+```
 
 Authorised-host acceptance is a separate checkpoint. Record the executable and script hashes, Blender build identity, host fingerprint, profile/capability, input and output hashes, wall/resource limits, and the fact that the host is permitted. Do not relabel inert-fixture results as Blender, Cycles, GPU, or render-pass evidence.

@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 import type { APIRequestContext, BrowserContext, Page } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 import { ids } from "../../../apps/web/test/render-stills/fixtures";
 
 const backend = "http://127.0.0.1:4353";
 const route = `/render-stills/${ids.project}?jobId=${ids.job}`;
+const screenshotDirectory = "/tmp/c14-render-stills-playwright-evidence";
 let applicationPrimed = false;
 
 async function session(context: BrowserContext, value: string) {
@@ -127,6 +129,11 @@ test("@workflow @keyboard owner follows exact pins through verification and a du
   await expect(
     page.getByRole("img", { name: /Segmentation diagnostic for Fixture lifecycle still/iu }),
   ).toBeVisible();
+  await mkdir(screenshotDirectory, { recursive: true });
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDirectory}/chromium-desktop-inert-workflow.png`,
+  });
 
   const state = await request.get(`${backend}/__state`);
   await expect(state.json()).resolves.toMatchObject({

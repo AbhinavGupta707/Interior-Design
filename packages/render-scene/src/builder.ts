@@ -331,8 +331,7 @@ function verifySpecification(input: {
   if (
     specification.projectId !== canonical.snapshot.projectId ||
     revision.modelSnapshotSha256 !== canonical.snapshotSha256 ||
-    revision.sourceConfirmation.resultSnapshotSha256 !== canonical.snapshotSha256 ||
-    revision.sourceConfirmation.resultSnapshotId !== revision.modelSnapshotId ||
+    revision.sourceConfirmation.modelId !== canonical.snapshot.modelId ||
     revision.catalogReleaseId !== release.releaseId ||
     revision.catalogReleaseSha256 !== release.manifestSha256 ||
     sha256Canonical(revisionBody) !== revisionSha256

@@ -18,21 +18,17 @@ function output(channels: readonly string[]): string {
 
 describe("C14 independently pinned EXR inspection", () => {
   it("normalises Blender 5.2 diagnostic channel spelling to the C14 contract", () => {
-    expect(
-      __test__.parseInspectionOutput(output(["depth.V"]), "depth-exr"),
-    ).toMatchObject({ channels: ["Z"], heightPx: 256, widthPx: 256 });
+    expect(__test__.parseInspectionOutput(output(["depth.V"]), "depth-exr")).toMatchObject({
+      channels: ["Z"],
+      heightPx: 256,
+      widthPx: 256,
+    });
     expect(
       __test__.parseInspectionOutput(output(["normal.X", "normal.Y", "normal.Z"]), "normal-exr"),
     ).toMatchObject({ channels: ["Normal.X", "Normal.Y", "Normal.Z"] });
     expect(
       __test__.parseInspectionOutput(
-        output([
-          "Combined.R",
-          "Combined.G",
-          "Combined.B",
-          "CryptoObject00.r",
-          "CryptoObject00.g",
-        ]),
+        output(["Combined.R", "Combined.G", "Combined.B", "CryptoObject00.r", "CryptoObject00.g"]),
         "multilayer-exr",
       ),
     ).toMatchObject({
@@ -45,10 +41,7 @@ describe("C14 independently pinned EXR inspection", () => {
       expect.objectContaining({ safeCode: "RENDER_EXR_INSPECTION_INVALID" }),
     );
     expect(() =>
-      __test__.parseInspectionOutput(
-        `${output(["depth.V"])}\n${output(["depth.V"])}`,
-        "depth-exr",
-      ),
+      __test__.parseInspectionOutput(`${output(["depth.V"])}\n${output(["depth.V"])}`, "depth-exr"),
     ).toThrow(expect.objectContaining({ safeCode: "RENDER_EXR_INSPECTION_INVALID" }));
   });
 });

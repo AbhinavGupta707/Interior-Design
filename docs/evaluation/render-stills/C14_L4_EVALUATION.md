@@ -4,6 +4,8 @@
 
 The owned C14-L4 lane provides an accessible `/render-stills/:projectId` workspace, an isolated strict-schema C14 BFF, fresh artifact access and byte verification, and an independent Sharp-backed artifact evaluator.
 
+This lane record is retained as focused UX/evaluator evidence. The integrated 2026-08-11 checkpoint result, live control-plane IDs/hashes and repository-wide gates are recorded in `C14_INTEGRATED_CLOSEOUT_2026-08-11.md`.
+
 The product truth boundary is explicit:
 
 - “Geometry-locked deterministic render” is derived visualisation only.
@@ -29,7 +31,7 @@ EXR evaluation is deliberately labelled `container-header-only-no-pixel-validati
 
 ## Accessibility and responsive review
 
-Automated and independent in-app browser inspection confirmed:
+Automated Playwright inspection confirmed:
 
 - one main landmark and no duplicate IDs;
 - exact job focus after keyboard selection;
@@ -41,7 +43,9 @@ Automated and independent in-app browser inspection confirmed:
 - safe and segmentation object images decode to the declared 96×64 fixture dimensions;
 - no page console warnings or errors during the independent render-workspace inspection.
 
-Responsive screenshot evidence: `/tmp/c14-render-stills-evidence/render-stills-390x844.jpg`.
+Final inert-workflow screenshot evidence: `/tmp/c14-render-stills-playwright-evidence/chromium-desktop-inert-workflow.png` (1440×4243, 410,118 bytes). The UI itself labels the fixture capability and hardware gate honestly.
+
+The Codex in-app Browser controller was attempted during integrated close-out but failed before tab creation with `Cannot redefine property: process`; it supplied no product evidence. The cross-engine Playwright matrix is the accepted browser automation evidence for this session.
 
 The static website-quality audit reported no P0/P1 findings and five P2 tight-gap heuristics. Those gaps bind eyebrow/title or title/metadata pairs rather than independent touch targets; browser checks confirmed the interactive target sizing and overflow requirements.
 
@@ -79,9 +83,9 @@ The static website-quality audit reported no P0/P1 findings and five P2 tight-ga
 
 The Playwright matrix covers exact deep links, all durable lifecycle stages, keyboard workflow, owner/editor/viewer/foreign access, provider disabled, enhancement failed/rejected, offline, session expiry, stale jobs, malformed/private responses, tampered bytes, expired access, decode failure, diagnostics, fresh access, and responsive overflow/target sizing. No Blender executable or render provider is called.
 
-## Integration steps and remaining limitations
+## Integrated status and remaining limitations
 
-1. The orchestrator should wire project navigation/composition to `/render-stills/:projectId`; this lane intentionally did not edit shared navigation.
-2. Deploy the frozen C14 backend routes behind the existing `HOME_DESIGN_API_BASE_URL` and return production capability evidence. Keep `C14_RENDER_EVIDENCE_CLASSIFICATION` unset for production-capability presentation; `synthetic-fixture` is for fixture tests only.
+1. Project navigation now links to `/render-stills/:projectId`, and the production API/worker composition is covered by focused and disposable-live tests.
+2. Production profiles remain unavailable until an authorised host supplies the exact required renderer/build/script/host/acceptance pins. `synthetic-fixture` and `FrozenInertRenderer` remain test-only evidence classes.
 3. Satisfy and record the C14 hardware/provider gate on an authorised render host before claiming a real geometry-safe render. This Mac provides no real-render evidence.
 4. Pixel-level OpenEXR and Blender/scene/camera validation remain outside this evaluator. They require separately authorised host evidence and must not be inferred from these header and PNG checks.

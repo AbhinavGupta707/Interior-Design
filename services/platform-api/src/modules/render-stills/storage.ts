@@ -45,7 +45,10 @@ interface EncryptedRenderAccessGrant {
 
 export interface RenderArtifactBroker {
   open(token: string): Promise<
-    | { readonly bytes: Uint8Array; readonly mediaType: "application/json" | "image/png" | "image/x-exr" }
+    | {
+        readonly bytes: Uint8Array;
+        readonly mediaType: "application/json" | "image/png" | "image/x-exr";
+      }
     | undefined
   >;
 }
@@ -96,13 +99,9 @@ function validGrant(input: EncryptedRenderAccessGrant): boolean {
     ["application/json", "image/png", "image/x-exr"].includes(input.mediaType) &&
     /^render-stills\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(?:exr|json|png)$/u.test(input.objectKey) &&
     /^[0-9a-f-]{36}$/iu.test(input.resultId) &&
-    [
-      "depth-exr",
-      "geometry-safe-png",
-      "multilayer-exr",
-      "normal-exr",
-      "segmentation-png",
-    ].includes(input.role) &&
+    ["depth-exr", "geometry-safe-png", "multilayer-exr", "normal-exr", "segmentation-png"].includes(
+      input.role,
+    ) &&
     /^[a-f0-9]{64}$/u.test(input.sha256) &&
     input.expiresAt.length > 0
   );
@@ -116,7 +115,12 @@ function tokenParts(token: string): readonly [Buffer, Buffer, Buffer] | undefine
   try {
     const decoded = parts.map((part) => Buffer.from(part, "base64url"));
     const [iv, ciphertext, tag] = decoded;
-    if (iv?.byteLength !== 12 || ciphertext === undefined || ciphertext.byteLength < 1 || tag?.byteLength !== 16) {
+    if (
+      iv?.byteLength !== 12 ||
+      ciphertext === undefined ||
+      ciphertext.byteLength < 1 ||
+      tag?.byteLength !== 16
+    ) {
       return undefined;
     }
     return [iv, ciphertext, tag];
@@ -130,7 +134,9 @@ function tokenParts(token: string): readonly [Buffer, Buffer, Buffer] | undefine
  * through the API. The S3 key remains encrypted inside the bearer token and is
  * never sent to the browser or written to API logs.
  */
-export class EncryptedRenderArtifactBroker implements OpaqueRenderAccessSigner, RenderArtifactBroker {
+export class EncryptedRenderArtifactBroker
+  implements OpaqueRenderAccessSigner, RenderArtifactBroker
+{
   readonly #baseUrl: URL;
   readonly #client: StorageCommandClient;
   readonly #key: Buffer;
@@ -168,7 +174,10 @@ export class EncryptedRenderArtifactBroker implements OpaqueRenderAccessSigner, 
     const iv = randomBytes(12);
     const cipher = createCipheriv("aes-256-gcm", this.#key, iv);
     cipher.setAAD(grantAad);
-    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(grant), "utf8"), cipher.final()]);
+    const ciphertext = Buffer.concat([
+      cipher.update(JSON.stringify(grant), "utf8"),
+      cipher.final(),
+    ]);
     const token = `${iv.toString("base64url")}.${ciphertext.toString("base64url")}.${cipher
       .getAuthTag()
       .toString("base64url")}`;
@@ -177,7 +186,10 @@ export class EncryptedRenderArtifactBroker implements OpaqueRenderAccessSigner, 
   }
 
   async open(token: string): Promise<
-    | { readonly bytes: Uint8Array; readonly mediaType: "application/json" | "image/png" | "image/x-exr" }
+    | {
+        readonly bytes: Uint8Array;
+        readonly mediaType: "application/json" | "image/png" | "image/x-exr";
+      }
     | undefined
   > {
     const parts = tokenParts(token);
@@ -231,10 +243,16 @@ export class EncryptedRenderArtifactBroker implements OpaqueRenderAccessSigner, 
       return undefined;
     }
     const bytes = Buffer.concat(chunks, total);
-    if (total !== grant.byteLength || createHash("sha256").update(bytes).digest("hex") !== grant.sha256) {
+    if (
+      total !== grant.byteLength ||
+      createHash("sha256").update(bytes).digest("hex") !== grant.sha256
+    ) {
       return undefined;
     }
-    return { bytes, mediaType: grant.mediaType as "application/json" | "image/png" | "image/x-exr" };
+    return {
+      bytes,
+      mediaType: grant.mediaType as "application/json" | "image/png" | "image/x-exr",
+    };
   }
 }
 

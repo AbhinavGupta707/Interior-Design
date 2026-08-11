@@ -160,7 +160,10 @@ function parseInspectionOutput(
   }
   return {
     allFinite: (value as { readonly allFinite: boolean }).allFinite,
-    channels: normalizedChannels(role, (value as { readonly channels: readonly string[] }).channels),
+    channels: normalizedChannels(
+      role,
+      (value as { readonly channels: readonly string[] }).channels,
+    ),
     heightPx,
     widthPx,
   };

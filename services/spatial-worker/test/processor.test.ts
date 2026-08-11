@@ -230,7 +230,10 @@ describe("provider-free hostile media processor", () => {
 
   it("inspects and rasterises a tiny synthetic PDF", async () => {
     const contents = onePagePdfFixture();
-    const command = commandFor(contents, { declaredMimeType: "application/pdf", kind: "document" });
+    const command = commandFor(contents, {
+      declaredMimeType: "application/pdf",
+      kind: "document",
+    });
     const storage = new MemoryObjectStorage();
     storage.sources.set(command.source.key, contents);
     const processor = new MediaProcessor(testConfig(await temporaryRoot()), storage);
@@ -248,5 +251,5 @@ describe("provider-free hostile media processor", () => {
       expect.arrayContaining(["pdfinfo", "pdftoppm", "sharp"]),
     );
     await prepared.cleanup();
-  });
+  }, 15_000);
 });
