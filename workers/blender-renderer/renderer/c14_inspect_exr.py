@@ -52,6 +52,7 @@ def inspect(path: Path) -> dict[str, object]:
     if image is None:
         raise RuntimeError("C14_EXR_OPEN_FAILED")
     channels: list[str] = []
+    cryptomatte_object_names: set[str] = set()
     dimensions: tuple[int, int] | None = None
     all_finite = True
     try:
@@ -72,6 +73,25 @@ def inspect(path: Path) -> dict[str, object]:
                 raise RuntimeError("C14_EXR_PIXELS_UNREADABLE")
             all_finite = all_finite and bool(np.isfinite(pixels).all())
             channels.extend(names)
+            for attribute in spec.extra_attribs:
+                attribute_name = str(attribute.name)
+                if not (
+                    attribute_name.startswith("cryptomatte/")
+                    and attribute_name.endswith("/manifest")
+                ):
+                    continue
+                raw_manifest = spec.getattribute(attribute_name)
+                if not isinstance(raw_manifest, str):
+                    raise RuntimeError("C14_EXR_CRYPTOMATTE_MANIFEST_INVALID")
+                manifest = json.loads(raw_manifest)
+                if not isinstance(manifest, dict) or not all(
+                    isinstance(name, str) and 0 < len(name) <= 240
+                    for name in manifest
+                ):
+                    raise RuntimeError("C14_EXR_CRYPTOMATTE_MANIFEST_INVALID")
+                cryptomatte_object_names.update(manifest)
+                if len(cryptomatte_object_names) > 100_000:
+                    raise RuntimeError("C14_EXR_CRYPTOMATTE_MANIFEST_LIMIT")
             if not image.seek_subimage(subimage + 1, 0):
                 break
         else:
@@ -83,6 +103,7 @@ def inspect(path: Path) -> dict[str, object]:
     return {
         "allFinite": all_finite,
         "channels": channels,
+        "cryptomatteObjectNames": sorted(cryptomatte_object_names),
         "heightPx": dimensions[1],
         "schemaVersion": "c14-exr-inspection-v1",
         "widthPx": dimensions[0],

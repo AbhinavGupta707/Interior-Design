@@ -8,6 +8,7 @@ import { lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 
 import { canonicalJson } from "./canonical.js";
+import { normalizeRenderArtifactContainer } from "./container-normalization.js";
 import { rendererFailure } from "./errors.js";
 import { sha256 } from "./hash.js";
 import type {
@@ -33,6 +34,7 @@ const artifactRoles = [
   "normal-exr",
   "segmentation-png",
 ] as const;
+type RendererOutputRole = (typeof artifactRoles)[number];
 
 function deterministicArtifactId(
   resultId: string,
@@ -49,7 +51,11 @@ function deterministicArtifactId(
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-async function readRegularOutput(workspace: string, fileName: string): Promise<Uint8Array> {
+async function readRegularOutput(
+  workspace: string,
+  fileName: string,
+  role: RendererOutputRole,
+): Promise<Uint8Array> {
   const outputRoot = path.join(workspace, "output");
   const outputStat = await lstat(outputRoot).catch(() => undefined);
   if (
@@ -72,7 +78,7 @@ async function readRegularOutput(workspace: string, fileName: string): Promise<U
   ) {
     rendererFailure("RENDER_OUTPUT_MISSING");
   }
-  return readFile(target);
+  return normalizeRenderArtifactContainer(role, await readFile(target));
 }
 
 export interface IsolatedRendererOptions {
@@ -146,7 +152,7 @@ export class IsolatedStillRenderer {
 
       const artifactEntries = await Promise.all(
         artifactRoles.map(async (role) => {
-          const bytes = await readRegularOutput(workspace, rendererArtifactFileNames[role]);
+          const bytes = await readRegularOutput(workspace, rendererArtifactFileNames[role], role);
           const digest = sha256(bytes);
           const artifact = await validateArtifactBytes({
             artifactId: deterministicArtifactId(input.resultId, role, digest),

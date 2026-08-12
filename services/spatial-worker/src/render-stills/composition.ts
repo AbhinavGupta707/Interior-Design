@@ -395,6 +395,8 @@ export function composeC14RenderRunner(options: {
     descriptor: {
       executablePath: config.executable.path,
       executableSha256: config.executable.sha256,
+      ocioConfigPath: config.ocioConfig.path,
+      ocioConfigSha256: config.ocioConfig.sha256,
       rendererScriptPath: config.rendererScript.path,
       rendererScriptSha256: config.rendererScript.sha256,
     },

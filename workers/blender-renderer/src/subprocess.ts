@@ -46,6 +46,7 @@ async function verifyRegularFile(filePath: string, expectedSha256: string, execu
 export async function verifyRendererDescriptor(
   descriptor: RendererExecutableDescriptor,
 ): Promise<void> {
+  await verifyRegularFile(descriptor.ocioConfigPath, descriptor.ocioConfigSha256, false);
   await verifyRegularFile(descriptor.executablePath, descriptor.executableSha256, true);
   await verifyRegularFile(descriptor.rendererScriptPath, descriptor.rendererScriptSha256, false);
 }
@@ -76,7 +77,10 @@ export function rendererArguments(descriptor: RendererExecutableDescriptor, work
   ] as const;
 }
 
-function boundedEnvironment(workspacePath: string): NodeJS.ProcessEnv {
+function boundedEnvironment(
+  workspacePath: string,
+  descriptor: RendererExecutableDescriptor,
+): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = Object.create(null) as NodeJS.ProcessEnv;
   for (const key of fixedEnvironmentKeys) {
     const value = process.env[key];
@@ -87,6 +91,7 @@ function boundedEnvironment(workspacePath: string): NodeJS.ProcessEnv {
   environment.BLENDER_USER_CONFIG = path.join(workspacePath, "user-config");
   environment.BLENDER_USER_SCRIPTS = path.join(workspacePath, "user-scripts");
   environment.PYTHONNOUSERSITE = "1";
+  environment.OCIO = descriptor.ocioConfigPath;
   return environment;
 }
 
@@ -130,7 +135,7 @@ export class FixedArgumentRendererProcess implements RendererProcessPort {
         {
           cwd: request.workspacePath,
           detached: true,
-          env: boundedEnvironment(request.workspacePath),
+          env: boundedEnvironment(request.workspacePath, request.descriptor),
           shell: false,
           stdio: ["ignore", "pipe", "pipe"],
           windowsHide: true,

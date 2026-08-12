@@ -458,8 +458,12 @@ def render_segmentation(manifest: dict[str, object], output: Path) -> None:
         scene.compositing_node_group = None
     else:
         scene.use_nodes = False
-    scene.view_settings.view_transform = "Standard"
-    scene.view_settings.look = "Medium High Contrast"
+    scene.view_settings.view_transform = "Raw"
+    scene.view_settings.look = "None"
+    scene.cycles.samples = 1
+    scene.cycles.pixel_filter_type = "BOX"
+    scene.cycles.filter_width = 0.01
+    scene.cycles.use_denoising = False
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
     scene.render.filepath = str(output / "segmentation.png")

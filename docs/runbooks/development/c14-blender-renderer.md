@@ -5,6 +5,9 @@
 This runbook covers the integrated C14 durable still-render product: PostgreSQL persistence, tenant-safe API composition, exact C10/C13 authority resolution, content-addressed artifact publication, spatial-worker lifecycle, and the fixed renderer subprocess boundary.
 
 No Blender executable, Blender version command, capability probe, render, GPU, Metal, CUDA, OptiX, or Cycles workload was invoked on the development Mac during the 2026-08-11 close-out. Automated subprocess evidence uses only `workers/blender-renderer/test/fixtures/inert-renderer.mjs`, an inert repository fixture which records the argument vector and runs inert marker scripts. The disposable C1-C14 integration uses the separately named `FrozenInertRenderer`, which emits bounded synthetic fixture bytes. The checked-in `renderer/c14_render.py` is an authorised-host integration driver, not locally executed render evidence.
+Session B on the authorised Linux host is a separate real-render path. It invokes only the explicitly
+pinned Linux Blender executable with CPU Cycles, records the Blender/renderer/inspector/OCIO hashes,
+and must not reuse the inert control-plane result as renderer evidence.
 
 The product is now composed in the executable platform API and spatial worker. The API registers the C14 routes, resolves C10 scenes and C13 specification/catalog authority, constructs the render-scene boundary, brokers opaque access, and keeps the worker absent when C14 is disabled. Enabling a production renderer still requires the complete immutable authorised-host pin set. Local inert evidence proves the control plane only; it does not make a renderer profile production-available.
 
@@ -93,7 +96,10 @@ Do not reuse a workspace across attempts or place customer material in a shared 
 
 ## Renderer subprocess boundary
 
-An authorised-host deployment supplies an immutable descriptor containing absolute executable/script paths and their SHA-256 values. Both files must be regular, non-symlink files whose resolved path and bytes match the descriptor. The executable is invoked with `shell: false`, a fixed working directory, and this fixed argument shape:
+An authorised-host deployment supplies an immutable descriptor containing absolute
+executable/renderer-script/OCIO paths and their SHA-256 values. Every file must be regular and
+non-symlinked, with the exact resolved path and bytes from the descriptor. The exact OCIO path is the
+only OCIO value passed to Blender. The executable is invoked with shell disabled, a fixed working directory, and this fixed argument shape:
 
 ```text
 --background --factory-startup --disable-autoexec --offline-mode
@@ -110,6 +116,18 @@ Before publication the boundary verifies:
 - staged GLB and render-scene manifest hashes;
 - exact PNG signatures and dimensions;
 - OpenEXR magic, required channels, finite samples, and exact dimensions through the injected EXR inspector;
+  Blender writes volatile wall-clock and render-duration attributes even when the sampled image payload
+  is deterministic. Before hashing, validation, retention, or publication, the renderer boundary
+  applies c14-render-container-normalization-v1: it removes only the named volatile PNG text attributes
+  (Date, RenderTime, and the three Cycles timing keys) and replaces the equal-length EXR Date and
+  RenderTime strings in place. PNG IDAT bytes, EXR layout/pixel payloads, channels, Cryptomatte metadata,
+  and every other attribute remain unchanged. Tests prove idempotence and payload preservation.
+  Same-host acceptance compares exact bytes after this frozen normalization and fails the command if
+  any of the five hashes differ.
+
+The segmentation render uses Raw color management, one CPU-Cycles sample, no denoising, and a
+deterministic minimal box filter so decoded pixels are exact members of the frozen palette.
+
 - GLB finiteness, no external resources/scripts, allowed extensions, object-ID coverage, and exact C13 extras through the injected GLB inspector; and
 - every artifact hash/size plus the deterministic output-manifest bytes.
 
@@ -135,7 +153,9 @@ Before an authorised renderer host may accept jobs, all of these remain mandator
 
 1. Create separate API, renderer-worker and protected claim-function-owner roles; grant the worker only constrained claim execution and its exact private repository operations.
 2. Configure a dedicated workspace volume, stable volume ID, worker identity, capability list and lease/heartbeat values.
-3. Set explicit absolute executable and script paths plus their SHA-256 values, renderer build/version, host fingerprint and authorised-host acceptance hash. Discovery, a PATH fallback and a hard-coded Mac path are forbidden.
+3. Set explicit absolute executable, renderer-script, EXR-inspector and OCIO paths plus their SHA-256
+   values, renderer build/version, host fingerprint and authorised-host acceptance hash. Discovery, a
+   PATH fallback and a hard-coded host path are forbidden.
 4. Keep every production profile `available: false`, `acceptingNewJobs: false`, and hardware evidence `deferred` until acceptance proves that exact build/script/profile/host combination.
 
 The executable application maps validated central configuration into typed constructors. The renderer and worker modules do not discover environment state themselves. `workers/blender-renderer/scripts/host-acceptance.ts` also requires an explicit absolute `C14_ACCEPTANCE_BLENDER_PATH`; the local close-out does not execute that script.
@@ -160,7 +180,7 @@ C14_RUNNER_TEST_STORAGE_ENDPOINT=http://127.0.0.1:8333 \
   pnpm test:c14
 ```
 
-The C14 PostgreSQL suite creates and removes constrained probe roles. It proves forced tenant isolation, no worker table access, one concurrent claim winner, exact disk threshold admission, stale-cancellation release, append-only rejection, exact replay, and changed-body conflict. The full-chain test starts at empty migrations, creates real C1-C13 records, compiles an exact C10 GLB, resolves a current C13 substitution revision, claims and fences the C14 job, publishes five immutable synthetic artifacts, brokers access, re-downloads and verifies every byte/hash/type, confirms redacted logs and proves canonical model counts are unchanged. It reuses only a database containing exactly migrations 0001-0014 and can run repeatedly. `FrozenInertRenderer` is never Blender evidence.
+The C14 PostgreSQL suite creates and removes constrained probe roles. It proves forced tenant isolation, no worker table access, one concurrent claim winner, exact disk threshold admission, stale-cancellation release, append-only rejection, exact replay, and changed-body conflict. The full-chain test starts at empty migrations, creates real C1-C13 records, compiles an exact C10 GLB, resolves a current C13 substitution revision, claims and fences the C14 job, publishes five immutable synthetic artifacts, brokers access, re-downloads and verifies every byte/hash/type, confirms redacted logs and proves canonical model counts are unchanged. It reuses only a database containing exactly migrations 0001-0014 and can run repeatedly. FrozenInertRenderer remains only in the explicitly labelled default control-plane mode and is never Blender evidence.
 
 Browser acceptance is separate and also fixture-labelled:
 
@@ -169,4 +189,22 @@ pnpm exec playwright test --config tests/e2e/render-stills/playwright.config.ts
 pnpm exec playwright test --config apps/web/playwright.config.ts
 ```
 
-Authorised-host acceptance is a separate checkpoint. Record the executable and script hashes, Blender build identity, host fingerprint, profile/capability, input and output hashes, wall/resource limits, and the fact that the host is permitted. Do not relabel inert-fixture results as Blender, Cycles, GPU, or render-pass evidence.
+Authorised-host acceptance uses the working root command:
+
+```sh
+C14_ACCEPTANCE_BLENDER_PATH=/absolute/pinned/blender \
+pnpm exec tsx workers/blender-renderer/scripts/host-acceptance.ts \
+  --output-directory docs/evaluation/render-stills/artifacts/<new-session>
+```
+
+The command retains primary and replay bundles, both complete hash sets, exact source commit, detailed
+independent PNG/EXR/GLB validation, Cryptomatte membership, segmentation palette, camera/material/light
+inputs, process/disk bounds, OCIO attestation, and privacy-minimised host fingerprint. A replay mismatch
+is a non-zero failure.
+
+The live integration has a second explicit C14_RUNNER_TEST_RENDERER_MODE=blender mode. Supply the
+complete C14 worker pins, disposable database/S3 variables, bounded loopback API base URL, and
+C14_RUNNER_TEST_EVIDENCE_OUTPUT. That mode composes the API through registerC14Module, the worker
+through composeC14RenderRunner, downloads all five artifacts twice through fresh opaque grants, and
+independently decodes/revalidates the downloaded bytes. Do not relabel inert-fixture results as
+Blender, Cycles, GPU, or render-pass evidence.

@@ -27,9 +27,15 @@ import {
   FixedArgumentRendererProcess,
   IsolatedStillRenderer,
   rendererArtifactFileNames,
+  requireExactByteReplay,
+  renderContainerNormalizationPolicy,
 } from "../src/index.js";
 import { buildRenderScene } from "@interior-design/render-scene";
-import { compareProtectedImageGeometry } from "../../../packages/render-evaluation/src/index.js";
+import {
+  compareProtectedImageGeometry,
+  inspectRenderArtifact,
+  inspectSegmentationPng,
+} from "../../../packages/render-evaluation/src/index.js";
 import type { RenderArtifactRole, RenderProfile } from "@interior-design/contracts";
 import { renderFixture } from "../../../packages/render-scene/test/support.js";
 
@@ -47,6 +53,7 @@ const artifactRoles = [
   "normal-exr",
   "segmentation-png",
 ] as const satisfies readonly Exclude<RenderArtifactRole, "illustrative-enhancement-png">[];
+const exrRoles = ["multilayer-exr", "depth-exr", "normal-exr"] as const;
 
 interface BlenderIdentity {
   readonly buildHash: string;
@@ -157,6 +164,8 @@ async function runBundle(options: {
   readonly executableSha256: string;
   readonly exrInspectorPath: string;
   readonly exrInspectorSha256: string;
+  readonly ocioConfigPath: string;
+  readonly ocioConfigSha256: string;
   readonly hostFingerprintSha256: string;
   readonly identity: BlenderIdentity;
   readonly rendererScriptPath: string;
@@ -173,6 +182,8 @@ async function runBundle(options: {
   });
   const renderer = new IsolatedStillRenderer({
     descriptor: {
+      ocioConfigPath: options.ocioConfigPath,
+      ocioConfigSha256: options.ocioConfigSha256,
       executablePath: options.executablePath,
       executableSha256: options.executableSha256,
       rendererScriptPath: options.rendererScriptPath,
@@ -235,6 +246,14 @@ async function writePrimaryBundle(
 async function main(): Promise<void> {
   const arguments_ = parseArguments(process.argv.slice(2));
   await mkdir(path.dirname(arguments_.outputDirectory), { mode: 0o700, recursive: true });
+  const repositoryCommit = (
+    await execFile("git", ["rev-parse", "HEAD"], {
+      cwd: repositoryRoot(),
+      encoding: "utf8",
+      maxBuffer: maximumProcessOutputBytes,
+      timeout: 10_000,
+    })
+  ).stdout.trim();
   await access(arguments_.outputDirectory)
     .then(() => Promise.reject(new Error("C14_OUTPUT_DIRECTORY_EXISTS")))
     .catch((error: unknown) => {
@@ -244,12 +263,23 @@ async function main(): Promise<void> {
   const rendererRoot = path.resolve(import.meta.dirname, "..");
   const rendererScriptPath = path.join(rendererRoot, "renderer", "c14_render.py");
   const exrInspectorPath = path.join(rendererRoot, "renderer", "c14_inspect_exr.py");
-  const [executableBytes, rendererScriptBytes, exrInspectorBytes, identity] = await Promise.all([
-    regularFile(arguments_.blenderPath),
-    regularFile(rendererScriptPath),
-    regularFile(exrInspectorPath),
-    blenderIdentity(arguments_.blenderPath),
-  ]);
+  const identity = await blenderIdentity(arguments_.blenderPath);
+  const versionDirectory = identity.version.match(/^(\d+\.\d+)/u)?.[1];
+  assert(versionDirectory !== undefined, "C14_BLENDER_VERSION_DIRECTORY_UNAVAILABLE");
+  const ocioConfigPath = path.join(
+    path.dirname(arguments_.blenderPath),
+    versionDirectory,
+    "datafiles",
+    "colormanagement",
+    "config.ocio",
+  );
+  const [executableBytes, rendererScriptBytes, exrInspectorBytes, ocioConfigBytes] =
+    await Promise.all([
+      regularFile(arguments_.blenderPath),
+      regularFile(rendererScriptPath),
+      regularFile(exrInspectorPath),
+      regularFile(ocioConfigPath),
+    ]);
   const workspaceRoot = await mkdir(path.join(tmpdir(), "c14-host-acceptance"), {
     mode: 0o700,
     recursive: true,
@@ -277,31 +307,45 @@ async function main(): Promise<void> {
     exrInspectorSha256: sha256(exrInspectorBytes),
     hostFingerprintSha256,
     identity,
+    ocioConfigPath,
+    ocioConfigSha256: sha256(ocioConfigBytes),
     rendererScriptPath,
     rendererScriptSha256: sha256(rendererScriptBytes),
     workspaceRoot,
   };
   try {
-    const smoke = await runBundle({ ...common, resultId: randomUUID(), settings: smokeProfile });
+    const smokeStartedAt = Date.now();
+    const smoke = await runBundle({
+      ...common,
+      resultId: randomUUID(),
+      settings: smokeProfile,
+    });
+    const smokeElapsedMilliseconds = Date.now() - smokeStartedAt;
     assert(smoke.artifacts.length === artifactRoles.length, "C14_SMOKE_ARTIFACT_SET_INVALID");
+    const primaryStartedAt = Date.now();
     const primary = await runBundle({
       ...common,
       resultId: randomUUID(),
       settings: acceptanceProfile,
     });
+    const primaryElapsedMilliseconds = Date.now() - primaryStartedAt;
+    const replayStartedAt = Date.now();
     const replay = await runBundle({
       ...common,
       resultId: randomUUID(),
       settings: acceptanceProfile,
     });
-    const replayByteEquality = Object.fromEntries(
-      artifactRoles.map((role) => {
-        const first = primary.artifactBytes.get(role);
-        const second = replay.artifactBytes.get(role);
-        assert(first !== undefined && second !== undefined, "C14_REPLAY_ARTIFACT_MISSING");
-        return [role, sha256(first) === sha256(second)];
-      }),
+    const replayElapsedMilliseconds = Date.now() - replayStartedAt;
+    const replayEvidence = requireExactByteReplay(
+      artifactRoles,
+      primary.artifactBytes,
+      replay.artifactBytes,
     );
+    const replaySourceBindingEqual =
+      primary.manifest.renderSceneManifestSha256 === replay.manifest.renderSceneManifestSha256 &&
+      primary.manifest.source.sceneGlbSha256 === replay.manifest.source.sceneGlbSha256 &&
+      JSON.stringify(primary.manifest.source) === JSON.stringify(replay.manifest.source);
+    assert(replaySourceBindingEqual, "C14_REPLAY_SOURCE_OR_RENDER_SCENE_BINDING_MISMATCH");
     const primarySafe = primary.artifactBytes.get("geometry-safe-png");
     const replaySafe = replay.artifactBytes.get("geometry-safe-png");
     const primarySegmentation = primary.artifactBytes.get("segmentation-png");
@@ -327,47 +371,163 @@ async function main(): Promise<void> {
         geometryReplay.segmentationIoUBasisPoints === 10_000,
       "C14_REPLAY_GEOMETRY_MISMATCH",
     );
+    const fixture = renderFixture({ cameraTarget: { xMm: 0, yMm: 0, zMm: 500 } });
+    const primaryScene = buildRenderScene({
+      ...fixture.input,
+      profile: profile(identity, acceptanceProfile),
+      rendererScriptSha256: common.rendererScriptSha256,
+    });
+    const artifactValidation = Object.fromEntries(
+      await Promise.all(
+        artifactRoles.map(async (role) => {
+          const bytes = primary.artifactBytes.get(role);
+          const artifact = primary.artifacts.find((candidate) => candidate.role === role);
+          assert(bytes !== undefined && artifact !== undefined, "C14_ACCEPTANCE_ARTIFACT_MISSING");
+          return [role, await inspectRenderArtifact(bytes, artifact)] as const;
+        }),
+      ),
+    );
+    const independentExrInspector = new BundledOiioExrInspector({
+      descriptor: {
+        executablePath: common.executablePath,
+        executableSha256: common.executableSha256,
+        inspectorScriptPath: common.exrInspectorPath,
+        inspectorScriptSha256: common.exrInspectorSha256,
+      },
+      timeoutMilliseconds: renderTimeoutMilliseconds,
+      workspaceRoot: common.workspaceRoot,
+    });
+    const exrValidation = Object.fromEntries(
+      await Promise.all(
+        exrRoles.map(async (role) => {
+          const bytes = primary.artifactBytes.get(role);
+          assert(bytes !== undefined, "C14_ACCEPTANCE_ARTIFACT_MISSING");
+          return [role, await independentExrInspector.inspect(role, bytes)] as const;
+        }),
+      ),
+    );
+    assert(
+      exrRoles.every((role) => {
+        const inspection = exrValidation[role];
+        return (
+          inspection !== undefined &&
+          inspection.allFinite &&
+          inspection.actualChannels.length > 0 &&
+          inspection.widthPx === acceptanceProfile.widthPx &&
+          inspection.heightPx === acceptanceProfile.heightPx
+        );
+      }),
+      "C14_EXR_DURABLE_VALIDATION_FAILED",
+    );
+    const protectedGlbValidation = await new C10ProtectedGlbInspector().inspect(
+      fixture.input.sceneGlb,
+    );
+    const multilayerValidation = exrValidation["multilayer-exr"];
+    assert(multilayerValidation !== undefined, "C14_MULTILAYER_VALIDATION_MISSING");
+    const cryptomatteProtectedObjectMembership = Object.fromEntries(
+      primaryScene.manifest.segmentationPalette.map(({ elementId }) => [
+        elementId,
+        multilayerValidation.cryptomatteObjectNames.filter(
+          (name) => name === elementId || name.endsWith(":" + elementId),
+        ),
+      ]),
+    );
+    const cryptomatteLightMembership = Object.fromEntries(
+      primaryScene.manifest.lights.map(({ lightId }) => [
+        lightId,
+        multilayerValidation.cryptomatteObjectNames.filter(
+          (name) => name === "C14Light-" + lightId,
+        ),
+      ]),
+    );
+    const cryptomatteSceneMembership = {
+      actualObjectNames: multilayerValidation.cryptomatteObjectNames,
+      lights: cryptomatteLightMembership,
+      nonRenderableProtectedObjectIds: protectedGlbValidation.objectIds.filter(
+        (objectId) =>
+          !primaryScene.manifest.segmentationPalette.some(
+            ({ elementId }) => elementId === objectId,
+          ),
+      ),
+      renderableProtectedObjects: cryptomatteProtectedObjectMembership,
+    };
+    assert(
+      [
+        ...Object.values(cryptomatteProtectedObjectMembership),
+        ...Object.values(cryptomatteLightMembership),
+      ].every((matchingNames) => matchingNames.length === 1),
+      "C14_CRYPTOMATTE_MEMBERSHIP_MISMATCH",
+    );
+    const segmentationValidation = await inspectSegmentationPng(
+      primarySegmentation,
+      primaryScene.manifest.segmentationPalette.map(({ rgb8 }) => rgb8),
+    );
+    assert(
+      segmentationValidation.missingPaletteColours.length === 0 &&
+        segmentationValidation.unexpectedColours.length === 0,
+      "C14_SEGMENTATION_PALETTE_MISMATCH",
+    );
+    const availableBytesAfter = await freeBytes(workspaceRoot);
     const stageDirectory = await mkdtemp(path.join(tmpdir(), "c14-host-evidence-"));
     try {
-      const fixture = renderFixture({ cameraTarget: { xMm: 0, yMm: 0, zMm: 500 } });
-      const primaryScene = buildRenderScene({
-        ...fixture.input,
-        profile: profile(identity, acceptanceProfile),
-        rendererScriptSha256: common.rendererScriptSha256,
-      });
       await writePrimaryBundle(stageDirectory, primary, primaryScene.canonicalBytes());
+      const replayDirectory = path.join(stageDirectory, "replay");
+      await mkdir(replayDirectory, { mode: 0o700 });
+      await writePrimaryBundle(replayDirectory, replay, primaryScene.canonicalBytes());
       const evidence = {
         artifacts: Object.fromEntries(
           artifactRoles.map((role) => {
-            const bytes = primary.artifactBytes.get(role);
-            assert(bytes !== undefined, "C14_ACCEPTANCE_ARTIFACT_MISSING");
-            return [role, { byteLength: bytes.byteLength, sha256: sha256(bytes) }];
+            const declaration = primary.artifacts.find((artifact) => artifact.role === role);
+            assert(declaration !== undefined, "C14_ACCEPTANCE_ARTIFACT_MISSING");
+            return [
+              role,
+              {
+                declaration,
+                independentValidation: artifactValidation[role],
+              },
+            ];
           }),
         ),
         constraints: {
-          diskAdmissionMinimumBytes: minimumFreeBytes,
+          boundedProcessRegressionCases: [
+            "timeout kills process group",
+            "subprocess output limit kills process group",
+            "pinned executable hash mismatch fails closed",
+          ],
+          diskAdmission: {
+            availableBytesAfter,
+            availableBytesBefore: availableBytes,
+            minimumBytes: minimumFreeBytes,
+            passed: availableBytes >= minimumFreeBytes && availableBytesAfter >= minimumFreeBytes,
+          },
           maximumProcessOutputBytes,
           oneWorker: true,
           renderTimeoutMilliseconds,
         },
         fixture: "repository-owned synthetic exact C10/C13 render-scene fixture",
         hostFingerprintSha256,
+        outcome: "passed",
+        primary: {
+          elapsedMilliseconds: primaryElapsedMilliseconds,
+          outputManifestSha256: sha256(primary.manifestBytes),
+        },
         profile: profile(identity, acceptanceProfile),
         renderer: {
           blenderBuildHash: identity.buildHash,
           blenderVersion: identity.version,
+          containerNormalization: renderContainerNormalizationPolicy,
           executableSha256: common.executableSha256,
           exrInspectorScriptSha256: common.exrInspectorSha256,
+          ocioConfigSha256: common.ocioConfigSha256,
           rendererScriptSha256: common.rendererScriptSha256,
         },
         replay: {
-          artifactByteHashesEqual: replayByteEquality,
+          ...replayEvidence,
+          elapsedMilliseconds: replayElapsedMilliseconds,
           geometrySafeComparison: geometryReplay,
-          manifestSourceAndRenderSceneMatch:
-            primary.manifest.renderSceneManifestSha256 ===
-              replay.manifest.renderSceneManifestSha256 &&
-            primary.manifest.source.sceneGlbSha256 === replay.manifest.source.sceneGlbSha256,
+          manifestSourceAndRenderSceneMatch: replaySourceBindingEqual,
           outputManifestSha256: sha256(replay.manifestBytes),
+          retainedSubdirectory: "replay",
         },
         smoke: {
           artifactByteHashes: Object.fromEntries(
@@ -377,12 +537,23 @@ async function main(): Promise<void> {
               return [role, sha256(bytes)];
             }),
           ),
+          elapsedMilliseconds: smokeElapsedMilliseconds,
           profile: profile(identity, smokeProfile),
         },
         source: {
           c10GlbSha256: primary.manifest.source.sceneGlbSha256,
           c13Specification: primary.manifest.source.specification,
           renderSceneManifestSha256: primary.manifest.renderSceneManifestSha256,
+          repositoryCommit,
+        },
+        validation: {
+          camera: primaryScene.manifest.camera,
+          cryptomatteSceneMembership,
+          exr: exrValidation,
+          lights: primaryScene.manifest.lights,
+          materials: primaryScene.manifest.materials,
+          protectedGlb: protectedGlbValidation,
+          segmentation: segmentationValidation,
         },
       };
       await writeFile(

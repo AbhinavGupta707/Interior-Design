@@ -167,6 +167,7 @@ function configuredCapabilities(environment: C14EnvironmentSource): RenderCapabi
   const profileId = configuredProfileId(environment.C14_RENDER_PROFILE_ID);
   const requiredHashes = [
     environment.C14_RENDER_EXECUTABLE_SHA256,
+    environment.C14_RENDER_OCIO_SHA256,
     environment.C14_RENDERER_SCRIPT_SHA256,
     environment.C14_RENDER_HOST_FINGERPRINT_SHA256,
     environment.C14_RENDER_HOST_ACCEPTANCE_SHA256,

@@ -25,5 +25,9 @@ describe("C14 Blender driver static contract", () => {
     expect(source).toContain('raise RuntimeError("C14_RENDER_DEVICE_UNAVAILABLE")');
     expect(source).toContain('configure_cycles_device(profile["device"])');
     expect(source).toContain('entry["conversionPolicy"] != "c14-photometric-to-blender-v1"');
+    expect(source).toContain('scene.view_settings.view_transform = "Raw"');
+    expect(source).toContain("scene.cycles.samples = 1");
+    expect(source).toContain('scene.cycles.pixel_filter_type = "BOX"');
+    expect(source).toContain("scene.cycles.filter_width = 0.01");
   });
 });

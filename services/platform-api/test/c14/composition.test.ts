@@ -71,6 +71,7 @@ describe("C14 API composition", () => {
         C14_BLENDER_BUILD_HASH: "fbe6228777e7",
         C14_BLENDER_VERSION: "5.2.0 LTS",
         C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
+        C14_RENDER_OCIO_SHA256: "e".repeat(64),
         C14_RENDER_HARDWARE_EVIDENCE: "verified-authorised-host",
         C14_RENDER_HOST_ACCEPTANCE_SHA256: "b".repeat(64),
         C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),
@@ -103,9 +104,16 @@ describe("C14 API composition", () => {
     ]);
   });
 
-  it("fails closed when an enabled worker lacks an authorised-host acceptance pin", () => {
+  it("fails closed when an otherwise complete enabled worker lacks the OCIO attestation", () => {
     const incomplete = {
+      C14_BLENDER_BUILD_HASH: "fbe6228777e7",
+      C14_BLENDER_VERSION: "5.2.0 LTS",
+      C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
+      C14_RENDER_HARDWARE_EVIDENCE: "verified-authorised-host",
+      C14_RENDER_HOST_ACCEPTANCE_SHA256: "b".repeat(64),
+      C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),
       C14_RENDER_PROFILE_ID: "cycles-cpu-geometry-safe-v1",
+      C14_RENDERER_SCRIPT_SHA256: "d".repeat(64),
       C14_RENDER_WORKER_ENABLED: "true",
     };
     server = Fastify({ logger: false });
