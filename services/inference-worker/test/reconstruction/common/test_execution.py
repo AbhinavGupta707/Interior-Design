@@ -146,6 +146,68 @@ def test_workspace_file_limit_is_enforced_for_fast_completed_process(tmp_path: P
     assert result.status == "file-limit"
 
 
+def test_workspace_file_at_exact_limit_is_allowed_for_successful_process(tmp_path: Path) -> None:
+    script = _executable(
+        tmp_path / "exact-file-tool",
+        "from pathlib import Path\nPath('exact.bin').write_bytes(b'x' * 1024)\n",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    result = run_bounded(
+        BinaryRegistry.fixture({BinaryId.COLMAP: script}),
+        BinaryId.COLMAP,
+        (),
+        workspace=workspace,
+        limits=SubprocessLimits(timeout_seconds=2, maximum_file_bytes=1_024),
+    )
+
+    assert result.succeeded
+    assert (workspace / "exact.bin").stat().st_size == 1_024
+
+
+def test_failed_process_at_exact_file_limit_without_efbig_stays_failed(tmp_path: Path) -> None:
+    script = _executable(
+        tmp_path / "failed-at-boundary-tool",
+        "from pathlib import Path\n"
+        "Path('exact.bin').write_bytes(b'x' * 1024)\n"
+        "raise SystemExit(7)\n",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    result = run_bounded(
+        BinaryRegistry.fixture({BinaryId.COLMAP: script}),
+        BinaryId.COLMAP,
+        (),
+        workspace=workspace,
+        limits=SubprocessLimits(timeout_seconds=2, maximum_file_bytes=1_024),
+    )
+
+    assert result.status == "failed"
+    assert result.return_code == 7
+
+
+def test_failed_process_below_workspace_file_limit_stays_failed(tmp_path: Path) -> None:
+    script = _executable(
+        tmp_path / "failed-tool",
+        "from pathlib import Path\nPath('small.bin').write_bytes(b'x' * 16)\nraise SystemExit(7)\n",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    result = run_bounded(
+        BinaryRegistry.fixture({BinaryId.COLMAP: script}),
+        BinaryId.COLMAP,
+        (),
+        workspace=workspace,
+        limits=SubprocessLimits(timeout_seconds=2, maximum_file_bytes=1_024),
+    )
+
+    assert result.status == "failed"
+    assert result.return_code == 7
+
+
 def test_aggregate_workspace_limit_is_independent_of_per_file_limit(tmp_path: Path) -> None:
     script = _executable(
         tmp_path / "aggregate-tool",

@@ -179,7 +179,6 @@ export class FFmpegMediaTools {
       "1",
       "-fflags",
       "+bitexact",
-      "-autorotate",
       "-i",
       sourcePath,
       "-map",

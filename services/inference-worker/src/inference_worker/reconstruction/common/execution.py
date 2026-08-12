@@ -1,6 +1,7 @@
 """Bounded, shell-free subprocess execution for allowlisted reconstruction tools."""
 
 import ctypes
+import errno
 import hashlib
 import os
 import platform
@@ -169,6 +170,7 @@ def _workspace_limits_exceeded(
     maximum_file_bytes: int,
     maximum_workspace_bytes: int,
     maximum_entries: int = 100_000,
+    include_file_boundary: bool = False,
 ) -> bool:
     """Check per-file and aggregate disk bounds without following symlinks."""
 
@@ -193,7 +195,9 @@ def _workspace_limits_exceeded(
                         pending.append(Path(child.path))
                     elif child.is_file(follow_symlinks=False):
                         size = child.stat(follow_symlinks=False).st_size
-                        if size > maximum_file_bytes:
+                        if size > maximum_file_bytes or (
+                            include_file_boundary and size == maximum_file_bytes
+                        ):
                             return True
                         total += size
                         if total > maximum_workspace_bytes:
@@ -382,10 +386,34 @@ def run_bounded(
         stderr = stderr_file.read(limits.maximum_output_bytes + 1)
         if len(stdout) + len(stderr) > limits.maximum_output_bytes and status == "succeeded":
             status = "output-limit"
-        if status == "succeeded" and _workspace_limits_exceeded(
+        file_size_signal = getattr(signal, "SIGXFSZ", None)
+        terminated_by_file_size_limit = (
+            file_size_signal is not None and return_code == -int(file_size_signal)
+        )
+        workspace_limit_exceeded = _workspace_limits_exceeded(
             workspace,
             maximum_file_bytes=limits.maximum_file_bytes,
             maximum_workspace_bytes=limits.maximum_workspace_bytes,
+        )
+        # CPython ignores SIGXFSZ and reports EFBIG after RLIMIT_FSIZE leaves the
+        # file exactly at the ceiling. Require both the concrete kernel error and
+        # that boundary state so an unrelated failed process is not reclassified.
+        file_size_error = f"[Errno {errno.EFBIG}] {os.strerror(errno.EFBIG)}".encode()
+        failed_at_file_boundary = (
+            status == "failed"
+            and platform.system() == "Linux"
+            and file_size_error in stderr
+            and _workspace_limits_exceeded(
+                workspace,
+                maximum_file_bytes=limits.maximum_file_bytes,
+                maximum_workspace_bytes=limits.maximum_workspace_bytes,
+                include_file_boundary=True,
+            )
+        )
+        if status in {"failed", "succeeded"} and (
+            terminated_by_file_size_limit
+            or workspace_limit_exceeded
+            or failed_at_file_boundary
         ):
             status = "file-limit"
         elapsed_milliseconds = max(0, int((time.monotonic() - started) * 1_000))
