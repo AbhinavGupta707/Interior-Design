@@ -58,7 +58,11 @@ import { applyC10Migration } from "../../../services/platform-api/src/c10.js";
 import { applyC11Migration } from "../../../services/platform-api/src/c11.js";
 import { applyC12Migration } from "../../../services/platform-api/src/c12.js";
 import { applyC13Migration } from "../../../services/platform-api/src/c13.js";
-import { applyC14Migration, registerC14Module } from "../../../services/platform-api/src/c14.js";
+import {
+  applyC14Migration,
+  c14RenderArtifactAccessTokenMaximumLength,
+  registerC14Module,
+} from "../../../services/platform-api/src/c14.js";
 import { PostgresBriefRepository } from "../../../services/platform-api/src/modules/briefs/postgres.js";
 import { BriefService } from "../../../services/platform-api/src/modules/briefs/service.js";
 import { PostgresBriefSourceVerifier } from "../../../services/platform-api/src/modules/briefs/sources.js";
@@ -713,7 +717,10 @@ describeLive(liveSuiteDescription, () => {
     const apiBaseUrl = process.env.C14_RUNNER_TEST_API_BASE_URL ?? "http://127.0.0.1:3014";
     const renderService = useAcceptedBlender
       ? (() => {
-          apiServer = Fastify({ logger: false });
+          apiServer = Fastify({
+            logger: false,
+            routerOptions: { maxParamLength: c14RenderArtifactAccessTokenMaximumLength },
+          });
           const module = registerC14Module(
             apiServer,
             "test",

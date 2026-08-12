@@ -1,6 +1,7 @@
 import { loadPlatformApiConfig } from "@interior-design/config";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { c14RenderArtifactAccessTokenMaximumLength } from "../src/c14.js";
 import {
   ApiError,
   createServer,
@@ -72,6 +73,26 @@ describe("platform API health contracts", () => {
       status: "not_ready",
     });
     expect(response.body).not.toContain("secret");
+  });
+
+  it("admits the bounded opaque C14 token route length and rejects anything longer", async () => {
+    const server = createServer({ config: testConfig, logger: false });
+    servers.push(server);
+    server.get("/test/opaque/:token", (_request, reply) => reply.status(204).send());
+
+    const [atLimit, aboveLimit] = await Promise.all([
+      server.inject({
+        method: "GET",
+        url: "/test/opaque/" + "a".repeat(c14RenderArtifactAccessTokenMaximumLength),
+      }),
+      server.inject({
+        method: "GET",
+        url: "/test/opaque/" + "a".repeat(c14RenderArtifactAccessTokenMaximumLength + 1),
+      }),
+    ]);
+
+    expect(atLimit.statusCode).toBe(204);
+    expect(aboveLimit.statusCode).not.toBe(204);
   });
 });
 
