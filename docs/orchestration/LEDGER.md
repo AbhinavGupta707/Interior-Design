@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C13 are complete. C14 Session A is locally closed as `implementation-ready / hardware-gate-deferred`; C15 remains closed and terminal for this run, and C16 is not authorised.
+- Autonomous execution boundary: C0-C14 are complete. C14 Session B closed the authorised-host gate for the exact accepted Linux CPU profile on codex/c14-windows-acceptance; C15 remains closed and terminal for this run, and C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -572,7 +572,7 @@
 
 ### Master activation
 
-- Status: **C14 implementation-ready / hardware-gate-deferred** after the 2026-08-11 local integration close-out; authorised-host render acceptance remains deferred and C15 remains closed.
+- Status: **C14 closed** after the 2026-08-12 Session B authorised-host acceptance and real production publication; the exact accepted Linux CPU profile is complete, unconfigured GPU profiles remain unavailable, and C15 remains closed.
 - Contract: `docs/orchestration/checkpoints/C14_CONTRACT.md` (`c14-render-scene-manifest-v1`, `c14-render-job-v1`, `c14-render-artifact-v1`, `c14-render-output-manifest-v1`, `c14-enhancement-result-v1`, `c14-geometry-guard-v1`).
 - Immutable predecessor/C13 ledger close: `ad161f4478c83f295f5cebcc5b3a8b622df31dab`.
 - Prelude commit: `8a5f483a4bced91eae25c8ff9d3ae652ea8f2ee9`.
@@ -611,3 +611,13 @@
 - Browser gates: root onboarding Playwright 6/6 on Chromium desktop/mobile; C14 22/22 across Chromium, Firefox and WebKit desktop/mobile plus final Chromium workflow 1/1. Screenshot `/tmp/c14-render-stills-playwright-evidence/chromium-desktop-inert-workflow.png` is visibly fixture/deferred-labelled. The Codex in-app Browser controller failed at bootstrap (`Cannot redefine property: process`) before creating a tab and is explicitly `NOT RUN` evidence, not a hidden product failure.
 - Non-evidence and deferred gate: no Blender executable/version/probe/test/acceptance script was invoked on this Mac. The ignored 2026-07-22 local bundle was not used. No GPU/Metal/CUDA/OptiX, external enhancement provider, model download, physical device, customer data, representative-home review or production deployment was run. Real Blender/Cycles/pass/performance evidence requires Session B on an explicitly authorised host at the exact pushed Session A commit.
 - Durable record: `docs/evaluation/render-stills/C14_INTEGRATED_CLOSEOUT_2026-08-11.md`; C14 remains **implementation-ready / hardware-gate-deferred**. C15 was not opened.
+
+### 2026-08-12 Session B authorised-host acceptance and C14 closure
+
+- Authority and source: one primary gpt-5.6-sol / xhigh agent on codex/c14-windows-acceptance, required base dab5580f9a476eeb33aeea66ae98c872706a156c. Implementation fixes dbb227c904df5394720779a08d437234415df0b3 and 1e9b7e227e6d96e4b65842dde8191f97fb97a54d were committed and pushed before the final counted run. The clean counted source was exactly 1e9b7e227e6d96e4b65842dde8191f97fb97a54d.
+- Determinism repair: retained visually identical outputs differed only in volatile PNG Date/RenderTime/Cycles timing text chunks and EXR Date/RenderTime strings. c14-render-container-normalization-v1 removes or freezes only those fields while preserving PNG IDAT and EXR pixel/offset payloads. Acceptance now fails closed on every replay mismatch, records primary/replay hashes and carries complete independent validation plus OCIO attestation. Root tsx, exact-palette segmentation and production renderer composition were also repaired.
+- Phase 1: authorised Linux Blender 5.2.0 LTS build fbe6228777e7, executable 83e8261eace07a5337f71b52d156c1eece1a6ba913403cc6406182ae58bacf27, renderer 1cdaf63c4d6c1911c4f697ab38e88abfaaf8ebd0ac725958e94582953bf30a17, inspector cb6fcba0be4181c6b96e575c86155880d5e262eac7aa2a31b9ed6d000d8656f3, OCIO 47a7d83e79c1d21f49ba6c505efe311da723471688c614b5c366e1da7eb8ea3a. CPU Cycles smoke 64x64/one sample and primary/replay 256x256/16 samples passed. All five primary artifact hashes exactly matched replay; acceptance evidence hash d1313de0438d9b35666aa088a95ff77f132f4d0f086f826a86ed6781a16d77a5.
+- Phase 2: disposable loopback Postgres/PostGIS and SeaweedFS ran the real registered API -> composed spatial worker -> IsolatedStillRenderer -> accepted Blender -> object-store path. Focused PostgreSQL passed 8/8 and the live production case passed 1/1 without mandatory skips. Render job 2a2e3fc7-fec6-46b0-81b5-86495a90ea55, result ee445fed-f660-4c2b-8958-c950cc59949d; all five artifacts were freshly downloaded twice through distinct opaque URLs and independently re-hashed/decoded/inspected. Production evidence hash 6300078b32ff8bdc25dfeaa66eccaa96f23f4912740962621937c08678a22710. Canonical model state was unchanged.
+- Final gates: environment-enabled pnpm test:c14 passed with zero mandatory skips; UV_CACHE_DIR=.cache/uv pnpm verify, contract, integration, security 921/921, geometry 43/43, onboarding Playwright 6/6 and C14 Playwright 22/22 across Chromium/Firefox/WebKit desktop/mobile passed. The only verify skips remain two unrelated unavailable COLMAP/Open3D capabilities.
+- Closure boundary: C14 is closed only for the exact pinned Linux CPU profile. CUDA, OptiX, GPU, Metal, native Windows Blender, Blender MCP, enhancement providers and production deployment remain unavailable/unclaimed. FrozenInertRenderer remains labelled test-only evidence and was not used for production publication. No merge or PR was created; C15 was not opened.
+- Durable record: docs/evaluation/render-stills/C14_AUTHORISED_HOST_ACCEPTANCE_2026-08-12.md.
