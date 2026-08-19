@@ -19,6 +19,8 @@ async function descriptor(scriptName: string): Promise<RendererExecutableDescrip
   const rendererScriptPath = fileURLToPath(fixture(scriptName));
   await chmod(executablePath, 0o755);
   return {
+    ocioConfigPath: rendererScriptPath,
+    ocioConfigSha256: await hashFile(fixture(scriptName)),
     executablePath,
     executableSha256: await hashFile(fixture("inert-renderer.ts")),
     rendererScriptPath,
@@ -69,6 +71,18 @@ describe("C14 fixed subprocess boundary", () => {
     await expect(
       new FixedArgumentRendererProcess().run({
         descriptor: { ...pinned, executableSha256: "0".repeat(64) },
+        maximumOutputBytes: 512,
+        timeoutMilliseconds: 2_000,
+        workspacePath: fileURLToPath(fixture(".")),
+      }),
+    ).rejects.toMatchObject({ safeCode: "RENDER_EXECUTABLE_HASH_MISMATCH" });
+  });
+
+  it("rejects an OCIO config whose pinned bytes changed", async () => {
+    const pinned = await descriptor("inert.py");
+    await expect(
+      new FixedArgumentRendererProcess().run({
+        descriptor: { ...pinned, ocioConfigSha256: "0".repeat(64) },
         maximumOutputBytes: 512,
         timeoutMilliseconds: 2_000,
         workspacePath: fileURLToPath(fixture(".")),

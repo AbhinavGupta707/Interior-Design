@@ -106,6 +106,8 @@ describe("strict worker configuration", () => {
         C14_RENDER_EXECUTABLE_PATH: "/opt/c14/blender-wrapper",
         C14_RENDER_EXECUTABLE_SHA256: "a".repeat(64),
         C14_RENDER_HEIGHT_PX: "256",
+        C14_RENDER_OCIO_PATH: "/opt/c14/config.ocio",
+        C14_RENDER_OCIO_SHA256: "f".repeat(64),
         C14_RENDER_HARDWARE_EVIDENCE: "verified-authorised-host",
         C14_RENDER_HOST_ACCEPTANCE_SHA256: "e".repeat(64),
         C14_RENDER_HOST_FINGERPRINT_SHA256: "c".repeat(64),

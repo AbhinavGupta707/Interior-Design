@@ -142,6 +142,14 @@ function parseInspectionOutput(
     !(value as { readonly channels: readonly unknown[] }).channels.every(
       (channel) => typeof channel === "string" && /^[A-Za-z0-9_.]{1,120}$/u.test(channel),
     ) ||
+    !Array.isArray(
+      (value as { readonly cryptomatteObjectNames?: unknown }).cryptomatteObjectNames,
+    ) ||
+    !(
+      value as { readonly cryptomatteObjectNames: readonly unknown[] }
+    ).cryptomatteObjectNames.every(
+      (name) => typeof name === "string" && name.length > 0 && name.length <= 240,
+    ) ||
     typeof (value as { readonly allFinite?: unknown }).allFinite !== "boolean" ||
     !Number.isInteger((value as { readonly widthPx?: unknown }).widthPx) ||
     !Number.isInteger((value as { readonly heightPx?: unknown }).heightPx)
@@ -154,16 +162,20 @@ function parseInspectionOutput(
     widthPx < 1 ||
     heightPx < 1 ||
     widthPx * heightPx > c14RenderPolicy.maximumPixels ||
-    (value as { readonly channels: readonly string[] }).channels.length > 128
+    (value as { readonly channels: readonly string[] }).channels.length > 128 ||
+    (value as { readonly cryptomatteObjectNames: readonly string[] }).cryptomatteObjectNames
+      .length > 100_000
   ) {
     rendererFailure("RENDER_EXR_INSPECTION_INVALID");
   }
+  const actualChannels = (value as { readonly channels: readonly string[] }).channels;
   return {
+    actualChannels,
     allFinite: (value as { readonly allFinite: boolean }).allFinite,
-    channels: normalizedChannels(
-      role,
-      (value as { readonly channels: readonly string[] }).channels,
-    ),
+    channels: normalizedChannels(role, actualChannels),
+    cryptomatteObjectNames: [
+      ...(value as { readonly cryptomatteObjectNames: readonly string[] }).cryptomatteObjectNames,
+    ].sort((left, right) => left.localeCompare(right)),
     heightPx,
     widthPx,
   };

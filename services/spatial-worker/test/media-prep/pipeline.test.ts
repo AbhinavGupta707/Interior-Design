@@ -31,6 +31,31 @@ afterEach(async () => {
 });
 
 describe("C8 deterministic media preparation", () => {
+  it.each(["6.1.1", "8.1"])(
+    "relies on documented default autorotation for FFmpeg %s command syntax",
+    async (version) => {
+      const process = new SyntheticMediaProcess();
+      process.version = version;
+      const bundle = await new MediaPreparationPipeline({
+        privacyReviewer: acceptingPrivacyReviewer,
+        process,
+        temporaryRoot: await temporaryRoot(),
+      }).prepare(requestFor(sourceFor(await syntheticPng())));
+
+      const extraction = process.calls.find(
+        ({ arguments_, executable }) => executable === "ffmpeg" && arguments_.includes("-frames:v"),
+      );
+      expect(extraction).toBeDefined();
+      if (extraction === undefined) throw new Error("missing FFmpeg extraction command");
+      expect(extraction.arguments_).not.toContain("-autorotate");
+      expect(extraction.arguments_).not.toContain("-noautorotate");
+      const inputOptionIndex = extraction.arguments_.indexOf("-i");
+      expect(inputOptionIndex).toBeGreaterThanOrEqual(0);
+      expect(extraction.arguments_[inputOptionIndex + 1]).toMatch(/source-0000\.png$/u);
+      await bundle.cleanup();
+    },
+  );
+
   it("creates exact deterministic hashes, strips metadata, and never forwards request strings as flags", async () => {
     const bytes = await syntheticPng();
     const request = requestFor(

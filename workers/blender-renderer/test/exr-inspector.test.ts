@@ -8,6 +8,7 @@ function output(channels: readonly string[]): string {
     `C14_EXR_INSPECTION ${JSON.stringify({
       allFinite: true,
       channels,
+      cryptomatteObjectNames: ["furnishing:fixture"],
       heightPx: 256,
       schemaVersion: "c14-exr-inspection-v1",
       widthPx: 256,
@@ -19,7 +20,9 @@ function output(channels: readonly string[]): string {
 describe("C14 independently pinned EXR inspection", () => {
   it("normalises Blender 5.2 diagnostic channel spelling to the C14 contract", () => {
     expect(__test__.parseInspectionOutput(output(["depth.V"]), "depth-exr")).toMatchObject({
+      actualChannels: ["depth.V"],
       channels: ["Z"],
+      cryptomatteObjectNames: ["furnishing:fixture"],
       heightPx: 256,
       widthPx: 256,
     });

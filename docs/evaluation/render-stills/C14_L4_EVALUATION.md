@@ -4,13 +4,13 @@
 
 The owned C14-L4 lane provides an accessible `/render-stills/:projectId` workspace, an isolated strict-schema C14 BFF, fresh artifact access and byte verification, and an independent Sharp-backed artifact evaluator.
 
-This lane record is retained as focused UX/evaluator evidence. The integrated 2026-08-11 checkpoint result, live control-plane IDs/hashes and repository-wide gates are recorded in `C14_INTEGRATED_CLOSEOUT_2026-08-11.md`.
+This lane record is retained as focused UX/evaluator evidence. The integrated 2026-08-11 checkpoint result, live control-plane IDs/hashes and repository-wide gates are recorded in `C14_INTEGRATED_CLOSEOUT_2026-08-11.md`. The exact authorised-host Session B acceptance and real production publication are recorded in `C14_AUTHORISED_HOST_ACCEPTANCE_2026-08-12.md`; that record supersedes the hardware deferral for the accepted Linux CPU profile.
 
 The product truth boundary is explicit:
 
 - “Geometry-locked deterministic render” is derived visualisation only.
 - “Illustrative optional enhancement” is never canonical.
-- The current Mac remains a real-render hardware hold. No Blender process was invoked and no fixture image is presented as a real render.
+- The Session A Mac remained a real-render hardware hold. No Blender process was invoked there and no fixture image from that session is presented as a real render.
 - The safe result remains visible when enhancement is disabled, fails, or is rejected.
 
 No frozen contract, generated client, migration, shared navigation, global CSS, render worker, or provider configuration changed.
@@ -85,7 +85,7 @@ The Playwright matrix covers exact deep links, all durable lifecycle stages, key
 
 ## Integrated status and remaining limitations
 
-1. Project navigation now links to `/render-stills/:projectId`, and the production API/worker composition is covered by focused and disposable-live tests.
-2. Production profiles remain unavailable until an authorised host supplies the exact required renderer/build/script/host/acceptance pins. `synthetic-fixture` and `FrozenInertRenderer` remain test-only evidence classes.
-3. Satisfy and record the C14 hardware/provider gate on an authorised render host before claiming a real geometry-safe render. This Mac provides no real-render evidence.
-4. Pixel-level OpenEXR and Blender/scene/camera validation remain outside this evaluator. They require separately authorised host evidence and must not be inferred from these header and PNG checks.
+1. Project navigation links to `/render-stills/:projectId`, and the production API/worker composition passed focused and disposable-live tests.
+2. Session B accepted the exact Blender 5.2.0 LTS build `fbe6228777e7` with CPU Cycles and complete executable/script/inspector/OCIO/host/acceptance pins. The real API -> worker -> accepted Blender -> object-store journey published and independently revalidated all five artifacts.
+3. `synthetic-fixture` and `FrozenInertRenderer` remain labelled test-only evidence classes and were not used for the production publication. CUDA, OptiX, GPU, Metal and all unconfigured profiles remain unavailable and unclaimed.
+4. Pixel-level OpenEXR and Blender/scene/camera validation remain outside this focused L4 evaluator, but the separate authorised-host record contains the required finite-pixel, channel, scene, camera, geometry and exact-byte replay evidence. Those results must not be inferred from L4 fixtures alone.

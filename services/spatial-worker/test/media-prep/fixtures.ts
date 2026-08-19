@@ -66,6 +66,7 @@ export class SyntheticMediaProcess implements MediaProcessPort {
   }[] = [];
   failExtraction?: "output-limit" | "timeout";
   frameCount = 1;
+  version = "synthetic-8.1";
   probe: SyntheticProbe = {
     codecName: "png",
     duration: "0",
@@ -81,7 +82,7 @@ export class SyntheticMediaProcess implements MediaProcessPort {
       return {
         exitCode: 0,
         stderr: "",
-        stdout: `${executable} version synthetic-8.1 Copyright synthetic fixture\n`,
+        stdout: `${executable} version ${this.version} Copyright synthetic fixture\n`,
       };
     }
     if (executable === "ffprobe") {

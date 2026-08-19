@@ -16,6 +16,8 @@ export const rendererArtifactFileNames = Object.freeze({
 export interface RendererExecutableDescriptor {
   readonly executablePath: string;
   readonly executableSha256: string;
+  readonly ocioConfigPath: string;
+  readonly ocioConfigSha256: string;
   readonly rendererScriptPath: string;
   readonly rendererScriptSha256: string;
 }
@@ -38,7 +40,9 @@ export interface RendererProcessPort {
 }
 
 export interface ExrInspection {
+  readonly actualChannels: readonly string[];
   readonly channels: readonly string[];
+  readonly cryptomatteObjectNames: readonly string[];
   readonly heightPx: number;
   readonly allFinite: boolean;
   readonly widthPx: number;

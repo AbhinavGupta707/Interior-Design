@@ -28,7 +28,14 @@ describe("C14 renderer artifact validation", () => {
         expectedWidthPx: 64,
         exrInspector: {
           inspect: () =>
-            Promise.resolve({ allFinite: true, channels: [], heightPx: 64, widthPx: 64 }),
+            Promise.resolve({
+              actualChannels: [],
+              allFinite: true,
+              channels: [],
+              cryptomatteObjectNames: [],
+              heightPx: 64,
+              widthPx: 64,
+            }),
         },
         role: "geometry-safe-png",
       }),
@@ -41,7 +48,14 @@ describe("C14 renderer artifact validation", () => {
         expectedWidthPx: 64,
         exrInspector: {
           inspect: () =>
-            Promise.resolve({ allFinite: true, channels: [], heightPx: 64, widthPx: 64 }),
+            Promise.resolve({
+              actualChannels: [],
+              allFinite: true,
+              channels: [],
+              cryptomatteObjectNames: [],
+              heightPx: 64,
+              widthPx: 64,
+            }),
         },
         role: "geometry-safe-png",
       }),
@@ -57,7 +71,14 @@ describe("C14 renderer artifact validation", () => {
         expectedWidthPx: 64,
         exrInspector: {
           inspect: () =>
-            Promise.resolve({ allFinite: true, channels: ["Z"], heightPx: 64, widthPx: 64 }),
+            Promise.resolve({
+              actualChannels: ["depth.V"],
+              allFinite: true,
+              channels: ["Z"],
+              cryptomatteObjectNames: [],
+              heightPx: 64,
+              widthPx: 64,
+            }),
         },
         role: "depth-exr",
       }),
@@ -70,7 +91,14 @@ describe("C14 renderer artifact validation", () => {
         expectedWidthPx: 64,
         exrInspector: {
           inspect: () =>
-            Promise.resolve({ allFinite: false, channels: ["Z"], heightPx: 64, widthPx: 64 }),
+            Promise.resolve({
+              actualChannels: ["depth.V"],
+              allFinite: false,
+              channels: ["Z"],
+              cryptomatteObjectNames: [],
+              heightPx: 64,
+              widthPx: 64,
+            }),
         },
         role: "depth-exr",
       }),

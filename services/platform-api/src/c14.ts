@@ -167,6 +167,7 @@ function configuredCapabilities(environment: C14EnvironmentSource): RenderCapabi
   const profileId = configuredProfileId(environment.C14_RENDER_PROFILE_ID);
   const requiredHashes = [
     environment.C14_RENDER_EXECUTABLE_SHA256,
+    environment.C14_RENDER_OCIO_SHA256,
     environment.C14_RENDERER_SCRIPT_SHA256,
     environment.C14_RENDER_HOST_FINGERPRINT_SHA256,
     environment.C14_RENDER_HOST_ACCEPTANCE_SHA256,
@@ -306,13 +307,16 @@ function configuredObjectStorage(
   };
 }
 
+export const c14RenderArtifactAccessTokenMaximumLength = 12_288;
+
 function registerRenderArtifactBrokerRoute(
   server: FastifyInstance,
   broker: RenderArtifactBroker,
 ): void {
   server.get("/v1/render-artifact-access/:token", async (request, reply) => {
     const { token } = request.params as { readonly token?: unknown };
-    if (typeof token !== "string" || token.length > 12_288) return reply.status(404).send();
+    if (typeof token !== "string" || token.length > c14RenderArtifactAccessTokenMaximumLength)
+      return reply.status(404).send();
     const artifact = await broker.open(token);
     if (artifact === undefined) return reply.status(404).send();
     reply.header("cache-control", "private, no-store");

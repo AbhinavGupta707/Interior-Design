@@ -19,7 +19,11 @@ import { registerC10Module, type C10ModuleOptions } from "./c10.js";
 import { registerC11Module, type C11ModuleOptions } from "./c11.js";
 import { registerC12Module, type C12ModuleOptions } from "./c12.js";
 import { registerC13Module, type C13ModuleOptions } from "./c13.js";
-import { registerC14Module, type C14ModuleOptions } from "./c14.js";
+import {
+  c14RenderArtifactAccessTokenMaximumLength,
+  registerC14Module,
+  type C14ModuleOptions,
+} from "./c14.js";
 import { generateRequestId, registerRequestCorrelation } from "./correlation.js";
 import { registerErrorHandling } from "./errors.js";
 import { registerHealthRoutes, type ReadinessCheck } from "./health.js";
@@ -201,6 +205,7 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
     bodyLimit: 1_048_576,
     genReqId: generateRequestId,
     logger: options.logger ?? defaultLogger(config),
+    routerOptions: { maxParamLength: c14RenderArtifactAccessTokenMaximumLength },
     requestIdHeader: false,
     trustProxy: false,
   });

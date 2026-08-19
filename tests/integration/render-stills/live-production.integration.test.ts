@@ -14,8 +14,12 @@ import {
   sha256Bytes,
 } from "../../../packages/catalog/src/index.js";
 import { DeterministicDesignBriefKernel } from "../../../packages/design-brief/src/index.js";
-import { parseProtectedC10Glb } from "../../../packages/render-scene/src/index.js";
 import {
+  parseProtectedC10Glb,
+  segmentationPaletteForElementIds,
+} from "../../../packages/render-scene/src/index.js";
+import {
+  BundledOiioExrInspector,
   assertExrMagic,
   canonicalJson,
   createOutputManifest,
@@ -27,6 +31,13 @@ import {
 import { minimalExr, solidPng } from "../../../packages/render-evaluation/test/fixtures.js";
 import { randomUUID, createHash } from "node:crypto";
 import type { JSONValue, Sql } from "../../../services/platform-api/node_modules/postgres";
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
+import Fastify, { type FastifyInstance } from "../../../services/platform-api/node_modules/fastify";
+import {
+  inspectRenderArtifact,
+  inspectSegmentationPng,
+} from "../../../packages/render-evaluation/src/index.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { C10SpecificationSceneJobPort } from "../../../services/platform-api/src/c13.js";
@@ -47,7 +58,11 @@ import { applyC10Migration } from "../../../services/platform-api/src/c10.js";
 import { applyC11Migration } from "../../../services/platform-api/src/c11.js";
 import { applyC12Migration } from "../../../services/platform-api/src/c12.js";
 import { applyC13Migration } from "../../../services/platform-api/src/c13.js";
-import { applyC14Migration } from "../../../services/platform-api/src/c14.js";
+import {
+  applyC14Migration,
+  c14RenderArtifactAccessTokenMaximumLength,
+  registerC14Module,
+} from "../../../services/platform-api/src/c14.js";
 import { PostgresBriefRepository } from "../../../services/platform-api/src/modules/briefs/postgres.js";
 import { BriefService } from "../../../services/platform-api/src/modules/briefs/service.js";
 import { PostgresBriefSourceVerifier } from "../../../services/platform-api/src/modules/briefs/sources.js";
@@ -87,12 +102,14 @@ import {
   ExactC10RenderSourceMaterial,
   ExactC14RenderSceneBuilder,
   S3ExactCatalogManifestReader,
+  composeC14RenderRunner,
 } from "../../../services/spatial-worker/src/render-stills/composition.js";
 import { StatfsRenderDisk } from "../../../services/spatial-worker/src/render-stills/disk.js";
 import { RenderStillRunner } from "../../../services/spatial-worker/src/render-stills/runner.js";
 import { SceneCompilationRunner } from "../../../services/spatial-worker/src/scene-compile/runner.js";
 import { createS3Client } from "../../../services/spatial-worker/src/storage.js";
 import { S3CatalogPublicationStore } from "../../../services/spatial-worker/src/catalog/s3-publication.js";
+import { fixtureIdentity } from "../../../services/platform-api/test/c6/support.js";
 import { householdEntry } from "../../../services/platform-api/test/c11/briefs/support.js";
 import {
   actor,
@@ -115,6 +132,16 @@ const storageEndpoint = process.env.C14_RUNNER_TEST_STORAGE_ENDPOINT ?? "";
 const describeLive =
   databaseUrl.length === 0 || storageEndpoint.length === 0 ? describe.skip : describe;
 
+const rendererMode = process.env.C14_RUNNER_TEST_RENDERER_MODE ?? "inert";
+if (!["inert", "blender"].includes(rendererMode)) {
+  throw new Error("C14_RUNNER_TEST_RENDERER_MODE must be inert or blender.");
+}
+const useAcceptedBlender = rendererMode === "blender";
+const productionEvidenceOutput = process.env.C14_RUNNER_TEST_EVIDENCE_OUTPUT;
+
+const liveSuiteDescription = useAcceptedBlender
+  ? "C14 production-composed API to accepted Blender to object-store acceptance"
+  : "C14 local C1-C14 control-plane acceptance with an inert renderer boundary";
 const inertRendererScriptSha256 = createHash("sha256")
   .update("c14-frozen-inert-renderer-boundary-v1")
   .digest("hex");
@@ -192,12 +219,14 @@ class FrozenInertRenderer {
             inspect: (exrRole) =>
               Promise.resolve({
                 allFinite: true,
+                actualChannels: [],
                 channels:
                   exrRole === "depth-exr"
                     ? ["Z"]
                     : exrRole === "normal-exr"
                       ? ["Normal.X", "Normal.Y", "Normal.Z"]
                       : ["Combined.R", "Combined.G", "Combined.B", "CryptoObject00.R"],
+                cryptomatteObjectNames: [],
                 heightPx,
                 widthPx,
               }),
@@ -271,17 +300,19 @@ async function publishAsset(
   `;
 }
 
-describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer boundary", () => {
+describeLive(liveSuiteDescription, () => {
   let sql!: Sql;
   let config: ReturnType<typeof parseWorkerConfig>;
   let s3: ReturnType<typeof createS3Client>;
   let sceneStorage: S3SceneObjectStorage;
   let broker: EncryptedRenderArtifactBroker;
+  let apiServer: FastifyInstance | undefined;
 
   beforeAll(async () => {
     sql = createC1Sql(databaseUrl);
     config = parseWorkerConfig({
       C2_DATABASE_URL: databaseUrl,
+      ...process.env,
       C2_HEARTBEAT_MS: "1000",
       C2_LEASE_MS: "10000",
       C2_S3_ACCESS_KEY_ID: process.env.C14_RUNNER_TEST_STORAGE_ACCESS_KEY_ID ?? "localdev",
@@ -293,7 +324,11 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
       C2_WORKER_ID: "c14-full-chain-worker",
       NODE_ENV: "test",
     });
-    expect(config.c14Render).toBeUndefined();
+    if (useAcceptedBlender) {
+      expect(config.c14Render).toBeDefined();
+    } else {
+      expect(config.c14Render).toBeUndefined();
+    }
     s3 = createS3Client(config);
     sceneStorage = new S3SceneObjectStorage(config.s3, { client: s3 });
     broker = new EncryptedRenderArtifactBroker({
@@ -332,9 +367,12 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
     await sceneStorage.readiness();
   });
 
-  afterAll(async () => sql.end({ timeout: 5 }));
+  afterAll(async () => {
+    await apiServer?.close();
+    await sql.end({ timeout: 5 });
+  });
 
-  it("publishes immutable inert fixture artifacts from a persisted C13-backed C10 GLB", async () => {
+  it("publishes five immutable artifacts from a persisted C13-backed C10 GLB", async () => {
     const project = await new PostgresProjectRepository(sql).create({
       actor,
       correlation,
@@ -533,7 +571,11 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
     const manifestBytes = catalogCanonicalBytes({
       assets: [initialAsset, replacementAsset]
         .sort((left, right) => left.versionId.localeCompare(right.versionId))
-        .map(({ assetId, versionId, versionSha256 }) => ({ assetId, versionId, versionSha256 })),
+        .map(({ assetId, versionId, versionSha256 }) => ({
+          assetId,
+          versionId,
+          versionSha256,
+        })),
       createdAt: publishedAt,
       releaseVersion: "1.0.0",
       schemaVersion: "c13-catalog-release-manifest-v1",
@@ -672,27 +714,65 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
     });
     const renderRepository = new PostgresRenderRepository(sql);
     const renderStorage = new S3RenderObjectStorage(config.s3, broker, { client: s3 });
-    const renderService = new RenderStillService({
-      capabilities: {
-        acceptingNewJobs: true,
-        enhancementProvider: "disabled",
-        hardwareEvidence: "deferred",
-        profiles: [
-          {
-            available: true,
-            capability: "render.cycles.cpu.v1",
-            profileId: "cycles-cpu-geometry-safe-v1",
-            reason: "Local frozen inert control-plane fixture; no renderer hardware evidence.",
+    const apiBaseUrl = process.env.C14_RUNNER_TEST_API_BASE_URL ?? "http://127.0.0.1:3014";
+    const renderService = useAcceptedBlender
+      ? (() => {
+          apiServer = Fastify({
+            logger: false,
+            routerOptions: { maxParamLength: c14RenderArtifactAccessTokenMaximumLength },
+          });
+          const module = registerC14Module(
+            apiServer,
+            "test",
+            {
+              ...process.env,
+              C2_S3_ACCESS_KEY_ID: config.s3.accessKeyId,
+              C2_S3_ENDPOINT: config.s3.endpoint,
+              C2_S3_FORCE_PATH_STYLE: String(config.s3.forcePathStyle),
+              C2_S3_REGION: config.s3.region,
+              C2_S3_SECRET_ACCESS_KEY: config.s3.secretAccessKey,
+              C14_RENDER_ACCESS_KEY_BASE64: Buffer.alloc(32, 14).toString("base64"),
+              C14_RENDER_ARTIFACT_BASE_URL: apiBaseUrl,
+              C14_RENDER_WORKER_ENABLED: "true",
+            },
+            {
+              database: sql,
+              identity: fixtureIdentity(),
+              projects: new PostgresProjectRepository(sql),
+              repository: renderRepository,
+              resolver,
+            },
+          );
+          return module.service;
+        })()
+      : new RenderStillService({
+          capabilities: {
+            acceptingNewJobs: true,
+            enhancementProvider: "disabled",
+            hardwareEvidence: "deferred",
+            profiles: [
+              {
+                available: true,
+                capability: "render.cycles.cpu.v1",
+                profileId: "cycles-cpu-geometry-safe-v1",
+                reason: "Local frozen inert control-plane fixture; no renderer hardware evidence.",
+              },
+            ],
           },
-        ],
-      },
-      repository: renderRepository,
-      resolver,
-      storage: renderStorage,
-    });
+          repository: renderRepository,
+          resolver,
+          storage: renderStorage,
+        });
+    if (useAcceptedBlender) {
+      const parsedApiBaseUrl = new URL(apiBaseUrl);
+      await apiServer?.listen({
+        host: parsedApiBaseUrl.hostname,
+        port: Number(parsedApiBaseUrl.port),
+      });
+    }
     expect(renderService.capabilities()).toMatchObject({
       acceptingNewJobs: true,
-      hardwareEvidence: "deferred",
+      hardwareEvidence: useAcceptedBlender ? "verified-authorised-host" : "deferred",
     });
     const modelStateBeforeRender = await sql<
       { readonly commits: string; readonly snapshots: string }[]
@@ -847,47 +927,55 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
         rightsRecordSha256: line.rightsRecordSha256,
       });
     }
-    const runner = new RenderStillRunner({
-      capabilities: ["render.cycles.cpu.v1"],
-      control: new RenderStillWorkerService({
-        repository: renderRepository,
-        resolver,
-        storage: renderStorage,
-      }),
-      disk: new StatfsRenderDisk(),
-      heartbeatMilliseconds: 1_000,
-      leaseSeconds: 30,
-      logger: { info: () => undefined, warn: () => undefined },
-      renderer: new FrozenInertRenderer(),
-      sceneBuilder: new ExactC14RenderSceneBuilder({
-        catalog: catalogRepository,
-        catalogManifest: new S3ExactCatalogManifestReader(s3),
-        config: {
-          blenderBuildHash: "inert-fixture-build-no-blender",
-          blenderVersion: "frozen-inert-fixture-no-blender",
-          profile: {
-            heightPx: 64,
-            profileId: "cycles-cpu-geometry-safe-v1",
-            samples: 1,
-            seed: 14,
-            threads: 1,
-            widthPx: 64,
-          },
-          rendererScript: { sha256: inertRendererScriptSha256 },
-        },
-        scenes: sceneRepository,
-        snapshots: new PostgresSceneSnapshotVerifier(sql),
-        specifications: specificationRepository,
-      }),
-      source: new ExactC10RenderSourceMaterial({
-        reader: new S3ExactSceneGlbReader(config.s3, { client: s3 }),
-        scenes: sceneRepository,
-      }),
-      volumeId: "c14-local-inert-control-plane-volume",
-      volumePath: "/private/tmp",
-      workerId: "c14-local-inert-control-plane-worker",
-    });
+    const runner = useAcceptedBlender
+      ? composeC14RenderRunner({
+          config,
+          logger: createJsonLogger({ write: () => true }),
+          s3Client: s3,
+          sql,
+        })
+      : new RenderStillRunner({
+          capabilities: ["render.cycles.cpu.v1"],
+          control: new RenderStillWorkerService({
+            repository: renderRepository,
+            resolver,
+            storage: renderStorage,
+          }),
+          disk: new StatfsRenderDisk(),
+          heartbeatMilliseconds: 1_000,
+          leaseSeconds: 30,
+          logger: { info: () => undefined, warn: () => undefined },
+          renderer: new FrozenInertRenderer(),
+          sceneBuilder: new ExactC14RenderSceneBuilder({
+            catalog: catalogRepository,
+            catalogManifest: new S3ExactCatalogManifestReader(s3),
+            config: {
+              blenderBuildHash: "inert-fixture-build-no-blender",
+              blenderVersion: "frozen-inert-fixture-no-blender",
+              profile: {
+                heightPx: 64,
+                profileId: "cycles-cpu-geometry-safe-v1",
+                samples: 1,
+                seed: 14,
+                threads: 1,
+                widthPx: 64,
+              },
+              rendererScript: { sha256: inertRendererScriptSha256 },
+            },
+            scenes: sceneRepository,
+            snapshots: new PostgresSceneSnapshotVerifier(sql),
+            specifications: specificationRepository,
+          }),
+          source: new ExactC10RenderSourceMaterial({
+            reader: new S3ExactSceneGlbReader(config.s3, { client: s3 }),
+            scenes: sceneRepository,
+          }),
+          volumeId: "c14-local-inert-control-plane-volume",
+          volumePath: "/private/tmp",
+          workerId: "c14-local-inert-control-plane-worker",
+        });
     let currentJob = await renderService.getJob(actor.tenantId, project.id, queued.job.id);
+    if (runner === undefined) throw new Error("C14_ACCEPTED_RENDERER_NOT_COMPOSED");
     for (let index = 0; index < 32 && currentJob.state === "queued"; index += 1) {
       await expect(runner.runOnce()).resolves.toBe("processed");
       currentJob = await renderService.getJob(actor.tenantId, project.id, queued.job.id);
@@ -902,38 +990,105 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
       specificationId: specification.specification.specificationId,
       specificationRevision: 2,
     });
-    expect(result.manifest.renderer).toMatchObject({
-      blenderBuildHash: "inert-fixture-build-no-blender",
-      blenderVersion: "frozen-inert-fixture-no-blender",
-      executableSha256: inertExecutableSha256,
-      scriptSha256: inertRendererScriptSha256,
-    });
+    const expectedRenderer = useAcceptedBlender
+      ? {
+          blenderBuildHash: config.c14Render?.blenderBuildHash,
+          blenderVersion: config.c14Render?.blenderVersion,
+          executableSha256: config.c14Render?.executable.sha256,
+          scriptSha256: config.c14Render?.rendererScript.sha256,
+        }
+      : {
+          blenderBuildHash: "inert-fixture-build-no-blender",
+          blenderVersion: "frozen-inert-fixture-no-blender",
+          executableSha256: inertExecutableSha256,
+          scriptSha256: inertRendererScriptSha256,
+        };
+    expect(result.manifest.renderer).toMatchObject(expectedRenderer);
     expect(result.manifest.artifacts).toHaveLength(5);
+    const downloadEvidence: Record<string, unknown>[] = [];
+    const acceptedInspector = useAcceptedBlender
+      ? new BundledOiioExrInspector({
+          descriptor: {
+            executablePath: required(config.c14Render, "C14 renderer config missing.").executable
+              .path,
+            executableSha256: required(config.c14Render, "C14 renderer config missing.").executable
+              .sha256,
+            inspectorScriptPath: required(config.c14Render, "C14 renderer config missing.")
+              .exrInspectorScript.path,
+            inspectorScriptSha256: required(config.c14Render, "C14 renderer config missing.")
+              .exrInspectorScript.sha256,
+          },
+          timeoutMilliseconds: 60_000,
+          workspaceRoot: required(config.c14Render, "C14 renderer config missing.").workspaceRoot,
+        })
+      : undefined;
+    const expectedSegmentationPalette = segmentationPaletteForElementIds(
+      scene.manifest.elementMappings
+        .filter(({ meshIndices, status }) => status === "mapped" && meshIndices.length > 0)
+        .map(({ elementId }) => elementId),
+    );
     for (const artifact of result.manifest.artifacts) {
-      const access = await renderService.createArtifactAccess({
+      const firstAccess = await renderService.createArtifactAccess({
         actor,
         artifactId: artifact.id,
         correlation,
         jobId: queued.job.id,
         projectId: project.id,
       });
-      const token = new URL(access.url).pathname.split("/").at(-1);
-      if (token === undefined) throw new Error("The opaque artifact access token is missing.");
-      const opened = await broker.open(token);
-      if (opened === undefined)
-        throw new Error("The opaque artifact grant did not resolve exactly.");
-      expect(opened.bytes.byteLength).toBe(artifact.byteLength);
-      expect(createHash("sha256").update(opened.bytes).digest("hex")).toBe(artifact.sha256);
-      if (artifact.role.endsWith("-png")) {
-        expect(inspectPng(opened.bytes)).toEqual({
-          heightPx: artifact.heightPx,
-          widthPx: artifact.widthPx,
-        });
+      const secondAccess = await renderService.createArtifactAccess({
+        actor,
+        artifactId: artifact.id,
+        correlation,
+        jobId: queued.job.id,
+        projectId: project.id,
+      });
+      expect(secondAccess.url).not.toBe(firstAccess.url);
+      let downloadedBytes: Uint8Array;
+      let mediaType: string;
+      if (useAcceptedBlender) {
+        const response = await fetch(secondAccess.url, { cache: "no-store" });
+        expect(response.status).toBe(200);
+        expect(response.headers.get("cache-control")).toBe("private, no-store");
+        downloadedBytes = new Uint8Array(await response.arrayBuffer());
+        mediaType = response.headers.get("content-type")?.split(";")[0] ?? "";
       } else {
-        expect(() => {
-          assertExrMagic(opened.bytes);
-        }).not.toThrow();
+        const token = new URL(secondAccess.url).pathname.split("/").at(-1);
+        if (token === undefined) throw new Error("The opaque artifact access token is missing.");
+        const opened = await broker.open(token);
+        if (opened === undefined)
+          throw new Error("The opaque artifact grant did not resolve exactly.");
+        downloadedBytes = opened.bytes;
+        mediaType = opened.mediaType;
       }
+      expect(mediaType).toBe(artifact.mediaType);
+      const independentValidation = await inspectRenderArtifact(downloadedBytes, artifact);
+      let exrValidation: Awaited<ReturnType<BundledOiioExrInspector["inspect"]>> | undefined;
+      if (useAcceptedBlender && !artifact.role.endsWith("-png")) {
+        exrValidation = await acceptedInspector?.inspect(
+          artifact.role as "depth-exr" | "multilayer-exr" | "normal-exr",
+          downloadedBytes,
+        );
+        expect(exrValidation?.allFinite).toBe(true);
+      }
+      let segmentationValidation: Awaited<ReturnType<typeof inspectSegmentationPng>> | undefined;
+      if (useAcceptedBlender && artifact.role === "segmentation-png") {
+        segmentationValidation = await inspectSegmentationPng(
+          downloadedBytes,
+          expectedSegmentationPalette.map(({ rgb8 }) => rgb8),
+        );
+        expect(segmentationValidation.missingPaletteColours).toEqual([]);
+        expect(segmentationValidation.unexpectedColours).toEqual([]);
+      }
+      downloadEvidence.push({
+        artifact,
+        exrValidation,
+        firstOpaqueUrlSha256: createHash("sha256").update(firstAccess.url).digest("hex"),
+        independentValidation,
+        mediaType,
+        secondOpaqueUrlSha256: createHash("sha256").update(secondAccess.url).digest("hex"),
+        segmentationValidation,
+        sha256: createHash("sha256").update(downloadedBytes).digest("hex"),
+      });
     }
     const modelStateAfterRender = await sql<
       { readonly commits: string; readonly snapshots: string }[]
@@ -943,5 +1098,41 @@ describeLive("C14 local C1-C14 control-plane acceptance with an inert renderer b
         (SELECT count(*)::text FROM canonical_model_snapshots WHERE project_id = ${project.id}::uuid) AS snapshots
     `;
     expect(modelStateAfterRender).toEqual(modelStateBeforeRender);
-  }, 120_000);
+    if (useAcceptedBlender && productionEvidenceOutput !== undefined) {
+      await writeFile(
+        path.resolve(productionEvidenceOutput),
+        JSON.stringify(
+          {
+            apiCapabilities: renderService.capabilities(),
+            artifacts: downloadEvidence,
+            jobId: queued.job.id,
+            modelStateBeforeAndAfterEqual: true,
+            outcome: "passed",
+            projectId: project.id,
+            renderer: result.manifest.renderer,
+            rendererPins: {
+              blenderBuildHash: config.c14Render?.blenderBuildHash,
+              blenderVersion: config.c14Render?.blenderVersion,
+              executableSha256: config.c14Render?.executable.sha256,
+              exrInspectorScriptSha256: config.c14Render?.exrInspectorScript.sha256,
+              hardwareEvidence: config.c14Render?.hardwareEvidence,
+              hostAcceptanceSha256: config.c14Render?.hostAcceptanceSha256,
+              hostFingerprintSha256: config.c14Render?.hostFingerprintSha256,
+              ocioConfigSha256: config.c14Render?.ocioConfig.sha256,
+              profile: config.c14Render?.profile,
+              rendererScriptSha256: config.c14Render?.rendererScript.sha256,
+              timeoutMilliseconds: config.c14Render?.timeoutMilliseconds,
+              volumeId: config.c14Render?.volumeId,
+            },
+            resultId: result.id,
+            source: result.manifest.source,
+            sourceRenderSceneManifestSha256: result.manifest.renderSceneManifestSha256,
+          },
+          null,
+          2,
+        ) + "\n",
+        { flag: "wx", mode: 0o600 },
+      );
+    }
+  }, 240_000);
 });
