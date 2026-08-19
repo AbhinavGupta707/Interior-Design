@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "c8-blackwell-versions-v2",
+  "cuda": {
+    "buildImage": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
+    "appearanceFinalImage": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
+    "geometryFinalImage": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
+    "runtimeImage": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
+    "toolkit": "13.2.51"
+  },
+  "python": "3.12.3",
+  "pytorch": "2.13.0+cu132",
+  "pytorchIndex": "https://download.pytorch.org/whl/cu132",
+  "gsplat": "1.5.3",
+  "open3d": "0.19.0",
+  "numpy": "2.5.2",
+  "pillow": "12.3.0",
+  "colmap": {
+    "version": "3.13.0",
+    "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5"
+  },
+  "cudaArchitecture": "sm_120",
+  "computeCapability": "12.0"
+}

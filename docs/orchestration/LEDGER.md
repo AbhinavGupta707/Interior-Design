@@ -621,3 +621,20 @@
 - Final gates: environment-enabled pnpm test:c14 passed with zero mandatory skips; UV_CACHE_DIR=.cache/uv pnpm verify, contract, integration, security 921/921, geometry 43/43, onboarding Playwright 6/6 and C14 Playwright 22/22 across Chromium/Firefox/WebKit desktop/mobile passed. The only verify skips remain two unrelated unavailable COLMAP/Open3D capabilities.
 - Closure boundary: C14 is closed only for the exact pinned Linux CPU profile. CUDA, OptiX, GPU, Metal, native Windows Blender, Blender MCP, enhancement providers and production deployment remain unavailable/unclaimed. FrozenInertRenderer remains labelled test-only evidence and was not used for production publication. No merge or PR was created; C15 was not opened.
 - Durable record: docs/evaluation/render-stills/C14_AUTHORISED_HOST_ACCEPTANCE_2026-08-12.md.
+
+## C8 v2 — RTX 5080 Blackwell modernisation re-entry
+
+- Status: active on `codex/c8-v2-blackwell`; bounded C8 re-entry, C15 remains closed.
+- Base: `c48c60ee8f179603670207642e31c56eba84b315`; contract:
+  `docs/orchestration/checkpoints/C8_V2_BLACKWELL_CONTRACT.md`.
+- Runtime: one primary `gpt-5.6-sol` / `xhigh` session; no delegated agent or Codex
+  worktree under the session-specific instruction.
+- `ml/reconstruction/windows-nvidia/**` is immutable and remains `NOT RUN`; v2 is a
+  sibling package.
+- Frozen candidate: CUDA 13.2, Python 3.12.3, PyTorch 2.13.0+cu132, gsplat 1.5.3,
+  Open3D 0.19.0 and COLMAP 3.13.0 commit `0b31f981`, compiled for `sm_120`.
+- v2 owns a bounded direct-gsplat trainer/exporter. Nerfstudio 1.1.5/gsplat 1.4.0 is
+  v1-only; appearance stays experimental and cannot block geometry completion.
+- Runtime, algorithm, repeatability, physical capture and representative accuracy are
+  separate. Physical iOS and representative-home evidence remain `deferred-not-run`;
+  no provider key, customer data or training permission is authorised.

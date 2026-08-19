@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TORCH_CUDA_ARCH_LIST=12.0 \
+    TORCH_EXTENSIONS_DIR=/opt/c8/extensions
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      build-essential ca-certificates ninja-build python3 python3-dev python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/c8/venv
+COPY ml/reconstruction/windows-nvidia-v2/requirements-appearance.lock /opt/c8/requirements.lock
+ENV PATH=/opt/c8/venv/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin
+RUN python -m pip install --no-cache-dir --require-hashes \
+      --index-url https://pypi.org/simple \
+      --extra-index-url https://download.pytorch.org/whl/cu132 \
+      --requirement /opt/c8/requirements.lock \
+    && python -m pip check \
+    && python -c "import gsplat.cuda._backend"
+COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
+RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
+      /src/sm120_probe.cu -o /opt/c8-sm120-probe \
+    && cuobjdump --list-elf /opt/c8-sm120-probe \
+    && chmod -R a-w /opt/c8/extensions
+
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/opt/c8/venv/bin:/usr/local/bin:/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    PYTHONUNBUFFERED=1 \
+    TORCH_CUDA_ARCH_LIST=12.0 \
+    TORCH_EXTENSIONS_DIR=/opt/c8/extensions
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      libgomp1 ninja-build passwd python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/sbin/groupadd --gid 65532 c8 \
+    && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c8
+COPY --from=builder /opt/c8 /opt/c8
+COPY --from=builder /opt/c8-sm120-probe /usr/local/bin/c8-sm120-probe
+COPY ml/reconstruction/windows-nvidia-v2/direct_gsplat.py /opt/c8/direct_gsplat.py
+COPY ml/reconstruction/windows-nvidia-v2/generate_gsplat_fixture.py /opt/c8/generate_gsplat_fixture.py
+USER 65532:65532
+WORKDIR /c8/work
+ENTRYPOINT ["python", "/opt/c8/direct_gsplat.py"]

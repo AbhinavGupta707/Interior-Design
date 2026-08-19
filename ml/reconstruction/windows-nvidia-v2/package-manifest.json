@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "c8-blackwell-package-manifest-v2",
+  "evidenceLabel": "PACKAGE_HASHES_ARE_NOT_EXECUTION_EVIDENCE",
+  "hashAlgorithm": "sha256",
+  "files": {
+    "Dockerfile.appearance": "4fc5ab3555c48f1ee07abad48ba8005439029572c0e53dbd156138e67a98cb9a",
+    "Dockerfile.colmap": "42b465f9b8a534b444a13c4def4c59ffe68c5618758b194f0e5a134f00d88a15",
+    "Dockerfile.open3d": "6fddb30c6813a586e7d72842c45c2d2e2cb61e32cb19236dc386f2b87aef09df",
+    "README.md": "c266985d54711e094116f28c25a50e68a1e23128f4d81a12eb1979f67288e444",
+    "direct_gsplat.py": "408ef1ae44839a7aa1c963f0894e9633736ceeed43f606107c6a795c68273b85",
+    "generate_gsplat_fixture.py": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e",
+    "open3d_probe.py": "389284f3ea2a222c0ade32d994c36fff321b8280f09112d0c7c09795281c2961",
+    "requirements-appearance.in": "6c4880729bef09e254fe1f34d6e194f4b219567f431d556edffd9a6e51d1570e",
+    "requirements-appearance.lock": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343",
+    "requirements-open3d.in": "dee9c2fc147a33ef878a4c66ef375bff0397ee0b0349e0c366f50dab356f63d9",
+    "requirements-open3d.lock": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
+    "sm120_probe.cu": "4b6415390eba1e9b60919b414c10bf07c1e4ea6dfa52057c188497914db00d0d",
+    "validate_colmap_outputs.py": "d8c0abef13a0e2d0c358331c75198158211b9eb4041db3e982d7e32e1964b099",
+    "versions.json": "2aa19455aba2cf0ed53b8717de00acbec67ed99cc0a2d41116a93f35fe2937a1"
+  },
+  "notice": "These hashes attest reviewed package inputs only. Runtime, algorithm, repeatability, physical-capture and representative-accuracy verdicts remain separate."
+}

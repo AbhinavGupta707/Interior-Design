@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a AS builder
+
+ARG COLMAP_COMMIT=0b31f98133b470eae62811b557dc2bcff1e4f9a5
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      build-essential cmake git libboost-graph-dev libboost-program-options-dev \
+      libboost-system-dev libcgal-dev libceres-dev libcurl4-openssl-dev \
+      libeigen3-dev libflann-dev libfreeimage-dev libglew-dev libgmock-dev \
+      libgoogle-glog-dev libgtest-dev libmetis-dev libmkl-full-dev \
+      libqt6opengl6-dev libqt6openglwidgets6 libsqlite3-dev libssl-dev \
+      ninja-build qt6-base-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN git clone --filter=blob:none https://github.com/colmap/colmap.git /src/colmap \
+    && git -C /src/colmap checkout --detach "${COLMAP_COMMIT}" \
+    && test "$(git -C /src/colmap rev-parse HEAD)" = "${COLMAP_COMMIT}" \
+    && cmake -S /src/colmap -B /src/colmap/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CUDA_ARCHITECTURES=120 \
+      -DCMAKE_INSTALL_PREFIX=/opt/colmap \
+      -DGUI_ENABLED=OFF \
+      -DOPENGL_ENABLED=OFF \
+      -DTESTS_ENABLED=OFF \
+    && cmake --build /src/colmap/build --target install --parallel 16
+COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
+RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
+      /src/sm120_probe.cu -o /opt/c8-sm120-probe \
+    && cuobjdump --list-elf /opt/c8-sm120-probe
+
+FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/usr/local/bin:/usr/bin:/bin
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      libboost-program-options1.83.0 libc6 libceres4t64 libcurl4t64 \
+      libfreeimage3 libgcc-s1 libglew2.2 libgomp1 libgoogle-glog0v6t64 \
+      libmetis5 libmkl-core libmkl-intel-lp64 libmkl-intel-thread \
+      libmkl-sequential libmkl-locale libomp5 libopengl0 libssl3t64 passwd \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/sbin/groupadd --gid 65532 c8 \
+    && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c8
+COPY --from=builder /opt/colmap/ /usr/local/
+COPY --from=builder /opt/c8-sm120-probe /usr/local/bin/c8-sm120-probe
+USER 65532:65532
+WORKDIR /c8/work
+ENTRYPOINT ["colmap"]
