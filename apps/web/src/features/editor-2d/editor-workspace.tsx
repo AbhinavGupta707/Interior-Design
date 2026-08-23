@@ -27,7 +27,7 @@ import type {
   Session,
 } from "@interior-design/contracts";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
 import type { z } from "zod";
 
@@ -84,6 +84,100 @@ async function optionalCurrentSnapshot(
   }
 }
 
+export async function reloadExistingSetup(
+  initializationKey: { current: string | undefined },
+  reload: () => Promise<void>,
+): Promise<void> {
+  initializationKey.current = undefined;
+  await reload();
+}
+
+interface UnmeasuredWorkspaceSetupProps {
+  readonly busy: boolean;
+  readonly editable: boolean;
+  readonly onInitialize: () => Promise<void>;
+  readonly onReload: () => Promise<void>;
+}
+
+export function UnmeasuredWorkspaceSetup({
+  busy,
+  editable,
+  onInitialize,
+  onReload,
+}: UnmeasuredWorkspaceSetupProps) {
+  const [levelConfirmed, setLevelConfirmed] = useState(false);
+  const [unknownsConfirmed, setUnknownsConfirmed] = useState(false);
+  const acknowledged = levelConfirmed && unknownsConfirmed;
+
+  if (!editable) {
+    return (
+      <div className="editor-readonly-note" role="note">
+        <strong>Viewer access is read-only</strong>
+        <span>
+          An owner or editor must explicitly acknowledge the unmeasured starting point before C6 or
+          C9 correction can begin.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="editor-workspace-setup"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (acknowledged) void onInitialize();
+      }}
+    >
+      <fieldset aria-describedby="unmeasured-workspace-boundary">
+        <legend>Confirm the unmeasured starting point</legend>
+        <label>
+          <input
+            checked={levelConfirmed}
+            onChange={(event) => {
+              setLevelConfirmed(event.target.checked);
+            }}
+            required
+            type="checkbox"
+          />
+          <span>I confirm this home has at least one level.</span>
+        </label>
+        <label>
+          <input
+            checked={unknownsConfirmed}
+            onChange={(event) => {
+              setUnknownsConfirmed(event.target.checked);
+            }}
+            required
+            type="checkbox"
+          />
+          <span>
+            I understand that its name, elevation, storey height and all interior measurements are
+            unknown.
+          </span>
+        </label>
+      </fieldset>
+      <p id="unmeasured-workspace-boundary">
+        This creates one unmeasured placeholder level only. It creates no rooms, boundaries,
+        dimensions or property-derived interior claims.
+      </p>
+      <div className="editor-workspace-setup__actions">
+        <ActionButton disabled={busy || !acknowledged} type="submit">
+          {busy ? "Setting up..." : "Set up unmeasured workspace"}
+        </ActionButton>
+        <ActionButton
+          disabled={busy}
+          onClick={() => void onReload()}
+          tone="secondary"
+          type="button"
+        >
+          Reload server state
+        </ActionButton>
+      </div>
+    </form>
+  );
+}
+
 export function EditorWorkspace({ projectId }: EditorWorkspaceProps) {
   const [profile, setProfile] = useState<ModelProfile>("existing");
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
@@ -98,6 +192,7 @@ export function EditorWorkspace({ projectId }: EditorWorkspaceProps) {
   const [snapGridMm, setSnapGridMm] = useState<EditorSnapGridMm>(defaultEditorSnapGridMm);
   const [comparison, setComparison] = useState<EditorBranchComparison>();
   const [busy, setBusy] = useState(false);
+  const initializationKey = useRef<string | undefined>(undefined);
   const [asyncMessage, setAsyncMessage] = useState("");
   const [alert, setAlert] = useState<string>();
 
@@ -233,6 +328,49 @@ export function EditorWorkspace({ projectId }: EditorWorkspaceProps) {
       setAsyncMessage(`Created ${branch.name} from the exact source snapshot.`);
     } catch (reason) {
       setAlert(reason instanceof Error ? reason.message : "The branch could not be created.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function initializeExistingWorkspace(): Promise<void> {
+    setBusy(true);
+    setAlert(undefined);
+    const key = initializationKey.current ?? crypto.randomUUID();
+    initializationKey.current = key;
+    try {
+      await editorClient.initializeExistingHomeWorkspace(projectId, key);
+      initializationKey.current = undefined;
+      await loadOverview("existing");
+      setAsyncMessage("Unmeasured workspace created. Exact server branch state was reloaded.");
+    } catch (reason) {
+      if (reason instanceof EditorProblem) {
+        if (reason.kind === "expired") {
+          setLoadState({ kind: "expired" });
+          return;
+        }
+        if (reason.kind === "forbidden") {
+          setLoadState({ kind: "forbidden" });
+          return;
+        }
+        if (reason.kind === "already-initialized") {
+          initializationKey.current = undefined;
+          await loadOverview("existing");
+          setAlert("This profile was already initialized. Exact server state has been reloaded.");
+          return;
+        }
+        if (reason.kind === "conflict") {
+          setAlert(
+            "Workspace state changed before setup completed. Reload exact server state before retrying.",
+          );
+          return;
+        }
+      }
+      setAlert(
+        reason instanceof Error
+          ? reason.message
+          : "The unmeasured workspace could not be initialized.",
+      );
     } finally {
       setBusy(false);
     }
@@ -476,26 +614,42 @@ export function EditorWorkspace({ projectId }: EditorWorkspaceProps) {
     );
   }
   if (!session) return null;
+  const needsExistingSetup = profile === "existing" && !sourceSnapshot;
 
   if (loadState.kind === "empty" || !workspace || !plan || !localSession) {
     return (
       <PageContainer className="editor-empty-state">
-        <Link className="back-link" href="/projects">
-          ← Projects
+        <Link className="back-link" href={`/home/${encodeURIComponent(projectId)}`}>
+          ← Home journey
         </Link>
-        <span>2D model editor</span>
-        <h1>{sourceSnapshot ? "Create the first branch" : "No canonical model yet"}</h1>
+        <span>Existing-model workspace</span>
+        <h1>
+          {needsExistingSetup
+            ? "Set up an unmeasured starting point"
+            : sourceSnapshot
+              ? "Create the first branch"
+              : "No canonical model yet"}
+        </h1>
         <p>
-          {sourceSnapshot
-            ? "A branch pins one exact immutable snapshot before any typed operation can be previewed."
-            : "This profile has no canonical snapshot. C5 does not fabricate a model; create or import one through the canonical model workflow first."}
+          {needsExistingSetup
+            ? "Start with one explicitly acknowledged placeholder level. Property context remains linkage only and supplies no interior evidence."
+            : sourceSnapshot
+              ? "A branch pins one exact immutable snapshot before any typed operation can be previewed."
+              : "This profile has no canonical snapshot. C5 does not fabricate a model; create or import one through the canonical model workflow first."}
         </p>
         {alert ? (
           <p className="editor-session__alert" role="alert">
             {alert}
           </p>
         ) : null}
-        {sourceSnapshot && editable ? (
+        {needsExistingSetup ? (
+          <UnmeasuredWorkspaceSetup
+            busy={busy}
+            editable={editable}
+            onInitialize={initializeExistingWorkspace}
+            onReload={() => reloadExistingSetup(initializationKey, () => loadOverview("existing"))}
+          />
+        ) : sourceSnapshot && editable ? (
           <form onSubmit={(event) => void createBranch(event)}>
             <label>
               <span>Branch name</span>
@@ -536,8 +690,8 @@ export function EditorWorkspace({ projectId }: EditorWorkspaceProps) {
       </p>
       <header className="editor-heading">
         <div>
-          <Link className="back-link" href="/projects">
-            ← Projects
+          <Link className="back-link" href={`/home/${encodeURIComponent(projectId)}`}>
+            ← Home journey
           </Link>
           <h1>2D model editor</h1>
           <p>Previewable typed operations against one exact canonical branch head.</p>

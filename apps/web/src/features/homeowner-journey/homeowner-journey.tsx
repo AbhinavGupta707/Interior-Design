@@ -111,8 +111,8 @@ export function HomeownerJourney({ projectId }: { readonly projectId: string }) 
             <span className="home-journey-eyebrow">Home journey · {session.actor.role} access</span>
             <h1>Build an honest model of your home</h1>
             <p>
-              Move from property context and renovation intent to rights-cleared evidence, an
-              uncertainty-aware proposal, explicit canonical confirmation and a derived twin.
+              Move from property context and renovation intent to rights-cleared evidence, explicit
+              unmeasured workspace setup, proposal correction, confirmation and a derived twin.
             </p>
           </div>
           <div className="home-journey-truth" role="note">
@@ -175,7 +175,9 @@ export function HomeownerJourney({ projectId }: { readonly projectId: string }) 
           <li>Original evidence is immutable; derived previews and proposals remain separate.</li>
           <li>Processing requires an explicit rights basis and service-processing consent.</li>
           <li>Training permission is separate and denied by default.</li>
-          <li>Plans continue to C6; ready photo/video evidence continues to C8.</li>
+          <li>
+            After explicit workspace setup, plans continue to C6; ready media continues to C8.
+          </li>
         </ul>
       </section>
 

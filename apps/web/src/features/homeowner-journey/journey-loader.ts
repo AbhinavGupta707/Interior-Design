@@ -68,7 +68,11 @@ export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJour
   return {
     input: {
       branches: resource(branches, (items) => ({
-        revisions: items.map(({ revision }) => revision),
+        branches: items.map(({ headSnapshotId, revision, sourceSnapshotId }) => ({
+          headSnapshotId,
+          revision,
+          sourceSnapshotId,
+        })),
       })),
       currentSnapshot: resource(snapshot, (item) =>
         item === null ? null : { snapshotId: item.id },

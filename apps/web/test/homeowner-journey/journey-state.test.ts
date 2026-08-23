@@ -9,6 +9,9 @@ import { homeJourneyHref } from "../../src/features/homeowner-journey/navigation
 
 const projectId = "00000000-0000-4000-8000-000000000101";
 const sceneJobId = "00000000-0000-4000-8000-000000000102";
+const currentSnapshotId = "00000000-0000-4000-8000-000000000103";
+const sourceSnapshotId = "00000000-0000-4000-8000-000000000104";
+const staleSnapshotId = "00000000-0000-4000-8000-000000000105";
 
 function ready<T>(value: T): JourneyResource<T> {
   return { kind: "ready", value };
@@ -22,7 +25,7 @@ function unavailable<T>(
 
 function input(overrides: Partial<HomeJourneyInput> = {}): HomeJourneyInput {
   return {
-    branches: ready({ revisions: [] }),
+    branches: ready({ branches: [] }),
     currentSnapshot: ready(null),
     evidence: ready({ assets: [] }),
     fusion: ready({ jobs: [] }),
@@ -36,13 +39,14 @@ function input(overrides: Partial<HomeJourneyInput> = {}): HomeJourneyInput {
   };
 }
 
-describe("C14.1 homeowner journey derivation", () => {
-  it("orders the six stages and selects one primary next action", () => {
+describe("C14.2 homeowner journey derivation", () => {
+  it("orders the seven stages and selects one primary next action", () => {
     const result = deriveHomeJourney(input());
     expect(result.stages.map(({ id }) => id)).toEqual([
       "property",
       "goals",
       "evidence",
+      "setup",
       "proposal",
       "confirmation",
       "twin",
@@ -61,6 +65,7 @@ describe("C14.1 homeowner journey derivation", () => {
         evidence: ready({
           assets: [{ kind: "photograph", status: "ready" }],
         }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
         fusion: unavailable("unavailable"),
         intake: ready({
           evidenceAvailable: {
@@ -95,7 +100,10 @@ describe("C14.1 homeowner journey derivation", () => {
 
   it("routes ready plans to C6 and ready photo/video evidence to C8", () => {
     const plan = deriveHomeJourney(
-      input({ evidence: ready({ assets: [{ kind: "plan", status: "ready" }] }) }),
+      input({
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        evidence: ready({ assets: [{ kind: "plan", status: "ready" }] }),
+      }),
     );
     expect(plan.stages.find(({ id }) => id === "proposal")).toMatchObject({
       href: `/plan-import/${projectId}`,
@@ -103,24 +111,116 @@ describe("C14.1 homeowner journey derivation", () => {
     });
 
     const media = deriveHomeJourney(
-      input({ evidence: ready({ assets: [{ kind: "video", status: "ready" }] }) }),
+      input({
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        evidence: ready({ assets: [{ kind: "video", status: "ready" }] }),
+      }),
     );
     expect(media.stages.find(({ id }) => id === "proposal")).toMatchObject({
       href: `/reconstruction/${projectId}`,
       status: "not-started",
     });
   });
+  it("routes a project with no existing snapshot to explicit setup before C6 or C9", () => {
+    const missing = deriveHomeJourney(
+      input({
+        evidence: ready({ assets: [{ kind: "plan", status: "ready" }] }),
+        intake: ready({
+          evidenceAvailable: {
+            photographs: false,
+            plans: true,
+            roomCapture: false,
+            video: false,
+          },
+          goals: ["Correct the ready floor plan"],
+        }),
+        property: ready({ confirmed: true }),
+      }),
+    );
+    expect(missing.primary).toMatchObject({
+      href: `/editor/${projectId}`,
+      id: "setup",
+      status: "not-started",
+    });
+    expect(missing.stages.find(({ id }) => id === "proposal")).toMatchObject({
+      href: `/editor/${projectId}`,
+      status: "not-started",
+    });
+
+    const initialized = deriveHomeJourney(
+      input({
+        branches: ready({
+          branches: [
+            {
+              headSnapshotId: currentSnapshotId,
+              revision: 1,
+              sourceSnapshotId: currentSnapshotId,
+            },
+          ],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        property: ready({ confirmed: true }),
+      }),
+    );
+    expect(initialized.stages.find(({ id }) => id === "setup")).toMatchObject({
+      status: "complete",
+    });
+    expect(initialized.stages.find(({ id }) => id === "confirmation")).toMatchObject({
+      status: "not-started",
+    });
+    expect(initialized.stages.find(({ id }) => id === "twin")).toMatchObject({
+      status: "needs-attention",
+    });
+  });
+
+  it("confirms only a changed branch whose head is the exact current snapshot", () => {
+    const confirmation = (branches: HomeJourneyInput["branches"]) =>
+      deriveHomeJourney(
+        input({
+          branches,
+          currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        }),
+      ).stages.find(({ id }) => id === "confirmation");
+
+    const initializationOnly = confirmation(
+      ready({
+        branches: [
+          {
+            headSnapshotId: currentSnapshotId,
+            revision: 1,
+            sourceSnapshotId: currentSnapshotId,
+          },
+        ],
+      }),
+    );
+    const staleChangedBranch = confirmation(
+      ready({
+        branches: [{ headSnapshotId: staleSnapshotId, revision: 3, sourceSnapshotId }],
+      }),
+    );
+    const exactChangedBranch = confirmation(
+      ready({
+        branches: [{ headSnapshotId: currentSnapshotId, revision: 1, sourceSnapshotId }],
+      }),
+    );
+
+    expect(initializationOnly).toMatchObject({ status: "not-started" });
+    expect(staleChangedBranch).toMatchObject({ status: "not-started" });
+    expect(exactChangedBranch).toMatchObject({ status: "confirmed" });
+  });
 
   it("keeps viewer proposal, confirmation and scene controls read-only", () => {
     const result = deriveHomeJourney(
       input({
-        branches: ready({ revisions: [1] }),
-        currentSnapshot: ready({ snapshotId: "00000000-0000-4000-8000-000000000103" }),
+        branches: ready({
+          branches: [{ headSnapshotId: currentSnapshotId, revision: 1, sourceSnapshotId }],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
         fusion: ready({ jobs: [{ state: "proposed" }] }),
         role: "viewer",
         scenes: ready({
           jobs: [],
-          snapshots: [{ profile: "existing", snapshotId: "00000000-0000-4000-8000-000000000103" }],
+          snapshots: [{ profile: "existing", snapshotId: currentSnapshotId }],
         }),
       }),
     );
@@ -138,32 +238,34 @@ describe("C14.1 homeowner journey derivation", () => {
   it("gates C10 on committed state and links the exact succeeded job", () => {
     const uncommitted = deriveHomeJourney(
       input({
-        currentSnapshot: ready({ snapshotId: "00000000-0000-4000-8000-000000000103" }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
         scenes: ready({
           jobs: [],
-          snapshots: [{ profile: "existing", snapshotId: "00000000-0000-4000-8000-000000000103" }],
+          snapshots: [{ profile: "existing", snapshotId: currentSnapshotId }],
         }),
       }),
     );
     expect(uncommitted.stages.find(({ id }) => id === "twin")).toMatchObject({
-      href: `/fusion/${projectId}`,
+      href: homeJourneyHref(projectId),
       status: "needs-attention",
     });
 
     const committed = deriveHomeJourney(
       input({
-        branches: ready({ revisions: [2] }),
-        currentSnapshot: ready({ snapshotId: "00000000-0000-4000-8000-000000000103" }),
+        branches: ready({
+          branches: [{ headSnapshotId: currentSnapshotId, revision: 2, sourceSnapshotId }],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
         scenes: ready({
           jobs: [
             {
               id: sceneJobId,
               sourceProfile: "existing",
-              sourceSnapshotId: "00000000-0000-4000-8000-000000000103",
+              sourceSnapshotId: currentSnapshotId,
               state: "succeeded",
             },
           ],
-          snapshots: [{ profile: "existing", snapshotId: "00000000-0000-4000-8000-000000000103" }],
+          snapshots: [{ profile: "existing", snapshotId: currentSnapshotId }],
         }),
       }),
     );
@@ -174,18 +276,20 @@ describe("C14.1 homeowner journey derivation", () => {
 
     const staleJob = deriveHomeJourney(
       input({
-        branches: ready({ revisions: [2] }),
-        currentSnapshot: ready({ snapshotId: "00000000-0000-4000-8000-000000000103" }),
+        branches: ready({
+          branches: [{ headSnapshotId: currentSnapshotId, revision: 2, sourceSnapshotId }],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
         scenes: ready({
           jobs: [
             {
               id: sceneJobId,
               sourceProfile: "existing",
-              sourceSnapshotId: "00000000-0000-4000-8000-000000000104",
+              sourceSnapshotId: staleSnapshotId,
               state: "succeeded",
             },
           ],
-          snapshots: [{ profile: "existing", snapshotId: "00000000-0000-4000-8000-000000000103" }],
+          snapshots: [{ profile: "existing", snapshotId: currentSnapshotId }],
         }),
       }),
     );

@@ -4,6 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { CandidateInspector, CandidateList } from "../../src/features/plan-import/candidate-review";
 import { PlanOverlay } from "../../src/features/editor-2d/plan-overlay/plan-overlay";
 import { defaultReview } from "../../src/features/plan-import/review-model";
+import {
+  EmptyBranchGuidance,
+  PlanWorkspaceBackLink,
+} from "../../src/features/plan-import/plan-import-workspace";
 import { proposal } from "./fixtures";
 
 describe("C6 correction semantics", () => {
@@ -55,5 +59,18 @@ describe("C6 correction semantics", () => {
     expect(markup).toContain("Source region");
     expect(markup).not.toContain('type="radio"');
     expect(markup).not.toContain("Exact wall correction");
+  });
+  it("returns C6 through the home journey and explicit setup guidance", () => {
+    const projectId = "project id/unsafe";
+    const back = renderToStaticMarkup(<PlanWorkspaceBackLink projectId={projectId} />);
+    const empty = renderToStaticMarkup(<EmptyBranchGuidance projectId={projectId} />);
+
+    expect(back).toContain('href="/home/project%20id%2Funsafe"');
+    expect(back).toContain("← Home journey");
+    expect(back).not.toContain("Projects");
+    expect(empty).toContain("complete the explicit unmeasured model setup");
+    expect(empty).toContain('href="/home/project%20id%2Funsafe"');
+    expect(empty).toContain('href="/editor/project%20id%2Funsafe"');
+    expect(empty).toContain("Open model workspace setup");
   });
 });

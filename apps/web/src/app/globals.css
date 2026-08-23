@@ -8085,3 +8085,67 @@ select {
     border-bottom: 1px solid var(--ui-colour-border);
   }
 }
+/* C14.2 persisted homeowner setup */
+.editor-workspace-setup fieldset {
+  display: grid;
+  gap: var(--ui-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.editor-workspace-setup legend {
+  margin-bottom: var(--ui-space-3);
+  color: var(--ui-colour-ink);
+  font-weight: 760;
+}
+
+.editor-workspace-setup label {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  color: var(--ui-colour-ink);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.editor-workspace-setup input[type="checkbox"] {
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin-top: 0.18rem;
+  accent-color: var(--ui-colour-accent);
+}
+
+.editor-workspace-setup > p {
+  margin: 0;
+  color: var(--ui-colour-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.editor-workspace-setup__actions,
+.plan-empty-branch-guidance > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+}
+
+.plan-empty-branch-guidance {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-4);
+  border-left: 3px solid var(--ui-colour-accent);
+  background: var(--ui-colour-accent-soft);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.plan-empty-branch-guidance p {
+  margin: 0;
+  color: var(--ui-colour-muted);
+}
+
+.plan-empty-branch-guidance a {
+  color: var(--ui-colour-accent-strong);
+  font-weight: 720;
+}

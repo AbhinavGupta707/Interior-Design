@@ -76,6 +76,30 @@ function initialReviews(proposal: PlanProposal): CandidateReviewMap {
   );
 }
 
+export function PlanWorkspaceBackLink({ projectId }: { readonly projectId: string }) {
+  return (
+    <Link className="back-link" href={`/home/${encodeURIComponent(projectId)}`}>
+      ← Home journey
+    </Link>
+  );
+}
+
+export function EmptyBranchGuidance({ projectId }: { readonly projectId: string }) {
+  return (
+    <div className="plan-empty-branch-guidance" role="note">
+      <strong>No existing C5 branch is available</strong>
+      <p>
+        Return through the home journey and complete the explicit unmeasured model setup before
+        handing a reviewed C6 proposal to C5.
+      </p>
+      <div>
+        <Link href={`/home/${encodeURIComponent(projectId)}`}>Return to home journey</Link>
+        <Link href={`/editor/${encodeURIComponent(projectId)}`}>Open model workspace setup</Link>
+      </div>
+    </div>
+  );
+}
+
 export function PlanImportWorkspace({ projectId }: { readonly projectId: string }) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
   const [workspace, setWorkspace] = useState<PlanImportWorkspace>();
@@ -532,9 +556,7 @@ export function PlanImportWorkspace({ projectId }: { readonly projectId: string 
       </p>
       <header className="plan-import-heading">
         <div>
-          <Link className="back-link" href="/projects">
-            ← Projects
-          </Link>
+          <PlanWorkspaceBackLink projectId={projectId} />
           <h1>Floor-plan correction</h1>
           <p>
             Inspect a source-pinned proposal, keep unknowns visible, and hand exact operations to
@@ -950,7 +972,7 @@ function JobStatus({
           Replace source
         </Link>
         <Link className="ui-action" data-tone="secondary" href={`/editor/${projectId}`}>
-          Use manual C5 editor
+          Open model workspace setup
         </Link>
       </div>
     </section>
@@ -1295,12 +1317,7 @@ function ReviewAndHandoff({
               ))}
             </select>
           </label>
-          {branches.length === 0 ? (
-            <p>
-              No existing C5 branch is available. Use the manual editor to create the canonical
-              branch first.
-            </p>
-          ) : null}
+          {branches.length === 0 ? <EmptyBranchGuidance projectId={projectId} /> : null}
           {draftError ? (
             <p className="plan-import-alert" role="alert">
               {draftError}
@@ -1456,6 +1473,9 @@ function ReviewAndHandoff({
           <p>{commitSummary}</p>
           <Link className="ui-action" data-tone="secondary" href={`/editor/${projectId}`}>
             Inspect append-only history in 2D editor
+          </Link>
+          <Link className="ui-action" data-tone="secondary" href={`/home/${projectId}`}>
+            Return to home journey
           </Link>
         </div>
       ) : null}

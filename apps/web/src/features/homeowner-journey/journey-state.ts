@@ -48,7 +48,11 @@ interface FusionSummary {
 }
 
 interface BranchSummary {
-  readonly revisions: readonly number[];
+  readonly branches: readonly {
+    readonly headSnapshotId: string;
+    readonly revision: number;
+    readonly sourceSnapshotId: string;
+  }[];
 }
 
 interface SceneSummary {
@@ -82,7 +86,7 @@ export interface JourneyStage {
   readonly degraded?: boolean;
   readonly detail: string;
   readonly href: string;
-  readonly id: "confirmation" | "evidence" | "goals" | "property" | "proposal" | "twin";
+  readonly id: "confirmation" | "evidence" | "goals" | "property" | "proposal" | "setup" | "twin";
   readonly status: JourneyStageStatus;
   readonly title: string;
 }
@@ -245,7 +249,87 @@ function evidenceStage(input: HomeJourneyInput): JourneyStage {
   };
 }
 
+function hasCurrentChangedBranch(input: HomeJourneyInput): boolean {
+  if (
+    input.currentSnapshot.kind !== "ready" ||
+    input.currentSnapshot.value === null ||
+    input.branches.kind !== "ready"
+  ) {
+    return false;
+  }
+  const currentSnapshotId = input.currentSnapshot.value.snapshotId;
+  return input.branches.value.branches.some(
+    ({ headSnapshotId, revision, sourceSnapshotId }) =>
+      revision > 0 && headSnapshotId === currentSnapshotId && headSnapshotId !== sourceSnapshotId,
+  );
+}
+
+function setupStage(input: HomeJourneyInput): JourneyStage {
+  if (input.currentSnapshot.kind === "unavailable") {
+    return unavailableStage(
+      "setup",
+      "Set up the unmeasured model workspace",
+      input.currentSnapshot.problem,
+      input.projectId,
+    );
+  }
+  const href = `/editor/${encodeURIComponent(input.projectId)}`;
+  if (input.currentSnapshot.value !== null) {
+    return {
+      actionLabel: "Review model workspace",
+      detail:
+        "An existing-profile workspace is present. Its initialization revision is setup only, not a confirmed correction.",
+      href,
+      id: "setup",
+      status: "complete",
+      title: "Set up the unmeasured model workspace",
+    };
+  }
+  if (input.role === "viewer") {
+    return {
+      actionLabel: "View setup status",
+      detail:
+        "No existing-model workspace is available. Viewer access is read-only; an owner or editor must acknowledge the unmeasured starting point.",
+      href,
+      id: "setup",
+      status: "unavailable",
+      title: "Set up the unmeasured model workspace",
+    };
+  }
+  return {
+    actionLabel: "Set up unmeasured workspace",
+    detail:
+      "Explicitly confirm at least one level and unknown measurements. The server will create no rooms, boundaries, dimensions or property-derived interior evidence.",
+    href,
+    id: "setup",
+    status: "not-started",
+    title: "Set up the unmeasured model workspace",
+  };
+}
+
 function proposalStage(input: HomeJourneyInput): JourneyStage {
+  if (input.currentSnapshot.kind === "unavailable") {
+    return unavailableStage(
+      "proposal",
+      "Reconstruction and fusion proposal",
+      input.currentSnapshot.problem,
+      input.projectId,
+    );
+  }
+  if (input.currentSnapshot.value === null) {
+    return {
+      actionLabel: input.role === "viewer" ? "View model setup status" : "Set up model workspace",
+      detail:
+        input.role === "viewer"
+          ? "Proposal correction cannot begin because no existing-model workspace is available and viewer access is read-only."
+          : "Set up the explicitly unmeasured existing-model workspace before C6 or C9 proposal correction.",
+      href: `/editor/${encodeURIComponent(input.projectId)}`,
+      id: "proposal",
+      status: input.role === "viewer" ? "unavailable" : "not-started",
+      title: "Reconstruction and fusion proposal",
+    };
+  }
+
   const reconstruction =
     input.reconstruction.kind === "ready" ? input.reconstruction.value : undefined;
   const fusion = input.fusion.kind === "ready" ? input.fusion.value : undefined;
@@ -353,9 +437,7 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
 }
 
 function confirmationStage(input: HomeJourneyInput): JourneyStage {
-  const branchConfirmed =
-    input.branches.kind === "ready" &&
-    input.branches.value.revisions.some((revision) => revision > 0);
+  const branchConfirmed = hasCurrentChangedBranch(input);
   const proposalReady =
     input.fusion.kind === "ready" &&
     input.fusion.value.jobs.some(({ state }) => state === "proposed");
@@ -364,8 +446,8 @@ function confirmationStage(input: HomeJourneyInput): JourneyStage {
     return {
       actionLabel: "Inspect confirmed model",
       detail:
-        "A typed C5 commit exists. This is homeowner-confirmed exploration state, not survey or professional truth.",
-      href: `/fusion/${encodeURIComponent(input.projectId)}`,
+        "A post-initialization C5 branch head exactly matches the current existing snapshot and differs from its immutable source. This remains homeowner-confirmed exploration state, not survey or professional truth.",
+      href: `/editor/${encodeURIComponent(input.projectId)}`,
       id: "confirmation",
       status: "confirmed",
       title: "Preview and explicitly confirm corrections",
@@ -430,12 +512,10 @@ function twinStage(input: HomeJourneyInput): JourneyStage {
   const hasCurrentSceneSource = input.scenes.value.snapshots.some(
     ({ profile, snapshotId }) => profile === "existing" && snapshotId === currentSnapshotId,
   );
-  const branchConfirmed =
-    input.branches.kind === "ready" &&
-    input.branches.value.revisions.some((revision) => revision > 0);
+  const branchConfirmed = hasCurrentChangedBranch(input);
   const hasCurrentSnapshot = currentSnapshotId !== undefined;
 
-  if (succeeded) {
+  if (branchConfirmed && succeeded) {
     return {
       actionLabel: "Explore exact viewer job",
       detail:
@@ -446,7 +526,7 @@ function twinStage(input: HomeJourneyInput): JourneyStage {
       title: "Build and explore the committed twin",
     };
   }
-  if (active) {
+  if (branchConfirmed && active) {
     return {
       actionLabel: "View scene progress",
       detail: "Scene compilation is in progress against a committed current-profile snapshot.",
@@ -473,7 +553,7 @@ function twinStage(input: HomeJourneyInput): JourneyStage {
     actionLabel: "Complete explicit confirmation",
     detail:
       "A scene is gated until typed corrections are explicitly committed and exposed as the current profile.",
-    href: `/fusion/${encodeURIComponent(input.projectId)}`,
+    href: homeJourneyHref(input.projectId),
     id: "twin",
     status: "needs-attention",
     title: "Build and explore the committed twin",
@@ -485,6 +565,7 @@ export function deriveHomeJourney(input: HomeJourneyInput): HomeJourneyState {
     propertyStage(input),
     goalsStage(input),
     evidenceStage(input),
+    setupStage(input),
     proposalStage(input),
     confirmationStage(input),
     twinStage(input),
