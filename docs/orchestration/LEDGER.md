@@ -3,12 +3,12 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `main`
-- Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design`
+- Integration branch: `codex/homeowner-digital-twin-journey`
+- Repository/project root: `/home/abhinav/code/interior-design` in the primary WSL checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 are complete. C14 Session B closed the authorised-host gate for the exact accepted Linux CPU profile on codex/c14-windows-acceptance; C15 remains closed and terminal for this run, and C16 is not authorised.
+- Autonomous execution boundary: C0-C14 are complete. On 2026-08-23 the user authorised corrective checkpoint C14.1 for the core homeowner reconstruction journey. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -624,9 +624,8 @@
 
 ## C8 v2 — RTX 5080 Blackwell modernisation correction
 
-- Status: **eligible workstation correction complete** on codex/c8-v2-blackwell.
-  PR #2 remains unmerged. C15 remains closed. Physical iOS and
-  representative-home field gates remain independently deferred-not-run.
+- Status: **acceptance-only workstation correction merged** to clean `main` by PR #2 at `54886f570c3bb559490a50727e4c77ed00834b52`.
+  C15 remains closed. Physical iOS and representative-home field gates remain independently deferred-not-run.
 - Authority: authorised base c48c60ee8f179603670207642e31c56eba84b315;
   counted RTX 5080 implementation
   ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0; exact complete software-gate
@@ -696,12 +695,39 @@
   removed. Final counts are zero C8 temp paths, containers, tags, volumes,
   networks, or helper processes; the primary checkout is the only worktree. No
   global Docker prune, host CUDA/driver install, or unrelated deletion occurred.
-- Merge recommendation: PR #2 is ready for review/merge **only for the
-  acceptance-only workstation package and evidence contract**. It is not a
-  production reconstruction, representative-home, metric-accuracy, or field
-  acceptance.
+- Merge record: PR #2 was merged only as the acceptance-only workstation package and evidence contract. It is not a production reconstruction, representative-home, metric-accuracy, or field acceptance.
 - Remaining limits: no physical iOS/LiDAR/RoomPlan/ARKit pose, relocalisation,
   interruption, thermal, background-transfer, representative-home, multi-room,
   real-capture, metric-scale, survey comparison, customer/phone/provider data,
   paid/cloud provider, external model key, production deployment, or
   professional review evidence. C15 was not opened.
+
+## C14.1 — Homeowner reconstruction journey integration
+
+### Master activation
+
+- Status: active; contract prelude frozen; isolated lanes not yet launched.
+- Authority: user instruction dated 2026-08-23 to prioritise the next core homeowner slice over C15, MCPs or speculative planning intelligence and to leave the final PR unmerged.
+- Contract: `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`.
+- Verified predecessor: clean `main` and `origin/main` at `54886f570c3bb559490a50727e4c77ed00834b52`; PR #2 is present only as the C8 v2 acceptance package.
+- Integration branch: `codex/homeowner-digital-twin-journey`.
+- Planned lanes: two. Both are exact `gpt-5.6-sol` / `xhigh` and are recorded before launch.
+- Contract/migration impact: none. C1–C10 contracts, server-side permissions, C5 canonical mutation and C10 exact-snapshot compilation remain authoritative.
+
+| Lane                                     | Task/thread | Worktree | Model / reasoning       | State  | Exclusive roots                                                                                                              |
+| ---------------------------------------- | ----------- | -------- | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| C14.1-L1 guided journey and safe handoff | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
+| C14.1-L2 independent journey acceptance  | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+
+### Discovery and prelude evidence
+
+- The primary WSL checkout was the only registered worktree. The branch was clean and exactly matched both requested and remote SHA before activation.
+- The clean predecessor `pnpm verify` gate passed Prettier, all 24 workspace lint/typecheck/build tasks, 45 unit task groups, Ruff, strict mypy and pytest 157 passed with two honest unavailable COLMAP/Open3D capability skips.
+- Code audit proved the smallest missing slice is orchestration, not a new inference domain: project navigation is fragmented; C1 already owns core renovation goals; C9 only renders its exact C5 draft; C5 commit already advances the canonical profile pointer; C10 already resolves that exact current committed snapshot.
+- The frozen mutation chain is C9 persisted proposal/draft → C5 preview → separate explicit confirmation → C5 commit → explicit C10 scene compilation. Preview blocking, stale, expired, denied or offline states change no canonical model.
+- Host preflight: WSL2 Linux 6.6 is authoritative; Node 22.22.2, pnpm 10.33.0, uv 0.11.16, Docker 29.5.3 and gh 2.92.0 are available. `nvidia-smi` is exposed through WSL. `xcodebuild` is absent, so Xcode/RoomPlan/LiDAR/physical Apple validation is not available on this host.
+- No real address, representative property, customer media, paid/cloud provider, production deployment or physical capture is activated. C8 v2 remains acceptance-only with no API/queue/worker/UI route and production routing disabled.
+
+### Frozen terminal rule
+
+- The orchestrator owns lane prompts, review, merge order, integration repairs, final repository/browser/runtime gates, closeout evidence, commit, push and non-draft PR. C15 remains closed and the final PR must not be merged by this run.

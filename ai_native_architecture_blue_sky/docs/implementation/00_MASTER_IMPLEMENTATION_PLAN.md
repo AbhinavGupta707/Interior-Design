@@ -5,6 +5,8 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
+**Current execution note (23 August 2026):** user-authorised corrective checkpoint C14.1 composes the accepted property, intake, evidence, proposal, C5 confirmation and C10 walkthrough capabilities into the core homeowner journey. It is governed by the active plan and `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`; C15 remains closed and C8 v2 remains acceptance-only.
+
 ## 1. Executive answer
 
 The material describes a credible long-term company, but not a credible single-release software project. The company should become an integrated residential-transformation platform: one trusted path from a property and a homeowner's intent to an evidence-backed existing-condition model, professionally accountable design, approvals, procurement, delivery and, eventually, a living as-built home record. Its analogue to an integrated insurance operator is not “AI architecture software”; it is ownership of the information, decision, evidence and operating loops that currently fragment a residential project.
