@@ -5,8 +5,10 @@ import {
   modelSnapshotRecordSchema,
   projectSchema,
   type Actor,
+  type KnownAttribution,
   type LocalPersona,
   type ModelBranch,
+  type ModelOperationRequest,
   type ModelProfile,
   type Project,
 } from "@interior-design/contracts";
@@ -58,6 +60,244 @@ const clientOperationId = "76000000-0000-4000-8000-000000000001";
 const tokenProvider = new LocalFixtureTokenProvider(
   "c5-route-session-secret-with-at-least-thirty-two-bytes",
 );
+
+const attributionErrorDetail =
+  "User-asserted model attribution must match the authenticated actor.";
+const spoofedPayloadMarker = "C14.2 spoofed attribution payload marker";
+
+function fixtureUuid(sequence: number): string {
+  return `90000000-0000-4000-8000-${sequence.toString().padStart(12, "0")}`;
+}
+
+function userAttribution(actorUserId: string, sequence: number): KnownAttribution {
+  return {
+    actorUserId,
+    claimId: fixtureUuid(sequence),
+    evidenceIds: [],
+    method: { kind: "manual", name: "Synthetic C14.2 route fixture", version: "1" },
+    state: "user-asserted",
+    verification: { status: "not-reviewed" },
+  };
+}
+
+function sourceDerivedAttribution(actorUserId: string, sequence: number): KnownAttribution {
+  return {
+    actorUserId,
+    claimId: fixtureUuid(sequence),
+    evidenceIds: [fixtureUuid(sequence + 1)],
+    method: { kind: "plan-import", name: "Synthetic C14.2 plan fixture", version: "1" },
+    state: "source-derived",
+    verification: { status: "not-reviewed" },
+  };
+}
+
+function known<T>(value: T, actorUserId: string, sequence: number) {
+  return {
+    attribution: userAttribution(actorUserId, sequence),
+    knowledge: "known" as const,
+    value,
+  };
+}
+
+function renameOperation(actorUserId: string): ModelOperationRequest {
+  return {
+    clientOperationId,
+    name: known("Renamed fixture", actorUserId, 100),
+    reason: "Rename fixture",
+    schemaVersion: "c5-model-operation-v1",
+    spaceId: "50000000-0000-4000-8000-000000000002",
+    type: "space.rename.v1",
+  };
+}
+
+function designElement(elementId: string, originActorUserId: string, sequence: number) {
+  return {
+    category: known("chair", editorUserId, sequence),
+    dimensions: known(
+      { depthMm: 550, heightMm: 800, widthMm: 500 },
+      editorUserId,
+      sequence + 1,
+    ),
+    elementType: "furnishing" as const,
+    id: elementId,
+    levelId: "50000000-0000-4000-8000-000000000001",
+    name: known("Synthetic chair", editorUserId, sequence + 2),
+    origin: userAttribution(originActorUserId, sequence + 3),
+    placement: {
+      position: known({ xMm: 1_000, yMm: 1_000, zMm: 0 }, editorUserId, sequence + 4),
+      rotationMilliDegrees: known(0, editorUserId, sequence + 5),
+    },
+  };
+}
+
+const designAssetBinding = {
+  assetId: fixtureUuid(800),
+  assetVersionId: fixtureUuid(801),
+  contentSha256: "a".repeat(64),
+  metadataSha256: "b".repeat(64),
+  placementPolicySha256: "c".repeat(64),
+  rightsRecordSha256: "d".repeat(64),
+};
+
+function spoofedOperationCases(): readonly {
+  readonly kind: string;
+  readonly operation: ModelOperationRequest;
+}[] {
+  const foreignActorUserId = ownerUserId;
+  const designCreateElementId = fixtureUuid(810);
+  const designReplaceElementId = fixtureUuid(811);
+
+  return [
+    {
+      kind: "level body",
+      operation: {
+        clientOperationId: fixtureUuid(200),
+        level: {
+          elementType: "level",
+          elevationMm: known(0, editorUserId, 201),
+          id: fixtureUuid(202),
+          name: known("Upper level", editorUserId, 203),
+          origin: userAttribution(foreignActorUserId, 204),
+          storeyHeightMm: known(2_400, editorUserId, 205),
+        },
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        type: "level.create.v1",
+      },
+    },
+    {
+      kind: "wall body",
+      operation: {
+        clientOperationId: fixtureUuid(210),
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        type: "wall.create.v1",
+        wall: {
+          alignment: "centre",
+          baseOffsetMm: known(0, editorUserId, 211),
+          elementType: "wall",
+          heightMm: known(2_400, editorUserId, 212),
+          id: fixtureUuid(213),
+          levelId: "50000000-0000-4000-8000-000000000001",
+          name: known("Partition", editorUserId, 214),
+          origin: userAttribution(editorUserId, 215),
+          path: known(
+            [
+              { xMm: 0, yMm: 0 },
+              { xMm: 2_000, yMm: 0 },
+            ],
+            foreignActorUserId,
+            216,
+          ),
+          thicknessMm: known(100, editorUserId, 217),
+        },
+      },
+    },
+    {
+      kind: "space body",
+      operation: {
+        clientOperationId: fixtureUuid(220),
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        space: {
+          boundary: known(
+            [
+              { xMm: 0, yMm: 0 },
+              { xMm: 2_000, yMm: 0 },
+              { xMm: 2_000, yMm: 2_000 },
+              { xMm: 0, yMm: 2_000 },
+            ],
+            foreignActorUserId,
+            221,
+          ),
+          boundedByElementIds: [],
+          classification: known("room", editorUserId, 222),
+          elementType: "space",
+          id: fixtureUuid(223),
+          levelId: "50000000-0000-4000-8000-000000000001",
+          name: known("Study", editorUserId, 224),
+          origin: userAttribution(editorUserId, 225),
+        },
+        type: "space.create.v1",
+      },
+    },
+    {
+      kind: "opening body",
+      operation: {
+        clientOperationId: fixtureUuid(230),
+        opening: {
+          elementType: "opening",
+          heightMm: known(2_000, editorUserId, 231),
+          hostWallId: fixtureUuid(213),
+          id: fixtureUuid(232),
+          kind: "door",
+          name: known("Door", editorUserId, 233),
+          offsetAlongHostMm: known(500, editorUserId, 234),
+          origin: userAttribution(foreignActorUserId, 235),
+          sillHeightMm: known(0, editorUserId, 236),
+          swing: known("left", editorUserId, 237),
+          widthMm: known(800, editorUserId, 238),
+        },
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        type: "opening.insert.v1",
+      },
+    },
+    {
+      kind: "metadata body",
+      operation: {
+        clientOperationId: fixtureUuid(240),
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        target: {
+          collection: "spaces",
+          elementId: "50000000-0000-4000-8000-000000000002",
+          field: "name",
+        },
+        type: "element.metadata.correct.v1",
+        value: known("Spoofed room", foreignActorUserId, 241),
+      },
+    },
+    {
+      kind: "provenance body",
+      operation: {
+        attribution: userAttribution(foreignActorUserId, 250),
+        clientOperationId: fixtureUuid(251),
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c5-model-operation-v1",
+        target: {
+          collection: "spaces",
+          elementId: "50000000-0000-4000-8000-000000000002",
+          field: "name",
+        },
+        type: "element.provenance.correct.v1",
+      },
+    },
+    {
+      kind: "design create body",
+      operation: {
+        assetBinding: designAssetBinding,
+        clientOperationId: fixtureUuid(260),
+        element: designElement(designCreateElementId, foreignActorUserId, 261),
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c12-design-element-operation-v1",
+        type: "design.element.create.v1",
+      },
+    },
+    {
+      kind: "design replace body",
+      operation: {
+        assetBinding: designAssetBinding,
+        clientOperationId: fixtureUuid(270),
+        element: designElement(designReplaceElementId, foreignActorUserId, 271),
+        expectedElementId: designReplaceElementId,
+        reason: spoofedPayloadMarker,
+        schemaVersion: "c12-design-element-operation-v1",
+        type: "design.element.replace.v1",
+      },
+    },
+  ];
+}
 
 const actors: Record<string, Actor> = {
   "fixture|editor-alpha": {
@@ -392,15 +632,17 @@ describe("C5 model operation routes", () => {
 
   it("routes first import through initialization and rejects raw amendments", async () => {
     const { repository, server } = createFixtureServer();
+    const initializationSnapshot = canonicalSnapshotFixture();
     const url = `/v1/projects/${alphaProjectId}/models/existing/snapshots`;
     const initialized = await server.inject({
       headers: { ...auth("fixture|owner-alpha"), "idempotency-key": "c5-initialize-0001" },
       method: "POST",
-      payload: { expectedCurrentSnapshotSha256: null, snapshot: canonicalSnapshotFixture() },
+      payload: { expectedCurrentSnapshotSha256: null, snapshot: initializationSnapshot },
       url,
     });
     expect(initialized.statusCode).toBe(201);
     expect(repository.initializationCommands).toHaveLength(1);
+    expect(repository.initializationCommands[0]?.snapshot).toEqual(initializationSnapshot);
 
     const rawAmendment = await server.inject({
       headers: { ...auth("fixture|owner-alpha"), "idempotency-key": "c5-raw-amendment-1" },
@@ -415,6 +657,153 @@ describe("C5 model operation routes", () => {
     expect(rawAmendment.json()).toMatchObject({ code: "TYPED_OPERATION_REQUIRED" });
     expect(repository.initializationCommands).toHaveLength(1);
   });
+
+  it("rejects spoofed nested initialization attribution without repository or disclosure", async () => {
+    const logLines: string[] = [];
+    const { repository, server } = createFixtureServer({
+      level: "warn",
+      stream: {
+        write(line: string) {
+          logLines.push(line);
+        },
+      },
+    });
+    const initializationSnapshot = canonicalSnapshotFixture();
+    const level = initializationSnapshot.elements.levels[0];
+    if (level === undefined || level.name.knowledge !== "known") {
+      throw new Error("Fixture level name is missing.");
+    }
+    const spoofedSnapshot = {
+      ...initializationSnapshot,
+      elements: {
+        ...initializationSnapshot.elements,
+        levels: [
+          {
+            ...level,
+            name: {
+              attribution: { ...level.name.attribution, actorUserId: editorUserId },
+              knowledge: "known" as const,
+              value: spoofedPayloadMarker,
+            },
+          },
+          ...initializationSnapshot.elements.levels.slice(1),
+        ],
+      },
+    };
+
+    const response = await server.inject({
+      headers: {
+        ...auth("fixture|owner-alpha"),
+        "idempotency-key": "c14-attribution-initialize1",
+      },
+      method: "POST",
+      payload: { expectedCurrentSnapshotSha256: null, snapshot: spoofedSnapshot },
+      url: `/v1/projects/${alphaProjectId}/models/existing/snapshots`,
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json()).toMatchObject({
+      code: "MODEL_ATTRIBUTION_ACTOR_MISMATCH",
+      detail: attributionErrorDetail,
+    });
+    const publicOutput = `${response.body}\n${logLines.join("\n")}`;
+    expect(publicOutput).not.toContain(editorUserId);
+    expect(publicOutput).not.toContain(spoofedPayloadMarker);
+    expect(repository.initializationCommands).toHaveLength(0);
+  });
+
+  it("passes a same-actor editor preview to the repository unchanged", async () => {
+    const { repository, server } = createFixtureServer();
+    const operation = renameOperation(editorUserId);
+    const response = await server.inject({
+      headers: {
+        ...auth("fixture|editor-alpha"),
+        "idempotency-key": "c14-attribution-preview-valid1",
+      },
+      method: "POST",
+      payload: {
+        expectedHeadSnapshotSha256: snapshotHash(),
+        expectedRevision: 0,
+        operations: [operation],
+      },
+      url: `/v1/projects/${alphaProjectId}/models/existing/branches/${branchId}/previews`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(repository.previewCommands).toHaveLength(1);
+    expect(repository.previewCommands[0]?.operations).toEqual([operation]);
+    expect(response.json()).toMatchObject({ operations: [operation] });
+  });
+
+  it("does not actor-bind source-derived attribution semantics", async () => {
+    const { repository, server } = createFixtureServer();
+    const operation: ModelOperationRequest = {
+      attribution: sourceDerivedAttribution(ownerUserId, 300),
+      clientOperationId: fixtureUuid(302),
+      reason: "Retain source-derived provenance",
+      schemaVersion: "c5-model-operation-v1",
+      target: {
+        collection: "spaces",
+        elementId: "50000000-0000-4000-8000-000000000002",
+        field: "name",
+      },
+      type: "element.provenance.correct.v1",
+    };
+    const response = await server.inject({
+      headers: {
+        ...auth("fixture|editor-alpha"),
+        "idempotency-key": "c14-attribution-source-derived1",
+      },
+      method: "POST",
+      payload: {
+        expectedHeadSnapshotSha256: snapshotHash(),
+        expectedRevision: 0,
+        operations: [operation],
+      },
+      url: `/v1/projects/${alphaProjectId}/models/existing/branches/${branchId}/previews`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(repository.previewCommands[0]?.operations).toEqual([operation]);
+  });
+
+  it.each(spoofedOperationCases())(
+    "rejects spoofed user attribution in a nested $kind before preview persistence",
+    async ({ operation }) => {
+      const logLines: string[] = [];
+      const { repository, server } = createFixtureServer({
+        level: "warn",
+        stream: {
+          write(line: string) {
+            logLines.push(line);
+          },
+        },
+      });
+      const response = await server.inject({
+        headers: {
+          ...auth("fixture|editor-alpha"),
+          "idempotency-key": "c14-attribution-preview-spoof1",
+        },
+        method: "POST",
+        payload: {
+          expectedHeadSnapshotSha256: snapshotHash(),
+          expectedRevision: 0,
+          operations: [operation],
+        },
+        url: `/v1/projects/${alphaProjectId}/models/existing/branches/${branchId}/previews`,
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(response.json()).toMatchObject({
+        code: "MODEL_ATTRIBUTION_ACTOR_MISMATCH",
+        detail: attributionErrorDetail,
+      });
+      const publicOutput = `${response.body}\n${logLines.join("\n")}`;
+      expect(publicOutput).not.toContain(ownerUserId);
+      expect(publicOutput).not.toContain(spoofedPayloadMarker);
+      expect(repository.previewCommands).toHaveLength(0);
+    },
+  );
 
   it("lets viewers read/history/compare while denying every mutation", async () => {
     const { repository, server } = createFixtureServer();
@@ -469,7 +858,7 @@ describe("C5 model operation routes", () => {
           {
             clientOperationId,
             name: {
-              attribution: fixtureSpace.name.attribution,
+              attribution: userAttribution(editorUserId, 990),
               knowledge: "known",
               value: "Renamed fixture",
             },
@@ -514,7 +903,7 @@ describe("C5 model operation routes", () => {
           {
             clientOperationId,
             name: {
-              attribution: fixtureSpace.name.attribution,
+              attribution: userAttribution(editorUserId, 991),
               knowledge: "known",
               value: "Renamed fixture",
             },
