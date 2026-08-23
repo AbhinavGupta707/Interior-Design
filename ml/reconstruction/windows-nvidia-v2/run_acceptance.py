@@ -536,13 +536,13 @@ def _colmap_run(
     sparse = {
         "meanReprojectionErrorPixels": metric(
             "mean reprojection error",
-            r"Mean reprojection error:\\s+([0-9.]+)px",
+            r"Mean reprojection error:\s+([0-9.]+)px",
         ),
-        "observations": metric("observations", r"Observations:\\s+([0-9]+)"),
+        "observations": metric("observations", r"Observations:\s+([0-9]+)"),
         "registeredImages": metric(
-            "registered images", r"Registered images:\\s+([0-9]+)"
+            "registered images", r"Registered images:\s+([0-9]+)"
         ),
-        "sparsePoints": metric("points", r"Points:\\s+([0-9]+)"),
+        "sparsePoints": metric("points", r"Points:\s+([0-9]+)"),
     }
     ply = cast("dict[str, object]", cast("dict[str, object]", validation)["ply"])
     if sparse["registeredImages"] < 2 or sparse["sparsePoints"] <= 0:
