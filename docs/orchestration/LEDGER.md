@@ -706,7 +706,7 @@
 
 ### Master activation
 
-- Status: active; contract prelude frozen; isolated lanes not yet launched.
+- Status: active; contract prelude frozen; L1 active. L2 intentionally starts after L1 integration so independent acceptance executes against the reviewed product code.
 - Authority: user instruction dated 2026-08-23 to prioritise the next core homeowner slice over C15, MCPs or speculative planning intelligence and to leave the final PR unmerged.
 - Contract: `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`.
 - Verified predecessor: clean `main` and `origin/main` at `54886f570c3bb559490a50727e4c77ed00834b52`; PR #2 is present only as the C8 v2 acceptance package.
@@ -714,10 +714,10 @@
 - Planned lanes: two. Both are exact `gpt-5.6-sol` / `xhigh` and are recorded before launch.
 - Contract/migration impact: none. C1–C10 contracts, server-side permissions, C5 canonical mutation and C10 exact-snapshot compilation remain authoritative.
 
-| Lane                                     | Task/thread | Worktree | Model / reasoning       | State  | Exclusive roots                                                                                                              |
-| ---------------------------------------- | ----------- | -------- | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| C14.1-L1 guided journey and safe handoff | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
-| C14.1-L2 independent journey acceptance  | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+| Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State  | Exclusive roots                                                                                                              |
+| ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | active | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
+| C14.1-L2 independent journey acceptance  | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
 
 ### Discovery and prelude evidence
 
