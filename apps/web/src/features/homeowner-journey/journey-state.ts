@@ -171,7 +171,7 @@ function propertyStage(input: HomeJourneyInput): JourneyStage {
     : {
         actionLabel: input.role === "viewer" ? "View property status" : "Confirm property",
         detail:
-          "Select a fixture/manual identity or record that provider context is unavailable. Interior facts remain unknown.",
+          "Select a provider or manual identity, or record that provider context is unavailable. Interior facts remain unknown.",
         href: `/property/${encodeURIComponent(input.projectId)}`,
         id: "property",
         status: "not-started",

@@ -125,14 +125,6 @@ export function HomeownerJourney({ projectId }: { readonly projectId: string }) 
         </div>
       </header>
 
-      <div className="fixture-banner" role="note">
-        <strong>Fixture/software journey</strong>
-        <span>
-          Synthetic/local states are not a real property. This Windows/WSL run has no Xcode,
-          RoomPlan, LiDAR or physical-device validation.
-        </span>
-      </div>
-
       {degradedCount > 0 ? (
         <div className="home-journey-degraded" role="status">
           <strong>Partial journey available</strong>
