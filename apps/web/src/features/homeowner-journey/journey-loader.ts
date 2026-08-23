@@ -4,6 +4,7 @@ import { ClientProblem, getProject, getProjectIntake, getSession } from "../auth
 import { listAssets, EvidenceProblem } from "../evidence/api";
 import { fusionClient, FusionProblem } from "../discrepancy-review/api";
 import { editorClient, EditorProblem } from "../editor-2d/api";
+import { planImportClient, PlanImportProblem } from "../plan-import/api";
 import { getPropertyDossier, PropertyProblem } from "../property/api";
 import { reconstructionClient, ReconstructionProblem } from "../reconstruction/api";
 import { sceneClient, SceneProblem } from "../viewer-3d/api";
@@ -22,6 +23,7 @@ function problemKind(reason: unknown): JourneyProblemKind {
     reason instanceof EvidenceProblem ||
     reason instanceof FusionProblem ||
     reason instanceof EditorProblem ||
+    reason instanceof PlanImportProblem ||
     reason instanceof PropertyProblem ||
     reason instanceof ReconstructionProblem ||
     reason instanceof SceneProblem
@@ -53,11 +55,12 @@ async function currentSnapshot(projectId: string) {
 
 export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJourney> {
   const [project, session] = await Promise.all([getProject(projectId), getSession()]);
-  const [intake, property, evidence, reconstruction, fusion, snapshot, branches, scenes] =
+  const [intake, property, evidence, plan, reconstruction, fusion, snapshot, branches, scenes] =
     await Promise.allSettled([
       getProjectIntake(projectId),
       getPropertyDossier(projectId),
       listAssets(projectId),
+      planImportClient.loadWorkspace(projectId),
       reconstructionClient.loadWorkspace(projectId),
       fusionClient.loadWorkspace(projectId),
       currentSnapshot(projectId),
@@ -91,6 +94,9 @@ export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJour
               goals: value.intake.goals,
             },
       ),
+      plan: resource(plan, (workspace) => ({
+        jobs: workspace.jobs.map(({ state }) => ({ state })),
+      })),
       projectId,
       property: resource(property, (dossier) => ({ confirmed: dossier !== null })),
       reconstruction: resource(reconstruction, (workspace) => ({

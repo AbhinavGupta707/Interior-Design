@@ -30,6 +30,7 @@ function input(overrides: Partial<HomeJourneyInput> = {}): HomeJourneyInput {
     evidence: ready({ assets: [] }),
     fusion: ready({ jobs: [] }),
     intake: ready(null),
+    plan: ready({ jobs: [] }),
     projectId,
     property: ready({ confirmed: false }),
     reconstruction: ready({ jobs: [] }),
@@ -95,7 +96,7 @@ describe("C14.2 homeowner journey derivation", () => {
       status: "needs-attention",
     });
     expect(result.primary).toMatchObject({ degraded: true });
-    expect(result.primary.detail).toContain("One proposal source is unavailable");
+    expect(result.primary.detail).toContain("One or more proposal sources are unavailable");
   });
 
   it("routes ready plans to C6 and ready photo/video evidence to C8", () => {
@@ -118,6 +119,80 @@ describe("C14.2 homeowner journey derivation", () => {
     );
     expect(media.stages.find(({ id }) => id === "proposal")).toMatchObject({
       href: `/reconstruction/${projectId}`,
+      status: "not-started",
+    });
+  });
+
+  it("advances persisted C6 proposal, confirmation and exact C10 setup without looping", () => {
+    const completedIntake = ready({
+      evidenceAvailable: {
+        photographs: false,
+        plans: true,
+        roomCapture: false,
+        video: false,
+      },
+      goals: ["Correct the ready floor plan"],
+    });
+    const beforeCommit = deriveHomeJourney(
+      input({
+        branches: ready({
+          branches: [
+            {
+              headSnapshotId: currentSnapshotId,
+              revision: 1,
+              sourceSnapshotId: currentSnapshotId,
+            },
+          ],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        evidence: ready({ assets: [{ kind: "plan", status: "ready" }] }),
+        intake: completedIntake,
+        plan: ready({ jobs: [{ state: "proposed" }] }),
+        property: ready({ confirmed: true }),
+      }),
+    );
+    expect(beforeCommit.stages.find(({ id }) => id === "proposal")).toMatchObject({
+      href: `/plan-import/${projectId}`,
+      status: "proposal-ready",
+    });
+    expect(beforeCommit.stages.find(({ id }) => id === "confirmation")).toMatchObject({
+      href: `/plan-import/${projectId}`,
+      status: "proposal-ready",
+    });
+    expect(beforeCommit.primary).toMatchObject({ id: "proposal", status: "proposal-ready" });
+
+    const afterCommit = deriveHomeJourney(
+      input({
+        branches: ready({
+          branches: [
+            {
+              headSnapshotId: currentSnapshotId,
+              revision: 2,
+              sourceSnapshotId,
+            },
+          ],
+        }),
+        currentSnapshot: ready({ snapshotId: currentSnapshotId }),
+        evidence: ready({ assets: [{ kind: "plan", status: "ready" }] }),
+        intake: completedIntake,
+        plan: ready({ jobs: [{ state: "proposed" }] }),
+        property: ready({ confirmed: true }),
+        scenes: ready({
+          jobs: [],
+          snapshots: [{ profile: "existing", snapshotId: currentSnapshotId }],
+        }),
+      }),
+    );
+    expect(afterCommit.stages.find(({ id }) => id === "proposal")).toMatchObject({
+      status: "complete",
+    });
+    expect(afterCommit.stages.find(({ id }) => id === "confirmation")).toMatchObject({
+      status: "confirmed",
+    });
+    expect(afterCommit.primary).toMatchObject({
+      actionLabel: "Compile committed twin",
+      href: `/viewer/${projectId}`,
+      id: "twin",
       status: "not-started",
     });
   });

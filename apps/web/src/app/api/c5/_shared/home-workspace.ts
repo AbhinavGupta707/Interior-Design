@@ -122,14 +122,14 @@ export function buildUnmeasuredHomeWorkspaceRequest(
       },
       knownLimitations: [
         {
-          code: "PROPERTY_CONTEXT_PROVES_NO_INTERIOR",
-          detail:
-            "The selected property links this project only; its address and provider context establish no interior geometry or dimensions.",
-        },
-        {
           code: "PLACEHOLDER_LEVEL_UNMEASURED",
           detail:
             "The single placeholder level is unmeasured and not reviewed; its name, elevation and storey height remain unknown.",
+        },
+        {
+          code: "PROPERTY_CONTEXT_PROVES_NO_INTERIOR",
+          detail:
+            "The selected property links this project only; its address and provider context establish no interior geometry or dimensions.",
         },
       ],
       modelId: deterministicUuid(scope, "existing-model"),

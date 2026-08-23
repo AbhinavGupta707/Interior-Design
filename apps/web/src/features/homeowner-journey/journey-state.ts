@@ -3,6 +3,7 @@ import type {
   AssetStatus,
   FusionJobState,
   HomeIntake,
+  PlanJobState,
   ReconstructionJobState,
   SceneJobState,
   Session,
@@ -47,6 +48,10 @@ interface FusionSummary {
   readonly jobs: readonly { readonly state: FusionJobState }[];
 }
 
+interface PlanSummary {
+  readonly jobs: readonly { readonly state: PlanJobState }[];
+}
+
 interface BranchSummary {
   readonly branches: readonly {
     readonly headSnapshotId: string;
@@ -74,6 +79,7 @@ export interface HomeJourneyInput {
   readonly evidence: JourneyResource<EvidenceSummary>;
   readonly fusion: JourneyResource<FusionSummary>;
   readonly intake: JourneyResource<IntakeSummary | null>;
+  readonly plan: JourneyResource<PlanSummary>;
   readonly projectId: string;
   readonly property: JourneyResource<{ readonly confirmed: boolean }>;
   readonly reconstruction: JourneyResource<ReconstructionSummary>;
@@ -112,6 +118,8 @@ const activeFusionStates = new Set<FusionJobState>([
   "queued",
   "registering",
 ]);
+
+const activePlanStates = new Set<PlanJobState>(["cancel-requested", "processing", "queued"]);
 
 const activeSceneStates = new Set<SceneJobState>([
   "cancel-requested",
@@ -330,16 +338,19 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
     };
   }
 
+  const plan = input.plan.kind === "ready" ? input.plan.value : undefined;
   const reconstruction =
     input.reconstruction.kind === "ready" ? input.reconstruction.value : undefined;
   const fusion = input.fusion.kind === "ready" ? input.fusion.value : undefined;
-  if (!reconstruction && !fusion) {
+  if (!plan && !reconstruction && !fusion) {
     const problem =
-      input.fusion.kind === "unavailable"
-        ? input.fusion.problem
-        : input.reconstruction.kind === "unavailable"
-          ? input.reconstruction.problem
-          : "unavailable";
+      input.plan.kind === "unavailable"
+        ? input.plan.problem
+        : input.fusion.kind === "unavailable"
+          ? input.fusion.problem
+          : input.reconstruction.kind === "unavailable"
+            ? input.reconstruction.problem
+            : "unavailable";
     return unavailableStage(
       "proposal",
       "Reconstruction and fusion proposal",
@@ -347,22 +358,41 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
       input.projectId,
     );
   }
-  const degraded = !reconstruction || !fusion;
+  const degraded = !plan || !reconstruction || !fusion;
   const degradedDetail = degraded
-    ? " One proposal source is unavailable; readable state is preserved and no missing completion was inferred."
+    ? " One or more proposal sources are unavailable; readable state is preserved and no missing completion was inferred."
     : "";
 
+  const planReady = plan?.jobs.some(({ state }) => state === "proposed") ?? false;
+  const planActive = plan?.jobs.some(({ state }) => activePlanStates.has(state)) ?? false;
   const fusionReady = fusion?.jobs.some(({ state }) => state === "proposed") ?? false;
   const fusionActive = fusion?.jobs.some(({ state }) => activeFusionStates.has(state)) ?? false;
   const reconstructionReady =
     reconstruction?.jobs.some(({ state }) => state === "completed") ?? false;
   const reconstructionActive =
     reconstruction?.jobs.some(({ state }) => activeReconstructionStates.has(state)) ?? false;
+  const planStopped =
+    plan?.jobs.some(({ state }) => state === "abstained" || state === "failed") ?? false;
   const stopped =
+    planStopped ||
     (fusion?.jobs.some(({ state }) => state === "abstained" || state === "failed") ?? false) ||
     (reconstruction?.jobs.some(({ state }) => state === "abstained" || state === "failed") ??
       false);
 
+  if (planReady) {
+    const confirmed = hasCurrentChangedBranch(input);
+    return {
+      actionLabel: "Review plan proposal",
+      degraded,
+      detail: confirmed
+        ? `An immutable C6 proposal is retained separately from the exact current confirmed model. Proposal generation is complete; confirmation remains a distinct C5 record.${degradedDetail}`
+        : `An immutable source-pinned C6 proposal is ready for explicit candidate review, calibration and C5 preview. It remains uncommitted.${degradedDetail}`,
+      href: `/plan-import/${encodeURIComponent(input.projectId)}`,
+      id: "proposal",
+      status: confirmed ? "complete" : "proposal-ready",
+      title: "Reconstruction and fusion proposal",
+    };
+  }
   if (fusionReady) {
     return {
       actionLabel: "Review full-house proposal",
@@ -374,14 +404,16 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
       title: "Reconstruction and fusion proposal",
     };
   }
-  if (fusionActive || reconstructionActive) {
+  if (planActive || fusionActive || reconstructionActive) {
     return {
       actionLabel: "Inspect proposal progress",
       degraded,
       detail: `Proposal work is in progress. Partial, disconnected and abstained results remain visible.${degradedDetail}`,
-      href: fusionActive
-        ? `/fusion/${encodeURIComponent(input.projectId)}`
-        : `/reconstruction/${encodeURIComponent(input.projectId)}`,
+      href: planActive
+        ? `/plan-import/${encodeURIComponent(input.projectId)}`
+        : fusionActive
+          ? `/fusion/${encodeURIComponent(input.projectId)}`
+          : `/reconstruction/${encodeURIComponent(input.projectId)}`,
       id: "proposal",
       status: "in-progress",
       title: "Reconstruction and fusion proposal",
@@ -424,7 +456,9 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
           ? `A ready plan continues through C6 calibration and correction; it is not interior truth by itself.${degradedDetail}`
           : `No eligible proposal source is ready. Supply and validate evidence first.${degradedDetail}`,
     href: stopped
-      ? `/fusion/${encodeURIComponent(input.projectId)}`
+      ? planStopped
+        ? `/plan-import/${encodeURIComponent(input.projectId)}`
+        : `/fusion/${encodeURIComponent(input.projectId)}`
       : readyMedia
         ? `/reconstruction/${encodeURIComponent(input.projectId)}`
         : readyPlan
@@ -438,9 +472,12 @@ function proposalStage(input: HomeJourneyInput): JourneyStage {
 
 function confirmationStage(input: HomeJourneyInput): JourneyStage {
   const branchConfirmed = hasCurrentChangedBranch(input);
-  const proposalReady =
+  const planProposalReady =
+    input.plan.kind === "ready" && input.plan.value.jobs.some(({ state }) => state === "proposed");
+  const fusionProposalReady =
     input.fusion.kind === "ready" &&
     input.fusion.value.jobs.some(({ state }) => state === "proposed");
+  const proposalReady = planProposalReady || fusionProposalReady;
 
   if (branchConfirmed) {
     return {
@@ -453,7 +490,11 @@ function confirmationStage(input: HomeJourneyInput): JourneyStage {
       title: "Preview and explicitly confirm corrections",
     };
   }
-  if (input.branches.kind === "unavailable" && input.fusion.kind === "unavailable") {
+  if (
+    input.branches.kind === "unavailable" &&
+    input.fusion.kind === "unavailable" &&
+    input.plan.kind === "unavailable"
+  ) {
     return unavailableStage(
       "confirmation",
       "Preview and explicitly confirm corrections",
@@ -471,9 +512,13 @@ function confirmationStage(input: HomeJourneyInput): JourneyStage {
     detail: proposalReady
       ? input.role === "viewer"
         ? "A proposal is ready, but viewers cannot preview or commit canonical mutations."
-        : "Create an exact C9 draft, run a distinct non-mutating C5 preview, then confirm in a separate action."
+        : planProposalReady
+          ? "Review the source-pinned C6 candidates and calibration, create an immutable operation draft, run a distinct C5 preview, then confirm in a separate action."
+          : "Create an exact C9 draft, run a distinct non-mutating C5 preview, then confirm in a separate action."
       : "No homeowner-confirmed correction commit is visible yet. Nothing will commit automatically.",
-    href: `/fusion/${encodeURIComponent(input.projectId)}`,
+    href: planProposalReady
+      ? `/plan-import/${encodeURIComponent(input.projectId)}`
+      : `/fusion/${encodeURIComponent(input.projectId)}`,
     id: "confirmation",
     status: proposalReady ? "proposal-ready" : "not-started",
     title: "Preview and explicitly confirm corrections",

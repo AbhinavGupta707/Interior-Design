@@ -159,8 +159,8 @@ describe("C14.2 persisted homeowner setup BFF", () => {
       if (collection !== "levels") expect(elements).toEqual([]);
     }
     expect(first.snapshot.knownLimitations.map(({ code }) => code)).toEqual([
-      "PROPERTY_CONTEXT_PROVES_NO_INTERIOR",
       "PLACEHOLDER_LEVEL_UNMEASURED",
+      "PROPERTY_CONTEXT_PROVES_NO_INTERIOR",
     ]);
   });
 
