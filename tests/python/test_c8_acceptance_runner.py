@@ -7,6 +7,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
+import pytest
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 RUNNER_PATH = REPOSITORY_ROOT / "ml/reconstruction/windows-nvidia-v2/run_acceptance.py"
 SPEC = importlib.util.spec_from_file_location("c8_acceptance_runner", RUNNER_PATH)
@@ -30,3 +32,16 @@ def test_each_container_command_has_a_bounded_timeout() -> None:
 
     assert isinstance(timeout, int)
     assert 60 <= timeout <= 60 * 60
+
+
+def test_canonical_output_is_materialized_once(tmp_path: Path) -> None:
+    target = tmp_path / "open3d-result.json"
+
+    RUNNER._materialize_json_output(target, {"z": 1, "a": 2})
+
+    assert target.read_bytes() == b'{"a":2,"z":1}\n'
+    with pytest.raises(ValueError, match="unsafe JSON output target"):
+        RUNNER._materialize_json_output(target, {"a": 2, "z": 1})
+
+    dangling = tmp_path / "dangling.json"
+    dangling.symlink_to(tmp_path / "missing.json")

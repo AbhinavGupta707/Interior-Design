@@ -67,6 +67,12 @@ def _canonical_bytes(value: object) -> bytes:
     ).encode("utf-8")
 
 
+def _materialize_json_output(path: Path, value: object) -> None:
+    if path.exists() or path.is_symlink() or not path.parent.is_dir():
+        raise ValueError(f"unsafe JSON output target: {path}")
+    path.write_bytes(_canonical_bytes(value) + b"\n")
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -661,6 +667,8 @@ def _simple_component_run(
         ),
     ]
     workload = _last_json(logs / f"{prefix}-workload.log")
+    if component == "open3d":
+        _materialize_json_output(output / "open3d-result.json", workload)
     output_paths = sorted(path for path in output.rglob("*") if path.is_file())
     result: dict[str, object] = {
         "commands": [asdict(record) for record in records],

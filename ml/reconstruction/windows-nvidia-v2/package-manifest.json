@@ -15,7 +15,7 @@
     "requirements-appearance.lock": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343",
     "requirements-open3d.in": "dee9c2fc147a33ef878a4c66ef375bff0397ee0b0349e0c366f50dab356f63d9",
     "requirements-open3d.lock": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
-    "run_acceptance.py": "7543f360ebf33e7904286c2ebf8e8b83e5d902f2d9970cbf789d69f02c91c6c5",
+    "run_acceptance.py": "1ff759ac4ef4f78b34db96f14b59ad59e2aed09cb5fa13e934eb110373128153",
     "sm120_probe.cu": "4b6415390eba1e9b60919b414c10bf07c1e4ea6dfa52057c188497914db00d0d",
     "validate_colmap_outputs.py": "858828ff3c48629cf2a0a9a7f9e31441438142b5c0d727beeff8ef272be2b15b",
     "versions.json": "d2ea9b30a13023630c828836f2d3ef289dfdedf0acc0993bb7d99ae844ee5248"
