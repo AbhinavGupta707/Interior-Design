@@ -61,9 +61,7 @@ function assertUserAttributionActor(value: unknown, actorUserId: string): void {
       throw invalidAttributionActor();
     }
 
-    const children = Array.isArray(current.value)
-      ? current.value
-      : Object.values(current.value);
+    const children = Array.isArray(current.value) ? current.value : Object.values(current.value);
     for (let index = children.length - 1; index >= 0; index -= 1) {
       pending.push({ depth: current.depth + 1, value: children[index] });
     }

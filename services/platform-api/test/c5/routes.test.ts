@@ -113,11 +113,7 @@ function renameOperation(actorUserId: string): ModelOperationRequest {
 function designElement(elementId: string, originActorUserId: string, sequence: number) {
   return {
     category: known("chair", editorUserId, sequence),
-    dimensions: known(
-      { depthMm: 550, heightMm: 800, widthMm: 500 },
-      editorUserId,
-      sequence + 1,
-    ),
+    dimensions: known({ depthMm: 550, heightMm: 800, widthMm: 500 }, editorUserId, sequence + 1),
     elementType: "furnishing" as const,
     id: elementId,
     levelId: "50000000-0000-4000-8000-000000000001",
