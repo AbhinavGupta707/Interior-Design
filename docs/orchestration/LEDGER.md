@@ -760,11 +760,11 @@
 - Contract/migration impact: none. Integrated C5 already owns the typed one-time initialization operation and migration. C14.2 adds a same-origin product adapter, provenance enforcement and tests only.
 - Runtime: every lane is exact `gpt-5.6-sol` / `xhigh`. L1 and L2 may run concurrently; L3 starts after their reviewed integration.
 
-| Lane                                  | Task/thread                            | Worktree                                               | Model / reasoning       | State  | Exclusive roots                                                                  |
-| ------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ------ | -------------------------------------------------------------------------------- |
-| C14.2-L1 attribution binding          | `01a0301b-bf5b-71e0-b286-2fafb588f06b` | `C:/Users/abhin/.codex/worktrees/5b2c/interior-design` | `gpt-5.6-sol` / `xhigh` | active | exact integrated C5 operation service and focused route test files               |
-| C14.2-L2 persisted web setup          | `01a0301b-bf5c-72a1-a91f-a93f1b4dd499` | `C:/Users/abhin/.codex/worktrees/ca9b/interior-design` | `gpt-5.6-sol` / `xhigh` | active | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
-| C14.2-L3 persisted journey acceptance | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-setup E2E/integration/security/evaluation paths               |
+| Lane                                  | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                  |
+| ------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | -------------------------------------------------------------------------------- |
+| C14.2-L1 attribution binding          | `01a0301b-bf5b-71e0-b286-2fafb588f06b` | `C:/Users/abhin/.codex/worktrees/5b2c/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | exact integrated C5 operation service and focused route test files               |
+| C14.2-L2 persisted web setup          | `01a0301b-bf5b-72a1-a91f-a93f1b4dd499` | `C:/Users/abhin/.codex/worktrees/ca9b/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
+| C14.2-L3 persisted journey acceptance | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | ready      | isolated homeowner-setup E2E/integration/security/evaluation paths               |
 
 ### Discovery and boundary
 
@@ -774,6 +774,13 @@
 - Initialization-only revision 1 cannot satisfy correction confirmation. Confirmation requires a changed branch head that is the exact current existing snapshot.
 - The counted host-live route uses the provider-free deterministic C6 plan parser. C9 needs two eligible distinct source kinds and remains software-complete rather than falsely live if C7/production-C8 sources are unavailable. C8 v2 remains acceptance-only.
 - Local fixture authentication may authorise a real disposable database run, but it is reported as local authentication. Persisted API/database/object-store/worker state, not the persona fixture, must drive journey completion. Synthetic input is never real-property evidence.
+
+### Reviewed integration record
+
+- C14.2-L1 worker commit `616a1770200aa052466c189d62ae01a7c928ec29` was reviewed and integrated as `6dd78a8`. The primary checkout passed 17 focused C5 route tests plus platform API lint, typecheck and build.
+- C14.2-L2 worker commit `486d9fbde9149181831a0623faafea67536137e8` was reviewed and integrated as `030e294`. The primary checkout passed 45 focused web tests across 11 files plus web lint, typecheck and build.
+- Orchestrator review repaired malformed patch insertions, exact C6 navigation copy, journey setup-state coverage, action-specific sanitisation, exact snapshot response validation, reload-safe idempotency and exact-current/expiry gating before integration.
+- C14.2-L3 is authorised from integrated revision `030e294` with exact `gpt-5.6-sol` / `xhigh` and the already frozen isolated acceptance roots.
 
 ### Frozen terminal rule
 
