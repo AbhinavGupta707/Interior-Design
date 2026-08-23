@@ -32,6 +32,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parent
 COLMAP_FIXTURE_GENERATOR = PACKAGE_ROOT / "generate_colmap_fixture.py"
 GSPLAT_FIXTURE_GENERATOR = "/opt/c8/generate_gsplat_fixture.py"
 VALIDATOR = PACKAGE_ROOT / "validate_colmap_outputs.py"
+COMMAND_TIMEOUT_SECONDS = 15 * 60
 
 
 @dataclass(slots=True)
@@ -249,6 +250,26 @@ def _container_argv(
     return argv
 
 
+def _stop_timed_out_container(name: str) -> None:
+    commands = (
+        ["docker", "stop", "--timeout", "10", name],
+        ["docker", "rm", "--force", name],
+    )
+    for command in commands:
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=REPOSITORY_ROOT,
+                check=False,
+                capture_output=True,
+                timeout=20,
+            )
+        except subprocess.TimeoutExpired:
+            continue
+        if completed.returncode == 0:
+            return
+
+
 def _sampled_command(
     *,
     name: str,
@@ -261,6 +282,7 @@ def _sampled_command(
     peak_gpu_utilization = 0
     peak_container_memory = 0
     samples = 0
+    timed_out = False
     with log_path.open("wb") as log:
         process = subprocess.Popen(
             argv,
@@ -269,13 +291,25 @@ def _sampled_command(
             stderr=subprocess.STDOUT,
         )
         while process.poll() is None:
+            if time.perf_counter() - started >= COMMAND_TIMEOUT_SECONDS:
+                timed_out = True
+                _stop_timed_out_container(name)
+                break
             current_memory, utilization = _gpu_values()
             peak_gpu_memory = max(peak_gpu_memory, current_memory - baseline_memory, 0)
             peak_gpu_utilization = max(peak_gpu_utilization, utilization)
             peak_container_memory = max(peak_container_memory, _container_memory(name))
             samples += 1
             time.sleep(0.25)
-        exit_code = process.wait()
+        try:
+            exit_code = process.wait(timeout=30 if timed_out else None)
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            try:
+                exit_code = process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                exit_code = process.wait()
     resources = ResourceSample(
         elapsed_milliseconds=max(1, round((time.perf_counter() - started) * 1000)),
         peak_gpu_memory_bytes_above_baseline=peak_gpu_memory,
@@ -291,6 +325,11 @@ def _sampled_command(
         log_sha256=_sha256(log_path),
         resources=resources,
     )
+    if timed_out:
+        tail = log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
+        raise RuntimeError(
+            f"{name} exceeded {COMMAND_TIMEOUT_SECONDS}s command timeout\n{tail}"
+        )
     if exit_code != 0:
         tail = log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
         raise RuntimeError(f"{name} failed with exit {exit_code}\n{tail}")
@@ -381,7 +420,7 @@ def _colmap_run(
     logs = run_root / "logs"
     for path in (run_root, work, output, logs):
         _prepare_directory(path, writable_by_container=path in {work, output})
-    (work / "sparse").mkdir(mode=0o777)
+    _prepare_directory(work / "sparse", writable_by_container=True)
     records: list[CommandRecord] = []
     prefix = f"c8v2-{run_label}"
 

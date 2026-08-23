@@ -153,7 +153,8 @@ python3 ml/reconstruction/windows-nvidia-v2/run_acceptance.py \
 The runner regenerates the retained COLMAP fixture, generates the calibrated gsplat
 fixture inside the pinned image, runs two fresh selected passes, strictly validates
 PLY payload records, samples Docker/NVIDIA resources, preserves exact argv/log hashes
-and continues to independent components after ordinary failures. It never installs a
+and continues to independent components after ordinary failures. Every container
+command has a 15-minute timeout with exact-name cleanup. It never installs a
 driver/toolkit or invokes Docker prune. Review raw runner output into durable evidence,
 then remove the exact temporary root and session-created image tags.
 
