@@ -100,8 +100,9 @@
     "colmap": {
       "description": "Eight creator-authored deterministic 640x480 synthetic views",
       "canonicalImageSetSha256": "41be0a35c371f9ce9cd46c9e33551a956f50af73d39524d7c3495d67dc3838ef",
+      "sourceBytesRetained": false,
       "generatorRetained": false,
-      "generatorWarning": "The disposable generator source was not retained; the exact accepted source bytes are individually and collectively hash-pinned.",
+      "generatorWarning": "Neither the disposable generator nor the source-image bytes were retained after cleanup. Individual and canonical hashes identify the counted inputs but do not independently enable replay or regeneration.",
       "images": [
         {
           "name": "view-00.png",
@@ -420,6 +421,6 @@
     "No customer data, paid provider, cloud GPU, external model key, production deployment, or professional review was used.",
     "Direct gsplat remains experimental even though its synthetic runtime, algorithm, and repeatability verdicts passed.",
     "COLMAP dense reconstruction remains partial because fusion produced zero points.",
-    "The COLMAP source-image bytes are fully hash-pinned, but the disposable generator source itself was not retained."
+    "The COLMAP source-image bytes and disposable generator were not retained after cleanup. Their hashes identify the counted inputs but do not independently enable replay or regeneration."
   ]
 }

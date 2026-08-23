@@ -112,10 +112,10 @@ and training denied. No customer or provider data was used.
 The COLMAP fixture has eight exact 640×480 PNG sources. Their canonical sorted
 hash-list digest is
 `41be0a35c371f9ce9cd46c9e33551a956f50af73d39524d7c3495d67dc3838ef`;
-all eight individual hashes are in the JSON record. The disposable generator
-source was not retained, so this evidence supports replay from the exact
-hash-pinned bytes but not regeneration from source code. That limitation is
-explicit rather than hidden.
+all eight individual hashes are in the JSON record. Neither the source-image
+bytes nor the disposable generator were retained after cleanup. The hashes
+identify the counted inputs, but the evidence does not independently enable
+replay or regeneration. That limitation is explicit rather than hidden.
 
 The calibrated-camera gsplat fixture manifest is
 `925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89`.
@@ -221,8 +221,9 @@ The remaining limitations are:
 - COLMAP dense fusion: **partial** because the synthetic fixture fused zero
   points;
 - direct-gsplat production appearance quality: **experimental**;
-- COLMAP fixture regeneration: exact source bytes are retained by hashes, but
-  its disposable generator source was not retained;
+- COLMAP fixture replay/regeneration: neither the source-image bytes nor the
+  disposable generator were retained after cleanup; only their hashes identify
+  the counted inputs;
 - paid/cloud providers, external model keys, customer data, production
   deployment and professional review: **not used/not run**; and
 - C15: **not opened**.

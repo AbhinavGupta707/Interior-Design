@@ -145,6 +145,7 @@ def test_counted_blackwell_evidence_preserves_separate_verdicts_and_hashes() -> 
     fixtures = _mapping(document["fixtures"])
     colmap_fixture = _mapping(fixtures["colmap"])
     _sha256(colmap_fixture["canonicalImageSetSha256"])
+    assert colmap_fixture["sourceBytesRetained"] is False
     assert colmap_fixture["generatorRetained"] is False
     appearance_fixture = _mapping(fixtures["appearance"])
     _sha256(appearance_fixture["manifestSha256"])
