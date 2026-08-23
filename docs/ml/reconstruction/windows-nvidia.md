@@ -83,3 +83,17 @@ Before build, the script verifies every package-manifest entry and records `pack
 - independent reviewer identity/date outside the repository if that record is sensitive.
 
 Never relabel a synthetic fixture, Docker build, runtime probe, empty metric, or partial log as completed neural/CUDA evidence.
+
+## C8 v2 sibling package (2026-08-19)
+
+The v1 package documented above is unchanged and remains **NOT RUN**. Do not
+reinterpret the v2 evidence as a v1 execution.
+
+Blackwell support is implemented separately in
+`ml/reconstruction/windows-nvidia-v2` under
+`docs/orchestration/checkpoints/C8_V2_BLACKWELL_CONTRACT.md`. Its exact
+RTX 5080 evidence is
+`docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md`.
+The v2 package selects CUDA 13.2, PyTorch 2.13+cu132, Open3D 0.19, COLMAP
+3.13 and a project-owned direct-gsplat boundary. It neither edits nor runs this
+frozen CUDA 11.8 / Nerfstudio v1 package.

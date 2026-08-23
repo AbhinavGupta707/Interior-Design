@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      ca-certificates libgl1 libglib2.0-0 libgomp1 libx11-6 libxext6 libxrender1 \
+      python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/c8
+COPY ml/reconstruction/windows-nvidia-v2/requirements-open3d.lock /opt/c8/requirements.lock
+ENV PATH=/opt/c8/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin
+RUN python -m pip install --no-cache-dir --require-hashes \
+      --requirement /opt/c8/requirements.lock \
+    && python -m pip check \
+    && mkdir --parents /opt/c8/build-provenance \
+    && python -m pip freeze --all \
+      | LC_ALL=C sort > /opt/c8/build-provenance/python-packages.txt \
+    && sha256sum /opt/c8/requirements.lock \
+      > /opt/c8/build-provenance/requirements-lock.sha256
+COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
+RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
+      /src/sm120_probe.cu -o /opt/c8-sm120-probe \
+    && cuobjdump --list-elf /opt/c8-sm120-probe \
+      > /opt/c8/build-provenance/project-sm120-probe-elf.txt
+
+FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2
+LABEL org.opencontainers.image.version="open3d-0.19.0-cuda13.2" \
+      io.interior-design.c8.capability="acceptance-only"
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/opt/c8/bin:/usr/local/bin:/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    PYTHONUNBUFFERED=1
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      libgl1 libglib2.0-0 libgomp1 libx11-6 libxext6 libxrender1 passwd python3 \
+    && mkdir --parents /usr/local/share/c8-build-provenance \
+    && dpkg-query --show --showformat='${binary:Package}\t${Version}\n' \
+      | LC_ALL=C sort \
+      > /usr/local/share/c8-build-provenance/runtime-packages.tsv \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/sbin/groupadd --gid 65532 c8 \
+    && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c8
+COPY --from=builder /opt/c8 /opt/c8
+COPY --from=builder /opt/c8-sm120-probe /usr/local/bin/c8-sm120-probe
+COPY ml/reconstruction/windows-nvidia-v2/open3d_probe.py /opt/c8/open3d_probe.py
+USER 65532:65532
+WORKDIR /c8/work
+ENTRYPOINT ["python", "/opt/c8/open3d_probe.py"]

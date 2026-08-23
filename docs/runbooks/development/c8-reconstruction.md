@@ -156,3 +156,30 @@ That live suite applies C1–C8 and proves exact replay, tenant isolation, lease
 10. Repeat at desktop and 390×844 mobile width, keyboard-only and as the viewer persona. Check no horizontal overflow, visible focus, meaningful live-region status, no framework overlay, no unexpected console warning/error and no failed network request.
 
 The Browser/in-app automation gate is distinct from component tests and production builds. Keep screenshots outside Git. Physical iOS camera/RGB-D, COLMAP/Open3D algorithm runs, CUDA dense geometry and Nerfstudio/gsplat output remain `NOT RUN` unless the named real hardware/runtime was actually used. The deterministic `C8_UI_TEST_MODE=1` native fixture is available only in a Debug/local build, is visibly synthetic and is compiled out of Release.
+
+## Blackwell v2 workstation runtime
+
+The 2026-08-19 C8 v2 package is a separate, digest-pinned workstation
+implementation at `ml/reconstruction/windows-nvidia-v2`. Use the ext4 checkout
+inside Ubuntu WSL for Git, pnpm, uv, Docker build contexts, fixture staging and
+outputs. PowerShell may dispatch `wsl.exe`, but Windows UNC bind mounts and a
+second native Windows clone are not part of the accepted topology.
+
+Do not install a Linux NVIDIA display driver in WSL or a host-wide CUDA
+toolkit. Docker Desktop supplies GPU integration. Build from the pinned CUDA
+bases and invoke only exact image digests. Runtime containers must retain
+`--network none`, a read-only root, dropped capabilities,
+`no-new-privileges`, one GPU, resource bounds, read-only input, an independent
+empty output directory and `noexec` tmpfs scratch space.
+
+COLMAP 3.13 output must be passed through
+`validate_colmap_outputs.py`; exit code zero alone is not success. Open3D
+requires known poses/intrinsics. Direct gsplat accepts calibrated RGB cameras
+only and exports `non-dimensional-appearance`; it must never supply canonical
+scale or geometry. Nerfstudio 1.1.5 remains v1-only.
+
+The counted workstation record is
+`docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md`.
+Runtime, sparse, Open3D and synthetic direct-gsplat gates passed; COLMAP dense
+fusion is partial. Physical iOS and representative-home evidence remain
+`deferred-not-run`, so operators must not advertise those capabilities.

@@ -482,3 +482,26 @@ The recommended choice after C14 is to run the C8 workstation/package discovery 
 because it is a bounded way to expose frozen-environment drift and actual GPU capacity. Do not let
 that discovery block C15 indefinitely: C7 physical hardware, representative data and provider choices
 are independent programmes, while C15 can begin from a trustworthy deterministic renderer baseline.
+
+## 13. 2026-08-19 C8 v2 Blackwell topology decision
+
+The C8 v2 re-entry supersedes the earlier optional native-clone/UNC suggestion
+for this package only. The accepted topology is one authoritative Ubuntu WSL
+ext4 checkout. Windows PowerShell is a thin `wsl.exe` dispatcher; WSL-native
+Git, pnpm, uv, Docker and gh own repository and execution state. Docker contexts,
+temporary fixtures and outputs stay on ext4, avoiding the PowerShell/UNC
+permission and file-mode boundary.
+
+Docker Desktop WSL GPU integration exposes the Windows NVIDIA driver to pinned
+Ubuntu 24.04 containers. No Linux display driver or host-wide CUDA toolkit was
+installed. COLMAP/Open3D final images use the CUDA 13.2 runtime base. The
+appearance image retains the exact CUDA 13.2 devel base only because gsplat
+1.5.3 checks for NVCC while loading its precompiled extension; the immutable
+root/cache prevents runtime compilation.
+
+The counted source is
+`e7ecb026afdc43c7bc33691687737f91dd287f02`. The durable record is
+`docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md`.
+It closes eligible RTX 5080 workstation runtime/algorithm/repeatability evidence
+without claiming physical iOS, representative-home, provider or production
+deployment evidence. C15 was not opened.
