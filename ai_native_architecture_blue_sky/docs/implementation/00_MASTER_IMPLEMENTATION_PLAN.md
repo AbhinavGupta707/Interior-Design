@@ -5,7 +5,7 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (23 August 2026):** user-authorised corrective checkpoint C14.1 composes the accepted property, intake, evidence, proposal, C5 confirmation and C10 walkthrough capabilities into the core homeowner journey. It is governed by the active plan and `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`; C15 remains closed and C8 v2 remains acceptance-only.
+**Current execution note (23 August 2026):** corrective checkpoint C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is active to make the normal property, intake, evidence, unmeasured-model, C6 correction and C10 exploration path genuinely persisted and server-authorised. It is governed by the active plan and `docs/orchestration/checkpoints/C14_2_PERSISTED_HOMEOWNER_SETUP_CONTRACT.md`; C15 remains closed and C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 

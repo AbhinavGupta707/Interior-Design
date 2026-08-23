@@ -5,7 +5,7 @@
 - Checkpoint: C14.1, a user-authorised corrective integration checkpoint inserted after C14. C15 remains closed.
 - Immutable predecessor: clean `main` commit `54886f570c3bb559490a50727e4c77ed00834b52`, which merged C8 v2 PR #2 as an acceptance-only sibling capability.
 - Integration branch: `codex/homeowner-digital-twin-journey`.
-- Outcome: a homeowner can move coherently from property selection and renovation intent through available evidence, a reconstruction/fusion proposal, explicit correction confirmation, and exploration of a digital twin compiled from the resulting committed canonical snapshot.
+- Outcome: a homeowner has one guided project route and, when a persisted C9 proposal/draft exists, can take its exact pins through distinct C5 preview, explicit commit and exact-current C10 scene creation. Property, intake and evidence stages are visible but their complete persisted continuity belongs to C14.2.
 - Contract impact: no shared API, generated client, canonical schema, migration, authz action, inference route or worker protocol changes are authorised. Existing strict C1–C10 contracts are composed through the web BFFs and clients.
 
 The governing product and safety rules remain both `AGENTS.md` files, the product and technical specifications, the active/master plans, accepted C1–C14 contracts and ADRs, and the orchestration ledger. This checkpoint improves the product journey and closes an integration gap; it does not increase the truth status of property context, source evidence, proposals, reconstructed geometry or appearance media.
@@ -80,6 +80,14 @@ Workers may read all predecessor code and contracts but must not edit root manif
 8. Windows/WSL may validate shared code, browser, API/runtime, Docker and an available accepted GPU evidence package. Xcode, RoomPlan, LiDAR and physical Apple validation remain externally deferred with exact setup, commands, cases and expected artifacts in the handoff.
 9. The ledger records task IDs, worktree paths, worker/merge/product SHAs, commands/counts, screenshots or artifacts, host/provider/hardware state, integration repairs, limitations and final PR before checkpoint closure.
 
+## Closeout — 2026-08-23
+
+- L1 worker `25eddb32cbf77f04c25ddd6a0e9488224579747b` was reviewed and integrated as `6845961`; orchestrator copy repair is `de68b0d`.
+- L2 worker `9fb9678addec72cd69a7a440b76097e358135729` was reviewed and integrated as `dc77288`.
+- Primary WSL rerun passed three TypeScript configurations, integration 4/4, security 3/3 and Playwright 14/14 across desktop and 390-pixel mobile.
+- C14.1 is closed only as the first corrective bridge. The accepted evaluation records fixture/mock software evidence and the exact Apple NOT RUN handoff; it is not a persisted end-to-end property journey.
+- Independent review found initialization/branch confirmation and preview-expiry wording defects. C14.2 owns those repairs plus the missing normal canonical setup path.
+
 ## Terminal rule
 
-C14.1 may close only after both lanes are reviewed, integrated and host-validated on the dedicated integration branch. C15 remains closed. The final non-draft pull request targets `main` and must be left unmerged for independent review.
+C14.1 is closed at integration commit `dc77288`. C14.2 must complete persisted setup and host-live journey evidence before the final PR. C15 remains closed and the final non-draft pull request targets `main` without merge.

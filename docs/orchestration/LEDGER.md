@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 are complete. On 2026-08-23 the user authorised corrective checkpoint C14.1 for the core homeowner reconstruction journey. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1 are complete. C14.2 is active for persisted homeowner setup and plan-to-twin continuity. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -706,7 +706,7 @@
 
 ### Master activation
 
-- Status: active; contract prelude frozen; L1 reviewed and integrated. L2 starts from the reviewed integration head so independent acceptance executes against the accepted bridge code.
+- Status: closed as the first corrective bridge at integration commit `dc77288`; it is not completion of the overall homeowner slice.
 - Authority: user instruction dated 2026-08-23 to prioritise the next core homeowner slice over C15, MCPs or speculative planning intelligence and to leave the final PR unmerged.
 - Contract: `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`.
 - Verified predecessor: clean `main` and `origin/main` at `54886f570c3bb559490a50727e4c77ed00834b52`; PR #2 is present only as the C8 v2 acceptance package.
@@ -717,7 +717,7 @@
 | Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                                                              |
 | ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
-| C14.1-L2 independent journey acceptance  | `01a02fec-b1c8-70b1-b70c-9afa227af272` | `C:/Users/abhin/.codex/worktrees/a263/interior-design` | `gpt-5.6-sol` / `xhigh` | active     | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+| C14.1-L2 independent journey acceptance  | `01a02fec-b1c8-70b1-b70c-9afa227af272` | `C:/Users/abhin/.codex/worktrees/a263/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
 
 ### Discovery and prelude evidence
 
@@ -736,6 +736,45 @@
 - Focused homeowner-journey tests, web ESLint and web TypeScript checks passed after integration. The bridge retains distinct persisted C9 draft, exact C5 preview, explicit C5 commit and explicit C10 scene actions.
 - Per the user continuation instruction, C14.1 is the first corrective bridge checkpoint, not completion of the overall homeowner slice. After L2 acceptance the orchestrator must reassess and open minimal persisted setup/evidence checkpoints wherever executable gaps remain.
 
+### L2 acceptance and bridge closure
+
+- Task `01a02fec-b1c8-70b1-b70c-9afa227af272` completed with worker commit `9fb9678addec72cd69a7a440b76097e358135729`. Orchestrator path/content review found 12 authorised files, no production, contract, migration, manifest, lockfile or C8 v2 change; it was integrated as `dc77288`.
+- The managed Windows lane passed TypeScript for all three suites, integration 4/4, security 3/3 and Playwright 14/14; web lint/typecheck and lane formatting passed. The in-app browser controller failed before page action with a managed runner `spawn_ready` timeout and is not claimed.
+- The primary WSL checkout independently reran all three TypeScript configurations, integration 4/4, security 3/3 and Playwright 14/14 in 60 seconds across 1440×960 and 390×844.
+- Durable evidence: `docs/evaluation/homeowner-journey/C14_1_BRIDGE_ACCEPTANCE_2026-08-23.md` and `docs/runbooks/ios/C14_1_APPLE_HANDOFF.md`. All browser state is explicitly synthetic fixture/mock evidence; Xcode, Simulator, camera, RoomPlan, LiDAR, background transfer and physical device remain NOT RUN.
+- Independent acceptance found two production defects without repairing them: any branch revision above zero is treated as confirmed even though initialization creates revision 1, and `PREVIEW_EXPIRED` is rendered as a generic conflict. Discovery also proved the web has no normal first-model initialization path and integrated C5 does not bind nested user assertions to the authenticated actor.
+- C14.1 closes only the guided C9 → C5 → C10 bridge. C14.2 is opened for the persisted property/intake/evidence/unmeasured-model/C6/C5/C10 product path and provenance repair.
+
 ### Frozen terminal rule
 
-- The orchestrator owns lane prompts, review, merge order, integration repairs, final repository/browser/runtime gates, closeout evidence, commit, push and non-draft PR. C15 remains closed and the final PR must not be merged by this run.
+- C14.1 is closed at `dc77288`. C14.2 must be reviewed, integrated and host-validated before the final non-draft PR. C15 remains closed and the final PR must not be merged by this run.
+
+## C14.2 — Persisted homeowner setup and plan-to-twin continuity
+
+### Master activation
+
+- Status: active; shared behavior and three lane boundaries frozen before task launch.
+- Contract: `docs/orchestration/checkpoints/C14_2_PERSISTED_HOMEOWNER_SETUP_CONTRACT.md`.
+- Immutable checkpoint predecessor: `dc77288` on `codex/homeowner-digital-twin-journey`.
+- Outcome: normal product controls persist property, intake, evidence, explicit unmeasured initialization, C6 correction, C5 confirmation and exact C10 exploration without manual JSON, direct-route-only navigation, fixture-only completion or hidden canonical setup.
+- Contract/migration impact: none. Integrated C5 already owns the typed one-time initialization operation and migration. C14.2 adds a same-origin product adapter, provenance enforcement and tests only.
+- Runtime: every lane is exact `gpt-5.6-sol` / `xhigh`. L1 and L2 may run concurrently; L3 starts after their reviewed integration.
+
+| Lane                                  | Task/thread | Worktree | Model / reasoning       | State  | Exclusive roots                                                                  |
+| ------------------------------------- | ----------- | -------- | ----------------------- | ------ | -------------------------------------------------------------------------------- |
+| C14.2-L1 attribution binding          | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | exact integrated C5 operation service and focused route test files               |
+| C14.2-L2 persisted web setup          | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
+| C14.2-L3 persisted journey acceptance | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-setup E2E/integration/security/evaluation paths               |
+
+### Discovery and boundary
+
+- Integrated C5 already creates the first snapshot, initial commit and `Main` branch atomically and rejects later raw snapshots. The missing executable path is web product composition, not a new canonical contract.
+- The first product snapshot is one explicitly acknowledged placeholder level with unknown name/elevation/height, no other elements, no global anchor and two visible limitations. Selected C3 property identity is linkage only and supplies no model evidence or interior geometry.
+- The BFF accepts acknowledgement only, resolves actor and property server-side and deterministically derives IDs from the idempotency scope. The platform rejects every nested `user-asserted` actor mismatch before initialization or preview.
+- Initialization-only revision 1 cannot satisfy correction confirmation. Confirmation requires a changed branch head that is the exact current existing snapshot.
+- The counted host-live route uses the provider-free deterministic C6 plan parser. C9 needs two eligible distinct source kinds and remains software-complete rather than falsely live if C7/production-C8 sources are unavailable. C8 v2 remains acceptance-only.
+- Local fixture authentication may authorise a real disposable database run, but it is reported as local authentication. Persisted API/database/object-store/worker state, not the persona fixture, must drive journey completion. Synthetic input is never real-property evidence.
+
+### Frozen terminal rule
+
+- The orchestrator owns task prompts, review, merge order, integration repair, live service/browser evidence, final repository gates, documentation, push and PR. C14.2 may close only with exact evidence; C15 remains closed and the PR remains unmerged.
