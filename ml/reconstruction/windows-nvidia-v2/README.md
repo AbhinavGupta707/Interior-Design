@@ -15,7 +15,7 @@ v1 package remains frozen and `NOT RUN`.
 | PyTorch                      | 2.13.0+cu132                                                                                                     |
 | gsplat                       | 1.5.3, direct API                                                                                                |
 | Open3D                       | 0.19.0                                                                                                           |
-| COLMAP                       | 4.1.1 at `a0d785fba74b2664f31edc4a29026a8b27c00f67`                                                             |
+| COLMAP                       | 4.1.1 at `a0d785fba74b2664f31edc4a29026a8b27c00f67`                                                              |
 | CUDA target                  | `sm_120` / compute capability 12.0                                                                               |
 
 The spike built and executed non-trivial CUDA 13.0.2 and CUDA 13.2.0 workloads.

@@ -4,8 +4,6 @@ import importlib.util
 import stat
 import sys
 from pathlib import Path
-from types import ModuleType
-from typing import cast
 
 import pytest
 
@@ -16,7 +14,6 @@ assert SPEC is not None and SPEC.loader is not None
 RUNNER = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = RUNNER
 SPEC.loader.exec_module(RUNNER)
-RUNNER = cast(ModuleType, RUNNER)
 
 
 def test_container_writable_directory_overrides_host_umask(tmp_path: Path) -> None:

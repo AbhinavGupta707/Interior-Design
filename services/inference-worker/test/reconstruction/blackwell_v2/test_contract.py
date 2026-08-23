@@ -17,6 +17,7 @@ from inference_worker.reconstruction.blackwell_v2.evidence import (
     AlgorithmVerdict,
     FieldVerdict,
     HashedObject,
+    MetricValue,
     RepeatabilityEvidence,
     RepeatabilityVerdict,
     ResourcePeaks,
@@ -60,6 +61,7 @@ def _runtime(code_path: str = "native-sm_120") -> RuntimeEvidence:
 
 
 def _algorithm(component: AlgorithmComponent) -> AlgorithmEvidence:
+    metrics: tuple[tuple[str, MetricValue], ...]
     if component is AlgorithmComponent.COLMAP_SPARSE:
         metrics = (("registeredImages", 10), ("sparsePoints", 3394))
     elif component is AlgorithmComponent.COLMAP_DENSE:
@@ -171,7 +173,13 @@ def test_component_run_reports_only_its_actual_algorithm_subset() -> None:
     run = _run("open3d-only", (_algorithm(AlgorithmComponent.OPEN3D_TSDF),))
     document = run.to_json()
 
-    assert [item["component"] for item in document["algorithmVerdicts"]] == ["open3d-tsdf"]
+    algorithms = document["algorithmVerdicts"]
+    assert isinstance(algorithms, list)
+    components: list[object] = []
+    for item in algorithms:
+        assert isinstance(item, dict)
+        components.append(item["component"])
+    assert components == ["open3d-tsdf"]
     assert RunEvidence.from_json(document).to_json() == document
 
 

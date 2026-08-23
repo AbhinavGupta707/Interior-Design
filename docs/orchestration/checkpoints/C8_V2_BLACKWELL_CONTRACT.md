@@ -2,143 +2,171 @@
 
 ## Status and authority
 
-- Version: `c8-blackwell-contract-v2`.
-- Authorised base: `c48c60ee8f179603670207642e31c56eba84b315`.
-- Implementation branch: `codex/c8-v2-blackwell`.
-- Runtime: `gpt-5.6-sol` with `xhigh` reasoning in one primary session. No Codex
-  worktree or delegated agent is used, per the session-specific instruction.
-- This is a bounded C8 hardware re-entry. It does not open C15 or change the
+- Version: c8-blackwell-contract-v3.
+- Authorised base: c48c60ee8f179603670207642e31c56eba84b315.
+- Implementation branch: codex/c8-v2-blackwell.
+- Counted hardware implementation commit:
+  ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0.
+- Runtime: gpt-5.6-sol with xhigh reasoning in one primary session. No delegated
+  agent, Codex worktree, or orchestration workflow is used.
+- This is a bounded C8 hardware re-entry. It does not open C15 or alter the
   sequential M1 checkpoint state.
-- The complete `ml/reconstruction/windows-nvidia/**` C8 v1 package is immutable,
-  retained byte-for-byte, and remains `NOT RUN` in this session.
+- The complete ml/reconstruction/windows-nvidia/** C8 v1 package is immutable,
+  byte-for-byte unchanged from the base, and NOT RUN.
 
-## Product boundary
+## Product and exposure boundary
 
-C8 v2 may create immutable derived reconstruction proposals and non-dimensional
-appearance artifacts. It cannot mutate a canonical home, establish real-world scale,
-promote splats or renders to dimensional truth, infer an exact interior from address
-context, or bypass C4/C5 validation and confirmation.
+C8 v2 may create immutable reconstruction proposals and non-dimensional appearance
+artifacts. It cannot mutate a canonical home, establish real-world scale, promote a
+splat or render to dimensional truth, infer an exact interior from address context,
+or bypass C4/C5 validation and confirmation.
 
-All inputs require an explicit service-processing right. Training use is a distinct
-field and is denied for the acceptance fixtures. Source bytes and all derived outputs
-are content-hashed. Physical capture and representative-home evidence are independent
-field gates and do not block eligible workstation runtime or synthetic-algorithm
-evidence.
+The package is **acceptance-only**. C8_V2_ACCEPTANCE_ONLY is a fail-closed exposure
+guard, not a production worker switch: its accepted state is status=acceptance-only
+and productionRoutingEnabled=false. No reconstruction worker route, queue dispatch,
+platform configuration, or product UI invokes the v2 package. Production routing
+requires a later contract and representative/physical evidence; an example script or
+incompatible Nerfstudio override is not support.
+
+All inputs require an explicit service-processing right. Training use is distinct and
+denied for these fixtures. Sources and derived artifacts are content-hashed. Physical
+capture and representative-home evidence are independent field gates and do not block
+eligible workstation runtime, algorithm, or repeatability evidence.
 
 ## Frozen workstation stack
 
-| Component      | Exact v2 selection                                                                                               | Boundary                                |
-| -------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Base OS        | Ubuntu 24.04 container on Docker Desktop WSL2                                                                    | no host CUDA install                    |
-| CUDA toolchain | `nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a`   | build stages and final appearance image |
-| CUDA runtime   | `nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2` | final COLMAP/Open3D images              |
-| Python         | Ubuntu CPython `3.12.3`                                                                                          | container only                          |
-| PyTorch        | `2.13.0+cu132`                                                                                                   | appearance                              |
-| gsplat         | `1.5.3`                                                                                                          | direct API, no Nerfstudio wrapper       |
-| Open3D         | `0.19.0`                                                                                                         | known-pose TSDF and CUDA tensor probe   |
-| COLMAP         | `3.13.0`, commit `0b31f98133b470eae62811b557dc2bcff1e4f9a5`                                                      | CUDA `sm_120`, headless                 |
-| GPU target     | compute capability `12.0`, compiled `sm_120`                                                                     | RTX 5080                                |
+| Component    | Exact v2 selection                                                                                                                       | Boundary                                        |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Base OS      | Ubuntu 24.04 containers on Docker Desktop WSL2                                                                                           | no host CUDA/driver install                     |
+| CUDA build   | nvidia/cuda:13.2.0-devel-ubuntu24.04 at digest f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a                          | build stages and final appearance image         |
+| CUDA runtime | nvidia/cuda:13.2.0-runtime-ubuntu24.04 at digest 7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2                        | final COLMAP/Open3D images                      |
+| Python       | Ubuntu CPython 3.12.3                                                                                                                    | container only                                  |
+| PyTorch      | 2.13.0+cu132                                                                                                                             | appearance                                      |
+| gsplat       | 1.5.3                                                                                                                                    | project-owned direct API                        |
+| Open3D       | 0.19.0                                                                                                                                   | CUDA tensor probe plus separate legacy CPU TSDF |
+| COLMAP       | 4.1.1, commit a0d785fba74b2664f31edc4a29026a8b27c00f67, archive SHA-256 6ecd8f333bdfc46491d067f05aaadbc97f7fa9f0b98c1a0e67cb9d3dd7604637 | deterministic CPU sparse; CUDA dense            |
+| GPU target   | compute capability 12.0; project probe compiled sm_120                                                                                   | RTX 5080                                        |
 
-CUDA 13.0.2 and 13.2.0 both compiled and executed real `sm_120` kernels. Matching
-PyTorch/gsplat/Open3D workloads passed on `2.13.0+cu130` and `2.13.0+cu132`. CUDA 13.2
-is selected because it is the driver-advertised toolchain, has an official PyTorch
-wheel, and avoids freezing v2 one minor generation behind. This does not claim
-forward compatibility with an untested driver or GPU.
+COLMAP 3.13.0 at 0b31f98133b470eae62811b557dc2bcff1e4f9a5 is retained only
+as the officially tagged comparison candidate. It is not the selected v2 stack because
+the retained fixture generated valid depth/normal maps but strict PLY payload
+validation found zero fused vertices after reasonable alternatives.
+
+CUDA 13.0.88 and 13.2.51 both compiled and executed native sm_120 kernels and
+completed real PyTorch, Open3D, and gsplat work. CUDA 13.2 is selected because it
+matches the driver-advertised generation and the accepted official PyTorch cu132
+wheel. This does not claim compatibility with an untested driver or GPU.
 
 ## Appearance decision
 
-Nerfstudio `1.1.5` remains a frozen v1 integration only. Its `splatfacto` package
-requires gsplat `1.4.0`, exposes a broad training/viewer dependency graph, and is not
-the proven Blackwell combination above. C8 v2 therefore owns a small direct-gsplat
-trainer and deterministic PLY/checkpoint exporter. It consumes only validated RGB
-frames plus calibrated cameras, never estimates canonical geometry, and exports
-appearance with `non-dimensional-appearance` authority.
+C8 v1 reaches gsplat through Nerfstudio 1.1.5 splatfacto. That frozen combination
+expects gsplat 1.4.0 and has a broader viewer/training dependency graph. C8 v2 does not
+override it.
 
-The direct trainer remains **experimental** unless its runtime, algorithm and
-repeatability verdicts pass **and** separate rights-cleared representative-home and
-physical-capture evaluation is accepted. Synthetic workstation passes alone do not
-promote it to production support. A script that only imports gsplat, a Nerfstudio
-override, or an upstream example is not production support. Geometry completion is
-independent of appearance outcome.
+C8 v2 owns a bounded direct-gsplat acceptance trainer/exporter. It validates calibrated
+RGB/camera input, performs rasterization, backward gradients and optimizer updates,
+holds out one frame, then writes a safe checkpoint/result and strict-payload-validated
+PLY. It never estimates or publishes canonical geometry. The result remains
+**experimental, non-dimensional, and acceptance-only** even when synthetic workstation
+gates pass.
 
-## Runtime topology
+## Runtime topology and build policy
 
-- Git, `pnpm`, `uv`, Docker and `gh` run inside Ubuntu WSL against the ext4 checkout.
-- Docker build contexts and acceptance inputs remain on WSL ext4. PowerShell is a
-  thin dispatcher only; it does not bind a Windows clone or translate output paths.
-- GPU access comes from Docker Desktop's WSL integration. No Linux NVIDIA display
-  driver or host-wide CUDA toolkit may be installed.
-- Containers run without network, with a read-only root filesystem, explicit writable
-  workspace/tmpfs, CPU/RAM/PID bounds and one selected GPU.
-- gsplat's CUDA extension is compiled during image construction. Its 1.5.3 loader
-  checks for a CUDA toolkit/NVCC before loading the cached backend, so the final
-  appearance image deliberately retains the pinned devel base. Runtime recompilation
-  is prevented by a read-only root and the already-populated cache; a runtime-only
-  base is not falsely claimed as supported.
+- Git, pnpm, uv, Docker, and gh run inside Ubuntu WSL against the ext4 checkout.
+  PowerShell is a thin dispatcher.
+- Docker contexts, fixtures, workspaces, and outputs stay on WSL ext4. No Windows
+  clone or UNC bind mount is an authoritative Git surface.
+- GPU access uses Docker Desktop's WSL integration. No Linux NVIDIA display driver
+  or host-wide CUDA toolkit is installed.
+- Acceptance containers use no network, a read-only root, dropped capabilities,
+  no-new-privileges, one GPU, explicit CPU/RAM/PID limits, read-only inputs,
+  isolated outputs, and bounded tmpfs.
+- gsplat 1.5.3 checks for NVCC while loading its prebuilt extension cache. The final
+  appearance image therefore deliberately uses the pinned devel base; the populated
+  cache and root are read-only, so runtime recompilation is denied.
+- APT indices are not snapshot-pinned. Exact base digests, source archives/commits,
+  hashed requirement locks, installed-package manifests, runtime binary hashes,
+  image IDs, and command/log hashes identify the accepted build.
 
 ## Versioned evidence model
 
-Every durable record uses `c8-blackwell-evidence-v2` and reports the following
-verdicts separately. No aggregate word such as “passed” may replace them.
+Durable evidence uses c8-blackwell-evidence-v3, run records use
+c8-blackwell-run-v3, and the envelope kind is
+c8-blackwell-workstation-envelope-v3. The production parser must round-trip the
+machine record exactly. Verdicts remain separate:
 
-1. `runtimeVerdict`: `passed | failed | not-run`. Requires exact image/source/package
-   hashes, device/driver identity, compute capability, compiled `sm_120` evidence and
-   successful non-trivial GPU work for each claimed component.
-2. `algorithmVerdict`: `passed | partial | failed | abstained | not-run`. Reported per
-   COLMAP sparse, COLMAP dense, Open3D TSDF and direct gsplat. Output existence alone
-   is insufficient; component-specific counts/finite metrics and safe failures are
-   required.
-3. `repeatabilityVerdict`: `passed | failed | not-run`. Requires two fresh runs with
-   exact input/config/tool hashes. Byte hashes are compared where deterministic;
-   otherwise the record names the bounded metric/tolerance and both results.
-4. `physicalCaptureVerdict`: `passed | failed | deferred-not-run`. It cannot be
-   inferred from workstation or synthetic evidence and is deferred until a physical
-   iOS capture is supplied.
+1. runtimeVerdict: passed | failed | not-run. A pass requires exact
+   image/source/dependency identity, device/driver identity, compute capability,
+   native sm_120 probe execution, and non-trivial component work.
+2. Per-component algorithmVerdict:
+   passed | partial | failed | abstained | not-run for COLMAP sparse, COLMAP dense,
+   Open3D TSDF, and direct gsplat. Output existence or headers alone are insufficient.
+3. repeatabilityVerdict: passed | failed | not-run. Two fresh selected-stack
+   observations per algorithm must use exact input/config/tool identities and satisfy
+   named tolerances.
+4. physicalCaptureVerdict:
+   passed | failed | deferred-not-run. It cannot be inferred from synthetic or
+   workstation evidence.
+5. representativeAccuracyVerdict uses the same field vocabulary and remains
+   independently deferred.
 
-Representative-home accuracy is a distinct `representativeAccuracyVerdict` with the
-same `passed | failed | deferred-not-run` vocabulary and is also deferred. Records
-include rights basis, processing consent, training consent, source/generator hashes,
-input hashes, command/config hash, output hashes, elapsed time, peak resources,
-warnings, failures and cleanup state.
+Records include rights, source/generator hashes, inputs, dependency locks, canonical
+config hashes, image IDs, command/log hashes, strict output hashes, elapsed time,
+resource peaks, warnings, failures, diagnostics, and cleanup state.
 
-## Algorithm gates
+## Algorithm and repeatability gates
 
 ### COLMAP
 
-- GPU feature extraction and matching must log binding to GPU 0.
-- Sparse pass requires one model with at least two registered images, non-zero 3D
-  points and parseable camera/image records.
-- Dense pass requires CUDA patch-match with finite non-empty depth maps and a
-  non-empty fused point cloud. Patch-match success with zero fused points is `partial`.
-- COLMAP 3.13 uses `FeatureMatching.max_num_matches` and
-  `FeatureMatching.guided_matching`; removed v1 `SiftMatching` names are forbidden.
-- CUDA bundle adjustment may be claimed only if Ceres confirms CUDA/cuDSS. The current
-  distro Ceres falls back to CPU and must be recorded as such.
+- The selected sparse front end is deliberately deterministic CPU SIFT, brute-force
+  matching, and mapper execution: random seed 0, one thread, one model. A counted run
+  must register all 10 retained fixture views and produce non-zero points and
+  observations.
+- The selected dense path must execute CUDA PatchMatchStereo on GPU 0, produce 20
+  non-empty finite depth maps and 20 normal maps, and write a strict
+  payload-validated PLY with more than zero finite vertices.
+- PLY validation parses all declared scalar payload values for ASCII, binary
+  little-endian, and binary big-endian formats; it rejects truncation, trailing bytes,
+  non-finite coordinates/scalars, range violations, unsupported list properties, and
+  header/payload count disagreement.
+- Two fresh selected runs require exact registered-image counts and at most 1%
+  relative deltas in sparse points/observations and dense PLY vertices.
+- COLMAP 3.13 is a diagnostic comparison. Patch-match success with a valid
+  zero-vertex PLY remains partial, never a selected dense pass.
+- CUDA bundle adjustment may be claimed only if Ceres confirms CUDA/cuDSS. No such
+  claim is made.
 
 ### Open3D
 
-- A real CUDA tensor operation proves the wheel/device path.
-- Known-pose RGB-D TSDF produces non-empty finite point and triangle counts.
-- TSDF geometry remains a proposal and has no scale authority beyond supplied units.
+- A real CUDA tensor matrix operation proves the Open3D wheel/device path.
+- Known-pose RGB-D TSDF uses the separate legacy-cpu backend and must produce
+  non-empty finite points, vertices, and triangles.
+- Two fresh runs require equal CUDA checksums and equal TSDF counts.
+- The supplied synthetic metre unit is not independent physical scale validation.
 
 ### Direct gsplat
 
-- At least three optimizer steps execute gsplat rasterization, backward gradients and
-  parameter updates on `sm_120` with finite loss.
-- Production acceptance trains from the calibrated-camera input, exports an
-  independently parseable PLY plus safe checkpoint/manifest, and records held-out
-  image metrics.
-- A trainer result never supplies canonical dimensions, collision geometry or scale.
+- The project-owned trainer must execute 24 deterministic forward/backward optimizer
+  updates on calibrated synthetic cameras, evaluate a held-out frame, and export a
+  strict-payload-validated PLY plus checkpoint/result.
+- Two fresh runs require equal exported vertex counts and an absolute held-out PSNR
+  delta no greater than 0.001 dB.
+- A trainer result never supplies canonical dimensions, collision geometry, or scale.
 
-## Deferred and closure boundary
+## Closure boundary
 
-Physical iOS capture, LiDAR/RoomPlan comparison, customer imagery,
-representative-home accuracy, multi-room coverage, provider/cloud execution and
-professional review are `deferred-not-run`. No customer data, paid provider, external
-model key or training permission is used.
+Eligible workstation closure requires:
 
-Closure requires unchanged v1 hashes; v2 schema/unit/Ruff/mypy gates; relevant
-repository contract/integration/security/C8 gates; counted hardware evidence pinned to
-committed source; complete diff/secret/path review; and removal of all temporary
-fixtures, containers and worktree metadata created by this session. The branch is
-committed, pushed and opened as a ready PR. C15 remains closed.
+- byte-for-byte unchanged v1 and NOT RUN;
+- typed v3 evidence round-trip and package-manifest coverage;
+- schema/unit/Ruff/mypy and relevant repository, contract, integration, security,
+  and C8 gates;
+- counted RTX 5080 evidence pinned to an exact committed source SHA;
+- complete diff, secret, generated-artifact, path, and C15 review;
+- pushed commits on PR #2 without merging; and
+- zero disposable C8 temp paths, containers, tags, helper processes, and added
+  worktrees, without global Docker pruning.
+
+Physical iOS/LiDAR/RoomPlan evidence, representative-home/multi-room/metric accuracy,
+customer/provider data, paid/cloud execution, production deployment, and professional
+review remain deferred-not-run or not used. C15 remains closed.

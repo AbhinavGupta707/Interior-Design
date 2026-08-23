@@ -1,426 +1,1327 @@
 {
-  "schemaVersion": "c8-blackwell-evidence-v2",
-  "recordKind": "c8-blackwell-workstation-envelope-v2",
-  "modelSemantics": "Detailed superset envelope for the strict RunEvidence verdict and hash requirements; component images remain separate.",
-  "recordedAt": "2026-08-19",
-  "sourceCommit": "e7ecb026afdc43c7bc33691687737f91dd287f02",
-  "authority": {
-    "geometry": "proposal-only",
-    "appearance": "non-dimensional-appearance",
-    "canonicalMutationAllowed": false
-  },
-  "package": {
-    "path": "ml/reconstruction/windows-nvidia-v2",
-    "manifestSha256": "c0012b4ccc45f01691f839df935746b12e8673a6e11cb435072e9b3b02c0ff96",
-    "appearanceLockSha256": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343",
-    "open3dLockSha256": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
-    "dockerfileSha256": {
-      "appearance": "4fc5ab3555c48f1ee07abad48ba8005439029572c0e53dbd156138e67a98cb9a",
-      "colmap": "42b465f9b8a534b444a13c4def4c59ffe68c5618758b194f0e5a134f00d88a15",
-      "open3d": "6fddb30c6813a586e7d72842c45c2d2e2cb61e32cb19236dc386f2b87aef09df"
-    },
-    "v1Package": {
-      "executionVerdict": "not-run",
-      "unchangedFromBase": true
-    }
-  },
-  "host": {
-    "windows": "Windows 11 Pro 10.0.26200 build 26200",
-    "wsl": "2.6.3.0",
-    "wslKernel": "6.6.87.2-microsoft-standard-WSL2",
-    "dockerDesktop": "4.78.0",
-    "dockerEngine": "29.5.3",
-    "dockerPlatform": "linux/amd64",
-    "cpu": "AMD Ryzen 9 9900X",
-    "logicalCpuCount": 24,
-    "ramBytes": 65905455104,
-    "gpu": "NVIDIA GeForce RTX 5080",
-    "gpuMemoryMiB": 16303,
-    "driver": "595.79",
-    "driverAdvertisedCuda": "13.2",
-    "computeCapability": "12.0",
-    "topology": "PowerShell dispatcher -> Ubuntu WSL ext4 checkout -> Docker Desktop Linux containers",
-    "linuxDisplayDriverInstalled": false,
-    "hostCudaToolkitInstalled": false
-  },
   "acceptedStack": {
+    "appearanceImplementation": "project-owned direct gsplat acceptance adapter (experimental, non-dimensional)",
+    "colmap": {
+      "commit": "a0d785fba74b2664f31edc4a29026a8b27c00f67",
+      "sourceArchiveSha256": "6ecd8f333bdfc46491d067f05aaadbc97f7fa9f0b98c1a0e67cb9d3dd7604637",
+      "version": "4.1.1"
+    },
     "containerOs": "Ubuntu 24.04",
-    "cudaToolkit": "13.2.51",
+    "cudaArchitecture": "sm_120",
     "cudaDevelBase": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
     "cudaRuntimeBase": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
+    "cudaToolkit": "13.2.51",
+    "gsplat": "1.5.3",
+    "nerfstudioV2": "not-supported",
+    "open3d": "0.19.0",
     "python": "3.12.3",
     "pytorch": "2.13.0+cu132",
-    "gsplat": "1.5.3",
-    "open3d": "0.19.0",
-    "colmap": {
-      "version": "3.13.0",
-      "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5"
-    },
-    "cudaArchitecture": "sm_120",
-    "appearanceImplementation": "project-owned direct gsplat",
-    "nerfstudioV2": "not-supported"
+    "selectedConfigs": {
+      "appearance": {
+        "canonical": {
+          "gsplat": "1.5.3",
+          "learningRate": 0.01,
+          "optimizerSteps": 24,
+          "pytorch": "2.13.0+cu132",
+          "seed": 20260819,
+          "targetArchitecture": "sm_120"
+        },
+        "sha256": "6a04df9778f61f4e91c4108842c4fede7488cc3581b2ce204cc7da60dc80cd76"
+      },
+      "colmap": {
+        "canonical": {
+          "cameraModel": "PINHOLE",
+          "denseBackend": "cuda-gpu-0",
+          "geometricConsistency": true,
+          "matcher": "exhaustive",
+          "maximumFeatures": 16384,
+          "maximumImageSize": 3200,
+          "maximumMatches": 32768,
+          "randomSeed": 0,
+          "sparseBackend": "cpu-deterministic",
+          "sparseThreads": 1,
+          "targetArchitecture": "sm_120",
+          "toolVersion": "4.1.1"
+        },
+        "sha256": "742513331c4e2fc7e943b6543dfb3a8474f5cca89507aff08dad740b1d63eacf"
+      },
+      "open3d": {
+        "canonical": {
+          "cpuTsdf": {
+            "backend": "legacy-cpu",
+            "knownPose": true
+          },
+          "cudaTensorProbe": {
+            "matrixShape": [64, 64]
+          },
+          "open3d": "0.19.0",
+          "suppliedDepthUnit": "metre-not-independently-validated",
+          "targetArchitecture": "sm_120"
+        },
+        "sha256": "b249fbb182ddff851130328d8ef31dee4a63ededdd6375a34411e0f37a962ebd"
+      }
+    }
+  },
+  "authority": {
+    "appearance": "non-dimensional-appearance",
+    "canonicalMutationAllowed": false,
+    "geometry": "proposal-only"
+  },
+  "cleanup": {
+    "additionalWorktreesCreated": 0,
+    "c8ContainersRemaining": 0,
+    "complete": true,
+    "globalDockerPruneUsed": false,
+    "hostCudaOrDriverInstalled": false,
+    "retainedRepositoryFixtures": [
+      "ml/reconstruction/windows-nvidia-v2/generate_colmap_fixture.py",
+      "ml/reconstruction/windows-nvidia-v2/generate_gsplat_fixture.py"
+    ],
+    "taggedC8ImagesRemaining": 0,
+    "temporaryInputDirectoriesRemaining": 0
   },
   "compatibilitySpike": {
     "cuda130": {
       "baseDigest": "sha256:5dc1bca23d05bd37b011be68ec470c03b403a5da07ec3a86e41af9470e9d0cc6",
-      "nvcc": "13.0.88",
       "compiledArchitecture": "sm_120",
+      "directGsplatForwardBackwardUpdate": "passed",
       "kernelPayload": 120,
-      "pytorchGpuMatmul": "passed",
+      "nvcc": "13.0.88",
       "open3dCudaAndTsdf": "passed",
-      "directGsplatForwardBackwardUpdate": "passed"
+      "pytorchGpuMatmul": "passed"
     },
     "cuda132": {
       "baseDigest": "sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
-      "nvcc": "13.2.51",
       "compiledArchitecture": "sm_120",
+      "directGsplatForwardBackwardUpdate": "passed",
       "kernelPayload": 132,
-      "pytorchGpuMatmul": "passed",
+      "nvcc": "13.2.51",
       "open3dCudaAndTsdf": "passed",
-      "directGsplatForwardBackwardUpdate": "passed"
+      "pytorchGpuMatmul": "passed"
     },
-    "selection": "cuda132",
-    "selectionBasis": "Both minors executed real sm_120 work. CUDA 13.2 matches the installed driver-advertised generation and the accepted PyTorch cu132 wheel.",
     "observations": [
-      "Open3D 0.19.0 required libX11 at runtime.",
-      "gsplat 1.5.3 required an executable extension cache during build and checks for NVCC while loading the cached backend.",
-      "The final appearance image therefore uses the pinned devel base; its root and populated extension cache are read-only at runtime.",
-      "COLMAP 3.13 uses FeatureExtraction and FeatureMatching GPU option namespaces; SIFT size/count limits remain under SiftExtraction.",
-      "The packaged Ceres build has no CUDA or cuDSS bundle-adjustment backend, so bundle adjustment is CPU fallback."
-    ]
-  },
-  "rights": {
-    "basis": "creator-owned-synthetic",
-    "serviceProcessingAllowed": true,
-    "trainingAllowed": false,
-    "customerDataUsed": false,
-    "providerDataUsed": false
-  },
-  "fixtures": {
-    "colmap": {
-      "description": "Eight creator-authored deterministic 640x480 synthetic views",
-      "canonicalImageSetSha256": "41be0a35c371f9ce9cd46c9e33551a956f50af73d39524d7c3495d67dc3838ef",
-      "sourceBytesRetained": false,
-      "generatorRetained": false,
-      "generatorWarning": "Neither the disposable generator nor the source-image bytes were retained after cleanup. Individual and canonical hashes identify the counted inputs but do not independently enable replay or regeneration.",
-      "images": [
-        {
-          "name": "view-00.png",
-          "sha256": "1b5b72eaff09ee824f3e9aa6b173a7c3b4d2e8546929e7ce1acbef603bebdc49"
-        },
-        {
-          "name": "view-01.png",
-          "sha256": "70e7970f1a8badeda3c7d2facdbab18e3cc6c328e28305a89c5f75a702771272"
-        },
-        {
-          "name": "view-02.png",
-          "sha256": "b9ce18f9e3bb06acb4bbddb29822d583cfca25e0c2cf43c6b91ecf489029cabf"
-        },
-        {
-          "name": "view-03.png",
-          "sha256": "cbc1c7bd63ee6791ffb74bfa49436496c1dd1857e66ea42a49795a5da5b9947f"
-        },
-        {
-          "name": "view-04.png",
-          "sha256": "191f9c02e9a066fc67a775385f14f9533fb7827bcefb699966355683fcdb5759"
-        },
-        {
-          "name": "view-05.png",
-          "sha256": "e37d5537f667043b886346268b8ba15606cbe12a76060ccf219debbb091ba09f"
-        },
-        {
-          "name": "view-06.png",
-          "sha256": "81454dcece7c51cef30b40ec252abb098ca524117740a6af9b3a79a4c4a086f8"
-        },
-        {
-          "name": "view-07.png",
-          "sha256": "b1f9f63ec6d183dbd5515885a2429bdc9add065c398c906257d12abb39e17ee7"
-        }
-      ]
-    },
-    "appearance": {
-      "manifestSha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89",
-      "generatorSha256": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e",
-      "frameCount": 3,
-      "width": 64,
-      "height": 64,
-      "gaussianCount": 6,
-      "units": "arbitrary",
-      "frames": [
-        {
-          "name": "frame-00.png",
-          "sha256": "7d6781bc8b06e5132c6eac9bfa9f297ff7ad270867f84b69fe379dce64f1bc5c"
-        },
-        {
-          "name": "frame-01.png",
-          "sha256": "f7464a4b7c148e2a4c44d62b0456f55d643a40264ce7fe89de776c113fe55a18"
-        },
-        {
-          "name": "frame-02.png",
-          "sha256": "79e9c08377198f4c1489bc60664c50c53dbc6a477f1d5f0ddfe34010c625550c"
-        }
-      ]
-    }
-  },
-  "verdicts": {
-    "runtimeVerdict": "passed",
-    "algorithmVerdict": {
-      "colmapSparse": "passed",
-      "colmapDense": "partial",
-      "open3dTsdf": "passed",
-      "directGsplatSynthetic": "passed"
-    },
-    "repeatabilityVerdict": "passed",
-    "physicalCaptureVerdict": "deferred-not-run",
-    "representativeAccuracyVerdict": "deferred-not-run"
-  },
-  "components": {
-    "colmap": {
-      "imageDigest": "sha256:02709ef85a5a096682de174f208d422573d9b624e77d1210bf0b5277e4ff5b3c",
-      "imageSizeBytes": 1702841266,
-      "configSha256": "61bf4a3e5c4d5deadec330c8077cae2e7e04344386a9be551d9e5a18fd06d0fa",
-      "runtimeVerdict": "passed",
-      "sm120Probe": {
-        "compiledArchitecture": "sm_120",
-        "computeCapability": "12.0",
-        "kernelResult": 120
-      },
-      "gpuEvidence": [
-        "Feature extraction bound to GPU 0.",
-        "Exhaustive feature matching logged both GPU matcher bindings.",
-        "Patch-match stereo executed on GPU 0 and wrote finite depth and normal maps."
-      ],
-      "sparseRun1": {
-        "registeredImages": 8,
-        "inputImages": 8,
-        "sparsePoints": 4239,
-        "observations": 22608,
-        "meanTrackLength": 5.333333,
-        "meanObservationsPerImage": 2826.0,
-        "meanReprojectionErrorPixels": 0.34512,
-        "featureCounts": [3656, 3613, 3609, 3580, 3654, 3640, 3683, 3718],
-        "outputs": {
-          "database.db": {
-            "byteSize": 5148672,
-            "sha256": "19400649c82d77f30a33f7ffc2d63e33787e2be33034d7797246d8874e53fb5a"
-          },
-          "cameras.bin": {
-            "byteSize": 456,
-            "sha256": "c231d096abba8fe67bda9e145448c9dc8387f4f0eaa56d4ba49d915953aefbe8"
-          },
-          "images.bin": {
-            "byteSize": 700352,
-            "sha256": "7aa29c037894f06ab0617eafffa14d1747aafe87937a3faf77fa4a8f09adc246"
-          },
-          "points3D.bin": {
-            "byteSize": 397061,
-            "sha256": "a64517124b2397504ec9b11732df0816b31bd985c4529956e90b3f248af1d7d3"
-          }
-        }
-      },
-      "sparseRun2": {
-        "registeredImages": 8,
-        "inputImages": 8,
-        "sparsePoints": 4192,
-        "observations": 22585,
-        "meanTrackLength": 5.387643,
-        "meanObservationsPerImage": 2823.125,
-        "meanReprojectionErrorPixels": 0.347437,
-        "outputs": {
-          "database.db": {
-            "byteSize": 5152768,
-            "sha256": "aab068bcb01e06f0082b7dc57c4916d384a7b273298854cca767750acd3e7c01"
-          },
-          "cameras.bin": {
-            "byteSize": 456,
-            "sha256": "46e7ef8e536edd958f02278126166d9ac58dae4a4a619f497b8398f48dd5d39c"
-          },
-          "images.bin": {
-            "byteSize": 700352,
-            "sha256": "0bd0bffb846e3f131f1859e0327d5aef43e621c83299fcec5515c079780d0ab4"
-          },
-          "points3D.bin": {
-            "byteSize": 394480,
-            "sha256": "b859632afaab837766d93e235d228a767bf46aec4fd1f334db41d109e8e88b0b"
-          }
-        }
-      },
-      "repeatability": {
-        "registeredImageTolerance": "exact",
-        "sparsePointRelativeTolerancePercent": 2.0,
-        "observedSparsePointDeltaPercent": 1.1088,
-        "reprojectionAbsoluteTolerancePixels": 0.01,
-        "observedReprojectionDeltaPixels": 0.002317,
-        "byteIdentityRequired": false,
-        "verdict": "passed"
-      },
-      "dense": {
-        "undistortedImages": 8,
-        "depthMapCount": 16,
-        "normalMapCount": 16,
-        "finitePositiveDepthValues": 2457600,
-        "mapSetSha256": "f19f496c03944aed88f1b4d36570330c88ed7e7ad801c534803856c1474d4394",
-        "geometricFusedPoints": 0,
-        "photometricFusedPoints": 0,
-        "fusedPly": {
-          "byteSize": 229,
-          "sha256": "84585f60956b534f1486de9bce213d48ae8530b8d7374616317dc953348ed01c"
-        },
-        "algorithmVerdict": "partial",
-        "safeCode": "COLMAP_DENSE_ZERO_FUSED_POINTS"
-      },
-      "resources": {
-        "patchMatchPeakDeviceMemoryBytes": 2045771776,
-        "patchMatchPeakGpuUtilizationPercent": 80,
-        "peakHostMemoryBytes": null,
-        "warning": "Host max RSS was not validly captured because the outer time wrapper measured only the Docker client."
-      },
-      "warnings": [
-        "COLMAP can return exit code zero after some missing-output errors; the project-owned validator rejects missing, malformed, non-finite, or zero-vertex outputs.",
-        "Ceres CUDA/cuDSS bundle adjustment is unavailable; bundle adjustment used CPU.",
-        "Dense patch-match passed, but both strict geometric and diagnostic photometric fusion produced zero points."
-      ]
-    },
-    "open3d": {
-      "imageDigest": "sha256:3d3b5b81e9cabb72690aece382048f62c3dc1417f39f303e513b2b9e3402d75b",
-      "imageConfigDigest": "sha256:1c9cb796e393a9184564c339b2cdeef9ded7f6d4f69795284f4c88540eeff363",
-      "imageSizeBytes": 2183045602,
-      "buildMode": "docker build --provenance=false",
-      "runtimeVerdict": "passed",
-      "algorithmVerdict": "passed",
-      "sm120Probe": {
-        "compiledArchitecture": "sm_120",
-        "computeCapability": "12.0",
-        "kernelResult": 120
-      },
-      "run1": {
-        "durationMilliseconds": 6513,
-        "cudaChecksum": 8386560.0,
-        "pointCount": 2160,
-        "vertexCount": 2160,
-        "triangleCount": 4134
-      },
-      "run2": {
-        "durationMilliseconds": 6366,
-        "cudaChecksum": 8386560.0,
-        "pointCount": 2160,
-        "vertexCount": 2160,
-        "triangleCount": 4134
-      },
-      "repeatability": {
-        "metricTolerance": "exact for checksum and geometry counts",
-        "verdict": "passed"
-      },
-      "resources": {
-        "peakGpuMemoryBytes": null,
-        "peakHostMemoryBytes": null,
-        "warning": "The bounded run completed in 6.513 s and 6.366 s; peak samplers were not captured for this component."
-      },
-      "warning": "Default BuildKit provenance indexes include regenerated attestation metadata. Counted runs use the stable provenance-disabled runnable manifest digest above."
-    },
-    "directGsplat": {
-      "imageDigest": "sha256:052df5d09f9785a5bcbbaaa7d8d5aeb6d4cfd3bb47a17d53d24699543dab5024",
-      "imageSizeBytes": 6430032380,
-      "runtimeVerdict": "passed",
-      "algorithmVerdict": "passed",
-      "capabilityStatus": "experimental",
-      "sm120Probe": {
-        "compiledArchitecture": "sm_120",
-        "computeCapability": "12.0",
-        "kernelResult": 120
-      },
-      "run1": {
-        "durationMilliseconds": 2122,
-        "optimizerSteps": 24,
-        "finalLoss": 0.00029473891481757164,
-        "heldOutMse": 0.0002981825964525342,
-        "heldOutPsnrDb": 35.255177079158756,
-        "peakGpuMemoryBytes": 397824,
-        "peakHostMemoryBytes": 1678487552,
-        "outputs": {
-          "appearance-checkpoint.json": {
-            "byteSize": 1947,
-            "sha256": "be9f5a373ab6681850c2e2ea4b54347e24b3f4ab47d1375def6fd44d8bc83510"
-          },
-          "appearance.ply": {
-            "byteSize": 1283,
-            "sha256": "864214b0f45dc02f827cf7a598a143dfa9167814a9d6ec933e0d985f5972429f"
-          },
-          "appearance-result.json": {
-            "byteSize": 1335,
-            "sha256": "ce20d2eb0d10511a8008e428a24816da13d8811a42e68c0d226f623bdec8a37b"
-          }
-        }
-      },
-      "run2": {
-        "durationMilliseconds": 1461,
-        "optimizerSteps": 24,
-        "finalLoss": 0.0002947387984022498,
-        "heldOutMse": 0.0002981825382448733,
-        "heldOutPsnrDb": 35.25517792693688,
-        "peakGpuMemoryBytes": 397824,
-        "peakHostMemoryBytes": 1681641472,
-        "outputs": {
-          "appearance-checkpoint.json": {
-            "byteSize": 1955,
-            "sha256": "b0e706157b77ee708192965955a2027c3c8bea8bb74ca4283d165d4f353e376c"
-          },
-          "appearance.ply": {
-            "byteSize": 1284,
-            "sha256": "b76bb2aaddd3b8a412315d9388425de85f42c1a077f7ffd41678a7184403ef71"
-          },
-          "appearance-result.json": {
-            "byteSize": 1336,
-            "sha256": "dd899740341637a3f18cee69868b931a290a4b488bc12e40f918f875a90e7ed9"
-          }
-        }
-      },
-      "repeatability": {
-        "heldOutPsnrAbsoluteToleranceDb": 0.00001,
-        "observedHeldOutPsnrDeltaDb": 0.000000847778124,
-        "byteIdentityRequired": false,
-        "verdict": "passed"
-      },
-      "warnings": [
-        "CUDA output bytes are not deterministic; acceptance is metric-tolerant and retains both hashes.",
-        "Synthetic calibrated-camera acceptance does not establish representative-home quality, dimensions, collision geometry, scale, or production provider capacity."
-      ]
-    }
-  },
-  "failedOrDiagnosticAttempts": [
-    {
-      "component": "gsplat",
-      "safeCode": "FIXTURE_HOST_PERMISSIONS",
-      "disposition": "The first post-rebuild run stopped before GPU work because a mktemp input root was owner-only. The fixture alone was made readable to UID 65532; the non-root container contract was retained."
-    },
-    {
-      "component": "colmap",
-      "safeCode": "COLMAP_EXIT_ZERO_WITH_MISSING_OUTPUT",
-      "disposition": "A diagnostic missing-directory invocation showed COLMAP may log an output failure yet exit zero. Production acceptance therefore requires the independent output validator."
-    },
-    {
-      "component": "open3d-build",
-      "safeCode": "BUILDKIT_ATTESTATION_INDEX_DRIFT",
-      "disposition": "Rebuilding identical runnable layers regenerated the provenance wrapper. The counted image was frozen with provenance disabled; both counted runs used its exact digest."
-    }
-  ],
-  "cleanup": {
-    "complete": true,
-    "temporaryInputDirectoriesRemaining": 0,
-    "c8ContainersRemaining": 0,
-    "taggedC8ImagesRemaining": 0,
-    "additionalWorktreesCreated": 0,
-    "disposablePostgresProjectRemovedWithVolumes": true,
-    "dockerGlobalPruneRun": false,
-    "hostDriverChanged": false,
-    "hostCudaChanged": false
+      "CUDA 13.0.88 and 13.2.51 both compiled and executed native sm_120 kernels.",
+      "Open3D CUDA tensor and legacy CPU TSDF are separate workloads.",
+      "COLMAP 4.1.1 is selected because the same fixture produced repeatable non-empty dense fusion; 3.13 did not.",
+      "Selected COLMAP sparse is CPU deterministic and selected dense is CUDA.",
+      "No Linux display driver or host CUDA toolkit was installed."
+    ],
+    "selection": "cuda132",
+    "selectionBasis": "CUDA 13.0 and 13.2 executed native sm_120 kernels plus PyTorch, Open3D and gsplat work; 13.2 matches the driver-advertised generation and selected cu132 wheel."
   },
   "deferredLimitations": [
-    "Physical iOS capture, LiDAR and RoomPlan comparison are deferred-not-run.",
-    "Representative-home, multi-room, metric-scale and real-capture accuracy are deferred-not-run.",
-    "No customer data, paid provider, cloud GPU, external model key, production deployment, or professional review was used.",
-    "Direct gsplat remains experimental even though its synthetic runtime, algorithm, and repeatability verdicts passed.",
-    "COLMAP dense reconstruction remains partial because fusion produced zero points.",
-    "The COLMAP source-image bytes and disposable generator were not retained after cleanup. Their hashes identify the counted inputs but do not independently enable replay or regeneration."
-  ]
+    "No physical iOS capture, LiDAR, ARKit pose, interruption, thermal or upload-resume evidence was run.",
+    "No representative-home or survey-grade accuracy evidence was run; synthetic fixtures cannot establish field accuracy.",
+    "No phone, customer or provider data was used.",
+    "Direct gsplat remains experimental, non-dimensional, acceptance-only and absent from the production worker.",
+    "C8 v2 has no production reconstruction route; the exposure guard requires acceptance-only with routing disabled.",
+    "COLMAP 3.13 produced depth and normal maps but a zero-vertex strict PLY after geometric, photometric, relaxed and fresh-workspace diagnosis.",
+    "Open3D CUDA tensor evidence does not make its separate legacy CPU TSDF a GPU workload.",
+    "Synthetic metres supplied to Open3D were not independently physically validated.",
+    "APT indices are not snapshot-pinned; exact base/image/source/lock/package/runtime hashes identify the build.",
+    "C8 v1 is byte-for-byte unchanged from the integrated base and was not run."
+  ],
+  "diagnosticAttempts": [
+    {
+      "candidate": "COLMAP 3.13.0",
+      "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5",
+      "dense": {
+        "authority": "proposal-only",
+        "depthMapCount": 20,
+        "depthPositiveValues": 1728000,
+        "normalMapCount": 20,
+        "ply": {
+          "coordinateBounds": null,
+          "finiteScalarCount": 0,
+          "format": "binary_little_endian",
+          "payloadValidated": true,
+          "sha256": "84585f60956b534f1486de9bce213d48ae8530b8d7374616317dc953348ed01c",
+          "sizeBytes": 229,
+          "vertexByteStride": 27,
+          "vertexCount": 0
+        },
+        "schemaVersion": "c8-colmap-output-validation-v2"
+      },
+      "image": {
+        "id": "sha256:2c587db48564d5abbf29802e681ceccac64518b77f9a82d2fc0b4a3aef917c47",
+        "labels": {
+          "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.version": "24.04"
+        },
+        "sizeBytes": 1822778658
+      },
+      "outcome": "partial",
+      "reason": "20 depth and 20 normal maps contained 1,728,000 positive depth samples, but strict payload validation found zero fused vertices.",
+      "resources": {
+        "elapsedMilliseconds": 36823,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 354418688,
+        "peakGpuUtilizationPercent": 80,
+        "peakHostMemoryBytes": 230477005,
+        "sampleCount": 31
+      },
+      "sourceArchiveSha256": "84388feabf937fc3e90568abdc2fdb4bde1a08cef8d0adb44ecaf64e9c7d1300",
+      "sparse": {
+        "meanReprojectionErrorPixels": 0.311709,
+        "observations": 9584,
+        "registeredImages": 10,
+        "sparsePoints": 1794
+      },
+      "triedAlternatives": [
+        "geometric fusion",
+        "photometric fusion",
+        "relaxed thresholds",
+        "fresh workspaces"
+      ]
+    },
+    {
+      "candidate": "COLMAP 4.1.1 GPU sparse path",
+      "outcome": "rejected-for-repeatability",
+      "rawResultSha256": "cb91e52d60eed305b8476312be7d0c6ef6fac5ef10b5366e21996dd030605f24",
+      "reason": "Prior runs registered 10 images/3298 points then 7 images/220 points; deterministic CPU sparse replaced it while CUDA dense remained."
+    }
+  ],
+  "exposure": {
+    "productionRoutingEnabled": false,
+    "status": "acceptance-only"
+  },
+  "fixtures": {
+    "appearance": {
+      "artifact": {
+        "byteSize": 2208,
+        "identifier": "fixture/appearance/appearance-input.json",
+        "sha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89"
+      },
+      "frameHashes": {
+        "frame-00.png": "7d6781bc8b06e5132c6eac9bfa9f297ff7ad270867f84b69fe379dce64f1bc5c",
+        "frame-01.png": "f7464a4b7c148e2a4c44d62b0456f55d643a40264ce7fe89de776c113fe55a18",
+        "frame-02.png": "79e9c08377198f4c1489bc60664c50c53dbc6a477f1d5f0ddfe34010c625550c"
+      },
+      "generatorSha256": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e",
+      "manifestSha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89",
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "schemaVersion": "c8-direct-gsplat-fixture-v2"
+    },
+    "colmap": {
+      "artifact": {
+        "byteSize": 1590,
+        "identifier": "fixture/colmap/fixture-manifest.json",
+        "sha256": "4e6f8dcd6097132378c5f0f955b35ad290c4cf3297ed46dd2953f09fb0b1052f"
+      },
+      "cameraCount": 10,
+      "creator": "project-owned deterministic ray renderer",
+      "fileHashes": {
+        "images/view-00.ppm": "0cb918839caa71ec8abf0c27466bd7b00958de3c1917811e8afbd137256716c0",
+        "images/view-01.ppm": "bb1fcdd707c449a3e3ad2f87f4f2f50c524bc6c63123531bf6799788b7e8f144",
+        "images/view-02.ppm": "050fda550dc7060757d5c554ffc1aa98e1fea9a6ba090781bdf303f2cccc651f",
+        "images/view-03.ppm": "10217dd9e03395c11324dfa81a386d48824171c43e462c3900d89cf7d25d76c1",
+        "images/view-04.ppm": "76528e1b0073a76af8b17fe649c5c1211d7b0541f10c5dc724ca7bc1f36a0967",
+        "images/view-05.ppm": "264e0d078ab272dae85b796077a1695265e12c47b8c7bf7a3e2a02f4d44e7556",
+        "images/view-06.ppm": "731c995710cec4337570af1a4b8c773da989a6d48b18a9cea6b009e248dddb1f",
+        "images/view-07.ppm": "3f143ece00e20773d72724982990b768086652cc0d914285142a1e8f85a83748",
+        "images/view-08.ppm": "6769ac22bc1ce8a8e2699150bd1fdc657ba33b3c091e95df3de1be568ee4b290",
+        "images/view-09.ppm": "537522228d8ec291897307cd8f381e2f48b5a6cb095e7160740e594707c3acee",
+        "known-model/cameras.txt": "0e9d1c49144a24cb72df8efae2b375707fc5b0749c6183816397894809a8e1dd",
+        "known-model/images.txt": "7f830df21c020962d08868e92c7a8a7fceb4f858b5a8cffdf88d5c8322d61498",
+        "known-model/points3D.txt": "f60d8d03dca22527ff2eef0f1b9dcbf375a3d5cb485128c802a3b77ec8e5306a"
+      },
+      "generatorRetained": true,
+      "generatorSha256": "b254537b83c54cbd59ece189cc848ea7f54d1ff067027831faf30f7a2281a188",
+      "height": 360,
+      "pointTrackCount": 557,
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "schemaVersion": "c8-colmap-fixture-v2",
+      "width": 480
+    }
+  },
+  "host": {
+    "computeCapability": "12.0",
+    "cpu": "AMD Ryzen 9 9900X",
+    "dockerDesktop": "4.78.0",
+    "dockerEngine": "29.5.3",
+    "dockerPlatform": "linux/amd64",
+    "driver": "595.79",
+    "driverAdvertisedCuda": "13.2",
+    "gpu": "NVIDIA GeForce RTX 5080",
+    "gpuMemoryMiB": 16303,
+    "gpuPowerLimitWatts": 360,
+    "gpuUuid": "GPU-247c541f-3a42-ab08-2b50-0dbed4f07f40",
+    "hostCudaToolkitInstalled": false,
+    "linuxDisplayDriverInstalled": false,
+    "logicalCpuCount": 24,
+    "ramBytes": 65905455104,
+    "topology": "PowerShell dispatcher -> WSL-native Git/pnpm/uv/Docker/gh -> WSL ext4 checkout -> Docker Desktop Linux containers",
+    "windows": "Windows 11 Pro 10.0.26200.9168",
+    "wsl": "2.6.3.0",
+    "wslKernel": "6.6.87.2-microsoft-standard-WSL2"
+  },
+  "package": {
+    "acceptanceResult": {
+      "byteSize": 60850,
+      "identifier": "acceptance-result.json",
+      "sha256": "72a95697e88fae80c93c624a152d63859f43f4bb4a67f6183ab187e576a986e5"
+    },
+    "aptRepositorySnapshotPinned": false,
+    "buildProvenance": {
+      "appearance": {
+        "extensionFilesSha256": "dab808289674a9e7a79527d6c41a7e6ddf5c0877b96d25cdad9d0b47e6a806c0",
+        "gsplatExtensionActualSha256": "ed6f7c2636ffc0452c0e6f6d7835ab4b7852b39cde13535a65c98d68324fcd6d",
+        "gsplatNativeSm120Cubins": 20,
+        "pythonPackagesSha256": "f1357285b8556c687ee41bd5355da77c5b283623f6b9e3da17fc2698c5a89d36",
+        "runtimePackagesSha256": "3d4ee953662bf95fba5c99a6c6c814cd4292dc2e8c3d9ae7e3332d7cb89b68cc"
+      },
+      "colmap": {
+        "builderPackagesSha256": "f7a26194464336748642455765b45a52b49ad67b78d9ed9fe29ea9194b23ba70",
+        "cmakeSelectionSha256": "741fb19f6f9da108c7d5ea5cdf6a5ce4b902ca42f67272daf87e54d70bc77e51",
+        "patchMatchElfSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "patchMatchPtxSha256": "0e7db3bf31b9cc8d9cebf139b3459ea64f72aa3b6fbb992a56ddb141c9dd6d1b",
+        "runtimePackagesSha256": "0c9f033623272376653b3716f4341b5f257af12d5605d380341d191d4a16ab1b"
+      },
+      "open3d": {
+        "open3dActualCudaBinarySha256": "b2be623a5e831547a8b56d0e1e32a6aba42f94cc2000ecebe9304879833b054b",
+        "open3dBinaryCode": "sm_75/80/86/89 cubins plus compute_90 PTX JIT; no native sm_120 in wheel",
+        "pythonPackagesSha256": "9b86339668af246146d81f93d0e39a4784095661488cc365eb22ef09e107bfb25",
+        "runtimePackagesSha256": "d687d7506de05a8465adad13628320574593e73e8c87eefc5f12a5a27241f006d"
+      }
+    },
+    "commandEvidence": {
+      "appearanceRun1": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "8d81c771eb8c74dc795c7338b5aea439760a824605c653ccd7c6b4ff4641ae77",
+          "exitCode": 0,
+          "logPath": "c8v2-appearance-r1-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-appearance-r1-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "dea27c8fbf41cb9a40db3f5ba3f808e2965231fa6a4ae642aed02802a6541f62",
+          "exitCode": 0,
+          "logPath": "c8v2-appearance-r1-workload.log",
+          "logSha256": "e0b310db4ac83c190d518bd7d424bb4fdb8aff946bae64d962ccbb3666bda1b9",
+          "name": "c8v2-appearance-r1-workload"
+        }
+      ],
+      "appearanceRun2": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "dadddec347b45a24de53546ffba4e9533eabc4bdf5b8506dba888394a7ef3be4",
+          "exitCode": 0,
+          "logPath": "c8v2-appearance-r2-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-appearance-r2-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e309dcb73f9670dc42d475d8512c972a15a46ed378dd5336580e52a84391e3b6",
+          "exitCode": 0,
+          "logPath": "c8v2-appearance-r2-workload.log",
+          "logSha256": "b0c62ce66f3f0fbf6c3e358a495d360fc2330706b49e1fc0ea917c8c06f3f891",
+          "name": "c8v2-appearance-r2-workload"
+        }
+      ],
+      "colmap313Comparison": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e4d2c3ebdd3b6ae059663024d3e7ac8ee2c97a545c14c670b458e80795af8cd4",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-colmap313-comparison-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "749f25691cee60f4c6375160e5702918e8d0c5d3c05a27972ece4d688adb9ebd",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-features.log",
+          "logSha256": "56ead871d2c6c04f68e9928f44cb9a68fb6ae740e59140eb5f95fbc7f4bb9e64",
+          "name": "c8v2-colmap313-comparison-features"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e063f2080ac0d666fd1b71e573d81c727b91cddc5ee044088e025aa15d68b7e2",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-matching.log",
+          "logSha256": "345853a0134da4e7616dc0554b61173e84769250d1736ed59bedaf4009d0e463",
+          "name": "c8v2-colmap313-comparison-matching"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "dd721e79749654d9cd106a52fdf3177d13b5f7c78222958dea9f80373dd26d75",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-mapper.log",
+          "logSha256": "7b3158b4dd63724784783c8cdb6b6717ad22b9dae11e4a8a40c40828628c489d",
+          "name": "c8v2-colmap313-comparison-mapper"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "0b764cc82ef07c5cec51717dd70579c2214409ab7247d8ceae1e50077962faf9",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-analyzer.log",
+          "logSha256": "5fb752e378e131255bb43d4d59aeef3ce4b2c66ef08ecf3754931ac6a7aaf49d",
+          "name": "c8v2-colmap313-comparison-analyzer"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e6e40ca63bf13c813ecd2bf743cd4db3fafc41f0713b7b430e5cb67a914484d7",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-undistort.log",
+          "logSha256": "3bf2a398c0887736ff2437bd1d689cfc30fa76c46a215a0dddb3bed1f79c9014",
+          "name": "c8v2-colmap313-comparison-undistort"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "17ca52835f2397dd3ba2400f0d12a37b9a52bef40248c307e4a1e9905e87781d",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-patchmatch.log",
+          "logSha256": "baba3bff4c5fa17cbb053a56f3f78064f467b0f139c78015cc800885b622cb0d",
+          "name": "c8v2-colmap313-comparison-patchmatch"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "4c2d054df501d3f9741e8778dc0a40bb6dae2ed747afb5686f0e123206549d4d",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap313-comparison-fusion.log",
+          "logSha256": "92b2fe7cf4671f8537b3c4ff4d4f9bc46bc0c5c34585c67529ca97523920ab8e",
+          "name": "c8v2-colmap313-comparison-fusion"
+        }
+      ],
+      "colmap411Run1": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e289be05fa4c90c7264a9e60b86b597f01ecd91584e8e318d71efd0b75e437a6",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-colmap411-r1-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "93b288d6d37c042782697ab5a4b9b0852d9cd35ceb892547ca7675e94b668bc4",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-features.log",
+          "logSha256": "320b39af3244ec756f691d9e6dec699a9c3a4aa9e62238c680392a7c038d5bad",
+          "name": "c8v2-colmap411-r1-features"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "f71263715878adc7353f057c554c83214b738015dd6074b6467466bdc4d9b930",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-matching.log",
+          "logSha256": "f77bb4e09b07c72762d018bf962f004fdbe2cfc1fc2e9c16898c57fd3b053eee",
+          "name": "c8v2-colmap411-r1-matching"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "4e6a83613f7d1f6457d201f86f31a9564bd54cac22506727d615dbb5ea8af478",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-mapper.log",
+          "logSha256": "b1b351bb17a578149fbe8a333eed498ac5ff13692af97881fbfa2ef1bdae4ff8",
+          "name": "c8v2-colmap411-r1-mapper"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "5aeda4620da047dda7f08aa6c38cbd1fd301f82a255c6751dd91af211d546d9a",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-analyzer.log",
+          "logSha256": "e76bcd17ff9878bb179553d71a0755c8ea386f3b0e2c2ec98ca82157179a9049",
+          "name": "c8v2-colmap411-r1-analyzer"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "2d3345aa7fc1118b77ee825bd2b29232ca57f684dbdd6f2b302e0d5fd8172c0e",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-undistort.log",
+          "logSha256": "6d32f288a0882d765e8db3120c1113cde2c40a217d86900347faa73cd3269725",
+          "name": "c8v2-colmap411-r1-undistort"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "00729a13cf24a64cc8cd04fac12adbac49e81292019ae90c3657cda40e55f04f",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-patchmatch.log",
+          "logSha256": "aa2b16b5e019da7cd98c691aeee921d05eb7085e4be32761595c734f03cea1d0",
+          "name": "c8v2-colmap411-r1-patchmatch"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "b506d3ea25c80d5f84cf134a3a4fef8d1064a285b7f677d887ced5ac70f352e7",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r1-fusion.log",
+          "logSha256": "72aa524a0df05c9b7745ed137a2c85c77d4dffb2edef64b29db91d885e1e085c",
+          "name": "c8v2-colmap411-r1-fusion"
+        }
+      ],
+      "colmap411Run2": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "e17fd91512adbae8d8db8305dcbf46806c3f916fe66241bfb30ae1fee3c3e133",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-colmap411-r2-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "091662b1d26744f10a25d3cae9e8689f33f99941552e6e77d9a6c98bd2936b22",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-features.log",
+          "logSha256": "db073e5fbd0b58fde89227119f9d9f27e3fc28aba8f5010e53971667705803e7",
+          "name": "c8v2-colmap411-r2-features"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "edd7afd27538134883c3bf3a2d788f86c768f953baf73f3417bc3d200c028d60",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-matching.log",
+          "logSha256": "4c9c094aa5485447853432cfa514e0b985d755117f98532add99b3a9067d0ab2",
+          "name": "c8v2-colmap411-r2-matching"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "441f2943e3098dbcb5278d975bcabc1176bf20fe3e796c48212bfda68d2bfdeb",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-mapper.log",
+          "logSha256": "f3d3a197a5620b7e58474100b3a70e0e6248c3ecaf3873386a277a085e761bb5",
+          "name": "c8v2-colmap411-r2-mapper"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "d82b4b04448e9873830efb67bff29febd0a46d9d13c49e8d34527b1ed73e2a32",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-analyzer.log",
+          "logSha256": "58111ee706502e72f2608f7f94dbe10b18bfc14920a32555a360ac566e9a36bf",
+          "name": "c8v2-colmap411-r2-analyzer"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "99b4f42d5cc01aa51fe7eb54cda595d86045180e21cf034cfc531719e39251ca",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-undistort.log",
+          "logSha256": "e26dfefb491f4875f15c9c728feee2d2f998b4e7813de9c5535d36de598c0a3a",
+          "name": "c8v2-colmap411-r2-undistort"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "b6b0f4e966b4b352cda8c9b3ecbf4c2c85544e215bdd1e956aca5a6f1fc1b0aa",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-patchmatch.log",
+          "logSha256": "b5843b2172c0ca2f4fd9504585f8b153a75f22c0f8070379701ff47256951bed",
+          "name": "c8v2-colmap411-r2-patchmatch"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "df4bef3de8467607e29162b7f3415abfa76b501535c7dc53490e6c91294a90d5",
+          "exitCode": 0,
+          "logPath": "c8v2-colmap411-r2-fusion.log",
+          "logSha256": "32a1babb1eafb062ca1fcd2f9e0b9704b1aa146060666ec8766a4e4d3a5aaa4c",
+          "name": "c8v2-colmap411-r2-fusion"
+        }
+      ],
+      "open3dRun1": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "000dd47e2498ff6e7266ef2fd15c8455ae61eb67d5f5ed1f26212992d438cca6",
+          "exitCode": 0,
+          "logPath": "c8v2-open3d-r1-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-open3d-r1-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "0fc2e40ca4f6798179078d94851a833ef36955b1e4c60057e5a4d760aa93eb3a",
+          "exitCode": 0,
+          "logPath": "c8v2-open3d-r1-workload.log",
+          "logSha256": "2740fa910ec0c4a5d6950bffd7ecc0e62412221bfc7e99d4f944dcd4142cc9cf",
+          "name": "c8v2-open3d-r1-workload"
+        }
+      ],
+      "open3dRun2": [
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "d5ce28ccee6ad2fd66d5832a8cb7a12b0e62d3a7b880adbe5676839f2ebfca91",
+          "exitCode": 0,
+          "logPath": "c8v2-open3d-r2-sm120.log",
+          "logSha256": "dc520747bcfca2de401f6cf6a9dd84d4d955ba171906ffe74c69556152d21426",
+          "name": "c8v2-open3d-r2-sm120"
+        },
+        {
+          "argvEncoding": "UTF-8 arguments joined by NUL",
+          "argvSha256": "1f2e8bbfe5a6d438d815a45fa86ea632286ccfeb4a11b0bcf8d50bbe4473fa11",
+          "exitCode": 0,
+          "logPath": "c8v2-open3d-r2-workload.log",
+          "logSha256": "06c8893a0f7d45f9c9c2d8577a94b6575775ce1ad04b517562367d199f25db25",
+          "name": "c8v2-open3d-r2-workload"
+        }
+      ]
+    },
+    "images": {
+      "appearance": {
+        "id": "sha256:d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae",
+        "labels": {
+          "io.interior-design.c8.appearance-status": "experimental",
+          "io.interior-design.c8.capability": "acceptance-only",
+          "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.version": "torch-2.13.0-cu132-gsplat-1.5.3"
+        },
+        "sizeBytes": 6430025374
+      },
+      "colmap": {
+        "id": "sha256:975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0",
+        "labels": {
+          "io.interior-design.c8.capability": "acceptance-only",
+          "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "a0d785fba74b2664f31edc4a29026a8b27c00f67",
+          "org.opencontainers.image.source": "https://github.com/colmap/colmap",
+          "org.opencontainers.image.version": "4.1.1"
+        },
+        "sizeBytes": 2031877888
+      },
+      "colmap313Comparison": {
+        "id": "sha256:2c587db48564d5abbf29802e681ceccac64518b77f9a82d2fc0b4a3aef917c47",
+        "labels": {
+          "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.version": "24.04"
+        },
+        "sizeBytes": 1822778658
+      },
+      "open3d": {
+        "id": "sha256:f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7",
+        "labels": {
+          "io.interior-design.c8.capability": "acceptance-only",
+          "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.version": "open3d-0.19.0-cuda13.2"
+        },
+        "sizeBytes": 2183046048
+      }
+    },
+    "countedSourceManifest": {
+      "byteSize": 1872,
+      "identifier": "git:ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0:ml/reconstruction/windows-nvidia-v2/package-manifest.json",
+      "sha256": "0b7eec33eef31e0c808827f598eba725ef8d4637aff091c93849e367421ad186"
+    },
+    "packageInputs": {
+      "Dockerfile.appearance": {
+        "byteSize": 3187,
+        "sha256": "58e553d901edff7a8ef417272af232d214f974fb36a77ae838901dc5577bc932"
+      },
+      "Dockerfile.colmap": {
+        "byteSize": 4841,
+        "sha256": "72e8e6a08580439f2d8766deaa19410c2bf7b98e4a9903e029c8aacbc17a077f"
+      },
+      "Dockerfile.open3d": {
+        "byteSize": 2547,
+        "sha256": "81a83e5b105bab38a3a43255157104b07b8eb5c454789cb0dd6876d9a2c72a99"
+      },
+      "generate_colmap_fixture.py": {
+        "byteSize": 8203,
+        "sha256": "b254537b83c54cbd59ece189cc848ea7f54d1ff067027831faf30f7a2281a188"
+      },
+      "generate_gsplat_fixture.py": {
+        "byteSize": 4651,
+        "sha256": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e"
+      },
+      "requirements-appearance.lock": {
+        "byteSize": 33686,
+        "sha256": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343"
+      },
+      "requirements-open3d.lock": {
+        "byteSize": 112751,
+        "sha256": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a"
+      },
+      "run_acceptance.py": {
+        "byteSize": 35502,
+        "sha256": "d096434edd876cc70b880884f69fb5f66d83f96034ef2b5e01ea50fdaadfb1c4"
+      },
+      "validate_colmap_outputs.py": {
+        "byteSize": 11268,
+        "sha256": "858828ff3c48629cf2a0a9a7f9e31441438142b5c0d727beeff8ef272be2b15b"
+      }
+    },
+    "path": "ml/reconstruction/windows-nvidia-v2",
+    "runnerCompletedAtUnixMilliseconds": 1787495418276,
+    "runnerSchemaVersion": "c8-blackwell-acceptance-runner-v3",
+    "v1Package": {
+      "executionVerdict": "not-run",
+      "unchangedFromBase": true
+    },
+    "versions": {
+      "byteSize": 1678,
+      "identifier": "ml/reconstruction/windows-nvidia-v2/versions.json",
+      "sha256": "d2ea9b30a13023630c828836f2d3ef289dfdedf0acc0993bb7d99ae844ee5248"
+    }
+  },
+  "recordKind": "c8-blackwell-workstation-envelope-v3",
+  "recordedAt": "2026-08-23",
+  "repeatability": [
+    {
+      "basis": "two fresh runs; exact registration and <=1% point/observation delta",
+      "component": "colmap-sparse",
+      "details": {
+        "observationRelativeDelta": 0.0,
+        "observations": [20366, 20366],
+        "passed": true,
+        "pointRelativeDelta": 0.0,
+        "registeredImages": [10, 10],
+        "sparsePoints": [3362, 3362]
+      },
+      "verdict": "passed"
+    },
+    {
+      "basis": "two fresh runs; equal positive depth and <=1% strict-payload PLY vertex delta",
+      "component": "colmap-dense",
+      "details": {
+        "depthPositiveValues": [3241745, 3241745],
+        "passed": true,
+        "vertexCount": [46856, 46859],
+        "vertexRelativeDelta": 6.402185279241981e-5
+      },
+      "verdict": "passed"
+    },
+    {
+      "basis": "two fresh runs; equal CPU TSDF counts and CUDA tensor checksum",
+      "component": "open3d-tsdf",
+      "details": {
+        "cudaChecksums": [8386560.0, 8386560.0],
+        "passed": true,
+        "triangles": [4134, 4134],
+        "vertices": [2160, 2160]
+      },
+      "verdict": "passed"
+    },
+    {
+      "basis": "two fresh runs; <=0.001 dB PSNR delta and equal validated export vertices",
+      "component": "direct-gsplat",
+      "details": {
+        "heldOutPsnrAbsoluteDeltaDb": 2.9672221515397723e-6,
+        "heldOutPsnrDb": [35.255174111936604, 35.255177079158756],
+        "passed": true,
+        "vertexCount": [6, 6]
+      },
+      "verdict": "passed"
+    }
+  ],
+  "rights": {
+    "basis": "creator-owned-synthetic",
+    "customerDataUsed": false,
+    "providerDataUsed": false,
+    "serviceProcessingAllowed": true,
+    "trainingAllowed": false
+  },
+  "runs": [
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "colmap-sparse",
+          "metrics": {
+            "meanReprojectionErrorPixels": 0.369919,
+            "observations": 20366,
+            "registeredImages": 10,
+            "sparseBackend": "cpu-deterministic",
+            "sparsePoints": 3362
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        },
+        {
+          "component": "colmap-dense",
+          "metrics": {
+            "coordinateBoundsJson": "{\"maximum\":[4.032320022583008,2.9608895778656006,7.462882995605469],\"minimum\":[-4.062729835510254,-2.9445369243621826,4.065446376800537]}",
+            "depthMaps": 20,
+            "depthPositiveValues": 3241745,
+            "finiteScalars": 281136,
+            "fusedPoints": 46856,
+            "normalMaps": 20,
+            "payloadValidated": true,
+            "plyFormat": "binary_little_endian",
+            "vertexByteStride": 27
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "742513331c4e2fc7e943b6543dfb3a8474f5cca89507aff08dad740b1d63eacf",
+      "dependencyLocks": [
+        {
+          "byteSize": 4841,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.colmap",
+          "sha256": "72e8e6a08580439f2d8766deaa19410c2bf7b98e4a9903e029c8aacbc17a077f"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 2031877888,
+        "identifier": "docker-image@sha256:975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0",
+        "sha256": "975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0"
+      },
+      "inputs": [
+        {
+          "byteSize": 1590,
+          "identifier": "fixture/colmap/fixture-manifest.json",
+          "sha256": "4e6f8dcd6097132378c5f0f955b35ad290c4cf3297ed46dd2953f09fb0b1052f"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 1265345,
+          "identifier": "output/fused.ply",
+          "sha256": "d76fa41d828986b710862be89868e4e9668688737e963d748f04ab9d0d7c14d1"
+        },
+        {
+          "byteSize": 4726784,
+          "identifier": "work/database.db",
+          "sha256": "4ed3c98b7369a5153265e0a80d1cb9daa78b2802e7a14bbc4fa1c1b1b3915bac"
+        },
+        {
+          "byteSize": 568,
+          "identifier": "work/sparse/0/cameras.bin",
+          "sha256": "4adf37861b6b5ab7e6905208dd6a33f9edc866cd74a05f8daa5398d183b79fb8"
+        },
+        {
+          "byteSize": 602792,
+          "identifier": "work/sparse/0/images.bin",
+          "sha256": "63a6de0d7528ee64fc467e606515de2a33842f5371c615e6e5c3d0c94d84f83a"
+        },
+        {
+          "byteSize": 334398,
+          "identifier": "work/sparse/0/points3D.bin",
+          "sha256": "c6c7a504d5a6637b35da1c90aa8472d9c3d5f79ed50687ee09af4e1daaae4506"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 98482,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 332398592,
+        "peakGpuUtilizationPercent": 98,
+        "peakHostMemoryBytes": 955252736
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "colmap-4.1.1-selected-r1",
+      "runtimeVerdict": {
+        "componentCodePath": "project native sm_120 SASS probe; official COLMAP MVS compute_90 PTX executes on SM120 through driver JIT",
+        "componentWorkload": "deterministic CPU sparse reconstruction plus CUDA PatchMatchStereo and dense fusion",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "Sparse is deliberately CPU deterministic; dense PatchMatchStereo is the selected GPU algorithm path.",
+        "COLMAP upstream SM100+ MVS uses compute_90 PTX; the project probe separately proves native sm_120 code."
+      ]
+    },
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "colmap-sparse",
+          "metrics": {
+            "meanReprojectionErrorPixels": 0.369919,
+            "observations": 20366,
+            "registeredImages": 10,
+            "sparseBackend": "cpu-deterministic",
+            "sparsePoints": 3362
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        },
+        {
+          "component": "colmap-dense",
+          "metrics": {
+            "coordinateBoundsJson": "{\"maximum\":[4.032320022583008,2.9608895778656006,7.462882995605469],\"minimum\":[-4.062729835510254,-2.9445369243621826,4.065446376800537]}",
+            "depthMaps": 20,
+            "depthPositiveValues": 3241745,
+            "finiteScalars": 281154,
+            "fusedPoints": 46859,
+            "normalMaps": 20,
+            "payloadValidated": true,
+            "plyFormat": "binary_little_endian",
+            "vertexByteStride": 27
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "742513331c4e2fc7e943b6543dfb3a8474f5cca89507aff08dad740b1d63eacf",
+      "dependencyLocks": [
+        {
+          "byteSize": 4841,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.colmap",
+          "sha256": "72e8e6a08580439f2d8766deaa19410c2bf7b98e4a9903e029c8aacbc17a077f"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 2031877888,
+        "identifier": "docker-image@sha256:975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0",
+        "sha256": "975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0"
+      },
+      "inputs": [
+        {
+          "byteSize": 1590,
+          "identifier": "fixture/colmap/fixture-manifest.json",
+          "sha256": "4e6f8dcd6097132378c5f0f955b35ad290c4cf3297ed46dd2953f09fb0b1052f"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 1265426,
+          "identifier": "output/fused.ply",
+          "sha256": "c00c6c23f579b423b25d8fba03b680c56f0d05e3ffdd5a09963805bfcf51b6a6"
+        },
+        {
+          "byteSize": 4726784,
+          "identifier": "work/database.db",
+          "sha256": "4ed3c98b7369a5153265e0a80d1cb9daa78b2802e7a14bbc4fa1c1b1b3915bac"
+        },
+        {
+          "byteSize": 568,
+          "identifier": "work/sparse/0/cameras.bin",
+          "sha256": "4adf37861b6b5ab7e6905208dd6a33f9edc866cd74a05f8daa5398d183b79fb8"
+        },
+        {
+          "byteSize": 602792,
+          "identifier": "work/sparse/0/images.bin",
+          "sha256": "63a6de0d7528ee64fc467e606515de2a33842f5371c615e6e5c3d0c94d84f83a"
+        },
+        {
+          "byteSize": 334398,
+          "identifier": "work/sparse/0/points3D.bin",
+          "sha256": "c6c7a504d5a6637b35da1c90aa8472d9c3d5f79ed50687ee09af4e1daaae4506"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 97637,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 373293056,
+        "peakGpuUtilizationPercent": 98,
+        "peakHostMemoryBytes": 887934157
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "colmap-4.1.1-selected-r2",
+      "runtimeVerdict": {
+        "componentCodePath": "project native sm_120 SASS probe; official COLMAP MVS compute_90 PTX executes on SM120 through driver JIT",
+        "componentWorkload": "deterministic CPU sparse reconstruction plus CUDA PatchMatchStereo and dense fusion",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "Sparse is deliberately CPU deterministic; dense PatchMatchStereo is the selected GPU algorithm path.",
+        "COLMAP upstream SM100+ MVS uses compute_90 PTX; the project probe separately proves native sm_120 code."
+      ]
+    },
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "open3d-tsdf",
+          "metrics": {
+            "backend": "legacy-cpu",
+            "cudaTensorBackend": "CUDA",
+            "cudaTensorChecksum": 8386560.0,
+            "knownPose": true,
+            "points": 2160,
+            "suppliedDepthUnit": "metre-not-independently-validated",
+            "triangles": 4134,
+            "vertices": 2160
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "b249fbb182ddff851130328d8ef31dee4a63ededdd6375a34411e0f37a962ebd",
+      "dependencyLocks": [
+        {
+          "byteSize": 2547,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.open3d",
+          "sha256": "81a83e5b105bab38a3a43255157104b07b8eb5c454789cb0dd6876d9a2c72a99"
+        },
+        {
+          "byteSize": 112751,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/requirements-open3d.lock",
+          "sha256": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 2183046048,
+        "identifier": "docker-image@sha256:f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7",
+        "sha256": "f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7"
+      },
+      "inputs": [
+        {
+          "byteSize": 1590,
+          "identifier": "fixture/colmap/fixture-manifest.json",
+          "sha256": "4e6f8dcd6097132378c5f0f955b35ad290c4cf3297ed46dd2953f09fb0b1052f"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 472,
+          "identifier": "output/open3d-result.json",
+          "sha256": "2740fa910ec0c4a5d6950bffd7ecc0e62412221bfc7e99d4f944dcd4142cc9cf"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 10112,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 577765376,
+        "peakGpuUtilizationPercent": 3,
+        "peakHostMemoryBytes": 620127846
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "open3d-0.19.0-r1",
+      "runtimeVerdict": {
+        "componentCodePath": "project native sm_120 SASS probe; Open3D wheel sm_75/80/86/89 cubins plus compute_90 PTX JIT; TSDF is legacy-cpu",
+        "componentWorkload": "Open3D CUDA tensor multiplication followed separately by legacy CPU known-pose TSDF",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "CUDA tensor execution and legacy CPU TSDF are separate workloads.",
+        "Synthetic metre depth is supplied, not physically validated."
+      ]
+    },
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "open3d-tsdf",
+          "metrics": {
+            "backend": "legacy-cpu",
+            "cudaTensorBackend": "CUDA",
+            "cudaTensorChecksum": 8386560.0,
+            "knownPose": true,
+            "points": 2160,
+            "suppliedDepthUnit": "metre-not-independently-validated",
+            "triangles": 4134,
+            "vertices": 2160
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "b249fbb182ddff851130328d8ef31dee4a63ededdd6375a34411e0f37a962ebd",
+      "dependencyLocks": [
+        {
+          "byteSize": 2547,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.open3d",
+          "sha256": "81a83e5b105bab38a3a43255157104b07b8eb5c454789cb0dd6876d9a2c72a99"
+        },
+        {
+          "byteSize": 112751,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/requirements-open3d.lock",
+          "sha256": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 2183046048,
+        "identifier": "docker-image@sha256:f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7",
+        "sha256": "f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7"
+      },
+      "inputs": [
+        {
+          "byteSize": 1590,
+          "identifier": "fixture/colmap/fixture-manifest.json",
+          "sha256": "4e6f8dcd6097132378c5f0f955b35ad290c4cf3297ed46dd2953f09fb0b1052f"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 472,
+          "identifier": "output/open3d-result.json",
+          "sha256": "06c8893a0f7d45f9c9c2d8577a94b6575775ce1ad04b517562367d199f25db25"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 9063,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 624951296,
+        "peakGpuUtilizationPercent": 1,
+        "peakHostMemoryBytes": 635961344
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "open3d-0.19.0-r2",
+      "runtimeVerdict": {
+        "componentCodePath": "project native sm_120 SASS probe; Open3D wheel sm_75/80/86/89 cubins plus compute_90 PTX JIT; TSDF is legacy-cpu",
+        "componentWorkload": "Open3D CUDA tensor multiplication followed separately by legacy CPU known-pose TSDF",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "CUDA tensor execution and legacy CPU TSDF are separate workloads.",
+        "Synthetic metre depth is supplied, not physically validated."
+      ]
+    },
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "direct-gsplat",
+          "metrics": {
+            "exportFiniteScalars": 66,
+            "exportFormat": "ascii",
+            "exportPayloadValidated": true,
+            "exportVertices": 6,
+            "heldOutMse": 0.0002981828001793474,
+            "heldOutPsnrDb": 35.255174111936604,
+            "optimizerSteps": 24
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "6a04df9778f61f4e91c4108842c4fede7488cc3581b2ce204cc7da60dc80cd76",
+      "dependencyLocks": [
+        {
+          "byteSize": 3187,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.appearance",
+          "sha256": "58e553d901edff7a8ef417272af232d214f974fb36a77ae838901dc5577bc932"
+        },
+        {
+          "byteSize": 33686,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/requirements-appearance.lock",
+          "sha256": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 6430025374,
+        "identifier": "docker-image@sha256:d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae",
+        "sha256": "d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae"
+      },
+      "inputs": [
+        {
+          "byteSize": 2208,
+          "identifier": "fixture/appearance/appearance-input.json",
+          "sha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 1954,
+          "identifier": "output/appearance-checkpoint.json",
+          "sha256": "a504391b8fa39a9128813838c209dd7d7ac6ead53cb40c222190f9d33a4e020e"
+        },
+        {
+          "byteSize": 1334,
+          "identifier": "output/appearance-result.json",
+          "sha256": "d3d7e63a510d3e7ab5555539896e131a4097693a97660fae149c98ec5b0835f4"
+        },
+        {
+          "byteSize": 1286,
+          "identifier": "output/appearance.ply",
+          "sha256": "ded1261259cfff243bd9c56f700055fe0fb8a04507e6c474c01d182113a1a2e6"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 4511,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 308281344,
+        "peakGpuUtilizationPercent": 3,
+        "peakHostMemoryBytes": 500485325
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "direct-gsplat-1.5.3-r1",
+      "runtimeVerdict": {
+        "componentCodePath": "gsplat 1.5.3 extension contains 20 native sm_120 cubins",
+        "componentWorkload": "project-owned direct gsplat forward/backward updates, held-out render, checkpoint, and strict ASCII PLY payload export validation",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "Experimental non-dimensional appearance evidence; no production reconstruction route."
+      ]
+    },
+    {
+      "algorithmVerdicts": [
+        {
+          "component": "direct-gsplat",
+          "metrics": {
+            "exportFiniteScalars": 66,
+            "exportFormat": "ascii",
+            "exportPayloadValidated": true,
+            "exportVertices": 6,
+            "heldOutMse": 0.0002981825964525342,
+            "heldOutPsnrDb": 35.255177079158756,
+            "optimizerSteps": 24
+          },
+          "safeCodes": [],
+          "verdict": "passed"
+        }
+      ],
+      "configSha256": "6a04df9778f61f4e91c4108842c4fede7488cc3581b2ce204cc7da60dc80cd76",
+      "dependencyLocks": [
+        {
+          "byteSize": 3187,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/Dockerfile.appearance",
+          "sha256": "58e553d901edff7a8ef417272af232d214f974fb36a77ae838901dc5577bc932"
+        },
+        {
+          "byteSize": 33686,
+          "identifier": "ml/reconstruction/windows-nvidia-v2/requirements-appearance.lock",
+          "sha256": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343"
+        }
+      ],
+      "failures": [],
+      "image": {
+        "byteSize": 6430025374,
+        "identifier": "docker-image@sha256:d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae",
+        "sha256": "d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae"
+      },
+      "inputs": [
+        {
+          "byteSize": 2208,
+          "identifier": "fixture/appearance/appearance-input.json",
+          "sha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89"
+        }
+      ],
+      "outputs": [
+        {
+          "byteSize": 1950,
+          "identifier": "output/appearance-checkpoint.json",
+          "sha256": "dc675dea2ae5d729b9215980465c5a4e0ccc0381bd4996c7648740cc14de71fc"
+        },
+        {
+          "byteSize": 1333,
+          "identifier": "output/appearance-result.json",
+          "sha256": "a77ae8ff3dba8f9da9c3c980a2e61d638376c280c3f3597ac9641ff082182f94"
+        },
+        {
+          "byteSize": 1285,
+          "identifier": "output/appearance.ply",
+          "sha256": "d89b988ce6fb1b0a1243680062e03e0e94fc14dcde8cba62ef59e5e9eaddb43f"
+        }
+      ],
+      "resources": {
+        "elapsedMilliseconds": 3854,
+        "measurementBasis": "250ms nvidia-smi GPU-0 total-memory delta and docker-stats container memory",
+        "peakGpuMemoryBytes": 335544320,
+        "peakGpuUtilizationPercent": 1,
+        "peakHostMemoryBytes": 521142272
+      },
+      "rights": {
+        "basis": "creator-owned-synthetic",
+        "customerDataUsed": false,
+        "providerDataUsed": false,
+        "serviceProcessingAllowed": true,
+        "trainingAllowed": false
+      },
+      "runId": "direct-gsplat-1.5.3-r2",
+      "runtimeVerdict": {
+        "componentCodePath": "gsplat 1.5.3 extension contains 20 native sm_120 cubins",
+        "componentWorkload": "project-owned direct gsplat forward/backward updates, held-out render, checkpoint, and strict ASCII PLY payload export validation",
+        "computeCapability": "12.0",
+        "deviceName": "NVIDIA GeForce RTX 5080",
+        "driverVersion": "595.79",
+        "nativeProbeCompiledArchitecture": "sm_120",
+        "nativeProbeWorkload": "native sm_120 kernel executed on GPU 0 and returned payload 120",
+        "verdict": "passed"
+      },
+      "schemaVersion": "c8-blackwell-run-v3",
+      "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+      "warnings": [
+        "Experimental non-dimensional appearance evidence; no production reconstruction route."
+      ]
+    }
+  ],
+  "schemaVersion": "c8-blackwell-evidence-v3",
+  "sourceCommit": "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0",
+  "verdicts": {
+    "algorithmVerdicts": [
+      {
+        "component": "colmap-sparse",
+        "verdict": "passed"
+      },
+      {
+        "component": "colmap-dense",
+        "verdict": "passed"
+      },
+      {
+        "component": "open3d-tsdf",
+        "verdict": "passed"
+      },
+      {
+        "component": "direct-gsplat",
+        "verdict": "passed"
+      }
+    ],
+    "physicalCaptureVerdict": "deferred-not-run",
+    "repeatabilityVerdict": "passed",
+    "representativeAccuracyVerdict": "deferred-not-run",
+    "runtimeVerdict": "passed"
+  }
 }

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -12,22 +13,28 @@ PACKAGE_ROOT = REPOSITORY_ROOT / "ml/reconstruction/windows-nvidia-v2"
 EVIDENCE_PATH = (
     REPOSITORY_ROOT / "docs/evaluation/reconstruction/c8-v2-blackwell-evidence-2026-08-19.json"
 )
+INFERENCE_SOURCE = REPOSITORY_ROOT / "services/inference-worker/src"
+sys.path.insert(0, str(INFERENCE_SOURCE))
+
+from inference_worker.reconstruction.blackwell_v2.evidence import (  # noqa: E402
+    AlgorithmComponent,
+    AlgorithmVerdict,
+    FieldVerdict,
+    RepeatabilityVerdict,
+    RuntimeVerdict,
+    WorkstationEvidence,
+)
 
 
 def _mapping(value: object) -> dict[str, object]:
     assert isinstance(value, dict)
-    return cast(dict[str, object], value)
-
-
-def _number(value: object) -> int | float:
-    assert isinstance(value, (int, float)) and not isinstance(value, bool)
-    return value
+    return cast("dict[str, object]", value)
 
 
 def _sha256(value: object) -> str:
     assert isinstance(value, str)
     assert SHA256.fullmatch(value)
-    return value
+    return value.removeprefix("sha256:")
 
 
 def test_blackwell_package_manifest_covers_and_hashes_every_package_input() -> None:
@@ -47,113 +54,144 @@ def test_blackwell_package_manifest_covers_and_hashes_every_package_input() -> N
         assert actual_sha256 == expected_sha256
 
 
-def test_counted_blackwell_evidence_preserves_separate_verdicts_and_hashes() -> None:
+def test_counted_blackwell_evidence_round_trips_through_v3_contract() -> None:
     document = _mapping(json.loads(EVIDENCE_PATH.read_text(encoding="utf-8")))
+    evidence = WorkstationEvidence.from_json(document)
 
-    assert document["schemaVersion"] == "c8-blackwell-evidence-v2"
-    assert document["recordKind"] == "c8-blackwell-workstation-envelope-v2"
-    assert document["sourceCommit"] == "e7ecb026afdc43c7bc33691687737f91dd287f02"
+    assert evidence.to_json() == document
+    assert evidence.schema_version == "c8-blackwell-evidence-v3"
+    assert evidence.record_kind == "c8-blackwell-workstation-envelope-v3"
+    assert evidence.source_commit == "ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0"
+    assert evidence.exposure_status == "acceptance-only"
+    assert evidence.production_routing_enabled is False
+    assert evidence.runtime_verdict is RuntimeVerdict.PASSED
+    assert evidence.repeatability_verdict is RepeatabilityVerdict.PASSED
+    assert evidence.physical_capture_verdict is FieldVerdict.DEFERRED_NOT_RUN
+    assert evidence.representative_accuracy_verdict is FieldVerdict.DEFERRED_NOT_RUN
+
+    assert dict(evidence.algorithm_verdicts) == {
+        AlgorithmComponent.COLMAP_SPARSE: AlgorithmVerdict.PASSED,
+        AlgorithmComponent.COLMAP_DENSE: AlgorithmVerdict.PASSED,
+        AlgorithmComponent.OPEN3D_TSDF: AlgorithmVerdict.PASSED,
+        AlgorithmComponent.DIRECT_GSPLAT: AlgorithmVerdict.PASSED,
+    }
+    assert len(evidence.runs) == 6
+    assert len({run.run_id for run in evidence.runs}) == 6
+    assert all(run.runtime.verdict is RuntimeVerdict.PASSED for run in evidence.runs)
+    assert all(run.runtime.compute_capability == "12.0" for run in evidence.runs)
+    assert all(
+        run.runtime.native_probe_compiled_architecture == "sm_120"
+        for run in evidence.runs
+    )
+    assert all(run.outputs and run.inputs and run.dependency_locks for run in evidence.runs)
+    assert all(not run.failures for run in evidence.runs)
+
+
+def test_counted_payloads_and_runtime_paths_support_honest_verdicts() -> None:
+    evidence = WorkstationEvidence.from_json(
+        json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
+    )
+    by_id = {run.run_id: run for run in evidence.runs}
+
+    colmap_runs = [
+        by_id["colmap-4.1.1-selected-r1"],
+        by_id["colmap-4.1.1-selected-r2"],
+    ]
+    for run in colmap_runs:
+        algorithms = {item.component: item for item in run.algorithms}
+        sparse = dict(algorithms[AlgorithmComponent.COLMAP_SPARSE].metrics)
+        dense = dict(algorithms[AlgorithmComponent.COLMAP_DENSE].metrics)
+        assert sparse["registeredImages"] == 10
+        assert sparse["sparsePoints"] == 3362
+        assert sparse["sparseBackend"] == "cpu-deterministic"
+        assert dense["depthMaps"] == dense["normalMaps"] == 20
+        assert isinstance(dense["fusedPoints"], int) and dense["fusedPoints"] > 46_000
+        assert dense["payloadValidated"] is True
+        assert dense["plyFormat"] == "binary_little_endian"
+        fused = next(item for item in run.outputs if item.identifier == "output/fused.ply")
+        assert fused.byte_size > 1_200_000
+        _sha256(fused.sha256)
+        assert "compute_90 PTX" in run.runtime.component_code_path
+        assert "CUDA PatchMatchStereo" in run.runtime.component_workload
+
+    open3d_runs = [by_id["open3d-0.19.0-r1"], by_id["open3d-0.19.0-r2"]]
+    for run in open3d_runs:
+        metrics = dict(run.algorithms[0].metrics)
+        assert metrics["backend"] == "legacy-cpu"
+        assert metrics["cudaTensorBackend"] == "CUDA"
+        assert metrics["vertices"] == 2160
+        assert metrics["triangles"] == 4134
+        assert metrics["cudaTensorChecksum"] == 8_386_560.0
+        assert "separately" in run.runtime.component_workload
+        assert "TSDF is legacy-cpu" in run.runtime.component_code_path
+
+    appearance_runs = [
+        by_id["direct-gsplat-1.5.3-r1"],
+        by_id["direct-gsplat-1.5.3-r2"],
+    ]
+    for run in appearance_runs:
+        metrics = dict(run.algorithms[0].metrics)
+        assert metrics["optimizerSteps"] == 24
+        assert metrics["exportVertices"] == 6
+        assert metrics["exportPayloadValidated"] is True
+        assert metrics["exportFormat"] == "ascii"
+        assert "20 native sm_120 cubins" in run.runtime.component_code_path
+
+
+def test_provenance_comparison_cleanup_and_deferrals_are_explicit() -> None:
+    document = _mapping(json.loads(EVIDENCE_PATH.read_text(encoding="utf-8")))
+    accepted = _mapping(document["acceptedStack"])
+    colmap = _mapping(accepted["colmap"])
+    assert colmap["version"] == "4.1.1"
+    assert colmap["commit"] == "a0d785fba74b2664f31edc4a29026a8b27c00f67"
+    _sha256(colmap["sourceArchiveSha256"])
+    assert accepted["pytorch"] == "2.13.0+cu132"
+    assert accepted["open3d"] == "0.19.0"
+    assert accepted["gsplat"] == "1.5.3"
 
     package = _mapping(document["package"])
-    _sha256(package["manifestSha256"])
-    _sha256(package["appearanceLockSha256"])
-    _sha256(package["open3dLockSha256"])
     assert _mapping(package["v1Package"]) == {
         "executionVerdict": "not-run",
         "unchangedFromBase": True,
     }
+    assert package["aptRepositorySnapshotPinned"] is False
+    acceptance_result = _mapping(package["acceptanceResult"])
+    _sha256(acceptance_result["sha256"])
+    assert isinstance(acceptance_result["byteSize"], int)
+    assert acceptance_result["byteSize"] > 0
+    for commands in _mapping(package["commandEvidence"]).values():
+        assert isinstance(commands, list) and commands
+        for command in commands:
+            item = _mapping(command)
+            assert item["exitCode"] == 0
+            _sha256(item["argvSha256"])
+            _sha256(item["logSha256"])
 
-    rights = _mapping(document["rights"])
-    assert rights["basis"] == "creator-owned-synthetic"
-    assert rights["serviceProcessingAllowed"] is True
-    assert rights["trainingAllowed"] is False
-    assert rights["customerDataUsed"] is False
-    assert rights["providerDataUsed"] is False
-
-    compatibility = _mapping(document["compatibilitySpike"])
-    cuda130 = _mapping(compatibility["cuda130"])
-    cuda132 = _mapping(compatibility["cuda132"])
-    assert (
-        cuda130["compiledArchitecture"]
-        == cuda132["compiledArchitecture"]
-        == "sm_120"
-    )
-    assert cuda130["kernelPayload"] == 120
-    assert cuda132["kernelPayload"] == 132
-
-    verdicts = _mapping(document["verdicts"])
-    assert verdicts["runtimeVerdict"] == "passed"
-    assert verdicts["repeatabilityVerdict"] == "passed"
-    assert verdicts["physicalCaptureVerdict"] == "deferred-not-run"
-    assert verdicts["representativeAccuracyVerdict"] == "deferred-not-run"
-    assert _mapping(verdicts["algorithmVerdict"]) == {
-        "colmapSparse": "passed",
-        "colmapDense": "partial",
-        "open3dTsdf": "passed",
-        "directGsplatSynthetic": "passed",
-    }
-
-    components = _mapping(document["components"])
-    assert set(components) == {"colmap", "open3d", "directGsplat"}
-    for component in components.values():
-        component_record = _mapping(component)
-        _sha256(component_record["imageDigest"])
-        assert _number(component_record["imageSizeBytes"]) > 0
-        assert component_record["runtimeVerdict"] == "passed"
-        sm120 = _mapping(component_record["sm120Probe"])
-        assert sm120 == {
-            "compiledArchitecture": "sm_120",
-            "computeCapability": "12.0",
-            "kernelResult": 120,
-        }
-
-    colmap = _mapping(components["colmap"])
-    sparse_run_1 = _mapping(colmap["sparseRun1"])
-    sparse_run_2 = _mapping(colmap["sparseRun2"])
-    assert sparse_run_1["registeredImages"] == sparse_run_2["registeredImages"] == 8
-    assert _number(sparse_run_1["sparsePoints"]) > 0
-    assert _number(sparse_run_2["sparsePoints"]) > 0
-    dense = _mapping(colmap["dense"])
-    assert dense["algorithmVerdict"] == "partial"
-    assert dense["safeCode"] == "COLMAP_DENSE_ZERO_FUSED_POINTS"
-    assert dense["depthMapCount"] == dense["normalMapCount"] == 16
-    assert dense["geometricFusedPoints"] == dense["photometricFusedPoints"] == 0
-    _sha256(dense["mapSetSha256"])
-    assert _mapping(colmap["repeatability"])["verdict"] == "passed"
-
-    open3d = _mapping(components["open3d"])
-    open3d_run_1 = _mapping(open3d["run1"])
-    open3d_run_2 = _mapping(open3d["run2"])
-    for metric in ("cudaChecksum", "pointCount", "vertexCount", "triangleCount"):
-        assert open3d_run_1[metric] == open3d_run_2[metric]
-    assert _mapping(open3d["repeatability"])["verdict"] == "passed"
-
-    direct_gsplat = _mapping(components["directGsplat"])
-    assert direct_gsplat["capabilityStatus"] == "experimental"
-    gsplat_run_1 = _mapping(direct_gsplat["run1"])
-    gsplat_run_2 = _mapping(direct_gsplat["run2"])
-    assert gsplat_run_1["optimizerSteps"] == gsplat_run_2["optimizerSteps"] == 24
-    repeatability = _mapping(direct_gsplat["repeatability"])
-    assert _number(repeatability["observedHeldOutPsnrDeltaDb"]) <= _number(
-        repeatability["heldOutPsnrAbsoluteToleranceDb"]
-    )
-    assert repeatability["verdict"] == "passed"
-    for run in (gsplat_run_1, gsplat_run_2):
-        for output in _mapping(run["outputs"]).values():
-            _sha256(_mapping(output)["sha256"])
+    attempts = document["diagnosticAttempts"]
+    assert isinstance(attempts, list) and len(attempts) == 2
+    comparison = _mapping(attempts[0])
+    assert comparison["candidate"] == "COLMAP 3.13.0"
+    assert comparison["outcome"] == "partial"
+    assert _mapping(_mapping(comparison["dense"])["ply"])["vertexCount"] == 0
 
     fixtures = _mapping(document["fixtures"])
     colmap_fixture = _mapping(fixtures["colmap"])
-    _sha256(colmap_fixture["canonicalImageSetSha256"])
-    assert colmap_fixture["sourceBytesRetained"] is False
-    assert colmap_fixture["generatorRetained"] is False
-    appearance_fixture = _mapping(fixtures["appearance"])
-    _sha256(appearance_fixture["manifestSha256"])
-    _sha256(appearance_fixture["generatorSha256"])
+    assert colmap_fixture["generatorRetained"] is True
+    assert colmap_fixture["cameraCount"] == 10
+    _sha256(colmap_fixture["generatorSha256"])
 
     cleanup = _mapping(document["cleanup"])
     assert cleanup["complete"] is True
     assert cleanup["temporaryInputDirectoriesRemaining"] == 0
     assert cleanup["c8ContainersRemaining"] == 0
     assert cleanup["taggedC8ImagesRemaining"] == 0
+    assert cleanup["globalDockerPruneUsed"] is False
     assert cleanup["additionalWorktreesCreated"] == 0
+
+    limitations = document["deferredLimitations"]
+    assert isinstance(limitations, list)
+    joined = "\n".join(cast("list[str]", limitations))
+    assert "physical iOS" in joined
+    assert "representative-home" in joined
+    assert "No phone, customer or provider data" in joined
+    assert "acceptance-only" in joined
