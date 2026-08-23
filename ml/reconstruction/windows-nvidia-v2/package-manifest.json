@@ -6,7 +6,7 @@
     "Dockerfile.appearance": "58e553d901edff7a8ef417272af232d214f974fb36a77ae838901dc5577bc932",
     "Dockerfile.colmap": "72e8e6a08580439f2d8766deaa19410c2bf7b98e4a9903e029c8aacbc17a077f",
     "Dockerfile.open3d": "81a83e5b105bab38a3a43255157104b07b8eb5c454789cb0dd6876d9a2c72a99",
-    "README.md": "53041cbca8ecca528dd6b11d6fb06bf051458263b1a2ddc7b696652ea5490d77",
+    "README.md": "921a41709e7af672ff25a1629f2540fafb02a19fa86d6729ce654fbb31730bac",
     "direct_gsplat.py": "408ef1ae44839a7aa1c963f0894e9633736ceeed43f606107c6a795c68273b85",
     "generate_colmap_fixture.py": "b254537b83c54cbd59ece189cc848ea7f54d1ff067027831faf30f7a2281a188",
     "generate_gsplat_fixture.py": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e",
@@ -15,7 +15,7 @@
     "requirements-appearance.lock": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343",
     "requirements-open3d.in": "dee9c2fc147a33ef878a4c66ef375bff0397ee0b0349e0c366f50dab356f63d9",
     "requirements-open3d.lock": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
-    "run_acceptance.py": "1ff759ac4ef4f78b34db96f14b59ad59e2aed09cb5fa13e934eb110373128153",
+    "run_acceptance.py": "d096434edd876cc70b880884f69fb5f66d83f96034ef2b5e01ea50fdaadfb1c4",
     "sm120_probe.cu": "4b6415390eba1e9b60919b414c10bf07c1e4ea6dfa52057c188497914db00d0d",
     "validate_colmap_outputs.py": "858828ff3c48629cf2a0a9a7f9e31441438142b5c0d727beeff8ef272be2b15b",
     "versions.json": "d2ea9b30a13023630c828836f2d3ef289dfdedf0acc0993bb7d99ae844ee5248"

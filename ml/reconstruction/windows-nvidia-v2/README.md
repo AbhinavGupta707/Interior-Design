@@ -76,6 +76,10 @@ Official COLMAP 4.1.1 moves the extraction image-size limit to
 `SiftExtraction.max_num_features`, and uses `FeatureMatching.*` for matcher
 controls. Use the argument tuples in `blackwell_v2.colmap_commands`; do not reuse
 the v1 namespace.
+Counted sparse acceptance fixes seed zero, one CPU thread, CPU SIFT/brute-force
+matching and a single mapper model to bound GPU sparse nondeterminism. CUDA
+PatchMatch remains the real RTX dense workload; sparse CPU execution is reported
+separately and is not represented as GPU work.
 
 On the same retained ten-view project-owned fixture, 4.1.1 produced a non-empty
 validated dense PLY while 3.13 produced zero points after geometric, photometric,
@@ -157,6 +161,9 @@ and continues to independent components after ordinary failures. Every container
 command has a 15-minute timeout with exact-name cleanup. It never installs a
 driver/toolkit or invokes Docker prune. Review raw runner output into durable evidence,
 then remove the exact temporary root and session-created image tags.
+The runner also fails unless both selected passes meet explicit sparse/dense,
+Open3D and direct-gsplat tolerances; two individually non-empty runs are not by
+themselves a repeatability pass.
 
 ## Evidence and verdicts
 

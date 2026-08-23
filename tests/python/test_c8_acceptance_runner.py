@@ -45,3 +45,54 @@ def test_canonical_output_is_materialized_once(tmp_path: Path) -> None:
 
     dangling = tmp_path / "dangling.json"
     dangling.symlink_to(tmp_path / "missing.json")
+
+
+def _repeatability_input(second_registered_images: int = 10) -> dict[str, object]:
+    def colmap(registered_images: int) -> dict[str, object]:
+        return {
+            "algorithms": {
+                "dense": {
+                    "depthPositiveValues": 100,
+                    "ply": {
+                        "coordinateBounds": {"maximum": [1, 1, 1], "minimum": [0, 0, 0]},
+                        "payloadValidated": True,
+                        "vertexCount": 1_000,
+                    },
+                },
+                "sparse": {
+                    "observations": 20_000,
+                    "registeredImages": registered_images,
+                    "sparsePoints": 3_000,
+                },
+            }
+        }
+
+    open3d = {
+        "workload": {
+            "cpuTsdf": {"triangleCount": 20, "vertexCount": 10},
+            "cudaTensorProbe": {"checksum": 123.0},
+        }
+    }
+    appearance = {
+        "plyValidation": {"vertexCount": 6},
+        "workload": {"heldOutPsnrDb": 35.0, "optimizerSteps": 24},
+    }
+    return {
+        "appearanceRun1": appearance,
+        "appearanceRun2": appearance,
+        "colmap411Run1": colmap(10),
+        "colmap411Run2": colmap(second_registered_images),
+        "open3dRun1": open3d,
+        "open3dRun2": open3d,
+    }
+
+
+def test_repeatability_gate_rejects_sparse_registration_collapse() -> None:
+    passed = RUNNER._evaluate_repeatability(_repeatability_input())
+    failed = RUNNER._evaluate_repeatability(_repeatability_input(7))
+
+    assert passed["verdict"] == "passed"
+    assert failed["verdict"] == "failed"
+    checks = failed["checks"]
+    assert isinstance(checks, dict)
+    assert checks["colmapSparse"]["passed"] is False

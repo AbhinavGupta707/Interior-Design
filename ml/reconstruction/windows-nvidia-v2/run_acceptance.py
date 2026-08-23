@@ -23,7 +23,7 @@ from functools import partial
 from pathlib import Path
 from typing import cast
 
-SCHEMA_VERSION = "c8-blackwell-acceptance-runner-v2"
+SCHEMA_VERSION = "c8-blackwell-acceptance-runner-v3"
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,62}$")
@@ -192,9 +192,7 @@ def _memory_bytes(value: str) -> int:
 
 def _container_memory(name: str) -> int:
     try:
-        output = _run_checked(
-            ["docker", "stats", "--no-stream", "--format", "{{.MemUsage}}", name]
-        )
+        output = _run_checked(["docker", "stats", "--no-stream", "--format", "{{.MemUsage}}", name])
         return _memory_bytes(output.split("/", 1)[0])
     except (OSError, subprocess.CalledProcessError, ValueError):
         return 0
@@ -333,9 +331,7 @@ def _sampled_command(
     )
     if timed_out:
         tail = log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
-        raise RuntimeError(
-            f"{name} exceeded {COMMAND_TIMEOUT_SECONDS}s command timeout\n{tail}"
-        )
+        raise RuntimeError(f"{name} exceeded {COMMAND_TIMEOUT_SECONDS}s command timeout\n{tail}")
     if exit_code != 0:
         tail = log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
         raise RuntimeError(f"{name} failed with exit {exit_code}\n{tail}")
@@ -444,6 +440,8 @@ def _colmap_run(
     )
     feature_command = (
         "feature_extractor",
+        "--default_random_seed",
+        "0",
         "--database_path",
         "/c8/work/database.db",
         "--image_path",
@@ -451,9 +449,9 @@ def _colmap_run(
         "--ImageReader.camera_model",
         "PINHOLE",
         "--FeatureExtraction.use_gpu",
-        "1",
-        "--FeatureExtraction.gpu_index",
         "0",
+        "--FeatureExtraction.num_threads",
+        "1",
         cast("str", profile["featureMaxSizeOption"]),
         "3200",
         "--SiftExtraction.max_num_features",
@@ -465,28 +463,42 @@ def _colmap_run(
             "matching",
             (
                 "exhaustive_matcher",
+                "--default_random_seed",
+                "0",
                 "--database_path",
                 "/c8/work/database.db",
                 "--FeatureMatching.use_gpu",
-                "1",
-                "--FeatureMatching.gpu_index",
                 "0",
+                "--FeatureMatching.num_threads",
+                "1",
                 "--FeatureMatching.max_num_matches",
                 "32768",
                 "--FeatureMatching.guided_matching",
                 "1",
+                "--SiftMatching.cpu_brute_force_matcher",
+                "1",
+                "--TwoViewGeometry.random_seed",
+                "0",
             ),
         ),
         (
             "mapper",
             (
                 "mapper",
+                "--default_random_seed",
+                "0",
                 "--database_path",
                 "/c8/work/database.db",
                 "--image_path",
                 "/c8/input/images",
                 "--output_path",
                 "/c8/work/sparse",
+                "--Mapper.multiple_models",
+                "0",
+                "--Mapper.num_threads",
+                "1",
+                "--Mapper.random_seed",
+                "0",
             ),
         ),
         (
@@ -568,9 +580,7 @@ def _colmap_run(
             ]
         )
     )
-    analyzer = (logs / f"{prefix}-analyzer.log").read_text(
-        encoding="utf-8", errors="replace"
-    )
+    analyzer = (logs / f"{prefix}-analyzer.log").read_text(encoding="utf-8", errors="replace")
 
     def metric(label: str, pattern: str) -> int | float:
         match = re.search(pattern, analyzer)
@@ -584,13 +594,15 @@ def _colmap_run(
             r"Mean reprojection error:\s+([0-9.]+)px",
         ),
         "observations": metric("observations", r"Observations:\s+([0-9]+)"),
-        "registeredImages": metric(
-            "registered images", r"Registered images:\s+([0-9]+)"
-        ),
+        "registeredImages": metric("registered images", r"Registered images:\s+([0-9]+)"),
         "sparsePoints": metric("points", r"Points:\s+([0-9]+)"),
     }
     ply = cast("dict[str, object]", cast("dict[str, object]", validation)["ply"])
-    if sparse["registeredImages"] < 2 or sparse["sparsePoints"] <= 0:
+    if (
+        sparse["registeredImages"] < 2
+        or sparse["sparsePoints"] <= 0
+        or (version == "4.1.1" and sparse["registeredImages"] != 10)
+    ):
         raise RuntimeError("COLMAP_SPARSE_ALGORITHM_GATE_FAILED")
     if version == "4.1.1" and (
         ply.get("payloadValidated") is not True
@@ -727,6 +739,158 @@ def _generate_appearance_fixture(image: str, root: Path) -> dict[str, object]:
     }
 
 
+def _nested_value(value: object, *keys: str) -> object:
+    current = value
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            raise ValueError(f"missing repeatability field: {'.'.join(keys)}")
+        current = cast("dict[str, object]", current)[key]
+    return current
+
+
+def _number_value(value: object, *keys: str) -> int | float:
+    metric = _nested_value(value, *keys)
+    if isinstance(metric, bool) or not isinstance(metric, (int, float)):
+        raise ValueError(f"repeatability field is not numeric: {'.'.join(keys)}")
+    return metric
+
+
+def _relative_delta(first: int | float, second: int | float) -> float:
+    return abs(float(first) - float(second)) / max(abs(float(first)), abs(float(second)), 1.0)
+
+
+def _evaluate_repeatability(results: dict[str, object]) -> dict[str, object]:
+    required = (
+        "appearanceRun1",
+        "appearanceRun2",
+        "colmap411Run1",
+        "colmap411Run2",
+        "open3dRun1",
+        "open3dRun2",
+    )
+    missing = [name for name in required if name not in results]
+    if missing:
+        return {"checks": {}, "missingRuns": missing, "verdict": "not-run"}
+
+    colmap_first = results["colmap411Run1"]
+    colmap_second = results["colmap411Run2"]
+    sparse_registered = [
+        _number_value(colmap_first, "algorithms", "sparse", "registeredImages"),
+        _number_value(colmap_second, "algorithms", "sparse", "registeredImages"),
+    ]
+    sparse_points = [
+        _number_value(colmap_first, "algorithms", "sparse", "sparsePoints"),
+        _number_value(colmap_second, "algorithms", "sparse", "sparsePoints"),
+    ]
+    sparse_observations = [
+        _number_value(colmap_first, "algorithms", "sparse", "observations"),
+        _number_value(colmap_second, "algorithms", "sparse", "observations"),
+    ]
+    sparse_point_delta = _relative_delta(*sparse_points)
+    sparse_observation_delta = _relative_delta(*sparse_observations)
+    sparse_passed = (
+        sparse_registered == [10, 10]
+        and sparse_point_delta <= 0.01
+        and sparse_observation_delta <= 0.01
+    )
+    dense_vertices = [
+        _number_value(colmap_first, "algorithms", "dense", "ply", "vertexCount"),
+        _number_value(colmap_second, "algorithms", "dense", "ply", "vertexCount"),
+    ]
+    dense_depth_values = [
+        _number_value(colmap_first, "algorithms", "dense", "depthPositiveValues"),
+        _number_value(colmap_second, "algorithms", "dense", "depthPositiveValues"),
+    ]
+    dense_vertex_delta = _relative_delta(*dense_vertices)
+    dense_passed = (
+        dense_depth_values[0] == dense_depth_values[1]
+        and dense_vertex_delta <= 0.01
+        and _nested_value(colmap_first, "algorithms", "dense", "ply", "payloadValidated") is True
+        and _nested_value(colmap_second, "algorithms", "dense", "ply", "payloadValidated") is True
+        and _nested_value(colmap_first, "algorithms", "dense", "ply", "coordinateBounds")
+        == _nested_value(colmap_second, "algorithms", "dense", "ply", "coordinateBounds")
+    )
+
+    open3d_first = results["open3dRun1"]
+    open3d_second = results["open3dRun2"]
+    open3d_vertices = [
+        _number_value(open3d_first, "workload", "cpuTsdf", "vertexCount"),
+        _number_value(open3d_second, "workload", "cpuTsdf", "vertexCount"),
+    ]
+    open3d_triangles = [
+        _number_value(open3d_first, "workload", "cpuTsdf", "triangleCount"),
+        _number_value(open3d_second, "workload", "cpuTsdf", "triangleCount"),
+    ]
+    open3d_checksums = [
+        _number_value(open3d_first, "workload", "cudaTensorProbe", "checksum"),
+        _number_value(open3d_second, "workload", "cudaTensorProbe", "checksum"),
+    ]
+    open3d_passed = (
+        open3d_vertices[0] == open3d_vertices[1]
+        and open3d_triangles[0] == open3d_triangles[1]
+        and open3d_checksums[0] == open3d_checksums[1]
+    )
+
+    appearance_first = results["appearanceRun1"]
+    appearance_second = results["appearanceRun2"]
+    appearance_vertices = [
+        _number_value(appearance_first, "plyValidation", "vertexCount"),
+        _number_value(appearance_second, "plyValidation", "vertexCount"),
+    ]
+    appearance_psnr = [
+        _number_value(appearance_first, "workload", "heldOutPsnrDb"),
+        _number_value(appearance_second, "workload", "heldOutPsnrDb"),
+    ]
+    appearance_psnr_delta = abs(float(appearance_psnr[0]) - float(appearance_psnr[1]))
+    appearance_passed = (
+        appearance_vertices[0] == appearance_vertices[1]
+        and appearance_psnr_delta <= 0.001
+        and _number_value(appearance_first, "workload", "optimizerSteps")
+        == _number_value(appearance_second, "workload", "optimizerSteps")
+    )
+
+    checks = {
+        "colmapDense": {
+            "depthPositiveValues": dense_depth_values,
+            "passed": dense_passed,
+            "vertexCount": dense_vertices,
+            "vertexRelativeDelta": dense_vertex_delta,
+        },
+        "colmapSparse": {
+            "observationRelativeDelta": sparse_observation_delta,
+            "observations": sparse_observations,
+            "passed": sparse_passed,
+            "pointRelativeDelta": sparse_point_delta,
+            "registeredImages": sparse_registered,
+            "sparsePoints": sparse_points,
+        },
+        "directGsplat": {
+            "heldOutPsnrAbsoluteDeltaDb": appearance_psnr_delta,
+            "heldOutPsnrDb": appearance_psnr,
+            "passed": appearance_passed,
+            "vertexCount": appearance_vertices,
+        },
+        "open3d": {
+            "cudaChecksums": open3d_checksums,
+            "passed": open3d_passed,
+            "triangles": open3d_triangles,
+            "vertices": open3d_vertices,
+        },
+    }
+    return {
+        "checks": checks,
+        "tolerances": {
+            "appearanceHeldOutPsnrAbsoluteDb": 0.001,
+            "denseVertexRelative": 0.01,
+            "sparseObservationRelative": 0.01,
+            "sparsePointRelative": 0.01,
+        },
+        "verdict": (
+            "passed" if all(item["passed"] is True for item in checks.values()) else "failed"
+        ),
+    }
+
+
 def _package_hashes() -> dict[str, object]:
     names = (
         "Dockerfile.appearance",
@@ -773,9 +937,7 @@ def main() -> int:
     fixture_result = json.loads(
         _run_checked([sys.executable, str(COLMAP_FIXTURE_GENERATOR), str(fixture)])
     )
-    appearance_fixture_result = _generate_appearance_fixture(
-        arguments.appearance_image, root
-    )
+    appearance_fixture_result = _generate_appearance_fixture(arguments.appearance_image, root)
     appearance_fixture = cast("Path", appearance_fixture_result.pop("fixture"))
 
     results: dict[str, object] = {}
@@ -840,6 +1002,23 @@ def main() -> int:
             ),
         )
 
+    try:
+        repeatability = _evaluate_repeatability(results)
+    except Exception as error:
+        repeatability = {
+            "checks": {},
+            "error": str(error)[-4000:],
+            "verdict": "failed",
+        }
+    if repeatability["verdict"] != "passed":
+        failures.append(
+            {
+                "component": "repeatability",
+                "errorType": "RepeatabilityGateError",
+                "message": json.dumps(repeatability, separators=(",", ":"), sort_keys=True)[-4000:],
+            }
+        )
+
     document = {
         "authority": {
             "appearance": "non-dimensional-appearance",
@@ -853,6 +1032,7 @@ def main() -> int:
         },
         "images": images,
         "packageInputs": _package_hashes(),
+        "repeatability": repeatability,
         "results": results,
         "rights": {
             "basis": "creator-owned-synthetic",

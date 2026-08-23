@@ -171,9 +171,7 @@ def test_component_run_reports_only_its_actual_algorithm_subset() -> None:
     run = _run("open3d-only", (_algorithm(AlgorithmComponent.OPEN3D_TSDF),))
     document = run.to_json()
 
-    assert [item["component"] for item in document["algorithmVerdicts"]] == [
-        "open3d-tsdf"
-    ]
+    assert [item["component"] for item in document["algorithmVerdicts"]] == ["open3d-tsdf"]
     assert RunEvidence.from_json(document).to_json() == document
 
 
@@ -207,19 +205,28 @@ def test_runtime_pass_separates_native_probe_from_component_code_path() -> None:
 
 
 def test_colmap_411_commands_use_verified_option_namespace() -> None:
-    sparse = sparse_commands(ColmapV2Config())
-    dense = dense_commands(ColmapV2Config())
+    config = ColmapV2Config()
+    sparse = sparse_commands(config)
+    dense = dense_commands(config)
+    feature, matching, mapper = sparse
     options = flattened_option_names(sparse)
 
     assert "--FeatureMatching.max_num_matches" in options
     assert "--FeatureMatching.guided_matching" in options
-    assert all(not option.startswith("--SiftMatching.") for option in options)
-    assert "--FeatureExtraction.use_gpu" in options
     assert "--FeatureExtraction.max_image_size" in options
     assert "--SiftExtraction.max_num_features" in options
     assert "--SiftExtraction.max_image_size" not in options
+    assert feature[feature.index("--FeatureExtraction.use_gpu") + 1] == "0"
+    assert feature[feature.index("--FeatureExtraction.num_threads") + 1] == "1"
+    assert matching[matching.index("--FeatureMatching.use_gpu") + 1] == "0"
+    assert "--SiftMatching.cpu_brute_force_matcher" in matching
+    assert "--TwoViewGeometry.random_seed" in matching
+    assert mapper[mapper.index("--Mapper.random_seed") + 1] == "0"
+    assert mapper[mapper.index("--Mapper.num_threads") + 1] == "1"
     assert "--PatchMatchStereo.max_image_size" in dense[1]
-    assert ColmapV2Config().to_json()["toolVersion"] == "4.1.1"
+    assert config.to_json()["sparseBackend"] == "cpu-deterministic"
+    assert config.to_json()["denseBackend"] == "cuda-gpu-0"
+    assert config.to_json()["toolVersion"] == "4.1.1"
 
 
 def test_dense_command_is_explicit_cuda_patch_match_then_fusion() -> None:
@@ -230,7 +237,10 @@ def test_dense_command_is_explicit_cuda_patch_match_then_fusion() -> None:
         "patch_match_stereo",
         "stereo_fusion",
     )
-    assert "--PatchMatchStereo.gpu_index" in commands[1]
+    patch_match = commands[1]
+    assert "--PatchMatchStereo.gpu_index" in patch_match
+    assert patch_match[patch_match.index("--workspace_path") + 1] == "/c8/work/dense"
+    assert patch_match[patch_match.index("--PatchMatchStereo.max_image_size") + 1] == "3200"
 
 
 def test_c8_v2_is_fail_closed_acceptance_only() -> None:
