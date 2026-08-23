@@ -760,11 +760,11 @@
 - Contract/migration impact: none. Integrated C5 already owns the typed one-time initialization operation and migration. C14.2 adds a same-origin product adapter, provenance enforcement and tests only.
 - Runtime: every lane is exact `gpt-5.6-sol` / `xhigh`. L1 and L2 may run concurrently; L3 starts after their reviewed integration.
 
-| Lane                                  | Task/thread | Worktree | Model / reasoning       | State  | Exclusive roots                                                                  |
-| ------------------------------------- | ----------- | -------- | ----------------------- | ------ | -------------------------------------------------------------------------------- |
-| C14.2-L1 attribution binding          | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | exact integrated C5 operation service and focused route test files               |
-| C14.2-L2 persisted web setup          | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
-| C14.2-L3 persisted journey acceptance | pending     | pending  | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-setup E2E/integration/security/evaluation paths               |
+| Lane                                  | Task/thread                            | Worktree                                               | Model / reasoning       | State  | Exclusive roots                                                                  |
+| ------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ------ | -------------------------------------------------------------------------------- |
+| C14.2-L1 attribution binding          | `01a0301b-bf5b-71e0-b286-2fafb588f06b` | `C:/Users/abhin/.codex/worktrees/5b2c/interior-design` | `gpt-5.6-sol` / `xhigh` | active | exact integrated C5 operation service and focused route test files               |
+| C14.2-L2 persisted web setup          | `01a0301b-bf5c-72a1-a91f-a93f1b4dd499` | `C:/Users/abhin/.codex/worktrees/ca9b/interior-design` | `gpt-5.6-sol` / `xhigh` | active | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
+| C14.2-L3 persisted journey acceptance | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-setup E2E/integration/security/evaluation paths               |
 
 ### Discovery and boundary
 
