@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { reconstructionClient, ReconstructionProblem } from "./api";
 import type { ReadyReconstructionAsset, ReconstructionWorkspace as Workspace } from "./contracts";
 import { isActiveReconstructionState, reconstructionStages } from "./presentation";
@@ -280,6 +281,9 @@ export function ReconstructionWorkspace({ projectId }: { readonly projectId: str
       </div>
       <header className="reconstruction-hero">
         <div>
+          <Link className="back-link" href={homeJourneyHref(projectId)}>
+            ← Home journey
+          </Link>
           <span className="eyebrow">C8 · independent media proposal</span>
           <h1>Reconstruct what the evidence supports</h1>
           <p>

@@ -13,6 +13,7 @@ import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
 import { ClientProblem, getProject, getSession } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { abortUpload, EvidenceProblem, issueAssetAccess, listAssets } from "./api";
 import { clearRecovery, loadRecovery } from "./recovery";
 import type { RecoveryRecord } from "./recovery";
@@ -386,8 +387,8 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
   return (
     <PageContainer className="evidence-layout">
       <aside className="evidence-rail" aria-label="Evidence workspace navigation">
-        <Link className="back-link" href="/projects">
-          ← Projects
+        <Link className="back-link" href={homeJourneyHref(projectId)}>
+          ← Home journey
         </Link>
         <div>
           <strong>{state.project.name}</strong>
@@ -740,6 +741,16 @@ export function EvidenceWorkspace({ projectId }: { projectId: string }) {
                           href={`/plan-import/${projectId}`}
                         >
                           Use in floor-plan correction
+                        </Link>
+                      ) : null}
+                      {(asset.kind === "photograph" || asset.kind === "video") &&
+                      asset.status === "ready" ? (
+                        <Link
+                          className="ui-action"
+                          data-tone="secondary"
+                          href={`/reconstruction/${projectId}`}
+                        >
+                          Use in media reconstruction
                         </Link>
                       ) : null}
                       {asset.status === "ready" ? (

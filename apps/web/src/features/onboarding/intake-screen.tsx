@@ -1,6 +1,6 @@
 "use client";
 
-import type { HomeIntake, Project, ProjectIntake } from "@interior-design/contracts";
+import type { HomeIntake, Project, ProjectIntake, Session } from "@interior-design/contracts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,9 +11,11 @@ import {
   ClientProblem,
   getProject,
   getProjectIntake,
+  getSession,
   saveProjectIntake,
   validateHomeIntake,
 } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { createEmptyIntake, linesToList, listToLines, optionalCount } from "./intake-model";
 import type { TextListField } from "./intake-model";
 
@@ -23,7 +25,7 @@ type LoadState =
   | { kind: "forbidden" }
   | { kind: "loading" }
   | { kind: "offline" }
-  | { intake: ProjectIntake | null; kind: "ready"; project: Project };
+  | { intake: ProjectIntake | null; kind: "ready"; project: Project; session: Session };
 
 type SaveState = "idle" | "saved" | "saving" | "stale";
 
@@ -56,15 +58,16 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
   const load = useCallback(async () => {
     setLoadState({ kind: "loading" });
     try {
-      const [project, intake] = await Promise.all([
+      const [project, intake, session] = await Promise.all([
         getProject(projectId),
         getProjectIntake(projectId),
+        getSession(),
       ]);
       setDraft(intake?.intake ?? createEmptyIntake());
       setVersion(intake?.version ?? 0);
       setSaveState("idle");
       setSaveError(undefined);
-      setLoadState({ intake, kind: "ready", project });
+      setLoadState({ intake, kind: "ready", project, session });
     } catch (reason) {
       setLoadState(
         reason instanceof ClientProblem
@@ -105,6 +108,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
 
   async function handleSave(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
+    if (loadState.kind !== "ready" || loadState.session.actor.role === "viewer") return;
     const submitter = event.nativeEvent.submitter as HTMLButtonElement | null;
     const shouldContinue = submitter?.value === "continue";
     const validation = validateHomeIntake(draft);
@@ -126,7 +130,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
       setDraft(saved.intake);
       setVersion(saved.version);
       setSaveState("saved");
-      if (shouldContinue) router.push("/projects");
+      if (shouldContinue) router.push(homeJourneyHref(projectId));
     } catch (reason) {
       if (reason instanceof ClientProblem && reason.kind === "stale") {
         setSaveState("stale");
@@ -196,13 +200,14 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
   }
 
   const { project } = loadState;
+  const editable = loadState.session.actor.role !== "viewer";
   const goalInvalid = validationErrors.some((message) => message.startsWith("goals"));
 
   return (
     <PageContainer className="intake-layout">
       <aside className="intake-rail" aria-label="Intake progress">
-        <Link className="back-link" href="/projects">
-          ← Projects
+        <Link className="back-link" href={homeJourneyHref(projectId)}>
+          ← Home journey
         </Link>
         <div>
           <span>Selected project</span>
@@ -278,7 +283,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
             void handleSave(event);
           }}
         >
-          <fieldset disabled={saveState === "saving" || saveState === "stale"}>
+          <fieldset disabled={!editable || saveState === "saving" || saveState === "stale"}>
             <legend>Home basics</legend>
             <div className="form-grid form-grid--four">
               <label>
@@ -351,7 +356,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
             </label>
           </fieldset>
 
-          <fieldset disabled={saveState === "saving" || saveState === "stale"}>
+          <fieldset disabled={!editable || saveState === "saving" || saveState === "stale"}>
             <legend>Household</legend>
             <div className="form-grid form-grid--three">
               {(["adults", "children", "pets"] as const).map((field) => (
@@ -372,7 +377,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
             </div>
           </fieldset>
 
-          <fieldset disabled={saveState === "saving" || saveState === "stale"}>
+          <fieldset disabled={!editable || saveState === "saving" || saveState === "stale"}>
             <legend>Design direction</legend>
             <p className="field-description">
               Use one concise item per line. Goals require at least one item.
@@ -432,7 +437,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
             </div>
           </fieldset>
 
-          <fieldset disabled={saveState === "saving" || saveState === "stale"}>
+          <fieldset disabled={!editable || saveState === "saving" || saveState === "stale"}>
             <legend>Evidence you already have</legend>
             <div className="evidence-grid">
               <EvidenceOption
@@ -458,7 +463,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
               />
               <EvidenceOption
                 checked={draft.evidenceAvailable.roomCapture}
-                description="Selection only — native capture is not implemented in C1."
+                description="Native capture exists for supported physical Apple devices; this Windows/WSL journey has no physical-device validation."
                 label="Room capture"
                 onChange={(checked) => {
                   updateEvidence("roomCapture", checked);
@@ -468,10 +473,14 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
           </fieldset>
 
           <div className="intake-actions">
-            <span>Changes are sent only when you choose save.</span>
+            <span>
+              {editable
+                ? "Changes are sent only when you choose save."
+                : "Viewer access is read-only. Recorded intake remains visible."}
+            </span>
             <div>
               <ActionButton
-                disabled={saveState === "saving" || saveState === "stale"}
+                disabled={!editable || saveState === "saving" || saveState === "stale"}
                 tone="secondary"
                 type="submit"
                 value="draft"
@@ -479,7 +488,7 @@ export function IntakeScreen({ projectId }: { projectId: string }) {
                 Save draft
               </ActionButton>
               <ActionButton
-                disabled={saveState === "saving" || saveState === "stale"}
+                disabled={!editable || saveState === "saving" || saveState === "stale"}
                 type="submit"
                 value="continue"
               >

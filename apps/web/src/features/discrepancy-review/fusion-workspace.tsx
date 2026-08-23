@@ -17,6 +17,8 @@ import {
   PageContainer,
   StatePanel,
 } from "../../components/ui-primitives";
+import { CanonicalHandoffPanel } from "../homeowner-journey/canonical-handoff-panel";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import {
   buildFusionAnchorGroups,
   minimumFusionAnchorDrafts,
@@ -401,7 +403,7 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
       </a>
       <header className="fusion-hero">
         <div>
-          <Link href="/projects">Projects</Link>
+          <Link href={homeJourneyHref(projectId)}>Home journey</Link>
           <span aria-hidden="true">/</span>
           <span>{workspace.project.name}</span>
         </div>
@@ -793,47 +795,67 @@ export function FusionWorkspace({ projectId }: { readonly projectId: string }) {
                   ) : null}
                 </div>
                 {draft ? (
-                  <div className="operation-draft" role="status">
-                    <header>
-                      <div>
-                        <strong>Draft ready · not committed</strong>
-                        <span>{draft.operations.length} typed operation(s)</span>
-                      </div>
-                      <code>{draft.schemaVersion}</code>
-                    </header>
-                    <dl>
-                      <div>
-                        <dt>Branch</dt>
-                        <dd>{draft.branchId}</dd>
-                      </div>
-                      <div>
-                        <dt>Revision pin</dt>
-                        <dd>{draft.expectedBranchRevision}</dd>
-                      </div>
-                      <div>
-                        <dt>Head hash pin</dt>
-                        <dd>
-                          <code>{draft.expectedHeadSnapshotSha256}</code>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Proposal</dt>
-                        <dd>{draft.proposalId}</dd>
-                      </div>
-                    </dl>
-                    <ol>
-                      {draft.operations.map((operation) => (
-                        <li key={operation.clientOperationId}>
-                          <strong>{operation.type.replaceAll(".", " · ")}</strong>
-                          <pre>{JSON.stringify(operation, null, 2)}</pre>
-                        </li>
-                      ))}
-                    </ol>
-                    <p>
-                      Continue in the 2D editor only after reloading the branch. C9 has made no C5
-                      preview or commit call.
-                    </p>
-                  </div>
+                  <>
+                    <div className="operation-draft" role="status">
+                      <header>
+                        <div>
+                          <strong>Draft ready · not committed</strong>
+                          <span>{draft.operations.length} typed operation(s)</span>
+                        </div>
+                        <code>{draft.schemaVersion}</code>
+                      </header>
+                      <dl>
+                        <div>
+                          <dt>Branch</dt>
+                          <dd>{draft.branchId}</dd>
+                        </div>
+                        <div>
+                          <dt>Revision pin</dt>
+                          <dd>{draft.expectedBranchRevision}</dd>
+                        </div>
+                        <div>
+                          <dt>Head hash pin</dt>
+                          <dd>
+                            <code>{draft.expectedHeadSnapshotSha256}</code>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Proposal</dt>
+                          <dd>{draft.proposalId}</dd>
+                        </div>
+                      </dl>
+                      <ol>
+                        {draft.operations.map((operation) => (
+                          <li key={operation.clientOperationId}>
+                            <strong>{operation.type.replaceAll(".", " · ")}</strong>
+                            <pre>{JSON.stringify(operation, null, 2)}</pre>
+                          </li>
+                        ))}
+                      </ol>
+                      <p>
+                        The persisted C9 draft above has made no C5 preview or commit call. Continue
+                        only through the distinct safe handoff below.
+                      </p>
+                    </div>
+                    <CanonicalHandoffPanel
+                      draft={draft}
+                      editable={editable}
+                      key={`${draft.branchId}:${String(draft.expectedBranchRevision)}:${draft.expectedHeadSnapshotSha256}:${draft.proposalId}`}
+                      onCommitted={(branch) => {
+                        setWorkspace((current) =>
+                          current
+                            ? {
+                                ...current,
+                                branches: current.branches.map((item) =>
+                                  item.id === branch.id ? branch : item,
+                                ),
+                              }
+                            : current,
+                        );
+                      }}
+                      projectId={projectId}
+                    />
+                  </>
                 ) : null}
               </section>
             ) : null}

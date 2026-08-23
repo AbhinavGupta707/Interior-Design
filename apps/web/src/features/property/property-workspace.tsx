@@ -15,6 +15,7 @@ import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
 import { ClientProblem, getProject, getSession } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import {
   getPropertyDossier,
   listPropertySourceRecords,
@@ -319,8 +320,8 @@ export function PropertyWorkspace({ projectId }: { projectId: string }) {
   return (
     <PageContainer className="property-layout">
       <aside aria-label="Property dossier navigation" className="property-rail">
-        <Link className="back-link" href="/projects">
-          ← Projects
+        <Link className="back-link" href={homeJourneyHref(projectId)}>
+          ← Home journey
         </Link>
         <div>
           <strong>{state.project.name}</strong>
