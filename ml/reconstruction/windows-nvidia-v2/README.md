@@ -15,7 +15,7 @@ v1 package remains frozen and `NOT RUN`.
 | PyTorch                      | 2.13.0+cu132                                                                                                     |
 | gsplat                       | 1.5.3, direct API                                                                                                |
 | Open3D                       | 0.19.0                                                                                                           |
-| COLMAP                       | 3.13.0 at `0b31f98133b470eae62811b557dc2bcff1e4f9a5`                                                             |
+| COLMAP                       | 4.1.1 at `a0d785fba74b2664f31edc4a29026a8b27c00f67`                                                             |
 | CUDA target                  | `sm_120` / compute capability 12.0                                                                               |
 
 The spike built and executed non-trivial CUDA 13.0.2 and CUDA 13.2.0 workloads.
@@ -62,13 +62,28 @@ docker build --file ml/reconstruction/windows-nvidia-v2/Dockerfile.appearance \
 
 Each build compiles `sm120_probe.cu` with an exact `sm_120` code target. The
 appearance build also imports the gsplat CUDA backend so runtime does not depend on a
-fresh JIT build. Record `docker image inspect` digests and sizes after every build.
+fresh JIT build. The COLMAP build verifies the official commit archive against
+`6ecd8f333bdfc46491d067f05aaadbc97f7fa9f0b98c1a0e67cb9d3dd7604637`;
+all images retain installed package lists, lock hashes and native-probe code-object
+records. COLMAP additionally retains its CMake selection and PatchMatch code-object
+inventory. Ubuntu APT repositories are not snapshot-pinned, so exact image IDs and
+the installed manifests—not the Dockerfile alone—identify counted binaries.
 
 ## Geometry
 
-COLMAP 3.13 keeps SIFT extraction limits under `SiftExtraction.*` while moving
-matcher controls to `FeatureMatching.*`. Use the argument tuples in
-`blackwell_v2.colmap_commands`; do not reuse the v1 matcher namespace.
+Official COLMAP 4.1.1 moves the extraction image-size limit to
+`FeatureExtraction.max_image_size`, retains the SIFT feature-count limit under
+`SiftExtraction.max_num_features`, and uses `FeatureMatching.*` for matcher
+controls. Use the argument tuples in `blackwell_v2.colmap_commands`; do not reuse
+the v1 namespace.
+
+On the same retained ten-view project-owned fixture, 4.1.1 produced a non-empty
+validated dense PLY while 3.13 produced zero points after geometric, photometric,
+relaxed-filter and fresh photometric diagnostics. The 3.13 comparison remains
+`partial`, not failed runtime. Upstream 4.1.1 deliberately compiles MVS as
+`compute_90` PTX for SM100+ because of its documented NVCC workaround; that PTX
+JIT-executed on the RTX 5080. The separate project probe is native `sm_120`.
+Do not conflate those two code paths.
 
 A valid sparse result has parseable camera/image records, at least two registered
 images and nonzero points. Dense success requires all of the following:
@@ -87,9 +102,11 @@ python3 ml/reconstruction/windows-nvidia-v2/validate_colmap_outputs.py \
   --ply /absolute/private/output/fused.ply
 ```
 
-Open3D's `open3d_probe.py` executes a CUDA tensor operation and known-pose RGB-D TSDF
-integration. All reconstructed geometry remains `proposal-only`; supplied arbitrary
-or metric units do not become independently established scale.
+Open3D's `open3d_probe.py` reports two distinct operations. The tensor matrix
+workload runs on `CUDA:0` and proves the CUDA-enabled wheel/device path. The legacy
+`ScalableTSDFVolume` known-pose integration is CPU TSDF; the CUDA probe does not make
+that TSDF GPU-backed. All reconstructed geometry remains `proposal-only`; the
+supplied metre unit is not independently established scale.
 
 ## Direct gsplat appearance
 
@@ -114,12 +131,38 @@ The output directory must be empty. Output never establishes canonical geometry,
 dimensions, collision surfaces or scale. Appearance remains experimental until
 rights-cleared representative-home and physical-capture evaluation is separately run.
 
+## Acceptance runner and exposure
+
+C8 v2 is acceptance-only. No reconstruction job kind, worker route, configuration
+key or environment variable enables production dispatch; the package's explicit
+guard raises `C8_V2_ACCEPTANCE_ONLY`. Direct gsplat remains experimental.
+
+After building and recording immutable local image IDs, run two fresh selected passes
+and the optional 3.13 comparison from a clean exact commit:
+
+```sh
+python3 ml/reconstruction/windows-nvidia-v2/run_acceptance.py \
+  --source-commit <40-character-committed-sha> \
+  --output-root /tmp/c8-v2-acceptance-<sha> \
+  --colmap-image sha256:<selected-4.1.1-image-id> \
+  --open3d-image sha256:<open3d-image-id> \
+  --appearance-image sha256:<appearance-image-id> \
+  --comparison-colmap-image sha256:<3.13-comparison-image-id>
+```
+
+The runner regenerates the retained COLMAP fixture, generates the calibrated gsplat
+fixture inside the pinned image, runs two fresh selected passes, strictly validates
+PLY payload records, samples Docker/NVIDIA resources, preserves exact argv/log hashes
+and continues to independent components after ordinary failures. It never installs a
+driver/toolkit or invokes Docker prune. Review raw runner output into durable evidence,
+then remove the exact temporary root and session-created image tags.
+
 ## Evidence and verdicts
 
-Durable evidence uses `c8-blackwell-evidence-v2` and reports these independently:
+Durable evidence uses `c8-blackwell-evidence-v3` and reports these independently:
 
 - runtime: exact image/dependency/source hashes, compiled `sm_120`, capability 12.0,
-  and a real GPU workload;
+  and a real GPU workload, while separately naming each component's actual code path;
 - algorithm: separate COLMAP sparse, COLMAP dense, Open3D TSDF and direct-gsplat
   verdicts;
 - repeatability: two fresh runs plus explicit byte or metric tolerances;
@@ -128,6 +171,14 @@ Durable evidence uses `c8-blackwell-evidence-v2` and reports these independently
   homes and ground truth exist.
 
 A zero-point dense fusion is `partial`, even when patch-match and the command exit
-succeed. Synthetic workstation evidence cannot pass either field verdict. Record every
-source, generator, dependency, config and output hash; rights; elapsed time; peak
-resources; warnings; failures; and cleanup state.
+succeed. Synthetic workstation evidence cannot pass either field verdict. Each run
+reports only its actual algorithm subset; the typed workstation envelope owns aggregate
+runtime, per-algorithm, repeatability, physical-capture and representative verdicts and
+round-trips the committed JSON. Record every source, generator, dependency, config and
+output hash; rights; elapsed time; sampled resource peaks; warnings; failures; and
+cleanup state.
+
+`generate_colmap_fixture.py` is the retained pure-standard-library source for the
+creator-owned PPM/known-pose fixture. Generated source bytes are disposable; the
+generator, exact generator hash, manifest and per-file hashes make regeneration and
+comparison reproducible without customer, provider or phone data.

@@ -1,20 +1,28 @@
 # syntax=docker/dockerfile:1.7
 FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a AS builder
 
-ARG COLMAP_COMMIT=0b31f98133b470eae62811b557dc2bcff1e4f9a5
+ARG COLMAP_VERSION=4.1.1
+ARG COLMAP_COMMIT=a0d785fba74b2664f31edc4a29026a8b27c00f67
+ARG COLMAP_SOURCE_SHA256=6ecd8f333bdfc46491d067f05aaadbc97f7fa9f0b98c1a0e67cb9d3dd7604637
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
-      build-essential cmake git libboost-graph-dev libboost-program-options-dev \
-      libboost-system-dev libcgal-dev libceres-dev libcurl4-openssl-dev \
-      libeigen3-dev libflann-dev libfreeimage-dev libglew-dev libgmock-dev \
+      build-essential ca-certificates cmake curl libboost-graph-dev \
+      libboost-program-options-dev libboost-system-dev libcgal-dev libceres-dev \
+      libcurl4-openssl-dev libeigen3-dev libflann-dev libglew-dev libgmock-dev \
       libgoogle-glog-dev libgtest-dev libmetis-dev libmkl-full-dev \
+      libopencv-dev libopenimageio-dev openimageio-tools \
       libqt6opengl6-dev libqt6openglwidgets6 libsqlite3-dev libssl-dev \
       ninja-build qt6-base-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN git clone --filter=blob:none https://github.com/colmap/colmap.git /src/colmap \
-    && git -C /src/colmap checkout --detach "${COLMAP_COMMIT}" \
-    && test "$(git -C /src/colmap rev-parse HEAD)" = "${COLMAP_COMMIT}" \
+RUN curl --fail --location --silent --show-error \
+      "https://codeload.github.com/colmap/colmap/tar.gz/$COLMAP_COMMIT" \
+      --output /tmp/colmap-source.tar.gz \
+    && echo "$COLMAP_SOURCE_SHA256 */tmp/colmap-source.tar.gz" \
+      | sha256sum --check --strict \
+    && mkdir --parents /src/colmap \
+    && tar --extract --gzip --file /tmp/colmap-source.tar.gz \
+      --directory /src/colmap --strip-components=1 \
     && cmake -S /src/colmap -B /src/colmap/build -GNinja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CUDA_ARCHITECTURES=120 \
@@ -22,21 +30,57 @@ RUN git clone --filter=blob:none https://github.com/colmap/colmap.git /src/colma
       -DGUI_ENABLED=OFF \
       -DOPENGL_ENABLED=OFF \
       -DTESTS_ENABLED=OFF \
-    && cmake --build /src/colmap/build --target install --parallel 16
+    && cmake --build /src/colmap/build --target install --parallel 16 \
+    && mkdir --parents /opt/colmap/share/c8-build-provenance \
+    && printf '%s\n' \
+      "version=$COLMAP_VERSION" \
+      "commit=$COLMAP_COMMIT" \
+      "sourceArchiveSha256=$COLMAP_SOURCE_SHA256" \
+      > /opt/colmap/share/c8-build-provenance/colmap-source.txt \
+    && grep -E \
+      '^(CMAKE_CUDA_ARCHITECTURES|CMAKE_CUDA_COMPILER|CMAKE_CUDA_COMPILER_VERSION|CMAKE_CXX_COMPILER|CMAKE_CXX_COMPILER_VERSION):' \
+      /src/colmap/build/CMakeCache.txt \
+      > /opt/colmap/share/c8-build-provenance/cmake-cache-selection.txt \
+    && find /src/colmap/build -type f -name '*patch_match_cuda*.o' -print \
+      > /opt/colmap/share/c8-build-provenance/patch-match-objects.txt \
+    && find /src/colmap/build -type f -name '*patch_match_cuda*.o' \
+      -exec cuobjdump --list-elf {} \; \
+      > /opt/colmap/share/c8-build-provenance/patch-match-elf.txt \
+    && find /src/colmap/build -type f -name '*patch_match_cuda*.o' \
+      -exec cuobjdump --list-ptx {} \; \
+      > /opt/colmap/share/c8-build-provenance/patch-match-ptx.txt \
+    && dpkg-query --show --showformat='${binary:Package}\t${Version}\n' \
+      | LC_ALL=C sort \
+      > /opt/colmap/share/c8-build-provenance/builder-packages.tsv \
+    && sha256sum /src/colmap/build/CMakeCache.txt \
+      > /opt/colmap/share/c8-build-provenance/cmake-cache.sha256 \
+    && rm --force /tmp/colmap-source.tar.gz
 COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
 RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
       /src/sm120_probe.cu -o /opt/c8-sm120-probe \
-    && cuobjdump --list-elf /opt/c8-sm120-probe
+    && cuobjdump --list-elf /opt/c8-sm120-probe \
+      > /opt/colmap/share/c8-build-provenance/project-sm120-probe-elf.txt
 
 FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2
+ARG COLMAP_VERSION=4.1.1
+ARG COLMAP_COMMIT=a0d785fba74b2664f31edc4a29026a8b27c00f67
+LABEL org.opencontainers.image.source="https://github.com/colmap/colmap" \
+      org.opencontainers.image.version="$COLMAP_VERSION" \
+      org.opencontainers.image.revision="$COLMAP_COMMIT" \
+      io.interior-design.c8.capability="acceptance-only"
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/bin:/usr/bin:/bin
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
       libboost-program-options1.83.0 libc6 libceres4t64 libcurl4t64 \
-      libfreeimage3 libgcc-s1 libglew2.2 libgomp1 libgoogle-glog0v6t64 \
+      libgcc-s1 libglew2.2 libgomp1 libgoogle-glog0v6t64 \
       libmetis5 libmkl-core libmkl-intel-lp64 libmkl-intel-thread \
-      libmkl-sequential libmkl-locale libomp5 libopengl0 libssl3t64 passwd \
+      libmkl-sequential libmkl-locale libomp5 libopenimageio2.4t64 \
+      libopengl0 libssl3t64 passwd \
+    && mkdir --parents /usr/local/share/c8-build-provenance \
+    && dpkg-query --show --showformat='${binary:Package}\t${Version}\n' \
+      | LC_ALL=C sort \
+      > /usr/local/share/c8-build-provenance/runtime-packages.tsv \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/sbin/groupadd --gid 65532 c8 \
     && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c8

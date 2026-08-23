@@ -17,14 +17,26 @@ RUN python -m pip install --no-cache-dir --require-hashes \
       --extra-index-url https://download.pytorch.org/whl/cu132 \
       --requirement /opt/c8/requirements.lock \
     && python -m pip check \
-    && python -c "import gsplat.cuda._backend"
+    && python -c "import gsplat.cuda._backend" \
+    && mkdir --parents /opt/c8/build-provenance \
+    && python -m pip freeze --all \
+      | LC_ALL=C sort > /opt/c8/build-provenance/python-packages.txt \
+    && sha256sum /opt/c8/requirements.lock \
+      > /opt/c8/build-provenance/requirements-lock.sha256 \
+    && find /opt/c8/extensions -type f -print0 \
+      | LC_ALL=C sort -z | xargs -0 sha256sum \
+      > /opt/c8/build-provenance/extension-files.sha256
 COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
 RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
       /src/sm120_probe.cu -o /opt/c8-sm120-probe \
     && cuobjdump --list-elf /opt/c8-sm120-probe \
+      > /opt/c8/build-provenance/project-sm120-probe-elf.txt \
     && chmod -R a-w /opt/c8/extensions
 
 FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a
+LABEL org.opencontainers.image.version="torch-2.13.0-cu132-gsplat-1.5.3" \
+      io.interior-design.c8.capability="acceptance-only" \
+      io.interior-design.c8.appearance-status="experimental"
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/c8/venv/bin:/usr/local/bin:/usr/bin:/bin \
     PYTHONNOUSERSITE=1 \
@@ -34,6 +46,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
       libgomp1 ninja-build passwd python3 \
+    && mkdir --parents /usr/local/share/c8-build-provenance \
+    && dpkg-query --show --showformat='${binary:Package}\t${Version}\n' \
+      | LC_ALL=C sort \
+      > /usr/local/share/c8-build-provenance/runtime-packages.tsv \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/sbin/groupadd --gid 65532 c8 \
     && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c8

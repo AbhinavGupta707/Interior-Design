@@ -1,4 +1,4 @@
-"""COLMAP 3.13 command contract verified against the Blackwell container."""
+"""COLMAP 4.1.1 command contract verified against the Blackwell container."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ class ColmapV2Config:
             "maximumImageSize": self.maximum_image_size,
             "maximumMatches": self.maximum_matches,
             "targetArchitecture": "sm_120",
-            "toolVersion": "3.13.0",
+            "toolVersion": "4.1.1",
         }
 
     @property
@@ -61,7 +61,7 @@ def sparse_commands(config: ColmapV2Config) -> tuple[tuple[str, ...], ...]:
             "1",
             "--FeatureExtraction.gpu_index",
             "0",
-            "--SiftExtraction.max_image_size",
+            "--FeatureExtraction.max_image_size",
             str(config.maximum_image_size),
             "--SiftExtraction.max_num_features",
             str(config.maximum_features),
@@ -109,6 +109,8 @@ def dense_commands(config: ColmapV2Config) -> tuple[tuple[str, ...], ...]:
         (
             "patch_match_stereo",
             "--workspace_path",
+            "--PatchMatchStereo.max_image_size",
+            str(config.maximum_image_size),
             "/c8/work/dense",
             "--workspace_format",
             "COLMAP",

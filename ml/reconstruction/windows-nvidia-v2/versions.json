@@ -1,11 +1,12 @@
 {
-  "schemaVersion": "c8-blackwell-versions-v2",
+  "schemaVersion": "c8-blackwell-versions-v3",
   "cuda": {
     "buildImage": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
     "appearanceFinalImage": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
     "geometryFinalImage": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
     "runtimeImage": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
-    "toolkit": "13.2.51"
+    "toolkit": "13.2.51",
+    "comparisonToolkit": "13.0.88"
   },
   "python": "3.12.3",
   "pytorch": "2.13.0+cu132",
@@ -15,9 +16,23 @@
   "numpy": "2.5.2",
   "pillow": "12.3.0",
   "colmap": {
+    "version": "4.1.1",
+    "commit": "a0d785fba74b2664f31edc4a29026a8b27c00f67",
+    "releaseDate": "2026-07-17",
+    "sourceArchiveSha256": "6ecd8f333bdfc46491d067f05aaadbc97f7fa9f0b98c1a0e67cb9d3dd7604637",
+    "projectProbeArchitecture": "sm_120",
+    "mvsCodePath": "compute_90 PTX JIT on sm_120 per upstream NVCC workaround"
+  },
+  "colmapComparison": {
     "version": "3.13.0",
-    "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5"
+    "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5",
+    "sourceArchiveSha256": "84388feabf937fc3e90568abdc2fdb4bde1a08cef8d0adb44ecaf64e9c7d1300",
+    "projectProbeArchitecture": "sm_120",
+    "mvsBuildArchitecture": "sm_120",
+    "denseVerdict": "partial"
   },
   "cudaArchitecture": "sm_120",
-  "computeCapability": "12.0"
+  "computeCapability": "12.0",
+  "capabilityExposure": "acceptance-only",
+  "productionRoutingEnabled": false
 }
