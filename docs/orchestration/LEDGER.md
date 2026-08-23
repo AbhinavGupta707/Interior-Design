@@ -622,38 +622,86 @@
 - Closure boundary: C14 is closed only for the exact pinned Linux CPU profile. CUDA, OptiX, GPU, Metal, native Windows Blender, Blender MCP, enhancement providers and production deployment remain unavailable/unclaimed. FrozenInertRenderer remains labelled test-only evidence and was not used for production publication. No merge or PR was created; C15 was not opened.
 - Durable record: docs/evaluation/render-stills/C14_AUTHORISED_HOST_ACCEPTANCE_2026-08-12.md.
 
-## C8 v2 — RTX 5080 Blackwell modernisation re-entry
+## C8 v2 — RTX 5080 Blackwell modernisation correction
 
-- Status: **workstation evidence closed** on `codex/c8-v2-blackwell`; C15 remains
-  closed. Physical iOS and representative-home field gates remain independently
-  `deferred-not-run`.
-- Base: `c48c60ee8f179603670207642e31c56eba84b315`; counted implementation:
-  `e7ecb026afdc43c7bc33691687737f91dd287f02`; contract:
-  `docs/orchestration/checkpoints/C8_V2_BLACKWELL_CONTRACT.md`.
-- Runtime: one primary `gpt-5.6-sol` / `xhigh` session; no delegated agent or
-  additional worktree. WSL-native Git/pnpm/uv/Docker/gh on the ext4 checkout was
-  authoritative.
-- The complete `ml/reconstruction/windows-nvidia/**` v1 tree is byte-for-byte
-  unchanged from the base and remains **NOT RUN**. v2 is a sibling package.
-- Accepted stack: Ubuntu 24.04 containers; CUDA 13.2.51; Python 3.12.3; PyTorch
-  2.13.0+cu132; gsplat 1.5.3; Open3D 0.19.0; COLMAP 3.13.0 at
-  `0b31f98133b470eae62811b557dc2bcff1e4f9a5`; compute 12.0 / compiled
-  `sm_120`; Windows driver 595.79 on an RTX 5080.
-- Compatibility: CUDA 13.0.2 and 13.2.0 both compiled/executed `sm_120` kernels
-  and completed real PyTorch/Open3D/gsplat work. CUDA 13.2 was selected.
-- Verdicts: runtime passed; COLMAP sparse passed; Open3D known-pose TSDF passed;
-  direct-gsplat synthetic algorithm passed but remains experimental; repeatability
-  passed under recorded tolerances; COLMAP dense is **partial** because CUDA
-  patch-match produced finite depth/normals but fusion produced zero points.
-- Evidence: `docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md`
-  and machine record
-  `docs/evaluation/reconstruction/c8-v2-blackwell-evidence-2026-08-19.json`.
-- Gates: complete `pnpm verify` passed (Python 144 passed/two capability skips);
-  contract, integration, security 921/921, focused C8 suites and live PostgreSQL
-  C8 8/8 passed. v1 diff, secret/path and complete diff checks passed.
-- Cleanup: disposable C8 temp trees, containers, seven image tags and the isolated
-  PostgreSQL project/volumes were removed; no global prune, driver/CUDA install or
-  unrelated deletion occurred.
-- Remaining limits: no physical iOS/LiDAR/RoomPlan, representative home, multi-room
-  accuracy, metric-scale validation, customer/provider data, paid/cloud provider,
-  production deployment or professional review evidence.
+- Status: **eligible workstation correction complete** on codex/c8-v2-blackwell.
+  PR #2 remains unmerged. C15 remains closed. Physical iOS and
+  representative-home field gates remain independently deferred-not-run.
+- Authority: authorised base c48c60ee8f179603670207642e31c56eba84b315;
+  counted RTX 5080 implementation
+  ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0; exact complete software-gate
+  commit 170202c. The ledger closeout is the documentation-only commit
+  containing this block.
+- Runtime: one primary gpt-5.6-sol / xhigh session; no delegated agent,
+  orchestration workflow, or additional worktree. WSL-native Git, pnpm, uv,
+  Docker, and gh on the ext4 checkout were authoritative.
+- Frozen predecessor: the complete ml/reconstruction/windows-nvidia/** v1 tree
+  is byte-for-byte unchanged from the authorised base and remains **NOT RUN**.
+  v2 is a sibling package.
+- Accepted stack: Ubuntu 24.04 containers; CUDA 13.2.51; Python 3.12.3;
+  PyTorch 2.13.0+cu132; gsplat 1.5.3; Open3D 0.19.0; official COLMAP 4.1.1
+  commit a0d785fba74b2664f31edc4a29026a8b27c00f67; compute 12.0; project
+  probe native sm_120; Windows driver 595.79 on an RTX 5080.
+- Immutable selected images: COLMAP
+  975133bb324122e74baec3a6cee14989792ab0413f5229cb9a37f3107ca635f0;
+  Open3D f18141bb0bd07e275a552413b2ca34072f9f5b53607234f23333c747342835e7;
+  appearance d950e62af89e1da2b9770468e8991d266e5bc4199c46a0c052c06b06b79349ae.
+- Compatibility: CUDA 13.0.88 and 13.2.51 both compiled/executed native sm_120
+  kernels and completed real PyTorch/Open3D/gsplat work. CUDA 13.2 was selected.
+  Upstream COLMAP/Open3D PTX-JIT paths are recorded separately from the native
+  project probe; gsplat contains 20 native sm_120 cubins.
+- COLMAP selection: the retained deterministic 10-view/557-track generator is
+  creator-owned and replayable. Selected sparse uses CPU seed 0/one thread for
+  repeatability; selected CUDA dense produced 20 depth plus 20 normal maps and
+  strict-payload PLYs with 46,856 and 46,859 vertices. Sparse registered 10/10
+  with 3,362 points and 20,366 observations in both runs.
+- Official comparison: COLMAP 3.13 commit
+  0b31f98133b470eae62811b557dc2bcff1e4f9a5 registered 10/10 and produced
+  20 depth/20 normal maps with 1,728,000 positive depth samples, but strict PLY
+  parsing found zero fused vertices after geometric, photometric, relaxed, and
+  fresh-workspace attempts. Its dense verdict remains **partial**.
+- Open3D boundary: two CUDA tensor workloads produced checksum 8,386,560.0;
+  the separate legacy-cpu known-pose TSDF workloads each produced 2,160
+  vertices and 4,134 triangles. No GPU TSDF or physical scale claim is made.
+- Appearance boundary: two project-owned direct-gsplat runs completed 24
+  optimizer steps, exported six strict-payload ASCII PLY vertices, and differed
+  by only 0.0000029672 dB held-out PSNR. Appearance remains experimental,
+  non-dimensional, and acceptance-only.
+- Exposure: v2 has no reconstruction worker/API/queue/UI route.
+  C8_V2_ACCEPTANCE_ONLY is a fail-closed guard requiring
+  productionRoutingEnabled=false; it is not a production enablement flag.
+- Verdicts: selected workstation runtime, COLMAP sparse, COLMAP dense, Open3D
+  TSDF, direct gsplat, and repeatability **passed**. Physical capture and
+  representative accuracy are **deferred-not-run**. The 3.13 comparison remains
+  independently partial.
+- Durable evidence:
+  docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md and
+  docs/evaluation/reconstruction/c8-v2-blackwell-evidence-2026-08-19.json.
+  The v3 canonical evidence SHA-256 is
+  fa57d18a7a2fb2017c56cb8b85349c3a663c0add3cb5b23c63372d87724ff8ff;
+  the raw runner record SHA-256 is
+  72a95697e88fae80c93c624a152d63859f43f4bb4a67f6183ab187e576a986e5.
+- Exact software gates on 170202c: pnpm verify passed Prettier, 24/24 lint,
+  24/24 typecheck, 45/45 unit task groups, 24/24 builds, Ruff, strict mypy on
+  105 files, and pytest 157 passed/two honest capability skips. Contract and
+  integration suites passed; security passed 921/921. A fresh isolated
+  PostgreSQL C8 suite passed 8/8. All three Dockerfiles passed docker build
+  --check with no warnings.
+- Review gates: typed v3 round-trip, package-manifest coverage, strict
+  ASCII/little-endian/big-endian PLY payload tests, timeout/permission/cleanup
+  tests, git diff --check, v1 byte diff, file-mode, forbidden manifest/workflow,
+  C15, secret-pattern, machine-path, and complete branch-diff reviews passed.
+- Cleanup: 11 exact C8 temporary paths, 17 C8 image tags, two isolated
+  PostgreSQL test projects and volumes, and one failed stdin helper were
+  removed. Final counts are zero C8 temp paths, containers, tags, volumes,
+  networks, or helper processes; the primary checkout is the only worktree. No
+  global Docker prune, host CUDA/driver install, or unrelated deletion occurred.
+- Merge recommendation: PR #2 is ready for review/merge **only for the
+  acceptance-only workstation package and evidence contract**. It is not a
+  production reconstruction, representative-home, metric-accuracy, or field
+  acceptance.
+- Remaining limits: no physical iOS/LiDAR/RoomPlan/ARKit pose, relocalisation,
+  interruption, thermal, background-transfer, representative-home, multi-room,
+  real-capture, metric-scale, survey comparison, customer/phone/provider data,
+  paid/cloud provider, external model key, production deployment, or
+  professional review evidence. C15 was not opened.
