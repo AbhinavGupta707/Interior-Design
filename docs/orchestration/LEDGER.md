@@ -624,17 +624,36 @@
 
 ## C8 v2 — RTX 5080 Blackwell modernisation re-entry
 
-- Status: active on `codex/c8-v2-blackwell`; bounded C8 re-entry, C15 remains closed.
-- Base: `c48c60ee8f179603670207642e31c56eba84b315`; contract:
+- Status: **workstation evidence closed** on `codex/c8-v2-blackwell`; C15 remains
+  closed. Physical iOS and representative-home field gates remain independently
+  `deferred-not-run`.
+- Base: `c48c60ee8f179603670207642e31c56eba84b315`; counted implementation:
+  `e7ecb026afdc43c7bc33691687737f91dd287f02`; contract:
   `docs/orchestration/checkpoints/C8_V2_BLACKWELL_CONTRACT.md`.
-- Runtime: one primary `gpt-5.6-sol` / `xhigh` session; no delegated agent or Codex
-  worktree under the session-specific instruction.
-- `ml/reconstruction/windows-nvidia/**` is immutable and remains `NOT RUN`; v2 is a
-  sibling package.
-- Frozen candidate: CUDA 13.2, Python 3.12.3, PyTorch 2.13.0+cu132, gsplat 1.5.3,
-  Open3D 0.19.0 and COLMAP 3.13.0 commit `0b31f981`, compiled for `sm_120`.
-- v2 owns a bounded direct-gsplat trainer/exporter. Nerfstudio 1.1.5/gsplat 1.4.0 is
-  v1-only; appearance stays experimental and cannot block geometry completion.
-- Runtime, algorithm, repeatability, physical capture and representative accuracy are
-  separate. Physical iOS and representative-home evidence remain `deferred-not-run`;
-  no provider key, customer data or training permission is authorised.
+- Runtime: one primary `gpt-5.6-sol` / `xhigh` session; no delegated agent or
+  additional worktree. WSL-native Git/pnpm/uv/Docker/gh on the ext4 checkout was
+  authoritative.
+- The complete `ml/reconstruction/windows-nvidia/**` v1 tree is byte-for-byte
+  unchanged from the base and remains **NOT RUN**. v2 is a sibling package.
+- Accepted stack: Ubuntu 24.04 containers; CUDA 13.2.51; Python 3.12.3; PyTorch
+  2.13.0+cu132; gsplat 1.5.3; Open3D 0.19.0; COLMAP 3.13.0 at
+  `0b31f98133b470eae62811b557dc2bcff1e4f9a5`; compute 12.0 / compiled
+  `sm_120`; Windows driver 595.79 on an RTX 5080.
+- Compatibility: CUDA 13.0.2 and 13.2.0 both compiled/executed `sm_120` kernels
+  and completed real PyTorch/Open3D/gsplat work. CUDA 13.2 was selected.
+- Verdicts: runtime passed; COLMAP sparse passed; Open3D known-pose TSDF passed;
+  direct-gsplat synthetic algorithm passed but remains experimental; repeatability
+  passed under recorded tolerances; COLMAP dense is **partial** because CUDA
+  patch-match produced finite depth/normals but fusion produced zero points.
+- Evidence: `docs/evaluation/reconstruction/C8_V2_BLACKWELL_ACCEPTANCE_2026-08-19.md`
+  and machine record
+  `docs/evaluation/reconstruction/c8-v2-blackwell-evidence-2026-08-19.json`.
+- Gates: complete `pnpm verify` passed (Python 144 passed/two capability skips);
+  contract, integration, security 921/921, focused C8 suites and live PostgreSQL
+  C8 8/8 passed. v1 diff, secret/path and complete diff checks passed.
+- Cleanup: disposable C8 temp trees, containers, seven image tags and the isolated
+  PostgreSQL project/volumes were removed; no global prune, driver/CUDA install or
+  unrelated deletion occurred.
+- Remaining limits: no physical iOS/LiDAR/RoomPlan, representative home, multi-room
+  accuracy, metric-scale validation, customer/provider data, paid/cloud provider,
+  production deployment or professional review evidence.

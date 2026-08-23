@@ -54,9 +54,12 @@ trainer and deterministic PLY/checkpoint exporter. It consumes only validated RG
 frames plus calibrated cameras, never estimates canonical geometry, and exports
 appearance with `non-dimensional-appearance` authority.
 
-The direct trainer is **experimental** until its algorithm and repeatability verdicts
-pass. A script that only imports gsplat, a Nerfstudio override, or an upstream example
-is not production support. Geometry completion is independent of appearance outcome.
+The direct trainer remains **experimental** unless its runtime, algorithm and
+repeatability verdicts pass **and** separate rights-cleared representative-home and
+physical-capture evaluation is accepted. Synthetic workstation passes alone do not
+promote it to production support. A script that only imports gsplat, a Nerfstudio
+override, or an upstream example is not production support. Geometry completion is
+independent of appearance outcome.
 
 ## Runtime topology
 

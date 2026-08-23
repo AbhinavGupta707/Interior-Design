@@ -1,0 +1,425 @@
+{
+  "schemaVersion": "c8-blackwell-evidence-v2",
+  "recordKind": "c8-blackwell-workstation-envelope-v2",
+  "modelSemantics": "Detailed superset envelope for the strict RunEvidence verdict and hash requirements; component images remain separate.",
+  "recordedAt": "2026-08-19",
+  "sourceCommit": "e7ecb026afdc43c7bc33691687737f91dd287f02",
+  "authority": {
+    "geometry": "proposal-only",
+    "appearance": "non-dimensional-appearance",
+    "canonicalMutationAllowed": false
+  },
+  "package": {
+    "path": "ml/reconstruction/windows-nvidia-v2",
+    "manifestSha256": "c0012b4ccc45f01691f839df935746b12e8673a6e11cb435072e9b3b02c0ff96",
+    "appearanceLockSha256": "ae192490ff13657976a3717a50670eb33d310712d4634d4b088afd2f6f599343",
+    "open3dLockSha256": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
+    "dockerfileSha256": {
+      "appearance": "4fc5ab3555c48f1ee07abad48ba8005439029572c0e53dbd156138e67a98cb9a",
+      "colmap": "42b465f9b8a534b444a13c4def4c59ffe68c5618758b194f0e5a134f00d88a15",
+      "open3d": "6fddb30c6813a586e7d72842c45c2d2e2cb61e32cb19236dc386f2b87aef09df"
+    },
+    "v1Package": {
+      "executionVerdict": "not-run",
+      "unchangedFromBase": true
+    }
+  },
+  "host": {
+    "windows": "Windows 11 Pro 10.0.26200 build 26200",
+    "wsl": "2.6.3.0",
+    "wslKernel": "6.6.87.2-microsoft-standard-WSL2",
+    "dockerDesktop": "4.78.0",
+    "dockerEngine": "29.5.3",
+    "dockerPlatform": "linux/amd64",
+    "cpu": "AMD Ryzen 9 9900X",
+    "logicalCpuCount": 24,
+    "ramBytes": 65905455104,
+    "gpu": "NVIDIA GeForce RTX 5080",
+    "gpuMemoryMiB": 16303,
+    "driver": "595.79",
+    "driverAdvertisedCuda": "13.2",
+    "computeCapability": "12.0",
+    "topology": "PowerShell dispatcher -> Ubuntu WSL ext4 checkout -> Docker Desktop Linux containers",
+    "linuxDisplayDriverInstalled": false,
+    "hostCudaToolkitInstalled": false
+  },
+  "acceptedStack": {
+    "containerOs": "Ubuntu 24.04",
+    "cudaToolkit": "13.2.51",
+    "cudaDevelBase": "nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
+    "cudaRuntimeBase": "nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2",
+    "python": "3.12.3",
+    "pytorch": "2.13.0+cu132",
+    "gsplat": "1.5.3",
+    "open3d": "0.19.0",
+    "colmap": {
+      "version": "3.13.0",
+      "commit": "0b31f98133b470eae62811b557dc2bcff1e4f9a5"
+    },
+    "cudaArchitecture": "sm_120",
+    "appearanceImplementation": "project-owned direct gsplat",
+    "nerfstudioV2": "not-supported"
+  },
+  "compatibilitySpike": {
+    "cuda130": {
+      "baseDigest": "sha256:5dc1bca23d05bd37b011be68ec470c03b403a5da07ec3a86e41af9470e9d0cc6",
+      "nvcc": "13.0.88",
+      "compiledArchitecture": "sm_120",
+      "kernelPayload": 120,
+      "pytorchGpuMatmul": "passed",
+      "open3dCudaAndTsdf": "passed",
+      "directGsplatForwardBackwardUpdate": "passed"
+    },
+    "cuda132": {
+      "baseDigest": "sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a",
+      "nvcc": "13.2.51",
+      "compiledArchitecture": "sm_120",
+      "kernelPayload": 132,
+      "pytorchGpuMatmul": "passed",
+      "open3dCudaAndTsdf": "passed",
+      "directGsplatForwardBackwardUpdate": "passed"
+    },
+    "selection": "cuda132",
+    "selectionBasis": "Both minors executed real sm_120 work. CUDA 13.2 matches the installed driver-advertised generation and the accepted PyTorch cu132 wheel.",
+    "observations": [
+      "Open3D 0.19.0 required libX11 at runtime.",
+      "gsplat 1.5.3 required an executable extension cache during build and checks for NVCC while loading the cached backend.",
+      "The final appearance image therefore uses the pinned devel base; its root and populated extension cache are read-only at runtime.",
+      "COLMAP 3.13 uses FeatureExtraction and FeatureMatching GPU option namespaces; SIFT size/count limits remain under SiftExtraction.",
+      "The packaged Ceres build has no CUDA or cuDSS bundle-adjustment backend, so bundle adjustment is CPU fallback."
+    ]
+  },
+  "rights": {
+    "basis": "creator-owned-synthetic",
+    "serviceProcessingAllowed": true,
+    "trainingAllowed": false,
+    "customerDataUsed": false,
+    "providerDataUsed": false
+  },
+  "fixtures": {
+    "colmap": {
+      "description": "Eight creator-authored deterministic 640x480 synthetic views",
+      "canonicalImageSetSha256": "41be0a35c371f9ce9cd46c9e33551a956f50af73d39524d7c3495d67dc3838ef",
+      "generatorRetained": false,
+      "generatorWarning": "The disposable generator source was not retained; the exact accepted source bytes are individually and collectively hash-pinned.",
+      "images": [
+        {
+          "name": "view-00.png",
+          "sha256": "1b5b72eaff09ee824f3e9aa6b173a7c3b4d2e8546929e7ce1acbef603bebdc49"
+        },
+        {
+          "name": "view-01.png",
+          "sha256": "70e7970f1a8badeda3c7d2facdbab18e3cc6c328e28305a89c5f75a702771272"
+        },
+        {
+          "name": "view-02.png",
+          "sha256": "b9ce18f9e3bb06acb4bbddb29822d583cfca25e0c2cf43c6b91ecf489029cabf"
+        },
+        {
+          "name": "view-03.png",
+          "sha256": "cbc1c7bd63ee6791ffb74bfa49436496c1dd1857e66ea42a49795a5da5b9947f"
+        },
+        {
+          "name": "view-04.png",
+          "sha256": "191f9c02e9a066fc67a775385f14f9533fb7827bcefb699966355683fcdb5759"
+        },
+        {
+          "name": "view-05.png",
+          "sha256": "e37d5537f667043b886346268b8ba15606cbe12a76060ccf219debbb091ba09f"
+        },
+        {
+          "name": "view-06.png",
+          "sha256": "81454dcece7c51cef30b40ec252abb098ca524117740a6af9b3a79a4c4a086f8"
+        },
+        {
+          "name": "view-07.png",
+          "sha256": "b1f9f63ec6d183dbd5515885a2429bdc9add065c398c906257d12abb39e17ee7"
+        }
+      ]
+    },
+    "appearance": {
+      "manifestSha256": "925f18990c19af5815e77a7f4348d940086c9ab79e5be868edd54ca3ee0f4a89",
+      "generatorSha256": "471d1422c6b97b81a93d3fd6ffa5535810e8255fdf885528d760b469b5af0e9e",
+      "frameCount": 3,
+      "width": 64,
+      "height": 64,
+      "gaussianCount": 6,
+      "units": "arbitrary",
+      "frames": [
+        {
+          "name": "frame-00.png",
+          "sha256": "7d6781bc8b06e5132c6eac9bfa9f297ff7ad270867f84b69fe379dce64f1bc5c"
+        },
+        {
+          "name": "frame-01.png",
+          "sha256": "f7464a4b7c148e2a4c44d62b0456f55d643a40264ce7fe89de776c113fe55a18"
+        },
+        {
+          "name": "frame-02.png",
+          "sha256": "79e9c08377198f4c1489bc60664c50c53dbc6a477f1d5f0ddfe34010c625550c"
+        }
+      ]
+    }
+  },
+  "verdicts": {
+    "runtimeVerdict": "passed",
+    "algorithmVerdict": {
+      "colmapSparse": "passed",
+      "colmapDense": "partial",
+      "open3dTsdf": "passed",
+      "directGsplatSynthetic": "passed"
+    },
+    "repeatabilityVerdict": "passed",
+    "physicalCaptureVerdict": "deferred-not-run",
+    "representativeAccuracyVerdict": "deferred-not-run"
+  },
+  "components": {
+    "colmap": {
+      "imageDigest": "sha256:02709ef85a5a096682de174f208d422573d9b624e77d1210bf0b5277e4ff5b3c",
+      "imageSizeBytes": 1702841266,
+      "configSha256": "61bf4a3e5c4d5deadec330c8077cae2e7e04344386a9be551d9e5a18fd06d0fa",
+      "runtimeVerdict": "passed",
+      "sm120Probe": {
+        "compiledArchitecture": "sm_120",
+        "computeCapability": "12.0",
+        "kernelResult": 120
+      },
+      "gpuEvidence": [
+        "Feature extraction bound to GPU 0.",
+        "Exhaustive feature matching logged both GPU matcher bindings.",
+        "Patch-match stereo executed on GPU 0 and wrote finite depth and normal maps."
+      ],
+      "sparseRun1": {
+        "registeredImages": 8,
+        "inputImages": 8,
+        "sparsePoints": 4239,
+        "observations": 22608,
+        "meanTrackLength": 5.333333,
+        "meanObservationsPerImage": 2826.0,
+        "meanReprojectionErrorPixels": 0.34512,
+        "featureCounts": [3656, 3613, 3609, 3580, 3654, 3640, 3683, 3718],
+        "outputs": {
+          "database.db": {
+            "byteSize": 5148672,
+            "sha256": "19400649c82d77f30a33f7ffc2d63e33787e2be33034d7797246d8874e53fb5a"
+          },
+          "cameras.bin": {
+            "byteSize": 456,
+            "sha256": "c231d096abba8fe67bda9e145448c9dc8387f4f0eaa56d4ba49d915953aefbe8"
+          },
+          "images.bin": {
+            "byteSize": 700352,
+            "sha256": "7aa29c037894f06ab0617eafffa14d1747aafe87937a3faf77fa4a8f09adc246"
+          },
+          "points3D.bin": {
+            "byteSize": 397061,
+            "sha256": "a64517124b2397504ec9b11732df0816b31bd985c4529956e90b3f248af1d7d3"
+          }
+        }
+      },
+      "sparseRun2": {
+        "registeredImages": 8,
+        "inputImages": 8,
+        "sparsePoints": 4192,
+        "observations": 22585,
+        "meanTrackLength": 5.387643,
+        "meanObservationsPerImage": 2823.125,
+        "meanReprojectionErrorPixels": 0.347437,
+        "outputs": {
+          "database.db": {
+            "byteSize": 5152768,
+            "sha256": "aab068bcb01e06f0082b7dc57c4916d384a7b273298854cca767750acd3e7c01"
+          },
+          "cameras.bin": {
+            "byteSize": 456,
+            "sha256": "46e7ef8e536edd958f02278126166d9ac58dae4a4a619f497b8398f48dd5d39c"
+          },
+          "images.bin": {
+            "byteSize": 700352,
+            "sha256": "0bd0bffb846e3f131f1859e0327d5aef43e621c83299fcec5515c079780d0ab4"
+          },
+          "points3D.bin": {
+            "byteSize": 394480,
+            "sha256": "b859632afaab837766d93e235d228a767bf46aec4fd1f334db41d109e8e88b0b"
+          }
+        }
+      },
+      "repeatability": {
+        "registeredImageTolerance": "exact",
+        "sparsePointRelativeTolerancePercent": 2.0,
+        "observedSparsePointDeltaPercent": 1.1088,
+        "reprojectionAbsoluteTolerancePixels": 0.01,
+        "observedReprojectionDeltaPixels": 0.002317,
+        "byteIdentityRequired": false,
+        "verdict": "passed"
+      },
+      "dense": {
+        "undistortedImages": 8,
+        "depthMapCount": 16,
+        "normalMapCount": 16,
+        "finitePositiveDepthValues": 2457600,
+        "mapSetSha256": "f19f496c03944aed88f1b4d36570330c88ed7e7ad801c534803856c1474d4394",
+        "geometricFusedPoints": 0,
+        "photometricFusedPoints": 0,
+        "fusedPly": {
+          "byteSize": 229,
+          "sha256": "84585f60956b534f1486de9bce213d48ae8530b8d7374616317dc953348ed01c"
+        },
+        "algorithmVerdict": "partial",
+        "safeCode": "COLMAP_DENSE_ZERO_FUSED_POINTS"
+      },
+      "resources": {
+        "patchMatchPeakDeviceMemoryBytes": 2045771776,
+        "patchMatchPeakGpuUtilizationPercent": 80,
+        "peakHostMemoryBytes": null,
+        "warning": "Host max RSS was not validly captured because the outer time wrapper measured only the Docker client."
+      },
+      "warnings": [
+        "COLMAP can return exit code zero after some missing-output errors; the project-owned validator rejects missing, malformed, non-finite, or zero-vertex outputs.",
+        "Ceres CUDA/cuDSS bundle adjustment is unavailable; bundle adjustment used CPU.",
+        "Dense patch-match passed, but both strict geometric and diagnostic photometric fusion produced zero points."
+      ]
+    },
+    "open3d": {
+      "imageDigest": "sha256:3d3b5b81e9cabb72690aece382048f62c3dc1417f39f303e513b2b9e3402d75b",
+      "imageConfigDigest": "sha256:1c9cb796e393a9184564c339b2cdeef9ded7f6d4f69795284f4c88540eeff363",
+      "imageSizeBytes": 2183045602,
+      "buildMode": "docker build --provenance=false",
+      "runtimeVerdict": "passed",
+      "algorithmVerdict": "passed",
+      "sm120Probe": {
+        "compiledArchitecture": "sm_120",
+        "computeCapability": "12.0",
+        "kernelResult": 120
+      },
+      "run1": {
+        "durationMilliseconds": 6513,
+        "cudaChecksum": 8386560.0,
+        "pointCount": 2160,
+        "vertexCount": 2160,
+        "triangleCount": 4134
+      },
+      "run2": {
+        "durationMilliseconds": 6366,
+        "cudaChecksum": 8386560.0,
+        "pointCount": 2160,
+        "vertexCount": 2160,
+        "triangleCount": 4134
+      },
+      "repeatability": {
+        "metricTolerance": "exact for checksum and geometry counts",
+        "verdict": "passed"
+      },
+      "resources": {
+        "peakGpuMemoryBytes": null,
+        "peakHostMemoryBytes": null,
+        "warning": "The bounded run completed in 6.513 s and 6.366 s; peak samplers were not captured for this component."
+      },
+      "warning": "Default BuildKit provenance indexes include regenerated attestation metadata. Counted runs use the stable provenance-disabled runnable manifest digest above."
+    },
+    "directGsplat": {
+      "imageDigest": "sha256:052df5d09f9785a5bcbbaaa7d8d5aeb6d4cfd3bb47a17d53d24699543dab5024",
+      "imageSizeBytes": 6430032380,
+      "runtimeVerdict": "passed",
+      "algorithmVerdict": "passed",
+      "capabilityStatus": "experimental",
+      "sm120Probe": {
+        "compiledArchitecture": "sm_120",
+        "computeCapability": "12.0",
+        "kernelResult": 120
+      },
+      "run1": {
+        "durationMilliseconds": 2122,
+        "optimizerSteps": 24,
+        "finalLoss": 0.00029473891481757164,
+        "heldOutMse": 0.0002981825964525342,
+        "heldOutPsnrDb": 35.255177079158756,
+        "peakGpuMemoryBytes": 397824,
+        "peakHostMemoryBytes": 1678487552,
+        "outputs": {
+          "appearance-checkpoint.json": {
+            "byteSize": 1947,
+            "sha256": "be9f5a373ab6681850c2e2ea4b54347e24b3f4ab47d1375def6fd44d8bc83510"
+          },
+          "appearance.ply": {
+            "byteSize": 1283,
+            "sha256": "864214b0f45dc02f827cf7a598a143dfa9167814a9d6ec933e0d985f5972429f"
+          },
+          "appearance-result.json": {
+            "byteSize": 1335,
+            "sha256": "ce20d2eb0d10511a8008e428a24816da13d8811a42e68c0d226f623bdec8a37b"
+          }
+        }
+      },
+      "run2": {
+        "durationMilliseconds": 1461,
+        "optimizerSteps": 24,
+        "finalLoss": 0.0002947387984022498,
+        "heldOutMse": 0.0002981825382448733,
+        "heldOutPsnrDb": 35.25517792693688,
+        "peakGpuMemoryBytes": 397824,
+        "peakHostMemoryBytes": 1681641472,
+        "outputs": {
+          "appearance-checkpoint.json": {
+            "byteSize": 1955,
+            "sha256": "b0e706157b77ee708192965955a2027c3c8bea8bb74ca4283d165d4f353e376c"
+          },
+          "appearance.ply": {
+            "byteSize": 1284,
+            "sha256": "b76bb2aaddd3b8a412315d9388425de85f42c1a077f7ffd41678a7184403ef71"
+          },
+          "appearance-result.json": {
+            "byteSize": 1336,
+            "sha256": "dd899740341637a3f18cee69868b931a290a4b488bc12e40f918f875a90e7ed9"
+          }
+        }
+      },
+      "repeatability": {
+        "heldOutPsnrAbsoluteToleranceDb": 0.00001,
+        "observedHeldOutPsnrDeltaDb": 0.000000847778124,
+        "byteIdentityRequired": false,
+        "verdict": "passed"
+      },
+      "warnings": [
+        "CUDA output bytes are not deterministic; acceptance is metric-tolerant and retains both hashes.",
+        "Synthetic calibrated-camera acceptance does not establish representative-home quality, dimensions, collision geometry, scale, or production provider capacity."
+      ]
+    }
+  },
+  "failedOrDiagnosticAttempts": [
+    {
+      "component": "gsplat",
+      "safeCode": "FIXTURE_HOST_PERMISSIONS",
+      "disposition": "The first post-rebuild run stopped before GPU work because a mktemp input root was owner-only. The fixture alone was made readable to UID 65532; the non-root container contract was retained."
+    },
+    {
+      "component": "colmap",
+      "safeCode": "COLMAP_EXIT_ZERO_WITH_MISSING_OUTPUT",
+      "disposition": "A diagnostic missing-directory invocation showed COLMAP may log an output failure yet exit zero. Production acceptance therefore requires the independent output validator."
+    },
+    {
+      "component": "open3d-build",
+      "safeCode": "BUILDKIT_ATTESTATION_INDEX_DRIFT",
+      "disposition": "Rebuilding identical runnable layers regenerated the provenance wrapper. The counted image was frozen with provenance disabled; both counted runs used its exact digest."
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "temporaryInputDirectoriesRemaining": 0,
+    "c8ContainersRemaining": 0,
+    "taggedC8ImagesRemaining": 0,
+    "additionalWorktreesCreated": 0,
+    "disposablePostgresProjectRemovedWithVolumes": true,
+    "dockerGlobalPruneRun": false,
+    "hostDriverChanged": false,
+    "hostCudaChanged": false
+  },
+  "deferredLimitations": [
+    "Physical iOS capture, LiDAR and RoomPlan comparison are deferred-not-run.",
+    "Representative-home, multi-room, metric-scale and real-capture accuracy are deferred-not-run.",
+    "No customer data, paid provider, cloud GPU, external model key, production deployment, or professional review was used.",
+    "Direct gsplat remains experimental even though its synthetic runtime, algorithm, and repeatability verdicts passed.",
+    "COLMAP dense reconstruction remains partial because fusion produced zero points.",
+    "The COLMAP source-image bytes are fully hash-pinned, but the disposable generator source itself was not retained."
+  ]
+}
