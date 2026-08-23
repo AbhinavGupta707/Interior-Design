@@ -706,7 +706,7 @@
 
 ### Master activation
 
-- Status: active; contract prelude frozen; L1 active. L2 intentionally starts after L1 integration so independent acceptance executes against the reviewed product code.
+- Status: active; contract prelude frozen; L1 reviewed and integrated. L2 starts from the reviewed integration head so independent acceptance executes against the accepted bridge code.
 - Authority: user instruction dated 2026-08-23 to prioritise the next core homeowner slice over C15, MCPs or speculative planning intelligence and to leave the final PR unmerged.
 - Contract: `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`.
 - Verified predecessor: clean `main` and `origin/main` at `54886f570c3bb559490a50727e4c77ed00834b52`; PR #2 is present only as the C8 v2 acceptance package.
@@ -714,10 +714,10 @@
 - Planned lanes: two. Both are exact `gpt-5.6-sol` / `xhigh` and are recorded before launch.
 - Contract/migration impact: none. C1–C10 contracts, server-side permissions, C5 canonical mutation and C10 exact-snapshot compilation remain authoritative.
 
-| Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State  | Exclusive roots                                                                                                              |
-| ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | active | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
-| C14.1-L2 independent journey acceptance  | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+| Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                                                              |
+| ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
+| C14.1-L2 independent journey acceptance  | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | launching  | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
 
 ### Discovery and prelude evidence
 
@@ -727,6 +727,14 @@
 - The frozen mutation chain is C9 persisted proposal/draft → C5 preview → separate explicit confirmation → C5 commit → explicit C10 scene compilation. Preview blocking, stale, expired, denied or offline states change no canonical model.
 - Host preflight: WSL2 Linux 6.6 is authoritative; Node 22.22.2, pnpm 10.33.0, uv 0.11.16, Docker 29.5.3 and gh 2.92.0 are available. `nvidia-smi` is exposed through WSL. `xcodebuild` is absent, so Xcode/RoomPlan/LiDAR/physical Apple validation is not available on this host.
 - No real address, representative property, customer media, paid/cloud provider, production deployment or physical capture is activated. C8 v2 remains acceptance-only with no API/queue/worker/UI route and production routing disabled.
+
+### L1 integration record
+
+- Task `01a02fc5-56b7-7f92-b574-dd710063fe23` completed in the managed Windows worktree with worker commit `25eddb32cbf77f04c25ddd6a0e9488224579747b`; the worktree-only executable-bit projection was neutralised with `extensions.worktreeConfig` plus `core.filemode=false` and no content was discarded.
+- Orchestrator path/diff review found no shared-contract, migration, backend, manifest, lockfile, C8 v2 or automatic-mutation change. The commit was cherry-picked as integration commit `6845961`.
+- Review removed two test-environment labels from production UI: the journey no longer calls itself fixture-backed and property guidance says provider/manual rather than fixture/manual. The repair is `de68b0d`.
+- Focused homeowner-journey tests, web ESLint and web TypeScript checks passed after integration. The bridge retains distinct persisted C9 draft, exact C5 preview, explicit C5 commit and explicit C10 scene actions.
+- Per the user continuation instruction, C14.1 is the first corrective bridge checkpoint, not completion of the overall homeowner slice. After L2 acceptance the orchestrator must reassess and open minimal persisted setup/evidence checkpoints wherever executable gaps remain.
 
 ### Frozen terminal rule
 
