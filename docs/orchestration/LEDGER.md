@@ -717,7 +717,7 @@
 | Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                                                              |
 | ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
-| C14.1-L2 independent journey acceptance  | pending                                | pending                                                | `gpt-5.6-sol` / `xhigh` | launching  | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+| C14.1-L2 independent journey acceptance  | `01a02fec-b1c8-70b1-b70c-9afa227af272` | `C:/Users/abhin/.codex/worktrees/a263/interior-design` | `gpt-5.6-sol` / `xhigh` | active     | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
 
 ### Discovery and prelude evidence
 
