@@ -88,3 +88,61 @@ Workers may read all predecessor code and documents. They must not edit root man
 ## Terminal rule
 
 C14.2 may close only after all three lanes are reviewed/integrated, the normal persisted local journey is host-validated as far as the available runtime permits, and documentation matches exact evidence. C15 remains closed. The final non-draft PR targets `main` and remains unmerged for independent review.
+
+## Closeout — 2026-08-24
+
+C14.2 satisfies its terminal rule and is closed for the Windows-testable core
+homeowner journey. The durable evaluation is
+`docs/evaluation/homeowner-journey/C14_2_PERSISTED_JOURNEY_ACCEPTANCE_2026-08-23.md`.
+
+### Exact revision record
+
+- L1 worker `616a1770200aa052466c189d62ae01a7c928ec29`; reviewed integration
+  `6dd78a86e75c36fdcf3dc7949b36156fbe31a56c`.
+- L2 worker `486d9fbde9149181831a0623faafea67536137e8`; reviewed integration
+  `030e294a84b830ddd4b85880b1aba7804cb0e422`.
+- Host-live production repair/evidence revision
+  `076901d42e5fa381ed0f04d003061e4b00c56ba8`; formatting-only verified
+  revision `fac7fe661602fe8c3937de36c19ea10a7b8aad12`.
+- Authoritative L3 replacement task
+  `01a03087-5fcf-7311-88cc-7a18ce9ae13f` at
+  `C:/Users/abhin/.codex/worktrees/8a48/interior-design`; recovery worker
+  `eb8b3f6e3dbc45a9fef9477110b8b5e720848c64`; reviewed integration
+  `ea5d0f77ce11add5e049eb4f9c57e93eb8b85736`.
+- Passing L3 acceptance repair `49faeb2869c9b4e3d9622c3bd1075112d37881bf`;
+  durable evaluation `7f77329f47384526ec5eda43c1822f87a13ca75c`;
+  product/evidence integration with current C14.1 regression
+  `dd225fa6b3d8baa7340f8236162bfa2860d4add0`.
+- Stale duplicate task `01a03070-7dfc-7c13-b684-9fa80c879e97` was not
+  resumed or merged.
+
+### Verified gate
+
+- C14.2: three TypeScript configurations; integration 4/4; security 4/4;
+  rendered normal-navigation journey 1/1 at 1440×960.
+- C14.1 regression: three TypeScript configurations; integration 4/4;
+  security 3/3; Playwright 14/14 across desktop, mobile, roles, degraded and
+  fail-closed states.
+- Repository-wide `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed at
+  `dd225fa6b3d8baa7340f8236162bfa2860d4add0`: Prettier; 24/24 lint;
+  24/24 typecheck; 45/45 JavaScript unit task groups; 24/24 builds; Ruff;
+  mypy over 105 source files; pytest 157 passed and 2 capability skips.
+- `git diff --check` passed. Shared contracts, generated clients, migrations,
+  registries, manifests and lockfiles are unchanged.
+
+### Evidence classification
+
+The clean host-live production path persisted project
+`9731c398-70c2-4dd5-a3ab-6474153a1795`, current snapshot
+`b68e48e9-9a09-40cd-ad27-6c4efde47d52`, source asset
+`2cf910c8-6679-4776-9a9d-e3dd569d52fe` and scene
+`7d1c62b3-285d-44f6-b907-ce0b25945f4e` in local database/object storage.
+The evaluation records their exact hashes and screenshots. This is
+synthetic-input local software evidence, not deployment, provider,
+representative-property, survey, professional, WebGL-canvas or physical-device
+evidence.
+
+C8 v2 remains acceptance-only. No C8/C9 live run, C8 v2 product route, Xcode,
+RoomPlan, LiDAR or physical Apple device validation is claimed. C15 remains
+closed. The final branch is gated and pushed, and its non-draft PR is left
+unmerged for independent review.

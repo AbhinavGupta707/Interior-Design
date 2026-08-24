@@ -5,7 +5,7 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (23 August 2026):** corrective checkpoint C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is active to make the normal property, intake, evidence, unmeasured-model, C6 correction and C10 exploration path genuinely persisted and server-authorised. It is governed by the active plan and `docs/orchestration/checkpoints/C14_2_PERSISTED_HOMEOWNER_SETUP_CONTRACT.md`; C15 remains closed and C8 v2 remains acceptance-only.
+**Current execution note (24 August 2026):** corrective checkpoints C14.1 and C14.2 are closed. The Windows-testable core journey now uses normal controls and persisted server-authorised state from property/intake/evidence through an explicitly unmeasured model, C6 correction, separate C5 preview/commit and exact C10 exploration. Evidence is synthetic-input local software acceptance, not a representative property, provider, WebGL canvas or physical Apple result. C15 remains closed and C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 

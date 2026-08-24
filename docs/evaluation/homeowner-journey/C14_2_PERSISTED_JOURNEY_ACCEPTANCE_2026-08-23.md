@@ -31,7 +31,11 @@ reviewed, previewed and committed through C5.
 
 ## Revision and orchestration trail
 
-- Production repair/live-evidence revision: `076901d`.
+- L1 worker `616a1770200aa052466c189d62ae01a7c928ec29`; reviewed integration
+  `6dd78a86e75c36fdcf3dc7949b36156fbe31a56c`.
+- L2 worker `486d9fbde9149181831a0623faafea67536137e8`; reviewed integration
+  `030e294a84b830ddd4b85880b1aba7804cb0e422`.
+- Production repair/live-evidence revision: `076901d42e5fa381ed0f04d003061e4b00c56ba8`.
 - Formatting-only integration revision with full repository verification:
   `fac7fe661602fe8c3937de36c19ea10a7b8aad12`.
 - Authoritative replacement L3 task:
@@ -45,6 +49,10 @@ reviewed, previewed and committed through C5.
   `ea5d0f77ce11add5e049eb4f9c57e93eb8b85736`.
 - Orchestrator review/repair and passing acceptance commit:
   `49faeb2869c9b4e3d9622c3bd1075112d37881bf`.
+- Initial durable evaluation commit:
+  `7f77329f47384526ec5eda43c1822f87a13ca75c`.
+- Final reviewed product/evidence integration revision:
+  `dd225fa6b3d8baa7340f8236162bfa2860d4add0`.
 - Stale duplicate task `01a03070-7dfc-7c13-b684-9fa80c879e97` at
   `6919cea` was not resumed, merged or used as an integration source.
 

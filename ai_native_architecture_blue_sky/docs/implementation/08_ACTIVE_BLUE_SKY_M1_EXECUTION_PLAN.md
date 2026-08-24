@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-23 the user authorised the corrective homeowner sequence before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge; C14.2 is active for persisted property/intake/evidence setup, honest canonical initialization and the host-live C6 plan-to-C10 journey. Neither checkpoint production-routes C8 v2 or authorises C15.
+On 2026-08-23 the user authorised the corrective homeowner sequence before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey, with synthetic-input local host-live evidence and deterministic rendered acceptance. Neither checkpoint production-routes C8 v2; C15 remains closed pending a separate user decision.
 
 M1 includes:
 
@@ -315,6 +315,8 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 | C14.2-L1 attribution binding | isolated integrated C5 service and focused route tests | authenticated-actor binding for every nested user assertion before initialization or preview persistence |
 | C14.2-L2 persisted web setup | exact C5 BFF/editor, homeowner-journey, C6 continuity and focused web tests | acknowledgement-only server-built unmeasured initialization, current-branch confirmation gating and precise expiry recovery |
 | C14.2-L3 persisted journey acceptance | isolated homeowner-setup E2E/integration/security/evaluation paths | normal-navigation browser evidence plus disposable Postgres/object-storage/API/worker seams and honest external deferrals |
+
+**Status:** closed at the reviewed product/evidence integration revision `dd225fa6b3d8baa7340f8236162bfa2860d4add0`; final closeout documentation and the non-draft PR remain on the same integration branch. C8 v2, a real C8/C9 run, a representative property, WebGL canvas evidence and Apple physical validation are not included.
 
 **Gate:** persisted state and server authorization drive every stage; initialization fabricates no interior; user attribution is actor-bound; the host-live path uses the production C6 parser and exact C5/C10 contracts; C9 multi-source and physical Apple claims remain deferred unless their real source/runtime gates are genuinely met.
 
