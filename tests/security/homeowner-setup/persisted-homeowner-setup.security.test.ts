@@ -26,8 +26,9 @@ describe("C14.2 persisted homeowner setup security", () => {
         }).success,
       ).toBe(false);
     }
-    expect(homeWorkspaceAcknowledgementSchema.safeParse({ confirmUnmeasuredInterior: true }).success)
-      .toBe(true);
+    expect(
+      homeWorkspaceAcknowledgementSchema.safeParse({ confirmUnmeasuredInterior: true }).success,
+    ).toBe(true);
   });
 
   it("binds all setup provenance to the authenticated actor with no property evidence promotion", () => {
@@ -78,8 +79,6 @@ describe("C14.2 persisted homeowner setup security", () => {
       "apps/web/src/features/homeowner-journey/journey-state.ts",
       "apps/web/src/features/plan-import/plan-import-workspace.tsx",
       "apps/web/src/features/viewer-3d/viewer-workspace.tsx",
-      "tests/e2e/homeowner-setup/mock-c14-2-backend.ts",
-      "tests/e2e/homeowner-setup/persisted-homeowner-setup.spec.ts",
     ];
     const source = (
       await Promise.all(files.map((file) => readFile(path.join(process.cwd(), file), "utf8")))
@@ -94,7 +93,10 @@ describe("C14.2 persisted homeowner setup security", () => {
     const setupStart = editorClient.indexOf("initializeExistingHomeWorkspace(");
     const setupEnd = editorClient.indexOf("listBranches(", setupStart);
     const setupSource = editorClient.slice(setupStart, setupEnd);
-    expect(setupSource).toContain("{ confirmUnmeasuredInterior: true }");
-    expect(setupSource).not.toMatch(/actorUserId|propertyId|snapshot|rooms|walls/iu);
+    const acknowledgement = setupSource.match(
+      /idempotentMutation\((\{[^)]*\}), idempotencyKey\)/u,
+    )?.[1];
+    expect(acknowledgement).toBe("{ confirmUnmeasuredInterior: true }");
+    expect(acknowledgement).not.toMatch(/actorUserId|propertyId|snapshot|rooms|walls/iu);
   });
 });

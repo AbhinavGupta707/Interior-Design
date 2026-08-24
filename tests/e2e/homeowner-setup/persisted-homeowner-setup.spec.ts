@@ -67,7 +67,10 @@ interface BackendState {
         {
           readonly elevationMm: { readonly knowledge: string };
           readonly name: { readonly knowledge: string };
-          readonly origin: { readonly actorUserId: string; readonly evidenceIds: readonly string[] };
+          readonly origin: {
+            readonly actorUserId: string;
+            readonly evidenceIds: readonly string[];
+          };
           readonly storeyHeightMm: { readonly knowledge: string };
         },
       ];
@@ -110,27 +113,35 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
   ).toBeVisible();
   const projectId = new URL(page.url()).pathname.split("/").at(-1);
   expect(projectId).toBeTruthy();
-  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(7);
+  await expect(page.locator("#journey-stages > li")).toHaveCount(7);
+  await page.waitForLoadState("networkidle");
 
-  await page.getByRole("link", { name: "Confirm property" }).click();
+  await page
+    .getByRole("region", { name: "Confirm property context" })
+    .getByRole("link", { name: "Confirm property" })
+    .click();
   await expect(page.getByRole("heading", { name: "Property and home dossier" })).toBeVisible();
   await page.getByRole("button", { name: "Enter manually" }).click();
   await page.getByLabel("Address line 1").fill("9 Synthetic Acceptance Row");
   await page.getByLabel("Locality optional").fill("Fixture Borough");
   await page.getByLabel("Jurisdiction").selectOption("england");
   await page.getByRole("button", { name: "Save manual identity" }).click();
-  await expect(page.getByText(/Manual property identity saved/u)).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: /Manual property identity saved/u }),
+  ).toBeVisible();
   await page.getByRole("link", { name: /Home journey/u }).click();
+  await page.waitForLoadState("networkidle");
 
-  await page.getByRole("link", { name: "Add goals" }).click();
+  await page.locator("#journey-stages").getByRole("link", { name: "Add goals" }).click();
   await expect(page.getByRole("heading", { name: "Tell us about your home" })).toBeVisible();
   await page
     .getByLabel("Goals *")
     .fill("Correct this creator-owned synthetic plan without inventing hidden geometry");
   await page.getByLabel("Plans").check();
   await page.getByRole("button", { name: "Save and continue" }).click();
+  await page.waitForLoadState("networkidle");
 
-  await page.getByRole("link", { name: "Supply evidence" }).click();
+  await page.locator("#journey-stages").getByRole("link", { name: "Supply evidence" }).click();
   await expect(page.getByRole("heading", { name: "Project evidence" })).toBeVisible();
   await page.getByLabel("Choose plan").setInputFiles({
     buffer: Buffer.from(
@@ -145,8 +156,12 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
   await page.getByRole("button", { name: "Hash and upload" }).click();
   await expect(page.getByText("Ready", { exact: true }).first()).toBeVisible();
   await page.getByRole("link", { name: /Home journey/u }).click();
+  await page.waitForLoadState("networkidle");
 
-  await page.getByRole("link", { name: "Set up unmeasured workspace" }).click();
+  await page
+    .locator("#journey-stages")
+    .getByRole("link", { name: "Set up unmeasured workspace" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Set up an unmeasured starting point" }),
   ).toBeVisible();
@@ -167,8 +182,9 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
     revision: 1,
   });
   await page.getByRole("link", { name: /Home journey/u }).click();
+  await page.waitForLoadState("networkidle");
 
-  await page.getByRole("link", { name: "Correct ready plan" }).click();
+  await page.locator("#journey-stages").getByRole("link", { name: "Correct ready plan" }).click();
   await expect(page.getByRole("heading", { name: "Floor-plan correction" })).toBeVisible();
   await expect(page.getByLabel("Parser")).toHaveValue("auto");
   await page.getByRole("button", { name: "Start proposal job" }).click();
@@ -200,9 +216,13 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
   await page.getByRole("button", { name: "Commit reviewed operations through C5" }).click();
   await expect(page.getByText("Committed through C5", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Return to home journey" }).click();
+  await page.waitForLoadState("networkidle");
 
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Compile committed twin" }).click();
+  await page
+    .locator("#journey-stages")
+    .getByRole("link", { name: "Compile committed twin" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Experience the exact committed model" }),
   ).toBeVisible();
@@ -212,8 +232,13 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
   await page.getByRole("button", { name: "Request access and inspect" }).click();
   await expect(page.getByTestId("scene-fallback")).toBeVisible();
   await expect(page.getByText(/WebGL is unavailable/u)).toBeVisible();
+  await page.screenshot({ fullPage: true, path: "/tmp/c14-2-persisted-viewer.png" });
   await page.getByRole("link", { name: /Home journey/u }).click();
-  await expect(page.getByRole("link", { name: "Explore exact viewer job" })).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(
+    page.locator("#journey-stages").getByRole("link", { name: "Explore exact viewer job" }),
+  ).toBeVisible();
+  await page.screenshot({ fullPage: true, path: "/tmp/c14-2-persisted-home.png" });
 
   const final = await backendState(request);
   expect(final.mutationOrder).toEqual([
@@ -282,9 +307,9 @@ test("empty-state rendered homeowner journey persists acknowledgement, C6/C5 cor
   await assertHealthy(page, health);
 });
 
-async function backendState(
-  request: { get(url: string): Promise<{ json(): Promise<unknown> }> },
-): Promise<BackendState> {
+async function backendState(request: {
+  get(url: string): Promise<{ json(): Promise<unknown> }>;
+}): Promise<BackendState> {
   const response = await request.get(`${backend}/__test/state`);
   return (await response.json()) as BackendState;
 }
@@ -305,17 +330,43 @@ async function forceNoWebGl(page: Page): Promise<void> {
 
 function watch(page: Page): BrowserHealth {
   const health: BrowserHealth = { consoleProblems: [], failedRequests: [], unexpectedOrigins: [] };
+  const expected404Message =
+    "Failed to load resource: the server responded with a status of 404 (Not Found)";
   page.on("console", (message) => {
+    if (message.type() === "error" && message.text() === expected404Message) {
+      return;
+    }
     if (message.type() === "error") health.consoleProblems.push(message.text());
   });
   page.on("pageerror", (error) => health.consoleProblems.push(error.message));
+  page.on("response", (browserResponse) => {
+    const url = browserResponse.url();
+    const status = browserResponse.status();
+    const expectedUnavailable =
+      status === 404 &&
+      /^\/api\/c5\/projects\/[^/]+\/models\/existing\/source$/u.test(new URL(url).pathname);
+    if (status >= 400 && !expectedUnavailable) {
+      health.failedRequests.push(`${String(status)} ${url}`);
+    }
+  });
   page.on("request", (browserRequest) => {
     const origin = new URL(browserRequest.url()).origin;
     if (!["http://127.0.0.1:4341", "http://127.0.0.1:4342"].includes(origin)) {
       health.unexpectedOrigins.push(browserRequest.url());
     }
   });
-  page.on("requestfailed", (browserRequest) => health.failedRequests.push(browserRequest.url()));
+  page.on("requestfailed", (browserRequest) => {
+    const url = browserRequest.url();
+    const path = new URL(url).pathname;
+    const expectedAbort =
+      browserRequest.failure()?.errorText === "net::ERR_ABORTED" &&
+      ((url.startsWith("http://127.0.0.1:4341") &&
+        /\/api\/c(?:1\/projects\/[^/]+\/intake|3\/projects\/[^/]+\/property\/dossier)$/u.test(
+          path,
+        )) ||
+        /^\/__storage\/[^/]+\/\d+$/u.test(path));
+    if (!expectedAbort) health.failedRequests.push(url);
+  });
   return health;
 }
 

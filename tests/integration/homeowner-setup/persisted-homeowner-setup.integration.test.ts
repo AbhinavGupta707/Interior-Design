@@ -9,11 +9,7 @@ import {
   type HomeJourneyInput,
 } from "../../../apps/web/src/features/homeowner-journey/journey-state";
 import { buildOperationDraftInput } from "../../../apps/web/src/features/plan-import/review-model";
-import {
-  calibration,
-  proposal,
-  session,
-} from "../../../apps/web/test/plan-import/fixtures";
+import { calibration, proposal, session } from "../../../apps/web/test/plan-import/fixtures";
 
 const projectId = "e1420000-0000-4000-8000-000000000001";
 const setupSnapshotId = "e1420000-0000-4000-8000-000000000002";
@@ -110,9 +106,7 @@ describe("C14.2 persisted homeowner setup integration", () => {
   it("keeps setup and proposal non-canonical until an exact changed current branch is committed", () => {
     const initialized = deriveHomeJourney(journey());
     expect(initialized.stages.find(({ id }) => id === "setup")?.status).toBe("complete");
-    expect(initialized.stages.find(({ id }) => id === "proposal")?.status).toBe(
-      "proposal-ready",
-    );
+    expect(initialized.stages.find(({ id }) => id === "proposal")?.status).toBe("proposal-ready");
     expect(initialized.stages.find(({ id }) => id === "confirmation")?.status).toBe(
       "proposal-ready",
     );
@@ -141,9 +135,7 @@ describe("C14.2 persisted homeowner setup integration", () => {
       },
     });
     const committedState = deriveHomeJourney(committed);
-    expect(committedState.stages.find(({ id }) => id === "confirmation")?.status).toBe(
-      "confirmed",
-    );
+    expect(committedState.stages.find(({ id }) => id === "confirmation")?.status).toBe("confirmed");
     expect(committedState.stages.find(({ id }) => id === "twin")?.actionLabel).toBe(
       "Compile committed twin",
     );
@@ -192,7 +184,10 @@ describe("C14.2 persisted homeowner setup integration", () => {
 
   it("builds actor-bound typed operations while the C6 proposal itself remains only a draft input", () => {
     const reviews = Object.fromEntries(
-      proposal.candidates.map(({ candidateId }) => [candidateId, { decision: "accepted" }]),
+      proposal.candidates.map(({ candidateId }) => [
+        candidateId,
+        { decision: "accepted" as const },
+      ]),
     );
     const result = buildOperationDraftInput({
       actorUserId: session.actor.userId,
@@ -203,8 +198,9 @@ describe("C14.2 persisted homeowner setup integration", () => {
     expect(result.decisions).toHaveLength(proposal.candidates.length);
     expect(result.decisions.every(({ decision }) => decision === "accepted")).toBe(true);
     expect(result.operations).toHaveLength(proposal.candidates.length);
-    expect(result.operations.every(({ schemaVersion }) => schemaVersion === "c5-model-operation-v1"))
-      .toBe(true);
+    expect(
+      result.operations.every(({ schemaVersion }) => schemaVersion === "c5-model-operation-v1"),
+    ).toBe(true);
     expect(result).not.toHaveProperty("commit");
     expect(result).not.toHaveProperty("snapshot");
   });

@@ -507,7 +507,7 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       return;
     }
     if (resource === "property/source-records" && request.method === "GET") {
-      json(response, 200, state.dossier?.sources ?? []);
+      json(response, 200, { sources: state.dossier?.sources ?? [] });
       return;
     }
     if (resource === "assets" && request.method === "GET") {
@@ -560,7 +560,10 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       });
       return;
     }
-    if (resource === `assets/upload-sessions/${ids.uploadSession}/parts` && request.method === "POST") {
+    if (
+      resource === `assets/upload-sessions/${ids.uploadSession}/parts` &&
+      request.method === "POST"
+    ) {
       const body = await readBody(request);
       if (!state.upload) throw new Error("Upload state is missing.");
       state.upload.state = "uploading";
@@ -573,7 +576,10 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       });
       return;
     }
-    if (resource === `assets/upload-sessions/${ids.uploadSession}/complete` && request.method === "POST") {
+    if (
+      resource === `assets/upload-sessions/${ids.uploadSession}/complete` &&
+      request.method === "POST"
+    ) {
       const body = await readBody(request);
       if (!state.upload || body.sha256 !== (state.upload.asset.source as JsonObject).sha256) {
         problem(response, 409, "CHECKSUM_MISMATCH", "The final asset checksum did not match.");
@@ -615,12 +621,14 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       const snapshot = body.snapshot as JsonObject;
       state.setupRequest = body;
       state.setupSnapshot = {
+        canonicalByteLength: Buffer.byteLength(canonicalJson(snapshot), "utf8"),
         createdAt: now,
         createdBy: ids.owner,
         id: ids.setupSnapshot,
         modelId: snapshot.modelId,
         profile: "existing",
         projectId: ids.project,
+        schemaVersion: "c4-canonical-home-v1",
         snapshot,
         snapshotSha256: "1".repeat(64),
         version: 1,
@@ -659,6 +667,11 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       );
       if (!found) problem(response, 404, "NOT_FOUND", "The exact snapshot is unavailable.");
       else json(response, 200, found);
+      return;
+    }
+    const operationHistory = resource.match(/^models\/existing\/branches\/([^/]+)\/operations$/u);
+    if (operationHistory && request.method === "GET" && state.branch?.id === operationHistory[1]) {
+      json(response, 200, { operations: [] });
       return;
     }
     const exactBranch = resource.match(/^models\/existing\/branches\/([^/]+)$/u);
@@ -768,7 +781,12 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     const commitMatch = resource.match(/^models\/existing\/branches\/([^/]+)\/commits$/u);
     if (commitMatch && request.method === "POST") {
       const body = await readBody(request);
-      if (body.previewId !== ids.preview || !state.preview || !state.setupSnapshot || !state.branch) {
+      if (
+        body.previewId !== ids.preview ||
+        !state.preview ||
+        !state.setupSnapshot ||
+        !state.branch
+      ) {
         problem(response, 409, "PREVIEW_REQUIRED", "Commit requires the exact current preview.");
         return;
       }
@@ -831,7 +849,12 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
         source.snapshotSha256 !== state.committedSnapshot.snapshotSha256 ||
         source.profile !== "existing"
       ) {
-        problem(response, 409, "SCENE_SOURCE_CONFLICT", "Use the exact current committed snapshot.");
+        problem(
+          response,
+          409,
+          "SCENE_SOURCE_CONFLICT",
+          "Use the exact current committed snapshot.",
+        );
         return;
       }
       state.sceneJob = {
