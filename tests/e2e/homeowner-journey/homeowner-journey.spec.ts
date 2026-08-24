@@ -145,7 +145,7 @@ test("normal project create/resume reaches the route and owner completes only ex
     .click();
   await resumeBridge(page);
 
-  await expect(page.locator("#journey-stages > li")).toHaveCount(6);
+  await expect(page.locator("#journey-stages > li")).toHaveCount(7);
   const twinStage = page.locator("#journey-stages > li").filter({
     hasText: "Build and explore the committed twin",
   });
@@ -318,7 +318,7 @@ test("one unavailable C8 or C9 read degrades only the proposal stage and preserv
     hasText: "Reconstruction and fusion proposal",
   });
   await expect(proposalStage).toHaveAttribute("data-stage-state", "proposal-ready");
-  await expect(proposalStage).toContainText("One proposal source is unavailable");
+  await expect(proposalStage).toContainText("One or more proposal sources are unavailable");
   for (const title of [
     "Confirm property context",
     "Renovation goals and available evidence",
@@ -341,7 +341,7 @@ test("one unavailable C8 or C9 read degrades only the proposal stage and preserv
   await page.reload();
   await expect(page.getByText("Partial journey available")).toBeVisible();
   await expect(proposalStage).toHaveAttribute("data-stage-state", "needs-attention");
-  await expect(proposalStage).toContainText("One proposal source is unavailable");
+  await expect(proposalStage).toContainText("One or more proposal sources are unavailable");
   await expect(
     page.locator("#journey-stages > li").filter({ hasText: "Confirm property context" }),
   ).toHaveAttribute("data-stage-state", "complete");
@@ -383,7 +383,7 @@ for (const [scenario, expected, acceptedPreviews] of [
 
 for (const [scenario, expected] of [
   ["commit-conflict", "branch revision or head changed"],
-  ["commit-expired", "branch revision or head changed"],
+  ["commit-expired", "preview expired"],
   ["commit-forbidden", "role cannot complete the canonical handoff"],
   ["commit-unavailable", "correction commit was not created"],
 ] as const) {
@@ -445,12 +445,12 @@ test("C10 remains unavailable until the exact committed snapshot is exposed by t
   expect(state.accepted.c10Create).toHaveLength(0);
 });
 
-test("390px mobile project navigation and six-stage semantics stay readable without horizontal overflow @mobile", async ({
+test("390px mobile project navigation and seven-stage semantics stay readable without horizontal overflow @mobile", async ({
   page,
 }) => {
   await signIn(page);
   await resumeBridge(page);
-  await expect(page.locator("#journey-stages > li")).toHaveCount(6);
+  await expect(page.locator("#journey-stages > li")).toHaveCount(7);
   await expect(
     page.getByRole("link", { name: "Review full-house proposal" }).first(),
   ).toBeVisible();

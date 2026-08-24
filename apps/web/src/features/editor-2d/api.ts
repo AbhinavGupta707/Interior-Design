@@ -99,7 +99,10 @@ async function editorProblemFrom(response: Response): Promise<EditorProblem> {
   );
 }
 
-function idempotentMutation(body: unknown, idempotencyKey = crypto.randomUUID()): RequestInit {
+function idempotentMutation(
+  body: unknown,
+  idempotencyKey: string = crypto.randomUUID(),
+): RequestInit {
   return {
     body: JSON.stringify(body),
     headers: {

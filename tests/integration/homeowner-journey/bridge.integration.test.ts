@@ -65,7 +65,15 @@ function unavailable<T>(
 
 function journeyInput(overrides: Partial<HomeJourneyInput> = {}): HomeJourneyInput {
   return {
-    branches: ready({ revisions: [1] }),
+    branches: ready({
+      branches: [
+        {
+          headSnapshotId: committedSnapshotId,
+          revision: 1,
+          sourceSnapshotId: snapshotRecord.id,
+        },
+      ],
+    }),
     currentSnapshot: ready({ snapshotId: committedSnapshotId }),
     evidence: ready({ assets: [{ kind: "photograph", status: "ready" }] }),
     fusion: ready({ jobs: [{ state: "proposed" }] }),
@@ -73,6 +81,7 @@ function journeyInput(overrides: Partial<HomeJourneyInput> = {}): HomeJourneyInp
       evidenceAvailable: { photographs: true, plans: false, roomCapture: false, video: false },
       goals: ["Improve the kitchen"],
     }),
+    plan: ready({ jobs: [] }),
     projectId: project.id,
     property: ready({ confirmed: true }),
     reconstruction: ready({ jobs: [{ state: "completed" }] }),
@@ -233,7 +242,7 @@ describe("C14.1 bridge integration acceptance", () => {
       const state = deriveHomeJourney(input);
       const proposalStage = state.stages.find(({ id }) => id === "proposal");
       expect(proposalStage).toMatchObject({ degraded: true });
-      expect(proposalStage?.detail).toContain("One proposal source is unavailable");
+      expect(proposalStage?.detail).toContain("One or more proposal sources are unavailable");
       expect(state.stages.find(({ id }) => id === "property")?.status).toBe("complete");
       expect(state.stages.find(({ id }) => id === "goals")?.status).toBe("complete");
       expect(state.stages.find(({ id }) => id === "evidence")?.status).toBe("complete");
