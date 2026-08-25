@@ -6,6 +6,12 @@ The repository contains a deterministic, visibly synthetic conformance split onl
 
 This is a named C7/C18 release blocker. Simulator navigation, XCUITest fixture journeys, generic iOS compilation and schema fixtures cannot close it.
 
+The 25 August 2026 Mac follow-up passed the named Xcode/Simulator and unsigned
+physical-SDK scope but did not add a physical sample or close this blocker. See
+the [Apple Xcode acceptance](../homeowner-journey/C14_1_APPLE_XCODE_ACCEPTANCE_2026-08-25.md)
+and the bounded
+[one-bedroom physical-device plan](../../runbooks/ios/C14_1_ONE_BEDROOM_PHYSICAL_DEVICE_PLAN.md).
+
 ## What the pack evaluates
 
 The independent evaluator in `tests/evaluation/roomplan` separates three questions:
