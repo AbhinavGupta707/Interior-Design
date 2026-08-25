@@ -48,7 +48,7 @@ jobs:
           corepack prepare pnpm@10.33.0 --activate
           test "$(node --version)" = "v$(cat .nvmrc)"
           test "$(pnpm --version)" = "10.33.0"
-          test "$(node -p "require('./package.json').packageManager")" = "pnpm@10.33.0"
+          test "$(node -p 'require("./package.json").packageManager')" = "pnpm@10.33.0"
 
       - name: Install JavaScript dependencies
         shell: bash
@@ -94,7 +94,7 @@ jobs:
 
       - name: Run Python lint, types, and tests
         shell: bash
-        run: pnpm --version >/dev/null 2>&1 || true; uv run ruff check . && uv run mypy . && uv run pytest
+        run: uv run ruff check . && uv run mypy . && uv run pytest
 
   portable-gates:
     name: Portable contract and security gates
