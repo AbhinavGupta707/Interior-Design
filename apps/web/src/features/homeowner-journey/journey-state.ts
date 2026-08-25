@@ -458,8 +458,7 @@ function exactCurrentSpecifications(input: HomeJourneyInput) {
         currentJobIds.has(sourceConfirmation.jobId) &&
         sourceBrief.briefId === brief.id &&
         sourceBrief.revision === brief.revision &&
-        sourceBrief.contentSha256 === brief.contentSha256 &&
-        sourceConfirmation.profile === "proposed"
+        sourceBrief.contentSha256 === brief.contentSha256
       );
     })
     .sort(
