@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-25 the user authorised the next smallest complete homeowner checkpoint before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey. C14.3 is open to extend normal navigation from the confirmed exact-current twin through C11 consultation, C12 options, C13 specification, proposed C10 exploration and C14 geometry-safe stills. None of these corrective checkpoints production-routes C8 v2; C15 remains closed.
+On 2026-08-25 the user authorised the next smallest complete homeowner checkpoint before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey. C14.3 is closed for Windows/WSL web continuity in unmerged PR #5: normal navigation now extends from the confirmed exact-current twin through C11 consultation, C12 options, C13 specification, proposed C10 exploration and C14 geometry-safe stills. The Mac/iPad audit and its two provisional shared API decisions remain pending; no later checkpoint is open. None of these corrective checkpoints production-routes C8 v2; C15 remains closed.
 
 M1 includes:
 

@@ -86,3 +86,22 @@ Root manifests and lockfiles, shared contracts/OpenAPI/generated clients, servic
 ## Terminal rule
 
 C14.3 may close only after both sequential bodies are implemented and reviewed, the complete Windows/WSL-testable design loop is rendered and statefully verified through normal navigation, documentation matches exact evidence and a non-draft PR targeting `main` is open for review. Shared mobile/backend changes are not part of this checkpoint and remain provisional pending the separate Mac/iPad audit. C15 remains closed and the PR must not be merged by this run.
+
+## Closeout — 2026-08-25
+
+C14.3 is closed for its frozen Windows/WSL web-continuity scope in non-draft PR
+[#5](https://github.com/AbhinavGupta707/Interior-Design/pull/5), targeting `main` and left
+unmerged. Product commit `9d88d1c`, acceptance commit `bd3f1d3`, review repair `408b809` and
+evidence/handoff commit `2de820e` satisfy the sequential bodies.
+
+Counted evidence: focused web 141/141; independent integration 4/4; security 4/4; final rendered
+normal-navigation Chromium workflow 1/1; full repository verify with all 24 lint/typecheck/build
+tasks, all 45 unit dependency tasks, web 227/227, Ruff/mypy clean and Python 157 passed/two optional
+capability skips; `git diff --check` clean. The final screenshot is
+`/tmp/c14-3-homeowner-design-studio-final.png`, 1440×3409, SHA-256
+`6f549b673f454ac391f17e4e7a33ec85863f5ede99d4305cf04b1928616e9de0`.
+
+The synthetic fixture proves software continuity only. Native Apple paths, shared contracts,
+services, C8 v1 and C8-v2 are unchanged. Cross-device C12 confirmation recovery and
+server-authoritative C14 eligible-source discovery remain provisional in the Mac handoff; no shared
+assumption is frozen. C15 remains closed and no later checkpoint is open.
