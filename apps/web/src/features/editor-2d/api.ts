@@ -26,6 +26,7 @@ import { editorBranchWorkspaceSchema } from "./contracts";
 import type { EditorBranchComparison, EditorBranchWorkspace } from "./contracts";
 
 export type EditorProblemKind =
+  | "already-initialized"
   | "conflict"
   | "expired"
   | "forbidden"
@@ -58,9 +59,17 @@ export class EditorProblem extends Error {
 export type EditorTransport = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 function problemKind(status: number, code?: string): EditorProblemKind {
-  if (status === 401) return "expired";
+  if (
+    status === 401 ||
+    status === 410 ||
+    code === "PREVIEW_EXPIRED" ||
+    code?.endsWith("_EXPIRED")
+  ) {
+    return "expired";
+  }
   if (status === 403) return "forbidden";
   if (status === 404) return "not-found";
+  if (code === "TYPED_OPERATION_REQUIRED") return "already-initialized";
   if (status === 409 || code === "BRANCH_REVISION_CONFLICT") return "conflict";
   return "unavailable";
 }
@@ -90,13 +99,16 @@ async function editorProblemFrom(response: Response): Promise<EditorProblem> {
   );
 }
 
-function idempotentMutation(body: unknown): RequestInit {
+function idempotentMutation(
+  body: unknown,
+  idempotencyKey: string = crypto.randomUUID(),
+): RequestInit {
   return {
     body: JSON.stringify(body),
     headers: {
       accept: "application/json, application/problem+json",
       "content-type": "application/json",
-      "idempotency-key": crypto.randomUUID(),
+      "idempotency-key": idempotencyKey,
     },
     method: "POST",
   };
@@ -181,6 +193,16 @@ export function createEditorClient(transport: EditorTransport = fetch) {
     getCurrentSnapshot(projectId: string, profile: ModelProfile): Promise<ModelSnapshotRecord> {
       modelProfileSchema.parse(profile);
       return request(`${editorBase(projectId, profile)}/source`, modelSnapshotRecordSchema);
+    },
+    initializeExistingHomeWorkspace(
+      projectId: string,
+      idempotencyKey: string,
+    ): Promise<ModelSnapshotRecord> {
+      return request(
+        `${editorBase(projectId, "existing")}/home-workspace`,
+        modelSnapshotRecordSchema,
+        idempotentMutation({ confirmUnmeasuredInterior: true }, idempotencyKey),
+      );
     },
     listBranches(projectId: string, profile: ModelProfile): Promise<ModelBranch[]> {
       return request(

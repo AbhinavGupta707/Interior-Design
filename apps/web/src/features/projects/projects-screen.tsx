@@ -8,6 +8,7 @@ import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
 import { ClientProblem, createProject, getSession, listProjects, signOut } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 
 type ProjectViewState =
   | { kind: "empty"; session: Session }
@@ -70,7 +71,7 @@ export function ProjectsScreen() {
     setCreateError(undefined);
     try {
       const project = await createProject(projectName);
-      router.push(`/onboarding/${project.id}`);
+      router.push(homeJourneyHref(project.id));
     } catch (reason) {
       setCreateError(
         reason instanceof ClientProblem ? reason.message : "The project could not be created.",
@@ -235,42 +236,56 @@ export function ProjectsScreen() {
                   </p>
                 </div>
                 <div className="project-row__actions">
-                  <Link className="project-row__action" href={`/onboarding/${project.id}`}>
-                    Resume intake
+                  <Link className="project-row__primary" href={homeJourneyHref(project.id)}>
+                    Resume home journey
                   </Link>
-                  <Link className="project-row__action" href={`/design-consultation/${project.id}`}>
-                    Design consultation
-                  </Link>
-                  <Link className="project-row__action" href={`/evidence/${project.id}`}>
-                    Evidence
-                  </Link>
-                  <Link className="project-row__action" href={`/property/${project.id}`}>
-                    Property dossier
-                  </Link>
-                  <Link className="project-row__action" href={`/editor/${project.id}`}>
-                    2D editor
-                  </Link>
-                  <Link className="project-row__action" href={`/plan-import/${project.id}`}>
-                    Correct floor plan
-                  </Link>
-                  <Link className="project-row__action" href={`/reconstruction/${project.id}`}>
-                    Reconstruct media
-                  </Link>
-                  <Link className="project-row__action" href={`/fusion/${project.id}`}>
-                    Reconcile sources
-                  </Link>
-                  <Link className="project-row__action" href={`/viewer/${project.id}`}>
-                    3D walkthrough
-                  </Link>
-                  <Link className="project-row__action" href={`/design-options/${project.id}`}>
-                    Design options
-                  </Link>
-                  <Link className="project-row__action" href={`/materials-products/${project.id}`}>
-                    Materials &amp; room specification
-                  </Link>
-                  <Link className="project-row__action" href={`/render-stills/${project.id}`}>
-                    Geometry-safe stills
-                  </Link>
+                  <details className="project-row__tools">
+                    <summary>Specialist tools</summary>
+                    <div>
+                      <Link className="project-row__action" href={`/onboarding/${project.id}`}>
+                        Structured intake
+                      </Link>
+                      <Link
+                        className="project-row__action"
+                        href={`/design-consultation/${project.id}`}
+                      >
+                        Design consultation
+                      </Link>
+                      <Link className="project-row__action" href={`/evidence/${project.id}`}>
+                        Evidence
+                      </Link>
+                      <Link className="project-row__action" href={`/property/${project.id}`}>
+                        Property dossier
+                      </Link>
+                      <Link className="project-row__action" href={`/editor/${project.id}`}>
+                        2D editor
+                      </Link>
+                      <Link className="project-row__action" href={`/plan-import/${project.id}`}>
+                        Correct floor plan
+                      </Link>
+                      <Link className="project-row__action" href={`/reconstruction/${project.id}`}>
+                        Reconstruct media
+                      </Link>
+                      <Link className="project-row__action" href={`/fusion/${project.id}`}>
+                        Reconcile sources
+                      </Link>
+                      <Link className="project-row__action" href={`/viewer/${project.id}`}>
+                        3D walkthrough
+                      </Link>
+                      <Link className="project-row__action" href={`/design-options/${project.id}`}>
+                        Design options
+                      </Link>
+                      <Link
+                        className="project-row__action"
+                        href={`/materials-products/${project.id}`}
+                      >
+                        Materials &amp; room specification
+                      </Link>
+                      <Link className="project-row__action" href={`/render-stills/${project.id}`}>
+                        Geometry-safe stills
+                      </Link>
+                    </div>
+                  </details>
                 </div>
               </article>
             ))}

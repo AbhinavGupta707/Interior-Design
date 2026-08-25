@@ -3,12 +3,12 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `main`
-- Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design`
+- Integration branch: `codex/homeowner-digital-twin-journey`
+- Repository/project root: `/home/abhinav/code/interior-design` in the primary WSL checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 are complete. C14 Session B closed the authorised-host gate for the exact accepted Linux CPU profile on codex/c14-windows-acceptance; C15 remains closed and terminal for this run, and C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2 are complete. No later checkpoint is open. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -624,9 +624,8 @@
 
 ## C8 v2 — RTX 5080 Blackwell modernisation correction
 
-- Status: **eligible workstation correction complete** on codex/c8-v2-blackwell.
-  PR #2 remains unmerged. C15 remains closed. Physical iOS and
-  representative-home field gates remain independently deferred-not-run.
+- Status: **acceptance-only workstation correction merged** to clean `main` by PR #2 at `54886f570c3bb559490a50727e4c77ed00834b52`.
+  C15 remains closed. Physical iOS and representative-home field gates remain independently deferred-not-run.
 - Authority: authorised base c48c60ee8f179603670207642e31c56eba84b315;
   counted RTX 5080 implementation
   ebf6cb173b73cc75e7b983f90a9d867a4f13f5e0; exact complete software-gate
@@ -696,12 +695,130 @@
   removed. Final counts are zero C8 temp paths, containers, tags, volumes,
   networks, or helper processes; the primary checkout is the only worktree. No
   global Docker prune, host CUDA/driver install, or unrelated deletion occurred.
-- Merge recommendation: PR #2 is ready for review/merge **only for the
-  acceptance-only workstation package and evidence contract**. It is not a
-  production reconstruction, representative-home, metric-accuracy, or field
-  acceptance.
+- Merge record: PR #2 was merged only as the acceptance-only workstation package and evidence contract. It is not a production reconstruction, representative-home, metric-accuracy, or field acceptance.
 - Remaining limits: no physical iOS/LiDAR/RoomPlan/ARKit pose, relocalisation,
   interruption, thermal, background-transfer, representative-home, multi-room,
   real-capture, metric-scale, survey comparison, customer/phone/provider data,
   paid/cloud provider, external model key, production deployment, or
   professional review evidence. C15 was not opened.
+
+## C14.1 — Homeowner reconstruction journey integration
+
+### Master activation
+
+- Status: closed as the first corrective bridge at integration commit `dc77288`; it is not completion of the overall homeowner slice.
+- Authority: user instruction dated 2026-08-23 to prioritise the next core homeowner slice over C15, MCPs or speculative planning intelligence and to leave the final PR unmerged.
+- Contract: `docs/orchestration/checkpoints/C14_1_HOMEOWNER_JOURNEY_CONTRACT.md`.
+- Verified predecessor: clean `main` and `origin/main` at `54886f570c3bb559490a50727e4c77ed00834b52`; PR #2 is present only as the C8 v2 acceptance package.
+- Integration branch: `codex/homeowner-digital-twin-journey`.
+- Planned lanes: two. Both are exact `gpt-5.6-sol` / `xhigh` and are recorded before launch.
+- Contract/migration impact: none. C1–C10 contracts, server-side permissions, C5 canonical mutation and C10 exact-snapshot compilation remain authoritative.
+
+| Lane                                     | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                                                              |
+| ---------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| C14.1-L1 guided journey and safe handoff | `01a02fc5-56b7-7f92-b574-dd710063fe23` | `C:/Users/abhin/.codex/worktrees/8478/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | allocated web home-journey, project/intake/property/evidence/reconstruction/fusion/viewer screens, CSS and focused web tests |
+| C14.1-L2 independent journey acceptance  | `01a02fec-b1c8-70b1-b70c-9afa227af272` | `C:/Users/abhin/.codex/worktrees/a263/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths                                       |
+
+### Discovery and prelude evidence
+
+- The primary WSL checkout was the only registered worktree. The branch was clean and exactly matched both requested and remote SHA before activation.
+- The clean predecessor `pnpm verify` gate passed Prettier, all 24 workspace lint/typecheck/build tasks, 45 unit task groups, Ruff, strict mypy and pytest 157 passed with two honest unavailable COLMAP/Open3D capability skips.
+- Code audit proved the smallest missing slice is orchestration, not a new inference domain: project navigation is fragmented; C1 already owns core renovation goals; C9 only renders its exact C5 draft; C5 commit already advances the canonical profile pointer; C10 already resolves that exact current committed snapshot.
+- The frozen mutation chain is C9 persisted proposal/draft → C5 preview → separate explicit confirmation → C5 commit → explicit C10 scene compilation. Preview blocking, stale, expired, denied or offline states change no canonical model.
+- Host preflight: WSL2 Linux 6.6 is authoritative; Node 22.22.2, pnpm 10.33.0, uv 0.11.16, Docker 29.5.3 and gh 2.92.0 are available. `nvidia-smi` is exposed through WSL. `xcodebuild` is absent, so Xcode/RoomPlan/LiDAR/physical Apple validation is not available on this host.
+- No real address, representative property, customer media, paid/cloud provider, production deployment or physical capture is activated. C8 v2 remains acceptance-only with no API/queue/worker/UI route and production routing disabled.
+
+### L1 integration record
+
+- Task `01a02fc5-56b7-7f92-b574-dd710063fe23` completed in the managed Windows worktree with worker commit `25eddb32cbf77f04c25ddd6a0e9488224579747b`; the worktree-only executable-bit projection was neutralised with `extensions.worktreeConfig` plus `core.filemode=false` and no content was discarded.
+- Orchestrator path/diff review found no shared-contract, migration, backend, manifest, lockfile, C8 v2 or automatic-mutation change. The commit was cherry-picked as integration commit `6845961`.
+- Review removed two test-environment labels from production UI: the journey no longer calls itself fixture-backed and property guidance says provider/manual rather than fixture/manual. The repair is `de68b0d`.
+- Focused homeowner-journey tests, web ESLint and web TypeScript checks passed after integration. The bridge retains distinct persisted C9 draft, exact C5 preview, explicit C5 commit and explicit C10 scene actions.
+- Per the user continuation instruction, C14.1 is the first corrective bridge checkpoint, not completion of the overall homeowner slice. After L2 acceptance the orchestrator must reassess and open minimal persisted setup/evidence checkpoints wherever executable gaps remain.
+
+### L2 acceptance and bridge closure
+
+- Task `01a02fec-b1c8-70b1-b70c-9afa227af272` completed with worker commit `9fb9678addec72cd69a7a440b76097e358135729`. Orchestrator path/content review found 12 authorised files, no production, contract, migration, manifest, lockfile or C8 v2 change; it was integrated as `dc77288`.
+- The managed Windows lane passed TypeScript for all three suites, integration 4/4, security 3/3 and Playwright 14/14; web lint/typecheck and lane formatting passed. The in-app browser controller failed before page action with a managed runner `spawn_ready` timeout and is not claimed.
+- The primary WSL checkout independently reran all three TypeScript configurations, integration 4/4, security 3/3 and Playwright 14/14 in 60 seconds across 1440×960 and 390×844.
+- Durable evidence: `docs/evaluation/homeowner-journey/C14_1_BRIDGE_ACCEPTANCE_2026-08-23.md` and `docs/runbooks/ios/C14_1_APPLE_HANDOFF.md`. All browser state is explicitly synthetic fixture/mock evidence; Xcode, Simulator, camera, RoomPlan, LiDAR, background transfer and physical device remain NOT RUN.
+- Independent acceptance found two production defects without repairing them: any branch revision above zero is treated as confirmed even though initialization creates revision 1, and `PREVIEW_EXPIRED` is rendered as a generic conflict. Discovery also proved the web has no normal first-model initialization path and integrated C5 does not bind nested user assertions to the authenticated actor.
+- C14.1 closes only the guided C9 → C5 → C10 bridge. C14.2 is opened for the persisted property/intake/evidence/unmeasured-model/C6/C5/C10 product path and provenance repair.
+
+### Frozen terminal rule
+
+- C14.1 is closed at `dc77288`. C14.2 must be reviewed, integrated and host-validated before the final non-draft PR. C15 remains closed and the final PR must not be merged by this run.
+
+## C14.2 — Persisted homeowner setup and plan-to-twin continuity
+
+### Master activation
+
+- Status: closed; all three lanes are reviewed and integrated, with exact host-live and rendered acceptance evidence recorded below.
+- Contract: `docs/orchestration/checkpoints/C14_2_PERSISTED_HOMEOWNER_SETUP_CONTRACT.md`.
+- Immutable checkpoint predecessor: `dc77288` on `codex/homeowner-digital-twin-journey`.
+- Outcome: normal product controls persist property, intake, evidence, explicit unmeasured initialization, C6 correction, C5 confirmation and exact C10 exploration without manual JSON, direct-route-only navigation, fixture-only completion or hidden canonical setup.
+- Contract/migration impact: none. Integrated C5 already owns the typed one-time initialization operation and migration. C14.2 adds a same-origin product adapter, provenance enforcement and tests only.
+- Runtime: every lane is exact `gpt-5.6-sol` / `xhigh`. L1 and L2 may run concurrently; L3 starts after their reviewed integration.
+
+| Lane                                  | Task/thread                            | Worktree                                               | Model / reasoning       | State      | Exclusive roots                                                                  |
+| ------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ----------------------- | ---------- | -------------------------------------------------------------------------------- |
+| C14.2-L1 attribution binding          | `01a0301b-bf5b-71e0-b286-2fafb588f06b` | `C:/Users/abhin/.codex/worktrees/5b2c/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | exact integrated C5 operation service and focused route test files               |
+| C14.2-L2 persisted web setup          | `01a0301b-bf5b-72a1-a91f-a93f1b4dd499` | `C:/Users/abhin/.codex/worktrees/ca9b/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | exact C5 BFF/editor, homeowner journey, C6 continuity, CSS and focused web tests |
+| C14.2-L3 persisted journey acceptance | `01a03087-5fcf-7311-88cc-7a18ce9ae13f` | `C:/Users/abhin/.codex/worktrees/8a48/interior-design` | `gpt-5.6-sol` / `xhigh` | integrated | isolated homeowner-setup E2E/integration/security/evaluation paths               |
+
+### Discovery and boundary
+
+- Integrated C5 already creates the first snapshot, initial commit and `Main` branch atomically and rejects later raw snapshots. The missing executable path is web product composition, not a new canonical contract.
+- The first product snapshot is one explicitly acknowledged placeholder level with unknown name/elevation/height, no other elements, no global anchor and two visible limitations. Selected C3 property identity is linkage only and supplies no model evidence or interior geometry.
+- The BFF accepts acknowledgement only, resolves actor and property server-side and deterministically derives IDs from the idempotency scope. The platform rejects every nested `user-asserted` actor mismatch before initialization or preview.
+- Initialization-only revision 1 cannot satisfy correction confirmation. Confirmation requires a changed branch head that is the exact current existing snapshot.
+- The counted host-live route uses the provider-free deterministic C6 plan parser. C9 needs two eligible distinct source kinds and remains software-complete rather than falsely live if C7/production-C8 sources are unavailable. C8 v2 remains acceptance-only.
+- Local fixture authentication may authorise a real disposable database run, but it is reported as local authentication. Persisted API/database/object-store/worker state, not the persona fixture, must drive journey completion. Synthetic input is never real-property evidence.
+
+### Reviewed integration record
+
+- C14.2-L1 worker commit `616a1770200aa052466c189d62ae01a7c928ec29` was reviewed and integrated as `6dd78a8`. The primary checkout passed 17 focused C5 route tests plus platform API lint, typecheck and build.
+- C14.2-L2 worker commit `486d9fbde9149181831a0623faafea67536137e8` was reviewed and integrated as `030e294`. The primary checkout passed 45 focused web tests across 11 files plus web lint, typecheck and build.
+- Orchestrator review repaired malformed patch insertions, exact C6 navigation copy, journey setup-state coverage, action-specific sanitisation, exact snapshot response validation, reload-safe idempotency and exact-current/expiry gating before integration.
+- C14.2-L3 is authorised from integrated revision `030e294` with exact `gpt-5.6-sol` / `xhigh` and the already frozen isolated acceptance roots.
+
+### Frozen terminal rule
+
+- The orchestrator owns task prompts, review, merge order, integration repair, live service/browser evidence, final repository gates, documentation, push and PR. C14.2 may close only with exact evidence; C15 remains closed and the PR remains unmerged.
+
+### Closeout and exact evidence — 2026-08-24
+
+- The authoritative L3 replacement task was `01a03087-5fcf-7311-88cc-7a18ce9ae13f` at `C:/Users/abhin/.codex/worktrees/8a48/interior-design`, exact `gpt-5.6-sol` / `xhigh`. It could not resume after the usage interruption, so the orchestrator preserved its ten owned uncommitted files as recovery worker commit `eb8b3f6e3dbc45a9fef9477110b8b5e720848c64` and integrated them as `ea5d0f77ce11add5e049eb4f9c57e93eb8b85736` without discarding work.
+- The stale duplicate task `01a03070-7dfc-7c13-b684-9fa80c879e97` at `6919cea` was neither resumed nor merged.
+- L1 worker `616a1770200aa052466c189d62ae01a7c928ec29` was reviewed/integrated as `6dd78a86e75c36fdcf3dc7949b36156fbe31a56c`. L2 worker `486d9fbde9149181831a0623faafea67536137e8` was reviewed/integrated as `030e294a84b830ddd4b85880b1aba7804cb0e422`.
+- Host-live production repair/evidence is `076901d42e5fa381ed0f04d003061e4b00c56ba8`; `fac7fe661602fe8c3937de36c19ea10a7b8aad12` is formatting-only and passed the full repository gate. Reviewed L3 acceptance repair is `49faeb2869c9b4e3d9622c3bd1075112d37881bf`, durable evaluation is `7f77329f47384526ec5eda43c1822f87a13ca75c`, and the final product/evidence integration revision is `dd225fa6b3d8baa7340f8236162bfa2860d4add0`.
+- The durable evaluation record is `docs/evaluation/homeowner-journey/C14_2_PERSISTED_JOURNEY_ACCEPTANCE_2026-08-23.md`.
+
+#### Exact acceptance gates
+
+- C14.2: all three TypeScript configurations passed; integration 4/4; security 4/4; rendered normal-navigation Playwright 1/1 at 1440×960. The journey begins at normal sign-in and an empty project list, creates the project through visible controls, then persists property, intake, evidence rights/consent, an explicit unmeasured model, C6 proposal/calibration/draft, distinct C5 preview/commit and the exact current C10 scene.
+- The observed mutation order is `project.create`, `property.manual`, `intake.persist`, `evidence.upload-start`, `evidence.ready`, `model.acknowledged-setup`, `c6.proposal`, `c6.calibration`, `c6.draft`, `c5.preview`, `c5.commit`, `c10.scene`; C8 v2 invocation count is zero.
+- C14.1 regression: all three TypeScript configurations passed; integration 4/4; security 3/3; Playwright 14/14 across desktop, mobile, roles, expiry, degraded and fail-closed states.
+- Repository-wide `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed at `dd225fa6b3d8baa7340f8236162bfa2860d4add0`: Prettier; 24/24 lint; 24/24 typecheck; 45/45 JavaScript unit task groups; 24/24 builds; Ruff; mypy over 105 source files; pytest 157 passed and 2 capability skips. The exact documentation head is gated again before push.
+- `git diff --check` passed. Shared contracts/generated clients, migrations, registries, manifests and lockfiles are unchanged.
+
+#### Host-live persistence and hashes
+
+- Local database `homeowner_journey_20260823`; project `9731c398-70c2-4dd5-a3ab-6474153a1795`; branch `98fb6b22-4dd6-474f-a63c-0607720c0f9a`; source snapshot `83f7446f-04ce-4781-a1a8-ae59ea14c75b`; exact current revision-2 snapshot `b68e48e9-9a09-40cd-ad27-6c4efde47d52`, SHA-256 `4b0938c61747fcfed87d913671b410c4cc62b3046f9e60f36cc840a013703d23`.
+- Source asset `2cf910c8-6679-4776-9a9d-e3dd569d52fe`; owned 162-byte SVG; SHA-256 `c8eb8a219afc1ebca6c24aa9fb2900614b530bb96824f057461829aa0ac077a5`; object key `sources/66883b22-2e7d-488f-b434-58349ada10f1`; service processing true and training denied.
+- Preview size 704 bytes, SHA-256 `a72035ba5985ba6986d2d6804ee44af6077703e884d4e8b799778e558af8927e`; commit job `bd196964-a7d7-457d-b20b-7cd1e2816b28`; scene `7d1c62b3-285d-44f6-b907-ce0b25945f4e`; GLB size 1,856 bytes, SHA-256 `886534b9e719a19c3e5b27cad0eedbb1d97391a2dacebd1eb2173534869a45f1`; manifest SHA-256 `ce98e9a1a195f9248fd77f12259fe19a70a99ab8ea622792dcb5db7dbd99cd9b`.
+- The database query found zero C8 reconstruction jobs and zero C9 fusion jobs for the clean project.
+
+#### Rendered evidence and fallback
+
+- Host-live home screenshot `/tmp/c14-clean-home-final.png`: 1440×2258, 534,860 bytes, SHA-256 `8b4c7996f659da140524e6e093d3c4f02fc09580966b36a369bb583ada4c0714`.
+- Host-live viewer screenshot `/tmp/c14-clean-viewer.png`: 1440×2006, 217,800 bytes, SHA-256 `cd4227d2cc06ada74c2f7d4723017c99338c20b373f1340bc7dda818287079ba`.
+- Deterministic acceptance home screenshot `/tmp/c14-2-persisted-home.png`: 1440×2258, 534,510 bytes, SHA-256 `652a484e4440d1640a9837f2e016a446e345f02ed135872f080cb0febd202906`.
+- Deterministic acceptance viewer screenshot `/tmp/c14-2-persisted-viewer.png`: 1440×1930, 193,302 bytes, SHA-256 `c79b495faef028923f988476746dbf418a02a47ead3e32c3f8a6035070c0ae5b`.
+- The in-app browser failed before navigation with Windows sandbox `helper_unknown_error`. The pinned repository Playwright/Chromium runner was the controlled fallback and enforced console/page/browser health, scoped UI controls and screenshot assertions. No in-app-browser success or WebGL-canvas visual claim is made.
+
+#### Honest completion boundary
+
+- Software-complete and Windows-host-validated: persisted server-authorised setup; immutable evidence attribution and consent; proposal-only unmeasured initialization; deterministic C6 plan proposal; canonical C5 preview/commit; exact-current C10 scene exploration; authentication/role/expiry/degraded/error behavior; zero silent C8 routing.
+- Experimental: C8 v2 remains acceptance-only and is not a production homeowner route. Reconstruction/fusion output remains a proposal until explicitly corrected and accepted through C5.
+- Externally deferred: deployed provider and worker evidence; representative property evidence; a real C8 or C9 run; WebGL canvas rendering; Xcode; RoomPlan; LiDAR; and physical Apple-device validation.

@@ -5,6 +5,8 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
+**Current execution note (24 August 2026):** corrective checkpoints C14.1 and C14.2 are closed. The Windows-testable core journey now uses normal controls and persisted server-authorised state from property/intake/evidence through an explicitly unmeasured model, C6 correction, separate C5 preview/commit and exact C10 exploration. Evidence is synthetic-input local software acceptance, not a representative property, provider, WebGL canvas or physical Apple result. C15 remains closed and C8 v2 remains acceptance-only.
+
 ## 1. Executive answer
 
 The material describes a credible long-term company, but not a credible single-release software project. The company should become an integrated residential-transformation platform: one trusted path from a property and a homeowner's intent to an evidence-backed existing-condition model, professionally accountable design, approvals, procurement, delivery and, eventually, a living as-built home record. Its analogue to an integrated insurance operator is not “AI architecture software”; it is ownership of the information, decision, evidence and operating loops that currently fragment a residential project.

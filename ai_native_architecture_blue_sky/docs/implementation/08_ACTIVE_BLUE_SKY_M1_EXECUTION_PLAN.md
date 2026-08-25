@@ -8,6 +8,8 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
+On 2026-08-23 the user authorised the corrective homeowner sequence before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey, with synthetic-input local host-live evidence and deterministic rendered acceptance. Neither checkpoint production-routes C8 v2; C15 remains closed pending a separate user decision.
+
 M1 includes:
 
 - homeowner/project intake and a source-aware home dossier;
@@ -91,12 +93,14 @@ Every isolated implementation task is created explicitly with `gpt-5.6-sol`. The
 | C12 | 4 | valid spatial/layout/style/material design variants | constraint engine, asset system, AI proposal layer and option UX/evaluation differ |
 | C13 | 3 | licensed product/material library and editable room specification | catalog pipeline, specification domain and selection UX are coherent groups |
 | C14 | 4 | reproducible photoreal still rendering | scene builder, Blender renderer, enhancement adapter and visual evaluation separate |
+| C14.1 | 2 | guided C9-to-C5-to-C10 correction bridge | coupled web state/mutation handoff and independent acceptance remain separate |
+| C14.2 | 3 | persisted setup and plan-to-twin continuity | provenance binding, coupled web setup and independent persisted acceptance remain separate |
 | C15 | 4 | deterministic and AI-enhanced walkthrough video | path/animation, frame/encode, enhancement/narration and temporal QA differ |
 | C16 | 3 | synchronised compare/decide/collaborate workflow | decision backend, comparison UX and comprehension/e2e QA are distinct |
 | C17 | 3 | implementation-ready room/product/work-package handoff | scope compiler, handoff UX/export and quantity/provenance QA separate |
 | C18 | 4 | secure, recoverable full-M1 release candidate | security/privacy, recovery/observability, device/browser/GPU UAT and support/release differ |
 
-There are 19 sequential checkpoints and 68 planned worker lanes. This is an orchestration topology, not a claim that 68 people or 68 simultaneous tasks are required. Only one checkpoint is open at a time, with two to four lanes running concurrently.
+There are 21 sequential checkpoints and 73 planned worker lanes. This is an orchestration topology, not a claim that 73 people or 73 simultaneous tasks are required. Only one checkpoint is open at a time, with two to four lanes running concurrently.
 
 ## 7. Checkpoint specifications
 
@@ -290,6 +294,31 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 | C14-L4 render UX and independent visual evaluation | isolated web render-stills routes/features/tests plus `tests/{evaluation,performance,security,e2e}/render-stills/**` | generate/status/view/compare/failure UX, geometry-mask/camera/product consistency, perceptual regressions, accessibility and time/memory tests |
 
 **Gate:** a geometry-safe render always accompanies enhanced media; enhancements cannot move protected geometry unnoticed; jobs reproduce from a manifest.
+
+### C14.1 — Homeowner reconstruction journey integration — 2 lanes
+
+**Outcome:** a homeowner can follow one honest path from property context and renovation intent through evidence and reconstruction proposal review, explicitly confirm C5-validated corrections, and explore a C10 twin compiled from the resulting committed canonical snapshot.
+
+| Lane | Exclusive paths | Output and evidence |
+|---|---|---|
+| C14.1-L1 guided journey and safe handoff | isolated web home-journey paths plus exact allocated C1/C2/C3/C8/C9/C10 screens | progressive journey, partial degradation, explicit C9→C5 preview/confirm/commit and committed C10 scene handoff |
+| C14.1-L2 independent journey acceptance | isolated homeowner-journey E2E/integration/security/evaluation and Apple handoff paths | stateful no-auto-mutation browser evidence, role/failure/privacy cases and precise Mac/iPhone deferred validation |
+
+**Gate:** property context never establishes an interior; source and training rights remain explicit; proposals remain uncommitted until a separate non-blocking C5 preview and explicit confirmation; C10 consumes only the current committed profile; C8 v2 remains acceptance-only; fixture/software evidence is never described as real-property or physical-device evidence. C14.1 closes only this guided bridge.
+
+### C14.2 — Persisted homeowner setup and plan-to-twin continuity — 3 lanes
+
+**Outcome:** a new project can use normal server-authorised product controls to confirm property context, persist intent, upload rights-cleared evidence, initialise an explicitly unmeasured model, correct a C6 plan proposal and explore the exact committed C10 twin without hidden JSON or seed state.
+
+| Lane | Exclusive paths | Output and evidence |
+|---|---|---|
+| C14.2-L1 attribution binding | isolated integrated C5 service and focused route tests | authenticated-actor binding for every nested user assertion before initialization or preview persistence |
+| C14.2-L2 persisted web setup | exact C5 BFF/editor, homeowner-journey, C6 continuity and focused web tests | acknowledgement-only server-built unmeasured initialization, current-branch confirmation gating and precise expiry recovery |
+| C14.2-L3 persisted journey acceptance | isolated homeowner-setup E2E/integration/security/evaluation paths | normal-navigation browser evidence plus disposable Postgres/object-storage/API/worker seams and honest external deferrals |
+
+**Status:** closed at the reviewed product/evidence integration revision `dd225fa6b3d8baa7340f8236162bfa2860d4add0`; final closeout documentation and the non-draft PR remain on the same integration branch. C8 v2, a real C8/C9 run, a representative property, WebGL canvas evidence and Apple physical validation are not included.
+
+**Gate:** persisted state and server authorization drive every stage; initialization fabricates no interior; user attribution is actor-bound; the host-live path uses the production C6 parser and exact C5/C10 contracts; C9 multi-source and physical Apple claims remain deferred unless their real source/runtime gates are genuinely met.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

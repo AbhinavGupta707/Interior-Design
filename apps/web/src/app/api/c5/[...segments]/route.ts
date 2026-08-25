@@ -23,6 +23,10 @@ import {
   validatedBackend,
 } from "../_shared/editor-proxy";
 import type { C5RouteBase, C5RouteContext } from "../_shared/editor-proxy";
+import {
+  homeWorkspaceAcknowledgementSchema,
+  initializeHomeWorkspace,
+} from "../_shared/home-workspace";
 import { backendRequest, problemResponse, safeBackendAction } from "../../c1/_shared/backend";
 
 function branchesPath(base: C5RouteBase): string {
@@ -136,6 +140,13 @@ export async function POST(request: Request, context: C5RouteContext): Promise<N
   const base = await c5RouteBase(request, context);
   if (base instanceof NextResponse) return base;
   const [resource, branchValue, action, extra] = base.remainder;
+  if (resource === "home-workspace" && !branchValue && !action && !extra) {
+    const key = requireC5MutationKey(request);
+    if (key instanceof NextResponse) return key;
+    const acknowledgement = await parseC5Body(request, homeWorkspaceAcknowledgementSchema);
+    if (acknowledgement instanceof NextResponse) return acknowledgement;
+    return initializeHomeWorkspace(base, key);
+  }
   if (resource !== "branches" || extra) {
     return problemResponse(404, "Editor route unavailable", "This editor route is not available.");
   }

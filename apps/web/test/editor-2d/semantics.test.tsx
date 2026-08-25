@@ -6,6 +6,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EditorInspector } from "../../src/features/editor-2d/inspector";
+import {
+  reloadExistingSetup,
+  UnmeasuredWorkspaceSetup,
+} from "../../src/features/editor-2d/editor-workspace";
 import { ElementList, PlanView } from "../../src/features/editor-2d/plan-view";
 import { snapshot, uuid } from "./fixtures";
 
@@ -44,5 +48,44 @@ describe("C5 editor semantics", () => {
     expect(markup).not.toContain("Add wall translation");
     expect(markup).not.toContain("Create elements");
     expect(markup).not.toContain("<form");
+  });
+  it("requires two explicit accessible acknowledgements before setup", () => {
+    const markup = renderToStaticMarkup(
+      <UnmeasuredWorkspaceSetup busy={false} editable onInitialize={vi.fn()} onReload={vi.fn()} />,
+    );
+    expect(markup).toContain("<fieldset");
+    expect(markup).toContain("<legend>Confirm the unmeasured starting point</legend>");
+    expect(markup.match(/type="checkbox"/gu)).toHaveLength(2);
+    expect(markup).toContain("I confirm this home has at least one level.");
+    expect(markup).toContain("all interior measurements are unknown");
+    expect(markup).toContain("required");
+    expect(markup).toContain("disabled");
+    expect(markup).toContain("Reload server state");
+    expect(markup).toContain("property-derived interior claims");
+  });
+
+  it("renders no setup mutation control for viewers", () => {
+    const markup = renderToStaticMarkup(
+      <UnmeasuredWorkspaceSetup
+        busy={false}
+        editable={false}
+        onInitialize={vi.fn()}
+        onReload={vi.fn()}
+      />,
+    );
+    expect(markup).toContain("Viewer access is read-only");
+    expect(markup).not.toContain("<form");
+    expect(markup).not.toContain("<button");
+    expect(markup).not.toContain('type="checkbox"');
+  });
+
+  it("clears a conflicting initialization key before explicit server reload", async () => {
+    const initializationKey = { current: "conflicting-key" as string | undefined };
+    const reload = vi.fn().mockResolvedValue(undefined);
+
+    await reloadExistingSetup(initializationKey, reload);
+
+    expect(initializationKey.current).toBeUndefined();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

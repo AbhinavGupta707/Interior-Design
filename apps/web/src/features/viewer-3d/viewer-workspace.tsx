@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { sceneClient, SceneProblem } from "./api";
 import { detectViewerCapabilities } from "./capabilities";
 import type { ViewerCapabilities } from "./capabilities";
@@ -436,8 +437,8 @@ export function ViewerWorkspace({
       </div>
       <header className="viewer-hero">
         <div>
-          <Link className="viewer-back" href="/projects">
-            ← Projects
+          <Link className="viewer-back" href={homeJourneyHref(projectId)}>
+            ← Home journey
           </Link>
           <span className="viewer-kicker">C10 · deterministic scene</span>
           <h1>Experience the exact committed model</h1>
