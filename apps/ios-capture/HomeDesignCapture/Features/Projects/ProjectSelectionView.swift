@@ -324,7 +324,9 @@ struct ProjectSelectionView: View {
       } header: {
         Text("Projects")
       } footer: {
-        Text("\(environmentLabel) configuration. Native capture is not implemented in C1; selection continues to the existing eligibility flow.")
+        Text(
+          "\(environmentLabel) configuration. Selection continues to device eligibility and the available native evidence routes."
+        )
       }
     }
   }

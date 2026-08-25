@@ -27,8 +27,10 @@ struct CaptureEligibilityView: View {
           LabeledContent("Source", value: project.isFixture ? "Local fixture" : "Project service")
         }
 
-        GroupBox("C0 boundary") {
-          Text("This build checks availability but does not request camera access or create a RoomPlan/ARKit session. Native capture lifecycle is implemented and field-tested in C7.")
+        GroupBox("Current boundary") {
+          Text(
+            "This check reports device capability only. Simulator cannot exercise RoomPlan, and physical-device capture, relocalisation, and accuracy remain to be validated."
+          )
             .frame(maxWidth: .infinity, alignment: .leading)
         }
 
@@ -55,10 +57,11 @@ struct CaptureEligibilityView: View {
     case .eligible:
       EligibilityPresentation(
         title: "Room capture is supported",
-        message: "RoomPlan reports that this physical device is eligible. This C0 shell still stops before starting a capture session.",
+        message:
+          "RoomPlan reports that this physical device is eligible. Continue to the capture workspace, but do not treat eligibility as proof of a successful scan or measurement accuracy.",
         icon: "checkmark.circle.fill",
         tint: .green,
-        actionTitle: "Review capture status"
+        actionTitle: "Open capture workspace"
       )
     case .unavailable(.simulatorUnsupported):
       EligibilityPresentation(
