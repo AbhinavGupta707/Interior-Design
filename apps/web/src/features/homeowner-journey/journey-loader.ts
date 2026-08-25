@@ -1,12 +1,16 @@
 import type { Project, Session } from "@interior-design/contracts";
 
 import { ClientProblem, getProject, getProjectIntake, getSession } from "../auth/api";
+import { consultationClient, ConsultationProblem } from "../design-consultation/api";
+import { designOptionsClient, DesignOptionsProblem } from "../design-options/api";
 import { listAssets, EvidenceProblem } from "../evidence/api";
 import { fusionClient, FusionProblem } from "../discrepancy-review/api";
 import { editorClient, EditorProblem } from "../editor-2d/api";
+import { materialsProductsClient, MaterialsProductsProblem } from "../materials-products/api";
 import { planImportClient, PlanImportProblem } from "../plan-import/api";
 import { getPropertyDossier, PropertyProblem } from "../property/api";
 import { reconstructionClient, ReconstructionProblem } from "../reconstruction/api";
+import { renderStillsClient, RenderStillsProblem } from "../render-stills/api";
 import { sceneClient, SceneProblem } from "../viewer-3d/api";
 
 import type { HomeJourneyInput, JourneyProblemKind, JourneyResource } from "./journey-state";
@@ -20,12 +24,16 @@ export interface LoadedHomeJourney {
 function problemKind(reason: unknown): JourneyProblemKind {
   if (
     reason instanceof ClientProblem ||
+    reason instanceof ConsultationProblem ||
+    reason instanceof DesignOptionsProblem ||
     reason instanceof EvidenceProblem ||
     reason instanceof FusionProblem ||
     reason instanceof EditorProblem ||
+    reason instanceof MaterialsProductsProblem ||
     reason instanceof PlanImportProblem ||
     reason instanceof PropertyProblem ||
     reason instanceof ReconstructionProblem ||
+    reason instanceof RenderStillsProblem ||
     reason instanceof SceneProblem
   ) {
     if (reason.kind === "expired") return "expired";
@@ -53,6 +61,76 @@ async function currentSnapshot(projectId: string) {
   }
 }
 
+const maximumJourneyOptionInspections = 12;
+
+async function loadDesignOptions(
+  projectId: string,
+  snapshot: Awaited<ReturnType<typeof currentSnapshot>> | undefined,
+) {
+  const response = await designOptionsClient.listJobs(projectId);
+  const exactSucceeded = snapshot
+    ? [...response.jobs]
+        .reverse()
+        .filter(
+          ({ sourceModel, state }) =>
+            state === "succeeded" &&
+            sourceModel.modelId === snapshot.modelId &&
+            sourceModel.snapshotId === snapshot.id &&
+            sourceModel.snapshotSha256 === snapshot.snapshotSha256 &&
+            sourceModel.snapshotVersion === snapshot.version,
+        )
+    : [];
+  const inspected = exactSucceeded.slice(0, maximumJourneyOptionInspections);
+  const optionResponses = await Promise.allSettled(
+    inspected.map((job) => designOptionsClient.listOptions(projectId, job.id)),
+  );
+  const confirmationCounts = new Map<string, number | undefined>();
+  inspected.forEach((job, index) => {
+    const optionResponse = optionResponses[index];
+    confirmationCounts.set(
+      job.id,
+      optionResponse?.status === "fulfilled"
+        ? optionResponse.value.options.filter(({ status }) => status === "confirmed").length
+        : undefined,
+    );
+  });
+
+  return {
+    confirmationInspectionComplete:
+      exactSucceeded.length <= maximumJourneyOptionInspections &&
+      optionResponses.every(({ status }) => status === "fulfilled"),
+    jobs: response.jobs.map((job) => ({
+      baseBrief: job.baseBrief,
+      confirmedOptionCount: confirmationCounts.get(job.id),
+      id: job.id,
+      optionCount: job.optionCount,
+      safeCode: job.safeCode,
+      sourceModel: job.sourceModel,
+      state: job.state,
+    })),
+  };
+}
+
+async function loadRenderState(projectId: string) {
+  const [capabilities, jobs] = await Promise.all([
+    renderStillsClient.getCapabilities(projectId),
+    renderStillsClient.listJobs(projectId),
+  ]);
+  return {
+    jobs: jobs.jobs.map(({ id, request, safeCode, state }) => ({
+      id,
+      request: {
+        sourceSceneJobId: request.sourceSceneJobId,
+        ...(request.specification ? { specification: request.specification } : {}),
+      },
+      safeCode,
+      state,
+    })),
+    renderer: capabilities.renderer,
+    sources: capabilities.sources,
+  };
+}
+
 export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJourney> {
   const [project, session] = await Promise.all([getProject(projectId), getSession()]);
   const [intake, property, evidence, plan, reconstruction, fusion, snapshot, branches, scenes] =
@@ -68,6 +146,14 @@ export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJour
       sceneClient.loadWorkspace(projectId),
     ]);
 
+  const exactSnapshot = snapshot.status === "fulfilled" ? snapshot.value : undefined;
+  const [consultation, designOptions, specifications, renders] = await Promise.allSettled([
+    consultationClient.loadWorkspace(projectId),
+    loadDesignOptions(projectId, exactSnapshot),
+    materialsProductsClient.listSpecifications(projectId),
+    loadRenderState(projectId),
+  ]);
+
   return {
     input: {
       branches: resource(branches, (items) => ({
@@ -78,8 +164,40 @@ export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJour
         })),
       })),
       currentSnapshot: resource(snapshot, (item) =>
-        item === null ? null : { snapshotId: item.id },
+        item === null
+          ? null
+          : {
+              modelId: item.modelId,
+              snapshotId: item.id,
+              snapshotSha256: item.snapshotSha256,
+              snapshotVersion: item.version,
+            },
       ),
+      design: {
+        consultation: resource(consultation, (workspace) => ({
+          brief:
+            workspace.brief === null
+              ? null
+              : {
+                  contentSha256: workspace.briefContentSha256,
+                  id: workspace.brief.id,
+                  revision: workspace.brief.revision,
+                  status: workspace.brief.status,
+                },
+        })),
+        options: resource(designOptions, (value) => value),
+        renders: resource(renders, (value) => value),
+        specifications: resource(specifications, (value) => ({
+          specifications: value.specifications.map(({ currentRevision, specificationId }) => ({
+            catalogReleaseId: currentRevision.catalogReleaseId,
+            modelSnapshotId: currentRevision.modelSnapshotId,
+            modelSnapshotSha256: currentRevision.modelSnapshotSha256,
+            revision: currentRevision.revision,
+            sourceConfirmation: currentRevision.sourceConfirmation,
+            specificationId,
+          })),
+        })),
+      },
       evidence: resource(evidence, (assets) => ({
         assets: assets.map(({ kind, status }) => ({ kind, status })),
       })),
@@ -108,6 +226,7 @@ export async function loadHomeJourney(projectId: string): Promise<LoadedHomeJour
           id,
           sourceProfile: request.sourceSnapshot.profile,
           sourceSnapshotId: request.sourceSnapshot.snapshotId,
+          sourceSnapshotSha256: request.sourceSnapshot.snapshotSha256,
           state,
         })),
         snapshots: workspace.snapshots.map(({ profile, snapshotId }) => ({ profile, snapshotId })),

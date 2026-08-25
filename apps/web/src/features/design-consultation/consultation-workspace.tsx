@@ -31,6 +31,8 @@ import {
 import { ReferenceBoard } from "./reference-board";
 import { editorClient } from "../editor-2d/api";
 import { designOptionLaunchHref } from "../design-options/launch-context";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
+import { consultationTwinGate } from "./twin-gate";
 
 type LoadState =
   | { readonly kind: "error" | "forbidden" | "offline"; readonly message: string }
@@ -180,21 +182,17 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
     }
     let active = true;
     setDesignOptionHandoff({ kind: "loading" });
-    void editorClient
-      .getCurrentSnapshot(projectId, "existing")
-      .then((snapshot) => {
+    void Promise.all([
+      editorClient.getCurrentSnapshot(projectId, "existing"),
+      editorClient.listBranches(projectId, "existing"),
+    ])
+      .then(([snapshot, branches]) => {
         if (!active) return;
-        const reference = acceptedBrief.modelReference;
-        if (
-          reference &&
-          (reference.modelId !== snapshot.modelId ||
-            reference.snapshotId !== snapshot.id ||
-            reference.snapshotSha256 !== snapshot.snapshotSha256)
-        ) {
+        const gate = consultationTwinGate(acceptedBrief, snapshot, branches);
+        if (gate.kind === "stale") {
           setDesignOptionHandoff({
             kind: "stale",
-            message:
-              "The brief references an older model snapshot. Reconcile and accept a fresh brief revision before generating options.",
+            message: gate.message,
           });
           return;
         }
@@ -500,6 +498,8 @@ export function ConsultationWorkspace({ projectId }: { readonly projectId: strin
       <header className={styles.hero}>
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
           <Link href="/projects">Projects</Link>
+          <span aria-hidden="true">/</span>
+          <Link href={homeJourneyHref(projectId)}>Home journey</Link>
           <span aria-hidden="true">/</span>
           <span>Design consultation</span>
         </nav>

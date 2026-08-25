@@ -20,7 +20,7 @@ export function readDesignOptionRecovery(
   projectId: string,
 ): DesignOptionRecovery | undefined {
   const raw = storage.getItem(recoveryKey(projectId));
-  if (!raw || raw.length > 2_000) return undefined;
+  if (!raw || raw.length > 8_000) return undefined;
   const payload: unknown = (() => {
     try {
       return JSON.parse(raw) as unknown;

@@ -155,6 +155,46 @@
   line-height: 1.5;
 }
 
+.home-journey-phase {
+  margin-top: var(--ui-space-6);
+}
+
+.home-journey-phase__header {
+  display: grid;
+  gap: var(--ui-space-2);
+  max-width: 58rem;
+}
+
+.home-journey-phase__header h2,
+.home-journey-phase__header p {
+  margin: 0;
+}
+
+.home-journey-phase__header h2 {
+  font: 600 clamp(1.7rem, 4vw, 2.7rem) / 1 var(--ui-font-serif);
+}
+
+.home-journey-phase__header p {
+  color: var(--ui-colour-muted);
+  line-height: 1.55;
+}
+
+.home-journey-phase--design {
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--ui-colour-accent);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--ui-colour-accent-soft) 55%, transparent),
+      transparent 42%
+    ),
+    var(--ui-colour-surface);
+}
+
+.home-journey-phase--design .home-journey-stages {
+  margin-top: var(--ui-space-4);
+}
+
 .home-journey-stages {
   display: grid;
   gap: 0;

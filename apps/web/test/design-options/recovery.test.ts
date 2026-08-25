@@ -5,7 +5,7 @@ import {
   readDesignOptionRecovery,
   saveDesignOptionRecovery,
 } from "../../src/features/design-options/recovery";
-import { ids } from "./fixtures";
+import { confirmationA, ids } from "./fixtures";
 
 function storage() {
   const values = new Map<string, string>();
@@ -18,10 +18,11 @@ function storage() {
 }
 
 describe("C12 private recovery boundary", () => {
-  it("stores only bounded job and comparison IDs", () => {
+  it("stores bounded job/comparison IDs and the opaque server-issued C13 continuation", () => {
     const local = storage();
     saveDesignOptionRecovery(local, {
       leftOptionId: ids.optionA,
+      confirmations: [{ confirmation: confirmationA, optionId: ids.optionA }],
       projectId: ids.project,
       rightOptionId: ids.optionB,
       savedAt: "2026-07-18T10:05:00.000Z",
@@ -31,6 +32,9 @@ describe("C12 private recovery boundary", () => {
     const serialized = [...local.values.values()].join("");
     expect(serialized).not.toMatch(/brief statement|asset payload|operation|token|credential/iu);
     expect(readDesignOptionRecovery(local, ids.project)?.selectedJobId).toBe(ids.job);
+    expect(readDesignOptionRecovery(local, ids.project)?.confirmations?.[0]?.confirmation.id).toBe(
+      confirmationA.id,
+    );
     clearDesignOptionRecovery(local, ids.project);
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
   });
@@ -39,7 +43,7 @@ describe("C12 private recovery boundary", () => {
     const local = storage();
     local.setItem(`hds:c12:option-recovery:${ids.project}`, "{");
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
-    local.setItem(`hds:c12:option-recovery:${ids.project}`, "x".repeat(2_001));
+    local.setItem(`hds:c12:option-recovery:${ids.project}`, "x".repeat(8_001));
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
     local.setItem(
       `hds:c12:option-recovery:${ids.project}`,

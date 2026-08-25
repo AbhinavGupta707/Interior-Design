@@ -12,6 +12,7 @@ import {
   StatePanel,
 } from "../../components/ui-primitives";
 import { ClientProblem, getProject, getSession } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { RenderStillsProblem, renderStillsClient } from "./api";
 import type {
   RenderEnhancementStatus,
@@ -20,6 +21,7 @@ import type {
   RenderWorkspace,
 } from "./contracts";
 import { renderWorkspaceSchema } from "./contracts";
+import type { RenderLaunchContext } from "./launch-context";
 import {
   artifactLabel,
   canCancel,
@@ -106,11 +108,13 @@ const terminalStates = new Set(["cancelled", "failed", "succeeded"]);
 export function RenderStillsWorkspace({
   evidenceClassification,
   initialJobId,
+  launchContext,
   invalidDeepLink,
   projectId,
 }: {
   readonly evidenceClassification: RenderEvidenceClassification;
   readonly initialJobId?: string;
+  readonly launchContext?: RenderLaunchContext;
   readonly invalidDeepLink: boolean;
   readonly projectId: string;
 }) {
@@ -149,25 +153,50 @@ export function RenderStillsWorkspace({
   );
   const rendererAvailable = workspace?.capabilities.renderer.state === "available";
 
-  const selectSourceDefaults = useCallback((next: RenderWorkspace) => {
-    const source = next.capabilities.sources[0];
-    const profile =
-      next.capabilities.profiles.find(({ state }) => state === "available") ??
-      next.capabilities.profiles[0];
-    setSourceSceneJobId(source?.sourceSceneJobId ?? "");
-    setCameraId(source?.cameras[0]?.cameraId ?? "");
-    const specification = source?.specifications[0];
-    setSpecificationKey(
-      specification
-        ? `${specification.specificationId}:${String(specification.specificationRevision)}`
-        : "",
-    );
-    setLightingPresetId(
-      next.capabilities.lightingPresets[0]?.lightingPresetId ?? "canonical-lights-neutral-world-v1",
-    );
-    setProfileId(profile?.profileId ?? "cycles-cpu-geometry-safe-v1");
-    setEnhancementRequested(false);
-  }, []);
+  const selectSourceDefaults = useCallback(
+    (next: RenderWorkspace) => {
+      const requestedSource = launchContext
+        ? next.capabilities.sources.find(
+            ({ sourceSceneJobId: id }) => id === launchContext.sourceSceneJobId,
+          )
+        : undefined;
+      const source = requestedSource ?? next.capabilities.sources[0];
+      const profile =
+        next.capabilities.profiles.find(({ state }) => state === "available") ??
+        next.capabilities.profiles[0];
+      setSourceSceneJobId(source?.sourceSceneJobId ?? "");
+      setCameraId(source?.cameras[0]?.cameraId ?? "");
+      const requestedSpecification =
+        requestedSource && launchContext?.specificationId
+          ? requestedSource.specifications.find(
+              ({ specificationId, specificationRevision }) =>
+                specificationId === launchContext.specificationId &&
+                specificationRevision === launchContext.specificationRevision,
+            )
+          : undefined;
+      const specification = requestedSpecification ?? source?.specifications[0];
+      setSpecificationKey(
+        specification
+          ? `${specification.specificationId}:${String(specification.specificationRevision)}`
+          : "",
+      );
+      setLightingPresetId(
+        next.capabilities.lightingPresets[0]?.lightingPresetId ??
+          "canonical-lights-neutral-world-v1",
+      );
+      setProfileId(profile?.profileId ?? "cycles-cpu-geometry-safe-v1");
+      setEnhancementRequested(false);
+      if (
+        launchContext &&
+        (!requestedSource || (launchContext.specificationId && !requestedSpecification))
+      ) {
+        setAlert(
+          "The exact scene/specification handoff is not currently an eligible render source. No alternate source was presented as that requested result.",
+        );
+      }
+    },
+    [launchContext],
+  );
 
   const loadWorkspace = useCallback(
     async (initial = false) => {
@@ -459,7 +488,9 @@ export function RenderStillsWorkspace({
     <div className={styles.shell}>
       <header className={styles.hero}>
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
-          <Link href={`/projects/${projectId}`}>Project</Link>
+          <Link href="/projects">Projects</Link>
+          <span aria-hidden="true">/</span>
+          <Link href={homeJourneyHref(projectId)}>Home journey</Link>
           <span aria-hidden="true">/</span>
           <span>Render stills</span>
         </nav>
@@ -511,7 +542,7 @@ export function RenderStillsWorkspace({
         <section className={styles.capabilityStrip} aria-labelledby="capability-title">
           <div>
             <p>Runtime truth</p>
-            <h2 id="capability-title">Real rendering is unavailable/deferred on this Mac</h2>
+            <h2 id="capability-title">Render capability on this configured host</h2>
             <span>{workspace.capabilities.renderer.reason}</span>
           </div>
           <dl>

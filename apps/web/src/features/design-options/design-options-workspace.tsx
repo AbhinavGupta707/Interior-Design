@@ -11,6 +11,7 @@ import {
   StatePanel,
 } from "../../components/ui-primitives";
 import { ClientProblem, getProject, getSession } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
 import { DesignOptionsProblem, designOptionsClient } from "./api";
 import type { ListDesignOptionsResponse } from "./api";
 import type {
@@ -135,8 +136,16 @@ export function DesignOptionsWorkspace({
         if (recovery) {
           setLeftOptionId(recovery.leftOptionId);
           setRightOptionId(recovery.rightOptionId);
+          setConfirmations(
+            Object.fromEntries(
+              (recovery.confirmations ?? []).map(({ confirmation, optionId }) => [
+                optionId,
+                confirmation,
+              ]),
+            ),
+          );
           setStatusMessage(
-            "Recovered the last job and comparison selection. No brief narrative or asset payload was stored in this browser.",
+            "Recovered the last job, comparison selection and any opaque C13 continuation. The server revalidates confirmed option state before use; no brief narrative or asset payload was stored in this browser.",
           );
         } else if (!initial) {
           setStatusMessage("Job list and exact source pins refreshed.");
@@ -179,6 +188,19 @@ export function DesignOptionsWorkspace({
         setLeftOptionId((current) => (current && ids.has(current) ? current : defaultLeft));
         setRightOptionId((current) =>
           current && ids.has(current) && current !== defaultLeft ? current : defaultRight,
+        );
+        setConfirmations((current) =>
+          Object.fromEntries(
+            Object.entries(current).filter(([optionId, confirmation]) =>
+              options.options.some(
+                (option) =>
+                  option.id === optionId &&
+                  option.status === "confirmed" &&
+                  confirmation.optionId === option.id &&
+                  confirmation.projectId === projectId,
+              ),
+            ),
+          ),
         );
         if (announce) {
           setStatusMessage(
@@ -225,6 +247,13 @@ export function DesignOptionsWorkspace({
   useEffect(() => {
     if (!selectedJobId) return;
     saveDesignOptionRecovery(window.localStorage, {
+      ...(Object.keys(confirmations).length > 0
+        ? {
+            confirmations: Object.entries(confirmations)
+              .slice(0, 4)
+              .map(([optionId, confirmation]) => ({ confirmation, optionId })),
+          }
+        : {}),
       ...(leftOptionId ? { leftOptionId } : {}),
       projectId,
       ...(rightOptionId ? { rightOptionId } : {}),
@@ -232,7 +261,7 @@ export function DesignOptionsWorkspace({
       schemaVersion: "c12-design-options-recovery-v1",
       selectedJobId,
     });
-  }, [leftOptionId, projectId, rightOptionId, selectedJobId]);
+  }, [confirmations, leftOptionId, projectId, rightOptionId, selectedJobId]);
 
   const sortedJobs = useMemo(
     () =>
@@ -396,6 +425,8 @@ export function DesignOptionsWorkspace({
       <header className={styles.hero}>
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
           <Link href="/projects">Projects</Link>
+          <span aria-hidden="true">/</span>
+          <Link href={homeJourneyHref(projectId)}>Home journey</Link>
           <span aria-hidden="true">/</span>
           <Link href={`/design-consultation/${projectId}`}>Accepted brief</Link>
           <span aria-hidden="true">/</span>

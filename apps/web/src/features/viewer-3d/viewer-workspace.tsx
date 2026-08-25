@@ -13,6 +13,7 @@ import type { SyntheticEvent } from "react";
 
 import { ActionButton, LoadingIndicator, PageContainer } from "../../components/ui-primitives";
 import { homeJourneyHref } from "../homeowner-journey/navigation";
+import { renderStillsLaunchHref } from "../render-stills/launch-context";
 import { sceneClient, SceneProblem } from "./api";
 import { detectViewerCapabilities } from "./capabilities";
 import type { ViewerCapabilities } from "./capabilities";
@@ -634,6 +635,16 @@ export function ViewerWorkspace({
                   <ActionButton onClick={() => void loadScene()}>
                     Request access and inspect
                   </ActionButton>
+                  {selectedJob.request.sourceSnapshot.profile === "proposed" ? (
+                    <Link
+                      className="ui-action"
+                      href={renderStillsLaunchHref(projectId, {
+                        sourceSceneJobId: selectedJob.id,
+                      })}
+                    >
+                      Continue to geometry-safe stills
+                    </Link>
+                  ) : null}
                 </div>
               ) : null}
             </>

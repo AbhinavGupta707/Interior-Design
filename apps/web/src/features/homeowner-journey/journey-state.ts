@@ -3,12 +3,16 @@ import type {
   AssetStatus,
   FusionJobState,
   HomeIntake,
+  OptionJob,
   PlanJobState,
   ReconstructionJobState,
+  RenderJobState,
   SceneJobState,
   Session,
 } from "@interior-design/contracts";
 
+import { designOptionLaunchHref } from "../design-options/launch-context";
+import { renderStillsLaunchHref } from "../render-stills/launch-context";
 import { exactSceneJobHref } from "../viewer-3d/deep-link";
 
 import { homeJourneyHref } from "./navigation";
@@ -65,6 +69,7 @@ interface SceneSummary {
     readonly id: string;
     readonly sourceProfile: "as-built" | "existing" | "proposed";
     readonly sourceSnapshotId: string;
+    readonly sourceSnapshotSha256?: string;
     readonly state: SceneJobState;
   }[];
   readonly snapshots: readonly {
@@ -73,9 +78,106 @@ interface SceneSummary {
   }[];
 }
 
+interface ConsultationSummary {
+  readonly brief: {
+    readonly contentSha256: string | null;
+    readonly id: string;
+    readonly revision: number;
+    readonly status: "accepted" | "draft" | "superseded";
+  } | null;
+}
+
+interface DesignOptionsSummary {
+  readonly confirmationInspectionComplete: boolean;
+  readonly jobs: readonly {
+    readonly baseBrief: {
+      readonly briefId: string;
+      readonly contentSha256: string;
+      readonly revision: number;
+    };
+    readonly confirmedOptionCount: number | undefined;
+    readonly id: string;
+    readonly optionCount: number;
+    readonly safeCode: string | undefined;
+    readonly sourceModel: {
+      readonly modelId: string;
+      readonly profile: "existing" | "proposed";
+      readonly snapshotId: string;
+      readonly snapshotSha256: string;
+      readonly snapshotVersion: number;
+    };
+    readonly state: OptionJob["state"];
+  }[];
+}
+
+interface SpecificationsSummary {
+  readonly specifications: readonly {
+    readonly catalogReleaseId: string;
+    readonly modelSnapshotId: string;
+    readonly modelSnapshotSha256: string;
+    readonly revision: number;
+    readonly sourceConfirmation: {
+      readonly acceptedBrief: {
+        readonly briefId: string;
+        readonly contentSha256: string;
+        readonly revision: number;
+      };
+      readonly confirmationId: string;
+      readonly jobId: string;
+      readonly jobVersion: number;
+      readonly optionId: string;
+      readonly profile: "proposed";
+      readonly resultSnapshotId: string;
+      readonly resultSnapshotSha256: string;
+      readonly resultSnapshotVersion: number;
+    };
+    readonly specificationId: string;
+  }[];
+}
+
+interface RenderSummary {
+  readonly jobs: readonly {
+    readonly id: string;
+    readonly request: {
+      readonly sourceSceneJobId: string;
+      readonly specification?: {
+        readonly specificationId: string;
+        readonly specificationRevision: number;
+      };
+    };
+    readonly safeCode: string | undefined;
+    readonly state: RenderJobState;
+  }[];
+  readonly renderer: {
+    readonly hardwareGate: "deferred" | "not-run" | "satisfied";
+    readonly reason: string;
+    readonly state: "available" | "deferred" | "disabled" | "paused";
+  };
+  readonly sources: readonly {
+    readonly sourceSceneJobId: string;
+    readonly specifications: readonly {
+      readonly specificationId: string;
+      readonly specificationRevision: number;
+    }[];
+  }[];
+}
+
+interface HomeDesignInput {
+  readonly consultation: JourneyResource<ConsultationSummary>;
+  readonly options: JourneyResource<DesignOptionsSummary>;
+  readonly renders: JourneyResource<RenderSummary>;
+  readonly specifications: JourneyResource<SpecificationsSummary>;
+}
+
 export interface HomeJourneyInput {
   readonly branches: JourneyResource<BranchSummary>;
-  readonly currentSnapshot: JourneyResource<{ readonly snapshotId: string } | null>;
+  readonly currentSnapshot: JourneyResource<{
+    readonly modelId?: string;
+    readonly snapshotId: string;
+    readonly snapshotSha256?: string;
+    readonly snapshotVersion?: number;
+  } | null>;
+  readonly design?: HomeDesignInput;
   readonly evidence: JourneyResource<EvidenceSummary>;
   readonly fusion: JourneyResource<FusionSummary>;
   readonly intake: JourneyResource<IntakeSummary | null>;
@@ -92,12 +194,26 @@ export interface JourneyStage {
   readonly degraded?: boolean;
   readonly detail: string;
   readonly href: string;
-  readonly id: "confirmation" | "evidence" | "goals" | "property" | "proposal" | "setup" | "twin";
+  readonly id:
+    | "confirmation"
+    | "consultation"
+    | "design-exploration"
+    | "design-options"
+    | "evidence"
+    | "goals"
+    | "property"
+    | "proposal"
+    | "setup"
+    | "specification"
+    | "stills"
+    | "twin";
   readonly status: JourneyStageStatus;
   readonly title: string;
 }
 
 export interface HomeJourneyState {
+  readonly designStages: readonly JourneyStage[];
+  readonly modelStages: readonly JourneyStage[];
   readonly primary: JourneyStage;
   readonly stages: readonly JourneyStage[];
 }
@@ -127,6 +243,15 @@ const activeSceneStates = new Set<SceneJobState>([
   "leased",
   "publishing",
   "queued",
+]);
+
+const activeRenderStates = new Set<RenderJobState>([
+  "cancel-requested",
+  "preparing",
+  "publishing-safe",
+  "queued",
+  "rendering-safe",
+  "validating-safe",
 ]);
 
 const activeAssetStates = new Set<AssetStatus>([
@@ -269,6 +394,89 @@ function hasCurrentChangedBranch(input: HomeJourneyInput): boolean {
   return input.branches.value.branches.some(
     ({ headSnapshotId, revision, sourceSnapshotId }) =>
       revision > 0 && headSnapshotId === currentSnapshotId && headSnapshotId !== sourceSnapshotId,
+  );
+}
+
+function exactExistingScene(input: HomeJourneyInput) {
+  if (
+    !hasCurrentChangedBranch(input) ||
+    input.currentSnapshot.kind !== "ready" ||
+    input.currentSnapshot.value === null ||
+    input.scenes.kind !== "ready"
+  ) {
+    return undefined;
+  }
+  const snapshot = input.currentSnapshot.value;
+  return input.scenes.value.jobs.find(
+    ({ sourceProfile, sourceSnapshotId, sourceSnapshotSha256, state }) =>
+      sourceProfile === "existing" &&
+      sourceSnapshotId === snapshot.snapshotId &&
+      sourceSnapshotSha256 === snapshot.snapshotSha256 &&
+      state === "succeeded",
+  );
+}
+
+function acceptedBrief(input: HomeJourneyInput) {
+  if (input.design?.consultation.kind !== "ready") return undefined;
+  const brief = input.design.consultation.value.brief;
+  if (brief?.status !== "accepted" || !brief.contentSha256) return undefined;
+  return { ...brief, contentSha256: brief.contentSha256 };
+}
+
+function exactCurrentOptionJobs(input: HomeJourneyInput) {
+  const brief = acceptedBrief(input);
+  if (
+    !brief ||
+    input.currentSnapshot.kind !== "ready" ||
+    input.currentSnapshot.value === null ||
+    input.design?.options.kind !== "ready"
+  ) {
+    return [];
+  }
+  const snapshot = input.currentSnapshot.value;
+  return input.design.options.value.jobs.filter(
+    ({ baseBrief, sourceModel }) =>
+      baseBrief.briefId === brief.id &&
+      baseBrief.revision === brief.revision &&
+      baseBrief.contentSha256 === brief.contentSha256 &&
+      sourceModel.profile === "existing" &&
+      sourceModel.modelId === snapshot.modelId &&
+      sourceModel.snapshotId === snapshot.snapshotId &&
+      sourceModel.snapshotSha256 === snapshot.snapshotSha256 &&
+      sourceModel.snapshotVersion === snapshot.snapshotVersion,
+  );
+}
+
+function exactCurrentSpecifications(input: HomeJourneyInput) {
+  const brief = acceptedBrief(input);
+  if (!brief || input.design?.specifications.kind !== "ready") return [];
+  const currentJobIds = new Set(exactCurrentOptionJobs(input).map(({ id }) => id));
+  return input.design.specifications.value.specifications
+    .filter(({ sourceConfirmation }) => {
+      const sourceBrief = sourceConfirmation.acceptedBrief;
+      return (
+        currentJobIds.has(sourceConfirmation.jobId) &&
+        sourceBrief.briefId === brief.id &&
+        sourceBrief.revision === brief.revision &&
+        sourceBrief.contentSha256 === brief.contentSha256 &&
+        sourceConfirmation.profile === "proposed"
+      );
+    })
+    .sort(
+      (left, right) =>
+        right.revision - left.revision || right.specificationId.localeCompare(left.specificationId),
+    );
+}
+
+function exactProposedScene(input: HomeJourneyInput) {
+  const specification = exactCurrentSpecifications(input)[0];
+  if (!specification || input.scenes.kind !== "ready") return undefined;
+  return input.scenes.value.jobs.find(
+    ({ sourceProfile, sourceSnapshotId, sourceSnapshotSha256, state }) =>
+      sourceProfile === "proposed" &&
+      sourceSnapshotId === specification.modelSnapshotId &&
+      sourceSnapshotSha256 === specification.modelSnapshotSha256 &&
+      state === "succeeded",
   );
 }
 
@@ -605,8 +813,376 @@ function twinStage(input: HomeJourneyInput): JourneyStage {
   };
 }
 
+function consultationStage(input: HomeJourneyInput): JourneyStage {
+  const twin = exactExistingScene(input);
+  if (!twin) {
+    return {
+      actionLabel: "Complete the exact twin first",
+      detail:
+        "Design consultation unlocks only after a changed existing branch is exact-current and its C10 twin is available. Intent will not substitute for geometry.",
+      href: `/viewer/${encodeURIComponent(input.projectId)}`,
+      id: "consultation",
+      status: "needs-attention",
+      title: "Shape and accept the design brief",
+    };
+  }
+  const consultation = input.design?.consultation;
+  if (!consultation || consultation.kind === "unavailable") {
+    return unavailableStage(
+      "consultation",
+      "Shape and accept the design brief",
+      consultation?.problem ?? "unavailable",
+      input.projectId,
+    );
+  }
+  const brief = consultation.value.brief;
+  if (brief?.status === "accepted" && brief.contentSha256) {
+    return {
+      actionLabel: "Review accepted brief",
+      detail:
+        "This exact C11 revision records attributable preferences, constraints, unknowns and review routes. It does not mutate or reinterpret the confirmed twin.",
+      href: `/design-consultation/${encodeURIComponent(input.projectId)}`,
+      id: "consultation",
+      status: "complete",
+      title: "Shape and accept the design brief",
+    };
+  }
+  return {
+    actionLabel:
+      input.role === "viewer"
+        ? "Inspect consultation status"
+        : brief
+          ? "Continue and accept the brief"
+          : "Start design consultation",
+    detail: brief
+      ? "A persisted draft brief is in progress. Review uncertainty and accountable routes before explicitly accepting one exact revision."
+      : "Turn the renovation intake into a structured, attributable brief. Consultation text remains intent, not model evidence.",
+    href: `/design-consultation/${encodeURIComponent(input.projectId)}`,
+    id: "consultation",
+    status: brief ? "in-progress" : input.role === "viewer" ? "unavailable" : "not-started",
+    title: "Shape and accept the design brief",
+  };
+}
+
+function designOptionsStage(input: HomeJourneyInput): JourneyStage {
+  const brief = acceptedBrief(input);
+  if (!brief || input.currentSnapshot.kind !== "ready" || input.currentSnapshot.value === null) {
+    return {
+      actionLabel: "Accept the brief first",
+      detail:
+        "Options require an accepted C11 brief and the exact current confirmed existing snapshot. Neither can be inferred from a previous visit.",
+      href: `/design-consultation/${encodeURIComponent(input.projectId)}`,
+      id: "design-options",
+      status: "needs-attention",
+      title: "Generate and compare design options",
+    };
+  }
+  const options = input.design?.options;
+  if (!options || options.kind === "unavailable") {
+    return unavailableStage(
+      "design-options",
+      "Generate and compare design options",
+      options?.problem ?? "unavailable",
+      input.projectId,
+    );
+  }
+  const jobs = exactCurrentOptionJobs(input);
+  const confirmed = jobs.find(({ confirmedOptionCount }) => (confirmedOptionCount ?? 0) > 0);
+  if (confirmed || exactCurrentSpecifications(input).length > 0) {
+    return {
+      actionLabel: "Review selected option",
+      degraded: !options.value.confirmationInspectionComplete,
+      detail:
+        "A persisted option from this accepted brief and exact current twin is confirmed only into proposed state. Existing and as-built profiles remain unchanged.",
+      href: `/design-options/${encodeURIComponent(input.projectId)}`,
+      id: "design-options",
+      status: "confirmed",
+      title: "Generate and compare design options",
+    };
+  }
+  const succeeded = jobs.find(
+    ({ optionCount, state }) => state === "succeeded" && optionCount >= 2,
+  );
+  if (succeeded) {
+    return {
+      actionLabel: "Compare at least two options",
+      degraded: !options.value.confirmationInspectionComplete,
+      detail:
+        "At least two bounded C12 alternatives are ready against the exact brief/model pins. Compare assumptions, unknowns and trade-offs before explicitly selecting one proposed design.",
+      href: `/design-options/${encodeURIComponent(input.projectId)}`,
+      id: "design-options",
+      status: "proposal-ready",
+      title: "Generate and compare design options",
+    };
+  }
+  if (jobs.some(({ state }) => ["cancel-requested", "queued", "running"].includes(state))) {
+    return {
+      actionLabel: "View option progress",
+      detail:
+        "Design alternatives are being generated from exact accepted-brief and current-twin pins. No proposed branch exists until explicit confirmation.",
+      href: `/design-options/${encodeURIComponent(input.projectId)}`,
+      id: "design-options",
+      status: "in-progress",
+      title: "Generate and compare design options",
+    };
+  }
+  if (jobs.some(({ state }) => ["abstained", "cancelled", "failed"].includes(state))) {
+    return {
+      actionLabel: "Review stopped option job",
+      detail:
+        "The latest exact-source option attempt stopped safely. Review its bounded diagnostic before retrying; no partial option was promoted.",
+      href: `/design-options/${encodeURIComponent(input.projectId)}`,
+      id: "design-options",
+      status: "needs-attention",
+      title: "Generate and compare design options",
+    };
+  }
+  const snapshot = input.currentSnapshot.value;
+  if (
+    snapshot.modelId === undefined ||
+    snapshot.snapshotSha256 === undefined ||
+    snapshot.snapshotVersion === undefined
+  ) {
+    return {
+      actionLabel: "Reload the exact twin",
+      detail:
+        "The current snapshot could not be verified with its complete model, hash and version pins. No option request was prepared.",
+      href: homeJourneyHref(input.projectId),
+      id: "design-options",
+      status: "unavailable",
+      title: "Generate and compare design options",
+    };
+  }
+  return {
+    actionLabel: input.role === "viewer" ? "Inspect option readiness" : "Generate two options",
+    detail:
+      input.role === "viewer"
+        ? "Viewer access is read-only. An owner or editor must generate alternatives from the exact accepted brief and confirmed twin."
+        : "Generate two deliberately different, computationally valid directions. They remain proposals until a separate confirmation.",
+    href: designOptionLaunchHref(input.projectId, {
+      baseBrief: {
+        briefId: brief.id,
+        contentSha256: brief.contentSha256,
+        revision: brief.revision,
+      },
+      requestedDirections: ["circulation-first", "conversation-first"],
+      requestedOptionCount: 2,
+      sourceModel: {
+        modelId: snapshot.modelId,
+        profile: "existing",
+        snapshotId: snapshot.snapshotId,
+        snapshotSha256: snapshot.snapshotSha256,
+        snapshotVersion: snapshot.snapshotVersion,
+      },
+    }),
+    id: "design-options",
+    status: input.role === "viewer" ? "unavailable" : "not-started",
+    title: "Generate and compare design options",
+  };
+}
+
+function specificationStage(input: HomeJourneyInput): JourneyStage {
+  const specifications = input.design?.specifications;
+  if (!specifications || specifications.kind === "unavailable") {
+    return unavailableStage(
+      "specification",
+      "Develop materials and room specification",
+      specifications?.problem ?? "unavailable",
+      input.projectId,
+    );
+  }
+  const exact = exactCurrentSpecifications(input)[0];
+  if (exact) {
+    return {
+      actionLabel: "Review working specification",
+      detail:
+        "A working C13 specification is bound to the exact confirmed option, proposed snapshot and catalog release. Prices, availability and professional approval remain unclaimed.",
+      href: `/materials-products/${encodeURIComponent(input.projectId)}`,
+      id: "specification",
+      status: "complete",
+      title: "Develop materials and room specification",
+    };
+  }
+  const confirmed = exactCurrentOptionJobs(input).some(
+    ({ confirmedOptionCount }) => (confirmedOptionCount ?? 0) > 0,
+  );
+  return {
+    actionLabel: confirmed ? "Continue from selected option" : "Select a design option first",
+    detail: confirmed
+      ? "The proposed option is persisted. Resume its server-verified continuation to create specification revision 1 from an exact published catalog release."
+      : "A working specification cannot start until one exact C12 option has been explicitly confirmed into proposed state.",
+    href: `/design-options/${encodeURIComponent(input.projectId)}`,
+    id: "specification",
+    status: confirmed ? "not-started" : "needs-attention",
+    title: "Develop materials and room specification",
+  };
+}
+
+function designExplorationStage(input: HomeJourneyInput): JourneyStage {
+  const specification = exactCurrentSpecifications(input)[0];
+  if (!specification) {
+    return {
+      actionLabel: "Complete the specification first",
+      detail:
+        "Proposed exploration requires an exact C13-backed proposed snapshot. A confirmed option alone is not a renderable specification.",
+      href: `/materials-products/${encodeURIComponent(input.projectId)}`,
+      id: "design-exploration",
+      status: "needs-attention",
+      title: "Explore the proposed design",
+    };
+  }
+  if (input.scenes.kind === "unavailable") {
+    return unavailableStage(
+      "design-exploration",
+      "Explore the proposed design",
+      input.scenes.problem,
+      input.projectId,
+    );
+  }
+  const matching = input.scenes.value.jobs.filter(
+    ({ sourceProfile, sourceSnapshotId, sourceSnapshotSha256 }) =>
+      sourceProfile === "proposed" &&
+      sourceSnapshotId === specification.modelSnapshotId &&
+      sourceSnapshotSha256 === specification.modelSnapshotSha256,
+  );
+  const succeeded = matching.find(({ state }) => state === "succeeded");
+  if (succeeded) {
+    return {
+      actionLabel: "Explore exact proposed scene",
+      detail:
+        "A read-only C10 scene matches the exact proposed snapshot and working specification. WebGL capability is reported separately and the DOM fallback remains valid.",
+      href: exactSceneJobHref(input.projectId, succeeded.id),
+      id: "design-exploration",
+      status: "complete",
+      title: "Explore the proposed design",
+    };
+  }
+  if (matching.some(({ state }) => activeSceneStates.has(state))) {
+    return {
+      actionLabel: "View proposed-scene progress",
+      detail: "C10 is compiling the exact C13-backed proposed snapshot into derived visualisation.",
+      href: `/viewer/${encodeURIComponent(input.projectId)}`,
+      id: "design-exploration",
+      status: "in-progress",
+      title: "Explore the proposed design",
+    };
+  }
+  const failed = matching.some(({ state }) => state === "failed" || state === "cancelled");
+  return {
+    actionLabel: failed ? "Retry exact proposed scene" : "Choose a material and create the scene",
+    detail: failed
+      ? "The exact scene attempt stopped without changing model or specification state. Retry explicitly from the current C13 revision."
+      : "Confirm one bounded material substitution from the working specification. C13 commits the exact proposed revision and requests its C10 scene without accepting raw client geometry.",
+    href: `/materials-products/${encodeURIComponent(input.projectId)}`,
+    id: "design-exploration",
+    status: failed ? "needs-attention" : input.role === "viewer" ? "unavailable" : "not-started",
+    title: "Explore the proposed design",
+  };
+}
+
+function stillsStage(input: HomeJourneyInput): JourneyStage {
+  const specification = exactCurrentSpecifications(input)[0];
+  const scene = exactProposedScene(input);
+  if (!specification || !scene) {
+    return {
+      actionLabel: "Create the proposed scene first",
+      detail:
+        "Geometry-safe stills require an eligible exact C10 scene and matching C13 specification. Images cannot substitute for those source pins.",
+      href: `/materials-products/${encodeURIComponent(input.projectId)}`,
+      id: "stills",
+      status: "needs-attention",
+      title: "Create geometry-safe stills",
+    };
+  }
+  const renders = input.design?.renders;
+  if (!renders || renders.kind === "unavailable") {
+    return unavailableStage(
+      "stills",
+      "Create geometry-safe stills",
+      renders?.problem ?? "unavailable",
+      input.projectId,
+    );
+  }
+  const matches = renders.value.jobs.filter(
+    ({ request }) =>
+      request.sourceSceneJobId === scene.id &&
+      request.specification?.specificationId === specification.specificationId &&
+      request.specification.specificationRevision === specification.revision,
+  );
+  const succeeded = matches.find(({ state }) => state === "succeeded");
+  if (succeeded) {
+    return {
+      actionLabel: "Inspect verified render artifacts",
+      detail:
+        "A geometry-safe C14 result is published from the exact scene/specification pins. Optional enhancement remains separate and illustrative.",
+      href: `/render-stills/${encodeURIComponent(input.projectId)}?${new URLSearchParams({ jobId: succeeded.id }).toString()}`,
+      id: "stills",
+      status: "complete",
+      title: "Create geometry-safe stills",
+    };
+  }
+  if (matches.some(({ state }) => activeRenderStates.has(state))) {
+    return {
+      actionLabel: "View render progress",
+      detail:
+        "The safe render is running from exact immutable inputs. No partial artifact is presented as complete.",
+      href: `/render-stills/${encodeURIComponent(input.projectId)}`,
+      id: "stills",
+      status: "in-progress",
+      title: "Create geometry-safe stills",
+    };
+  }
+  if (matches.some(({ state }) => state === "failed" || state === "cancelled")) {
+    return {
+      actionLabel: "Review stopped render",
+      detail:
+        "The durable render stopped safely. Existing model, scene and specification state remain unchanged and retry stays explicitly version-pinned.",
+      href: `/render-stills/${encodeURIComponent(input.projectId)}`,
+      id: "stills",
+      status: "needs-attention",
+      title: "Create geometry-safe stills",
+    };
+  }
+  const eligibleSource = renders.value.sources.some(
+    ({ sourceSceneJobId, specifications }) =>
+      sourceSceneJobId === scene.id &&
+      specifications.some(
+        ({ specificationId, specificationRevision }) =>
+          specificationId === specification.specificationId &&
+          specificationRevision === specification.revision,
+      ),
+  );
+  if (!eligibleSource || renders.value.renderer.state !== "available") {
+    return {
+      actionLabel: "Inspect render capability",
+      degraded: true,
+      detail: `This exact scene/specification is not currently renderable on the configured host. ${renders.value.renderer.reason}`,
+      href: `/render-stills/${encodeURIComponent(input.projectId)}`,
+      id: "stills",
+      status: "unavailable",
+      title: "Create geometry-safe stills",
+    };
+  }
+  return {
+    actionLabel:
+      input.role === "viewer" ? "Inspect render readiness" : "Create geometry-safe still",
+    detail:
+      input.role === "viewer"
+        ? "Viewer access can inspect eligible sources and results but cannot create a durable render job."
+        : "Choose an accepted renderer profile and camera. The geometry-safe bundle remains authoritative over any optional enhancement.",
+    href: renderStillsLaunchHref(input.projectId, {
+      sourceSceneJobId: scene.id,
+      specificationId: specification.specificationId,
+      specificationRevision: specification.revision,
+    }),
+    id: "stills",
+    status: input.role === "viewer" ? "unavailable" : "not-started",
+    title: "Create geometry-safe stills",
+  };
+}
+
 export function deriveHomeJourney(input: HomeJourneyInput): HomeJourneyState {
-  const stages = [
+  const modelStages = [
     propertyStage(input),
     goalsStage(input),
     evidenceStage(input),
@@ -615,11 +1191,22 @@ export function deriveHomeJourney(input: HomeJourneyInput): HomeJourneyState {
     confirmationStage(input),
     twinStage(input),
   ] as const;
+  const designStages = input.design
+    ? [
+        consultationStage(input),
+        designOptionsStage(input),
+        specificationStage(input),
+        designExplorationStage(input),
+        stillsStage(input),
+      ]
+    : [];
+  const stages = [...modelStages, ...designStages];
   const primary =
     stages.find(({ status }) => !["complete", "confirmed", "unavailable"].includes(status)) ??
+    stages.find(({ status }) => status === "unavailable") ??
     stages.at(-1) ??
-    stages[0];
-  return { primary, stages };
+    modelStages[0];
+  return { designStages, modelStages, primary, stages };
 }
 
 export function journeyStatusLabel(status: JourneyStageStatus): string {
