@@ -9,6 +9,13 @@ repository commands. No Xcode build, Simulator test, signed device build,
 iPhone/iPad launch, camera prompt, RoomPlan session, LiDAR observation,
 background transfer or interruption run was performed in C14.1-L2.
 
+**Mac follow-up — 2026-08-25.** The named Xcode project, Simulator suites and
+unsigned physical-SDK compile were subsequently run on a Mac at
+`cc7bc757a4d0cc323e51f299bfdb9cffc984ee5c`. Those exact results are recorded in
+[`C14_1_APPLE_XCODE_ACCEPTANCE_2026-08-25.md`](../../evaluation/homeowner-journey/C14_1_APPLE_XCODE_ACCEPTANCE_2026-08-25.md).
+Real RoomPlan, physical LiDAR/accuracy, production authentication/environment,
+process-terminated background transfer and native C10–C14 remain unaccepted.
+
 Simulator evidence may validate app state and synthetic fixtures, but it cannot
 close a camera, RoomPlan, LiDAR, AR tracking, background execution or physical
 journey gate. A physical run must name the exact Apple device, iOS version and

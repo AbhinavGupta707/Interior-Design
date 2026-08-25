@@ -156,7 +156,11 @@ struct AppRootView: View {
           }
         }
       case .manualEvidence:
-        ManualEvidenceView(project: project, onDone: flow.reset)
+        ManualEvidenceView(
+          project: project,
+          onOpenEvidence: flow.openEvidenceWorkspace,
+          onDone: flow.reset
+        )
       }
     } else {
       ContentUnavailableView(

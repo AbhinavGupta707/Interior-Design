@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ManualEvidenceView: View {
   let project: CaptureProject
+  let onOpenEvidence: () -> Void
   let onDone: () -> Void
 
   var body: some View {
@@ -10,7 +11,9 @@ struct ManualEvidenceView: View {
         VStack(alignment: .leading, spacing: 8) {
           Text("Manual evidence route")
             .font(.title2.bold())
-          Text("Prepare these sources for \(project.name). Upload and secure evidence handling arrive in C2.")
+          Text(
+            "Prepare these sources for \(project.name), then continue to the secure evidence workspace."
+          )
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 8)
@@ -35,9 +38,14 @@ struct ManualEvidenceView: View {
       }
 
       Section {
-        Text("No files are selected, recorded, or uploaded by this C0 screen.")
+        Text(
+          "Nothing is selected or uploaded until you choose a file, confirm its rights basis, and allow service processing on the next screen."
+        )
           .foregroundStyle(.secondary)
-        Button("Done", action: onDone)
+        Button("Continue to secure evidence upload", action: onOpenEvidence)
+          .buttonStyle(.borderedProminent)
+          .frame(maxWidth: .infinity)
+        Button("Not now", action: onDone)
           .frame(maxWidth: .infinity)
       }
     }
