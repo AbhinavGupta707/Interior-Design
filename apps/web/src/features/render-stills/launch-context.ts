@@ -1,6 +1,8 @@
 import { sceneJobIdSchema } from "@interior-design/contracts";
 import { z } from "zod";
 
+import type { RenderCapabilities } from "./contracts";
+
 export const renderLaunchContextSchema = z
   .object({
     sourceSceneJobId: sceneJobIdSchema,
@@ -18,6 +20,33 @@ export const renderLaunchContextSchema = z
   );
 
 export type RenderLaunchContext = z.infer<typeof renderLaunchContextSchema>;
+
+export function selectRenderLaunchSource(
+  sources: RenderCapabilities["sources"],
+  context?: RenderLaunchContext,
+) {
+  const source = context
+    ? sources.find(({ sourceSceneJobId }) => sourceSceneJobId === context.sourceSceneJobId)
+    : sources[0];
+
+  if (!source) {
+    return undefined;
+  }
+
+  const specification = context?.specificationId
+    ? source.specifications.find(
+        ({ specificationId, specificationRevision }) =>
+          specificationId === context.specificationId &&
+          specificationRevision === context.specificationRevision,
+      )
+    : source.specifications[0];
+
+  if (context?.specificationId && !specification) {
+    return undefined;
+  }
+
+  return { source, specification };
+}
 
 export function renderStillsLaunchHref(projectId: string, context: RenderLaunchContext): string {
   const parsed = renderLaunchContextSchema.parse(context);

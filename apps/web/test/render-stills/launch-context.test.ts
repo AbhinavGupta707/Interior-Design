@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   renderLaunchContextSchema,
   renderStillsLaunchHref,
+  selectRenderLaunchSource,
 } from "../../src/features/render-stills/launch-context";
-import { ids } from "./fixtures";
+import { availableCapabilities, ids, uuid } from "./fixtures";
 
 describe("C14 exact source handoff", () => {
   it("round-trips an exact C10/C13 launch without accepting partial specification pins", () => {
@@ -31,5 +32,23 @@ describe("C14 exact source handoff", () => {
     expect(renderLaunchContextSchema.parse({ sourceSceneJobId: ids.sceneJob })).toEqual({
       sourceSceneJobId: ids.sceneJob,
     });
+  });
+
+  it("fails closed when an explicit render handoff is no longer eligible", () => {
+    expect(
+      selectRenderLaunchSource(availableCapabilities.sources, {
+        sourceSceneJobId: uuid(98),
+        specificationId: ids.specification,
+        specificationRevision: 5,
+      }),
+    ).toBeUndefined();
+
+    expect(
+      selectRenderLaunchSource(availableCapabilities.sources, {
+        sourceSceneJobId: ids.sceneJob,
+        specificationId: uuid(99),
+        specificationRevision: 99,
+      }),
+    ).toBeUndefined();
   });
 });

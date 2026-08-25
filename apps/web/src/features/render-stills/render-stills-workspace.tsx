@@ -21,7 +21,7 @@ import type {
   RenderWorkspace,
 } from "./contracts";
 import { renderWorkspaceSchema } from "./contracts";
-import type { RenderLaunchContext } from "./launch-context";
+import { selectRenderLaunchSource, type RenderLaunchContext } from "./launch-context";
 import {
   artifactLabel,
   canCancel,
@@ -155,26 +155,14 @@ export function RenderStillsWorkspace({
 
   const selectSourceDefaults = useCallback(
     (next: RenderWorkspace) => {
-      const requestedSource = launchContext
-        ? next.capabilities.sources.find(
-            ({ sourceSceneJobId: id }) => id === launchContext.sourceSceneJobId,
-          )
-        : undefined;
-      const source = requestedSource ?? next.capabilities.sources[0];
+      const selection = selectRenderLaunchSource(next.capabilities.sources, launchContext);
+      const source = selection?.source;
       const profile =
         next.capabilities.profiles.find(({ state }) => state === "available") ??
         next.capabilities.profiles[0];
       setSourceSceneJobId(source?.sourceSceneJobId ?? "");
       setCameraId(source?.cameras[0]?.cameraId ?? "");
-      const requestedSpecification =
-        requestedSource && launchContext?.specificationId
-          ? requestedSource.specifications.find(
-              ({ specificationId, specificationRevision }) =>
-                specificationId === launchContext.specificationId &&
-                specificationRevision === launchContext.specificationRevision,
-            )
-          : undefined;
-      const specification = requestedSpecification ?? source?.specifications[0];
+      const specification = selection?.specification;
       setSpecificationKey(
         specification
           ? `${specification.specificationId}:${String(specification.specificationRevision)}`
@@ -186,10 +174,7 @@ export function RenderStillsWorkspace({
       );
       setProfileId(profile?.profileId ?? "cycles-cpu-geometry-safe-v1");
       setEnhancementRequested(false);
-      if (
-        launchContext &&
-        (!requestedSource || (launchContext.specificationId && !requestedSpecification))
-      ) {
+      if (launchContext && !selection) {
         setAlert(
           "The exact scene/specification handoff is not currently an eligible render source. No alternate source was presented as that requested result.",
         );
