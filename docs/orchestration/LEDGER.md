@@ -3,12 +3,12 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/homeowner-digital-twin-journey`
+- Integration branch: `codex/homeowner-design-studio-journey`
 - Repository/project root: `/home/abhinav/code/interior-design` in the primary WSL checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2 are complete. No later checkpoint is open. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3 are complete. No later checkpoint is open. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -822,3 +822,76 @@
 - Software-complete and Windows-host-validated: persisted server-authorised setup; immutable evidence attribution and consent; proposal-only unmeasured initialization; deterministic C6 plan proposal; canonical C5 preview/commit; exact-current C10 scene exploration; authentication/role/expiry/degraded/error behavior; zero silent C8 routing.
 - Experimental: C8 v2 remains acceptance-only and is not a production homeowner route. Reconstruction/fusion output remains a proposal until explicitly corrected and accepted through C5.
 - Externally deferred: deployed provider and worker evidence; representative property evidence; a real C8 or C9 run; WebGL canvas rendering; Xcode; RoomPlan; LiDAR; and physical Apple-device validation.
+
+## C14.3 — Homeowner design-studio continuity
+
+### Master activation — 2026-08-25
+
+- Status: **closed for the Windows/WSL web continuity checkpoint** in non-draft PR
+  [#5](https://github.com/AbhinavGupta707/Interior-Design/pull/5), left unmerged. Shared
+  mobile/backend decisions remain provisional pending the Mac/iPad audit. C15 remains closed.
+- Contract: `docs/orchestration/checkpoints/C14_3_HOMEOWNER_DESIGN_STUDIO_CONTRACT.md`.
+- Verified predecessor: primary Ubuntu WSL checkout on clean `main` at `5b719f9ab83616affc0eeb7de2ba73279bd93d5f`; after an explicit `git fetch --prune origin`, local and `origin/main` are 0/0 and exact. Integration branch: `codex/homeowner-design-studio-journey`.
+- GitHub state: public repository default branch `main`; active ruleset `21470129` (`Protect main with CI`) blocks deletion/non-fast-forward updates, requires pull requests, resolved review threads and strict up-to-date checks. The exact predecessor has successful `JavaScript quality and build`, `Python quality and tests`, `Portable contract and security gates` and `Bootstrap contract` checks.
+- Clean predecessor gate: `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck, 45 JavaScript unit task groups, 24/24 builds, Ruff, strict mypy over 105 source files and pytest 157 passed/two honest unavailable COLMAP/Open3D capability skips.
+- Product audit: normal homeowner navigation ends at the exact-current C10 twin; C11–C14 are secondary specialist tools whose persisted states do not drive the next action. The accepted control planes already provide the required strict operations, so the checkpoint is web continuity plus independent acceptance rather than a new backend or inference domain.
+- Reconstruction audit: production C8 dispatch remains the frozen v1 composition. C8-v2 remains a sibling acceptance package with fail-closed exposure and `productionRoutingEnabled=false`; no route/queue/worker/UI productionises it. C9 can acquire completed v1 reconstruction results but correctly abstains without the required independent semantic source diversity. Neither output is promoted directly to canonical truth.
+- Mobile audit: native iOS currently reaches project/setup/evidence/capture through C8 but has no standalone C10–C14 flow or generated mobile client. C14.3 will record an exact provisional HTTP/API handoff for Mac review; it will not edit native iOS or freeze shared mobile/backend assumptions.
+- Contract/migration impact: none authorised. Shared contracts, OpenAPI/generated clients, authz, migrations, worker protocols, C8 v1/v2 and native iOS paths are read-only.
+- Initial orchestration assessment identified web implementation and independent acceptance as separable bodies, but they were sequential rather than parallel because acceptance consumes the reviewed product state.
+- Managed-worktree launch failed before implementation: the Codex desktop project registry reported saved WSL project `0656bfea-3712-44ef-b91b-82336aade10c` as `isGitRepository=false`, while WSL Git continued to prove the checkout valid. Direct worktree creation failed repository validation; a staging handoff and same-directory fork handoff each failed with `source thread workspace is not a git repository`.
+- Staging task `01a03a73-039c-75e2-a070-b0ac12b5bd4f` replied ready only and made no edits. Same-directory fork `01a03a73-9d4d-7b90-a233-57d70e904ac2` performed no child implementation turn. Both were archived. The asynchronous worktree-fork request produced no registered thread or Git worktree.
+- Exact post-failure verification: `git worktree list --porcelain` lists only `/home/abhinav/code/interior-design` on `codex/homeowner-design-studio-journey` at prelude `15e0d159f9a22493c0ee664dfc6f75b64e2e5bc7`; the worktree is clean.
+- Replan, frozen before implementation: one primary `gpt-5.6-sol` / `xhigh` session owns the checkpoint. It completes the homeowner design-studio web body, reviews it, then implements independent acceptance/evidence and the provisional Mac handoff. No shared-checkout worker or raw unmanaged worktree is used.
+
+### Frozen terminal rule
+
+- C14.3 closes only after both sequential bodies are implemented/reviewed, normal-navigation Windows/WSL browser acceptance proves the exact persisted design loop, final repository gates pass, documentation matches the evidence and a non-draft PR targeting `main` is open and left unmerged.
+- Creator-owned synthetic apartment fixtures are software evidence, not a representative property, provider deployment, survey, professional review, WebGL-canvas or physical-device result. Mac/iPad validation and shared mobile decisions remain separately pending. C15 remains closed.
+
+### Closeout — 2026-08-25
+
+- Single-session revisions: contract freeze `15e0d159`; replan `b74ed40`; product integration
+  `9d88d1c`; independent browser/integration/security acceptance `bd3f1d3`; full-gate lint review
+  repair `408b809`; durable evaluation/Mac handoff `2de820e`. No implementation subagent or child
+  worktree was created, merged or used.
+- Homeowner result: the primary `/home/:projectId` route now has two phases and twelve persisted
+  stages. After the exact confirmed existing C10 twin, the owner can accept C11 intent, generate and
+  compare two exact C12 options, confirm one only into proposed state, create/evolve a C13
+  specification, inspect its exact proposed C10 scene and request/review a C14 safe still.
+- Exact gating: C11 checks the changed exact-current C5 branch and current snapshot; C12 pins the
+  accepted brief plus model/snapshot/hash/version; stale jobs do not advance; C13 retains its exact
+  C12 confirmation; proposed C10 matches current C13 snapshot ID/hash; C14 links the paired exact
+  scene/specification. Persisted server records, not visits or URL presence, drive progress.
+- Recovery/roles: same-browser C12 continuation retains at most four strict opaque server-issued
+  confirmations in an 8,000-character project-scoped envelope and revalidates them before C13.
+  Viewer progress remains readable but mutation actions remain unavailable. Stage-specific
+  unavailable/degraded state does not erase other readable progress.
+- Browser acceptance: creator-owned synthetic England one-floor/one-bedroom fixture; normal
+  `/projects` navigation; exact mutation order C11 accept → C12 confirm → C13 create → substitution
+  preview/confirm → C14 create; proposed C10 DOM fallback; safe and segmentation PNG bytes verified
+  in-browser; no C8-v2 request; no unexpected console error. Final Playwright 1/1 passed at
+  1440×960. Screenshot `/tmp/c14-3-homeowner-design-studio-final.png`, 1440×3409, 890,389 bytes,
+  SHA-256 `6f549b673f454ac391f17e4e7a33ec85863f5ede99d4305cf04b1928616e9de0`, visually
+  inspected in the Codex app.
+- Focused gates: web 34 files/141 tests; integration 4/4; security 4/4; three focused TypeScript
+  configs exit 0; `git diff --check` clean. The exact branch diff from the authoritative predecessor
+  changes zero `apps/ios-capture/**`, `services/**` or `packages/contracts/**` files.
+- Full gate: `TEMP=/tmp TMP=/tmp TMPDIR=/tmp UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed
+  all 24 lint, 24 typecheck, 45 unit dependency and 24 build tasks; web 227/227; spatial worker
+  150 passed/3 database capability skips; Ruff and mypy clean; Python 157 passed/2 optional
+  capability skips. The initial `TMPDIR`-only Turbo run failed before web test collection because
+  WSL inherited Windows `TEMP/TMP`; pinning all three WSL-native variables resolved it.
+- Audit boundary: C8 v1 and all production routing are unchanged; C8-v2 still fails closed as
+  acceptance-only; C9 still requires independent semantic-source diversity and never promotes a
+  reconstruction result directly. C15 remains closed.
+- Provisional shared gaps: C12 exposes the C13-required confirmation ID only in the confirm response,
+  preventing server-authoritative cold/cross-device continuation; raw platform C14 capability lacks
+  the exact C10/C13/camera binding expected by the web workspace, and the authoritative scene
+  binding is not externally discoverable after reload. These are documented, not guessed around,
+  in `docs/runbooks/ios/C14_3_DESIGN_STUDIO_MAC_HANDOFF.md`; no shared/native contract is frozen.
+- Durable evaluation:
+  `docs/evaluation/homeowner-journey/C14_3_DESIGN_STUDIO_ACCEPTANCE_2026-08-25.md`.
+- Review vehicle: non-draft PR
+  [#5](https://github.com/AbhinavGupta707/Interior-Design/pull/5) targets `main` and is deliberately
+  left unmerged. No later checkpoint is opened by this closeout.

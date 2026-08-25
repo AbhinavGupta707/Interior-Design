@@ -109,10 +109,11 @@ export function HomeownerJourney({ projectId }: { readonly projectId: string }) 
         <div className="home-journey-hero__grid">
           <div>
             <span className="home-journey-eyebrow">Home journey · {session.actor.role} access</span>
-            <h1>Build an honest model of your home</h1>
+            <h1>Model your home, then design it</h1>
             <p>
               Move from property context and renovation intent to rights-cleared evidence, explicit
-              unmeasured workspace setup, proposal correction, confirmation and a derived twin.
+              model confirmation and an exact twin—then continue through a structured brief,
+              comparable design choices, specification, exploration and geometry-safe stills.
             </p>
           </div>
           <div className="home-journey-truth" role="note">
@@ -146,25 +147,67 @@ export function HomeownerJourney({ projectId }: { readonly projectId: string }) 
         </Link>
       </section>
 
-      <ol className="home-journey-stages" id="journey-stages">
-        {journey.stages.map((stage, index) => (
-          <li data-stage-state={stage.status} key={stage.id}>
-            <div className="home-journey-stage__number" aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </div>
-            <div className="home-journey-stage__copy">
-              <div>
-                <h2>{stage.title}</h2>
-                <span className="home-journey-status">{journeyStatusLabel(stage.status)}</span>
+      <section className="home-journey-phase" id="journey-stages">
+        <header className="home-journey-phase__header">
+          <span className="home-journey-eyebrow">Phase 1 · Understand the home</span>
+          <h2>Evidence to confirmed digital twin</h2>
+          <p>
+            Context, evidence and proposals stay distinct until typed corrections are explicitly
+            committed and compiled from the exact current snapshot.
+          </p>
+        </header>
+        <ol className="home-journey-stages">
+          {journey.modelStages.map((stage, index) => (
+            <li data-stage-state={stage.status} key={stage.id}>
+              <div className="home-journey-stage__number" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
               </div>
-              <p>{stage.detail}</p>
-              <Link className="home-journey-stage__link" href={stage.href}>
-                {stage.actionLabel}
-              </Link>
-            </div>
-          </li>
-        ))}
-      </ol>
+              <div className="home-journey-stage__copy">
+                <div>
+                  <h2>{stage.title}</h2>
+                  <span className="home-journey-status">{journeyStatusLabel(stage.status)}</span>
+                </div>
+                <p>{stage.detail}</p>
+                <Link className="home-journey-stage__link" href={stage.href}>
+                  {stage.actionLabel}
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {journey.designStages.length > 0 ? (
+        <section className="home-journey-phase home-journey-phase--design">
+          <header className="home-journey-phase__header">
+            <span className="home-journey-eyebrow">Phase 2 · Design your home</span>
+            <h2>Confirmed twin to useful design outputs</h2>
+            <p>
+              The brief records intent; options change only proposed state; specifications and
+              visual media retain exact model, catalog and tool versions.
+            </p>
+          </header>
+          <ol className="home-journey-stages">
+            {journey.designStages.map((stage, index) => (
+              <li data-stage-state={stage.status} key={stage.id}>
+                <div className="home-journey-stage__number" aria-hidden="true">
+                  {String(journey.modelStages.length + index + 1).padStart(2, "0")}
+                </div>
+                <div className="home-journey-stage__copy">
+                  <div>
+                    <h2>{stage.title}</h2>
+                    <span className="home-journey-status">{journeyStatusLabel(stage.status)}</span>
+                  </div>
+                  <p>{stage.detail}</p>
+                  <Link className="home-journey-stage__link" href={stage.href}>
+                    {stage.actionLabel}
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
       <section className="home-journey-rights" aria-labelledby="journey-rights-title">
         <div>

@@ -248,6 +248,45 @@
   padding: 1rem;
 }
 
+.continuationCard {
+  align-items: center;
+  background: #173b32;
+  color: #f8f3e8;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.42fr);
+  padding: 1.35rem;
+}
+
+.continuationCard h2 {
+  font-family:
+    Iowan Old Style,
+    Baskerville,
+    Georgia,
+    serif;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  margin: 0.25rem 0 0.5rem;
+}
+
+.continuationCard p {
+  color: #dce7df;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.continuationCard > div:last-child {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.continuationCard a,
+.continuationCard > div:last-child > span {
+  border: 1px solid #aac3b7;
+  color: #fff;
+  padding: 0.75rem 0.85rem;
+  text-decoration: none;
+}
+
 .versionBar label,
 .filters label,
 .noteField {

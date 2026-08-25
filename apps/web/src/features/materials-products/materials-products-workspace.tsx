@@ -15,6 +15,9 @@ import {
   StatePanel,
 } from "../../components/ui-primitives";
 import { ClientProblem, getProject, getSession } from "../auth/api";
+import { homeJourneyHref } from "../homeowner-journey/navigation";
+import { exactSceneJobHref } from "../viewer-3d/deep-link";
+import { sceneClient } from "../viewer-3d/api";
 import { MaterialsProductsProblem, materialsProductsClient } from "./api";
 import { CatalogPanel } from "./catalog-panel";
 import { catalogFiltersSchema, materialsProductsWorkspaceSchema } from "./contracts";
@@ -110,6 +113,10 @@ export function MaterialsProductsWorkspace({
   const [candidateAssetVersionId, setCandidateAssetVersionId] = useState<string>();
   const [preview, setPreview] = useState<SubstitutionPreview>();
   const [confirmation, setConfirmation] = useState<SubstitutionConfirmationResult>();
+  const [exactSceneJob, setExactSceneJob] = useState<{
+    readonly id: string;
+    readonly state: string;
+  }>();
   const [busy, setBusy] = useState<BusyAction>();
   const [alert, setAlert] = useState<string>();
   const [statusMessage, setStatusMessage] = useState("");
@@ -213,10 +220,11 @@ export function MaterialsProductsWorkspace({
   const loadSpecification = useCallback(
     async (nextSpecificationId: string, announce = false) => {
       try {
-        const [nextSpecification, nextSchedule, revisions] = await Promise.all([
+        const [nextSpecification, nextSchedule, revisions, scenes] = await Promise.all([
           materialsProductsClient.getSpecification(projectId, nextSpecificationId),
           materialsProductsClient.readSchedule(projectId, nextSpecificationId),
           materialsProductsClient.listSpecificationRevisions(projectId, nextSpecificationId),
+          sceneClient.loadWorkspace(projectId).catch(() => undefined),
         ]);
         if (
           nextSchedule.specificationId !== nextSpecification.specificationId ||
@@ -257,6 +265,16 @@ export function MaterialsProductsWorkspace({
         );
         setSchedule(nextSchedule);
         setRevisionCount(revisions.revisions.length);
+        setExactSceneJob(
+          scenes?.jobs.find(
+            ({ request }) =>
+              request.sourceSnapshot.profile === "proposed" &&
+              request.sourceSnapshot.snapshotId ===
+                nextSpecification.currentRevision.modelSnapshotId &&
+              request.sourceSnapshot.snapshotSha256 ===
+                nextSpecification.currentRevision.modelSnapshotSha256,
+          ),
+        );
         setAssetDetails(new Map(assets.map((asset) => [asset.versionId, asset])));
         const lineIds = new Set(nextSchedule.lines.map(({ lineId }) => lineId));
         setSelectedLineId((current) =>
@@ -559,6 +577,8 @@ export function MaterialsProductsWorkspace({
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
           <Link href="/projects">Projects</Link>
           <span aria-hidden="true">/</span>
+          <Link href={homeJourneyHref(projectId)}>Home journey</Link>
+          <span aria-hidden="true">/</span>
           <Link href={`/design-options/${projectId}`}>Confirmed design option</Link>
           <span aria-hidden="true">/</span>
           <span>Materials &amp; products</span>
@@ -699,6 +719,36 @@ export function MaterialsProductsWorkspace({
           </section>
           {specification && schedule ? (
             <>
+              <section
+                className={styles.continuationCard}
+                aria-labelledby="scene-continuation-title"
+              >
+                <div>
+                  <p className={styles.sectionLabel}>Next design output</p>
+                  <h2 id="scene-continuation-title">Explore this exact proposed revision</h2>
+                  <p>
+                    A material substitution is previewed first, then explicitly confirmed into a new
+                    proposed specification revision. C13 requests C10 from that exact revision; the
+                    scene remains derived and read-only.
+                  </p>
+                </div>
+                <div>
+                  {confirmation?.sceneRequestState === "requested" ? (
+                    <Link href={exactSceneJobHref(projectId, confirmation.confirmation.sceneJobId)}>
+                      Open the exact proposed scene
+                    </Link>
+                  ) : exactSceneJob ? (
+                    <Link href={exactSceneJobHref(projectId, exactSceneJob.id)}>
+                      {exactSceneJob.state === "succeeded"
+                        ? "Explore the exact proposed scene"
+                        : `View proposed-scene progress · ${exactSceneJob.state}`}
+                    </Link>
+                  ) : (
+                    <span>Choose a catalog candidate below and confirm its bounded preview.</span>
+                  )}
+                  <Link href={homeJourneyHref(projectId)}>Return to the home journey</Link>
+                </div>
+              </section>
               <SelectionBoard
                 busy={busy === "board" || !online}
                 editable={editable}
