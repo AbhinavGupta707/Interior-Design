@@ -43,6 +43,12 @@ final class CaptureFlowModelTests: XCTestCase {
       model.path,
       [.eligibility, .unsupportedCapture, .manualEvidence]
     )
+
+    model.openEvidenceWorkspace()
+    XCTAssertEqual(
+      model.path,
+      [.eligibility, .unsupportedCapture, .manualEvidence, .evidenceWorkspace]
+    )
   }
 
   func testResetClearsProjectCapabilityAndNavigation() {
