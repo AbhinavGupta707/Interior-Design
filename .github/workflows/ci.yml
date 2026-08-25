@@ -54,6 +54,10 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace dependency declarations
+        shell: bash
+        run: pnpm build
+
       - name: Run formatting, lint, types, units, and builds
         shell: bash
         run: pnpm verify:js
@@ -86,7 +90,7 @@ jobs:
         shell: bash
         run: |
           test "$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')" = "$(cat .python-version)"
-          test "$(uv --version)" = "uv 0.11.16"
+          test "$(uv --version | cut -d " " -f 2)" = "0.11.16"
 
       - name: Install Python dependencies
         shell: bash
@@ -133,7 +137,7 @@ jobs:
           corepack prepare pnpm@10.33.0 --activate
           test "$(node --version)" = "v$(cat .nvmrc)"
           test "$(pnpm --version)" = "10.33.0"
-          test "$(uv --version)" = "uv 0.11.16"
+          test "$(uv --version | cut -d " " -f 2)" = "0.11.16"
 
       - name: Install frozen dependencies
         shell: bash

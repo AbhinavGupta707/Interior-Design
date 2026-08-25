@@ -21,7 +21,7 @@ Migration `services/platform-api/migrations/0006_plan_processing.sql` requires C
 Apply it from the repository root:
 
 ```sh
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/platform-api exec tsx src/c6.ts migrate
 ```
 
@@ -92,13 +92,13 @@ pnpm install --frozen-lockfile --offline
 Run package checks with the supported bundled Node runtime:
 
 ```sh
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/platform-api typecheck
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/platform-api exec vitest run --exclude 'dist/**' test/c6
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/spatial-worker typecheck
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/spatial-worker exec vitest run --exclude 'dist/**' test/plan-processing
 ```
 
@@ -106,10 +106,10 @@ The live suite is guarded and must be reported as skipped, not passed, when the 
 
 ```sh
 C6_TEST_DATABASE_URL='postgresql://…' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/platform-api exec vitest run test/c6/postgres.integration.test.ts
 C6_TEST_DATABASE_URL='postgresql://…' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/spatial-worker exec vitest run \
   test/plan-processing/postgres.integration.test.ts
 ```
@@ -128,7 +128,7 @@ and object-storage services running, execute:
 ```sh
 C6_LIVE_API_URL='http://127.0.0.1:3001' \
 C6_LIVE_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/interior_c6_api' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm --filter @interior-design/spatial-worker exec \
   tsx --conditions=development test/plan-processing/live-system-seed.ts
 ```
@@ -148,7 +148,7 @@ two live viewport checks:
 C6_LIVE_PLAN_URL='http://127.0.0.1:3000' \
 C6_LIVE_PLAN_PATH='/projects/<projectId>/plan-import' \
 C6_LIVE_PLAN_STORAGE_STATE='/tmp/c6-live-plan-storage-state.json' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
+PATH='<supported-node-bin>':$PATH \
   pnpm exec playwright test --config tests/e2e/plan-processing/playwright.live.config.ts
 ```
 
