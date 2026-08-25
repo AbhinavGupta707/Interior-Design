@@ -822,3 +822,28 @@
 - Software-complete and Windows-host-validated: persisted server-authorised setup; immutable evidence attribution and consent; proposal-only unmeasured initialization; deterministic C6 plan proposal; canonical C5 preview/commit; exact-current C10 scene exploration; authentication/role/expiry/degraded/error behavior; zero silent C8 routing.
 - Experimental: C8 v2 remains acceptance-only and is not a production homeowner route. Reconstruction/fusion output remains a proposal until explicitly corrected and accepted through C5.
 - Externally deferred: deployed provider and worker evidence; representative property evidence; a real C8 or C9 run; WebGL canvas rendering; Xcode; RoomPlan; LiDAR; and physical Apple-device validation.
+
+## C14.3 — Homeowner design-studio continuity
+
+### Master activation — 2026-08-25
+
+- Status: **open**. C15 remains closed.
+- Contract: `docs/orchestration/checkpoints/C14_3_HOMEOWNER_DESIGN_STUDIO_CONTRACT.md`.
+- Verified predecessor: primary Ubuntu WSL checkout on clean `main` at `5b719f9ab83616affc0eeb7de2ba73279bd93d5f`; after an explicit `git fetch --prune origin`, local and `origin/main` are 0/0 and exact. Integration branch: `codex/homeowner-design-studio-journey`.
+- GitHub state: public repository default branch `main`; active ruleset `21470129` (`Protect main with CI`) blocks deletion/non-fast-forward updates, requires pull requests, resolved review threads and strict up-to-date checks. The exact predecessor has successful `JavaScript quality and build`, `Python quality and tests`, `Portable contract and security gates` and `Bootstrap contract` checks.
+- Clean predecessor gate: `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck, 45 JavaScript unit task groups, 24/24 builds, Ruff, strict mypy over 105 source files and pytest 157 passed/two honest unavailable COLMAP/Open3D capability skips.
+- Product audit: normal homeowner navigation ends at the exact-current C10 twin; C11–C14 are secondary specialist tools whose persisted states do not drive the next action. The accepted control planes already provide the required strict operations, so the checkpoint is web continuity plus independent acceptance rather than a new backend or inference domain.
+- Reconstruction audit: production C8 dispatch remains the frozen v1 composition. C8-v2 remains a sibling acceptance package with fail-closed exposure and `productionRoutingEnabled=false`; no route/queue/worker/UI productionises it. C9 can acquire completed v1 reconstruction results but correctly abstains without the required independent semantic source diversity. Neither output is promoted directly to canonical truth.
+- Mobile audit: native iOS currently reaches project/setup/evidence/capture through C8 but has no standalone C10–C14 flow or generated mobile client. C14.3 will record an exact provisional HTTP/API handoff for Mac review; it will not edit native iOS or freeze shared mobile/backend assumptions.
+- Contract/migration impact: none authorised. Shared contracts, OpenAPI/generated clients, authz, migrations, worker protocols, C8 v1/v2 and native iOS paths are read-only.
+- Planned lanes: two, sequential. Both are predeclared as exact `gpt-5.6-sol` / `xhigh` because they cross persisted state, roles, concurrency, exact version pins, privacy and five accepted product surfaces.
+
+| Lane                                        | Task/thread                          | Worktree       | Model / reasoning       | State  | Exclusive roots                                                                                         |
+| ------------------------------------------- | ------------------------------------ | -------------- | ----------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| C14.3-L1 homeowner design-studio web        | pending launch                       | pending launch | `gpt-5.6-sol` / `xhigh` | frozen | allocated web homeowner-journey, C11/C12/C13/C10/C14 feature/test files, projects screen and global CSS |
+| C14.3-L2 independent design-loop acceptance | starts after reviewed L1 integration | pending launch | `gpt-5.6-sol` / `xhigh` | frozen | isolated homeowner-design-studio E2E/integration/security/evaluation and provisional Mac handoff paths  |
+
+### Frozen terminal rule
+
+- C14.3 closes only after both lanes are reviewed/integrated, normal-navigation Windows/WSL browser acceptance proves the exact persisted design loop, final repository gates pass, documentation matches the evidence and a non-draft PR targeting `main` is open and left unmerged.
+- Creator-owned synthetic apartment fixtures are software evidence, not a representative property, provider deployment, survey, professional review, WebGL-canvas or physical-device result. Mac/iPad validation and shared mobile decisions remain separately pending. C15 remains closed.

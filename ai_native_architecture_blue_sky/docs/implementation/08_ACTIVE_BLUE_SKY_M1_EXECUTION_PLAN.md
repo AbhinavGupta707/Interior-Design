@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-23 the user authorised the corrective homeowner sequence before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey, with synthetic-input local host-live evidence and deterministic rendered acceptance. Neither checkpoint production-routes C8 v2; C15 remains closed pending a separate user decision.
+On 2026-08-25 the user authorised the next smallest complete homeowner checkpoint before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey. C14.3 is open to extend normal navigation from the confirmed exact-current twin through C11 consultation, C12 options, C13 specification, proposed C10 exploration and C14 geometry-safe stills. None of these corrective checkpoints production-routes C8 v2; C15 remains closed.
 
 M1 includes:
 
@@ -319,6 +319,19 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 **Status:** closed at the reviewed product/evidence integration revision `dd225fa6b3d8baa7340f8236162bfa2860d4add0`; final closeout documentation and the non-draft PR remain on the same integration branch. C8 v2, a real C8/C9 run, a representative property, WebGL canvas evidence and Apple physical validation are not included.
 
 **Gate:** persisted state and server authorization drive every stage; initialization fabricates no interior; user attribution is actor-bound; the host-live path uses the production C6 parser and exact C5/C10 contracts; C9 multi-source and physical Apple claims remain deferred unless their real source/runtime gates are genuinely met.
+
+### C14.3 — Homeowner design-studio continuity — 2 lanes
+
+**Outcome:** from the normal project journey, a homeowner with a confirmed exact-current twin can complete a persisted design loop through structured consultation, at least two comparable options, explicit proposed-only selection, materials/specification, proposed-scene exploration and geometry-safe stills.
+
+| Lane | Exclusive paths | Output and evidence |
+|---|---|---|
+| C14.3-L1 homeowner design-studio web | isolated homeowner journey plus exact allocated C11/C12/C13/C10/C14 web features/tests | persisted stage state, exact-current gating, normal cross-workspace handoffs, role/degraded/stale recovery |
+| C14.3-L2 independent design-loop acceptance | isolated homeowner-design-studio E2E/integration/security/evaluation and Mac handoff paths | normal-navigation desktop/mobile evidence, exact pin/no-illicit-mutation assertions and provisional mobile API handoff |
+
+**Status:** open from clean GitHub-synchronised `main` commit `5b719f9ab83616affc0eeb7de2ba73279bd93d5f` under `docs/orchestration/checkpoints/C14_3_HOMEOWNER_DESIGN_STUDIO_CONTRACT.md`. Both lanes are frozen as exact `gpt-5.6-sol` / `xhigh`; L2 begins only after reviewed L1 integration.
+
+**Gate:** persisted server state drives the loop; the confirmed existing twin must be exact-current; C11 intent never becomes geometry; C12 confirmation changes only proposed state; C13/C10/C14 retain exact source/version pins; synthetic fixtures remain explicit; Mac/mobile assumptions remain provisional; C8 v2 and C15 remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 
