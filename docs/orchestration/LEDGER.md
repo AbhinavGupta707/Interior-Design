@@ -3,12 +3,12 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/homeowner-design-studio-journey`
-- Repository/project root: `/home/abhinav/code/interior-design` in the primary WSL checkout
+- Integration branch: `codex/c14-cross-device-continuity`
+- Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design` in the primary Mac checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3 are complete. No later checkpoint is open. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3 are complete. C14.4 is the only open checkpoint. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -895,3 +895,57 @@
 - Review vehicle: non-draft PR
   [#5](https://github.com/AbhinavGupta707/Interior-Design/pull/5) targets `main` and is deliberately
   left unmerged. No later checkpoint is opened by this closeout.
+
+## C14.4 — Cross-device design-studio continuity
+
+### Master activation — 2026-08-26
+
+- Status: open; C15 remains closed.
+- Authority: user instruction dated 2026-08-26 to close only the two documented C14.3
+  cross-device gaps before any native UI, physical-device, C8/C9 production, provider/hardware or
+  C15 work.
+- Contract: `docs/orchestration/checkpoints/C14_4_CROSS_DEVICE_CONTINUITY_CONTRACT.md`.
+- Verified predecessor: clean local `main` fast-forwarded to exact requested and remote commit
+  `e38b32783a08e026d31a8424210b429730393a79` after `git fetch --prune origin`.
+- Integration branch: `codex/c14-cross-device-continuity`.
+- Runtime: one primary `gpt-5.6-sol` session with `xhigh` reasoning.
+- Contract impact: two additive project-scoped GET routes, strict shared schemas and a pinned
+  OpenAPI 3.1.2 source with deterministic TypeScript/Swift clients.
+- Migration impact: none.
+
+### Implementation audit and parallelism decision
+
+- C12 persistence already retains one confirmation per tenant/project/job/option and C13 requires
+  its opaque ID, but no read route exists. C14 already resolves exact C10 bytes/hashes, embedded
+  C13 binding, live catalog rights and frozen profiles at job creation, but exposes no current
+  source/camera/specification discovery surface.
+- The existing C14 capability route is deliberately host-only. The web BFF currently parses it as
+  a richer workspace schema and therefore fails closed on a live platform response.
+- `packages/api-contracts/openapi/README.md` is a placeholder; no existing generated client can be
+  extended. Native iOS currently has no standalone C10–C14 client or UI.
+- The mandatory parallelism gate is not satisfied. Both reads share orchestrator-owned contracts,
+  one OpenAPI/generated-client package, platform composition and web consumers; acceptance is
+  sequential. Splitting them creates overlapping ownership and contract drift without shortening
+  the critical path.
+- No task, subagent or worktree was spawned. Historical registered worktrees predate this session
+  and remain untouched. Any later spawn requires a newly recorded independent scope, exclusive
+  paths, base, model and reasoning before launch.
+
+### Frozen implementation sequence
+
+1. Shared schemas, route constants, OpenAPI source, deterministic TypeScript/Swift generation and
+   drift tests.
+2. Tenant-scoped C12 repository/service/route/BFF recovery using the existing read action.
+3. C14 discovery derived from succeeded C10 scenes, mapped cameras and authoritative C13 binding/
+   rights, with creation-time exact-byte/binding revalidation preserved.
+4. Web composition and local-authority removal; focused contract, integration, PostgreSQL,
+   security and regression gates.
+5. Swift package compile/test, complete repository gates, durable evidence, push and non-draft PR.
+
+### Frozen terminal rule
+
+- C14.4 closes only after both routes are consumed through generated contracts, cross-tenant and
+  malformed/stale inputs fail closed, exact pins and provenance remain intact, complete gates pass,
+  evidence is recorded and a non-draft PR targeting `main` is open and left unmerged.
+- Native C10–C14 UI, C15, physical-device evidence, C8/C9 production work, representative-home
+  evidence and provider/render-hardware acceptance remain explicitly excluded.
