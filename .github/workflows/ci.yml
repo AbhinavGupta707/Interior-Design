@@ -43,6 +43,18 @@ jobs:
           check-latest: false
           node-version-file: .nvmrc
 
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          check-latest: false
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: false
+          version: "0.11.16"
+
       - name: Enable pinned pnpm
         shell: bash
         run: |
@@ -52,9 +64,17 @@ jobs:
           test "$(pnpm --version)" = "10.33.0"
           test "$(node -p 'require("./package.json").packageManager')" = "pnpm@10.33.0"
 
-      - name: Install JavaScript dependencies
+      - name: Install portable media test tools
         shell: bash
-        run: pnpm install --frozen-lockfile
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg poppler-utils
+
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+          uv sync --frozen
 
       - name: Build workspace dependency declarations
         shell: bash
