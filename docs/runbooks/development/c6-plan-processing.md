@@ -8,6 +8,19 @@ C6 produces an immutable proposal or abstention. A calibration and an operation 
 
 The supported v1 box is one selected page, at most 20 PDF pages, 25 MiB source bytes, 20 megapixels of raster work, 200 candidates, 5 MiB parser output, 30 seconds of total per-page source/normalization/parser work and three immutable attempts. Curves, freehand/perspective plans, sections/elevations, stairs, objects, structure and regulatory conclusions remain unsupported or unknown.
 
+## Supported Node toolchain
+
+From the repository root, use a version manager or bundled runtime to put the exact Node version in
+`.nvmrc` on `PATH`. Do not copy a machine-specific runtime path into this runbook. Then enable and
+verify the repository-pinned package manager:
+
+```sh
+test "$(node --version)" = "v$(cat .nvmrc)"
+corepack enable
+corepack prepare pnpm@10.33.0 --activate
+test "$(pnpm --version)" = "10.33.0"
+```
+
 ## Database and readiness
 
 Migration `services/platform-api/migrations/0006_plan_processing.sql` requires C2 and C5 to be present. It creates:
@@ -21,8 +34,7 @@ Migration `services/platform-api/migrations/0006_plan_processing.sql` requires C
 Apply it from the repository root:
 
 ```sh
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/platform-api exec tsx src/c6.ts migrate
+pnpm --filter @interior-design/platform-api exec tsx src/c6.ts migrate
 ```
 
 The API readiness route includes `c6-database` and is not ready until the `0006_plan_processing` marker exists. Migration `0006` is registered in the shared migration registry.
@@ -89,28 +101,22 @@ Materialize dependencies without network or lockfile changes:
 pnpm install --frozen-lockfile --offline
 ```
 
-Run package checks with the supported bundled Node runtime:
+Run package checks with the supported Node runtime verified above:
 
 ```sh
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/platform-api typecheck
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/platform-api exec vitest run --exclude 'dist/**' test/c6
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/spatial-worker typecheck
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/spatial-worker exec vitest run --exclude 'dist/**' test/plan-processing
+pnpm --filter @interior-design/platform-api typecheck
+pnpm --filter @interior-design/platform-api exec vitest run --exclude 'dist/**' test/c6
+pnpm --filter @interior-design/spatial-worker typecheck
+pnpm --filter @interior-design/spatial-worker exec vitest run --exclude 'dist/**' test/plan-processing
 ```
 
 The live suite is guarded and must be reported as skipped, not passed, when the variable is absent:
 
 ```sh
 C6_TEST_DATABASE_URL='postgresql://…' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/platform-api exec vitest run test/c6/postgres.integration.test.ts
+pnpm --filter @interior-design/platform-api exec vitest run test/c6/postgres.integration.test.ts
 C6_TEST_DATABASE_URL='postgresql://…' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/spatial-worker exec vitest run \
+pnpm --filter @interior-design/spatial-worker exec vitest run \
   test/plan-processing/postgres.integration.test.ts
 ```
 
@@ -128,8 +134,7 @@ and object-storage services running, execute:
 ```sh
 C6_LIVE_API_URL='http://127.0.0.1:3001' \
 C6_LIVE_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/interior_c6_api' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm --filter @interior-design/spatial-worker exec \
+pnpm --filter @interior-design/spatial-worker exec \
   tsx --conditions=development test/plan-processing/live-system-seed.ts
 ```
 
@@ -148,8 +153,7 @@ two live viewport checks:
 C6_LIVE_PLAN_URL='http://127.0.0.1:3000' \
 C6_LIVE_PLAN_PATH='/projects/<projectId>/plan-import' \
 C6_LIVE_PLAN_STORAGE_STATE='/tmp/c6-live-plan-storage-state.json' \
-PATH='/Users/abhinavgupta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin':$PATH \
-  pnpm exec playwright test --config tests/e2e/plan-processing/playwright.live.config.ts
+pnpm exec playwright test --config tests/e2e/plan-processing/playwright.live.config.ts
 ```
 
 The live browser gate fails on any warning/error, page exception, failed request, HTTP response at or
