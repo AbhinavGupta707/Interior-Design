@@ -8,7 +8,10 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4/C14.5 are complete. C14.6 is open only for production-shaped native session recovery, C1 intake, C3 England property context, C2 evidence and capture/proposal-readiness guidance. C6/C8/C9 processing, C4/C5 confirmation, live provider/deployment, physical-device/hardware and C15/C16 remain closed; C8 v2 remains acceptance-only.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4/C14.5/C14.6
+  are complete. No later checkpoint is open. C6/C8/C9 native processing, C4/C5 native confirmation,
+  live provider/deployment, physical-device/hardware and C15/C16 remain closed; C8 v2 remains
+  acceptance-only.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -1156,3 +1159,58 @@
   spawned; historical worktrees remain untouched.
 - Baseline audit is not live OIDC/property-provider/deployment, physical-device, RoomPlan/LiDAR,
   production C6/C8/C9, confirmed-twin, provider/render-hardware or C15 evidence.
+
+### Completion — 2026-08-26
+
+- Status: complete on `codex/c14-6-native-homeowner-readiness`; no later checkpoint is authorised.
+  Contract/audit freeze is `6e8dfc8`; native implementation is
+  `0e3ab58266dd21e877944433a64f9651ff23e810` and durable acceptance is recorded below.
+- Product result: a new homeowner can progress natively from cold launch through protected
+  production-shaped sign-in/session recovery, authorised project create/select/relaunch,
+  revisioned renovation intake, England address/property context, C2 rights/consent and evidence
+  upload, and fresh capture/proposal-readiness guidance. The website is no longer required for that
+  slice.
+- Authentication result: non-local configuration uses provider-neutral Authorization Code + PKCE
+  through `ASWebAuthenticationSession`, exact HTTPS endpoints and callback URI, no client secret,
+  and ThisDeviceOnly Keychain credentials. Cold launch requires `GET /v1/session`; a `401` permits
+  one refresh/retry. Invalid provider configuration fails closed. Local fixture identity remains
+  conspicuous and Debug-only in effect.
+- Project/recovery result: a bounded protected cache holds only the last project UUID. Fresh project
+  listing must revalidate membership before restoration. Sign-out/project switch clears all scoped
+  models, invalidates request identities and rejects or compensating-erases late persistence and
+  selection results.
+- C1/C3 result: native intake keeps exact optimistic versions and stable pending idempotency. England
+  resolution distinguishes exact/ambiguous/no-match/disabled/unavailable/expired/stale states and
+  offers a manual user-asserted fallback. Dossier items keep epistemic/source/licence labels and
+  `planningStatus: not-reviewed`; address context never establishes interior geometry.
+- C2/readiness result: existing immutable resumable uploads preserve rights, explicit service
+  processing and default-denied training consent. Fresh saved intake plus selected property define
+  onboarding readiness; only a fresh `ready` consented plan may be called eligible to begin later
+  C6. No proposal, reconstruction, fusion, C4/C5 confirmation or confirmed twin is inferred.
+- Contract/dependency impact: no backend/shared schema, OpenAPI/generated-client, database migration,
+  root manifest, lockfile or third-party dependency changed. Apple `AuthenticationServices` is the
+  only new framework link. Generated C14.4 TypeScript/Swift outputs remained byte-stable and the
+  Swift package passed 3/3.
+- Native gates: XcodeGen was byte-stable at final project SHA-256
+  `3b5a8346332757bc9190a293503e73cf5c5574356e8a009c35da4b666efa875a`; the locally signed
+  full native suite passed 166 logical tests/173 device invocations with zero failures/skips;
+  affected tests passed 27/27. C14.6 UI acceptance passed 3/3 on iPhone Air and 3/3 on iPad Pro
+  13-inch (M5), both iOS 26.4. Generic Debug/Release Simulator builds, unsigned generic iOS Release
+  compilation and Release analysis passed; fixture-exclusion scans found no C14.6 flags, fixture
+  property text or fixture-view symbol.
+- Repository/security gates: focused C1-C3 passed 27; focused contracts/authorisation/evidence passed
+  586 with 2 optional-provider skips; C14.5 integration/security regressions passed 4/4 and 4/4;
+  `pnpm test:c14` passed every locally available suite with 8 API capability and 1 disposable
+  production-control-plane skips; full `pnpm verify` passed 24 lint, 24 typecheck, 45 unit dependency
+  and 24 build tasks, Ruff/mypy, and Python 157 with 2 optional-runtime skips.
+- Durable evidence:
+  `docs/evaluation/homeowner-journey/C14_6_NATIVE_HOMEOWNER_READINESS_ACCEPTANCE_2026-08-26.md`,
+  including retained iPhone/iPad Simulator captures and exact result-bundle references.
+- Explicitly not accepted or claimed: live OIDC/address/EPC/planning/mapping provider or deployment;
+  remote token revocation; physical-device/camera/background transfer/RoomPlan/LiDAR;
+  representative-home; production C6/C8/C9; C4/C5 confirmation; confirmed-twin creation;
+  provider/render hardware; survey/structure/boundary/regulatory/cost/availability/professional
+  certainty; or C15.
+- Orchestration: one primary `gpt-5.6-sol` / `xhigh` session. The recorded mandatory-parallelism gate
+  remained unsatisfied; no task, subagent or worktree was spawned and historical worktrees were
+  untouched.

@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "F505A090-13B3-406C-8D64-A598D3676075",
+        "deviceName" : "iPhone Air",
+        "exportedFileName" : "6A7D8A93-A0ED-440D-9C7D-596B2BD6769A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "C14.6 native homeowner readiness_0_3CDEFD4A-AB5E-45FB-AE11-47388AED6FA8.png",
+        "timestamp" : 1787739927.7
+      }
+    ],
+    "testIdentifier" : "C14_6HomeownerReadinessUITests/testColdLaunchProgressesToNativeProposalReadiness()",
+    "testIdentifierURL" : "test://com.apple.xcode/HomeDesignCapture/HomeDesignCaptureUITests/C14_6HomeownerReadinessUITests/testColdLaunchProgressesToNativeProposalReadiness"
+  }
+]
