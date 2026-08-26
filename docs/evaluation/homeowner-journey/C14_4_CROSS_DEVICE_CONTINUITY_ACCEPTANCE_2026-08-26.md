@@ -18,11 +18,22 @@ representative home, an enabled provider, or render-hardware acceptance. C15 rem
   `e38b32783a08e026d31a8424210b429730393a79`.
 - Contract freeze: `aa3eb2f` (`docs(c14.4): freeze cross-device continuity contract`).
 - Implementation: `aae3379` (`feat(c14.4): add cross-device continuity authorities`).
+- Independently reviewed baseline: `5ecd850e242c36442fa415c0349f817692a3c5c4`.
+- Material review correction: `7b4eef258c203479815991445212590fe5633775`
+  (`fix(c14.4): enforce authoritative continuity discovery`).
 - Integration branch: `codex/c14-cross-device-continuity`.
 - Runtime: one primary `gpt-5.6-sol` session with `xhigh` reasoning.
 - Parallelism: the mandatory gate was recorded as unsatisfied before implementation. The two reads
   share one OpenAPI source, generated clients, platform authority and web consumers, so no task,
   subagent or worktree was spawned. Historical worktrees were untouched.
+
+The independent `gpt-5.6-sol` / `xhigh` review used the same primary checkout and no subagent or
+worktree. It found that discovery trusted C10 metadata plus live C13 authority without rereading the
+immutable GLB, allowing a bound scene with missing/mismatched authority to be advertised as
+unbound or with incorrect pins. The correction makes discovery reread and validate the exact GLB,
+distinguishes a legitimate unbound GLB from malformed bytes, cross-checks optional embedded and
+live bindings, retains independent creation-time revalidation, purges invalid local recovery state,
+and adds the missing exact-scope and generated-transport regression gates.
 
 ## Frozen shared surface
 
@@ -43,7 +54,7 @@ representative home, an enabled provider, or render-hardware acceptance. C15 rem
 ## Generated client evidence
 
 - Canonical OpenAPI: `3.1.2`, exactly the two additive GET operations.
-- Generator version: `interior-design-continuity-generator-1.0.0`.
+- Generator version: `interior-design-continuity-generator-1.0.1`.
 - Frozen OpenAPI SHA-256:
   `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`.
 - Generation is byte-stable, uses only the repository-pinned formatter and is checked before the
@@ -57,24 +68,28 @@ representative home, an enabled provider, or render-hardware acceptance. C15 rem
 
 ## Verification evidence
 
-The following final gates passed from implementation commit `aae3379` plus the documentation
-closeout diff:
+The following final gates passed with correction commit
+`7b4eef258c203479815991445212590fe5633775` plus this closeout diff:
 
 - deterministic generator write/check and `git diff --check`;
-- shared contracts: 15 files / 85 tests;
-- focused platform C12/C14: 5 files / 34 tests; full platform unit run: 54 files passed,
-  19 capability-gated files skipped, 252 tests passed and 51 capability-gated tests skipped;
+- shared contracts: 15 files / 86 tests;
+- focused review: 16 files / 92 passed / 2 unavailable-service skips; full platform unit run:
+  54 files passed, 19 unavailable-service files skipped, 254 tests passed and 51 unavailable-service
+  tests skipped;
 - web unit run: 57 files / 230 tests;
 - homeowner design-studio integration: 1 file / 4 tests; security: 1 file / 4 tests; additional
   render security: 2 files / 5 tests; render evaluation: 1 file / 4 tests;
-- live loopback PostgreSQL C12 suite: 1 file / 2 tests, including exact lookup and cross-tenant
-  isolation;
-- Swift package: build succeeded and 2 tests passed with isolated `/tmp` module/build caches;
+- live loopback PostgreSQL C12 suite: 1 file / 2 tests, including exact lookup, wrong-job,
+  wrong-option and cross-tenant isolation;
+- live C14 gate: platform 6 files / 35 tests and full C1-C14 control-plane integration 1/1 against
+  fresh disposable databases and loopback S3, with zero mandatory skips;
+- Swift package: build succeeded and 3 tests passed with isolated `/tmp` module/build caches,
+  including authenticated uncached JSON GET transport;
 - Playwright C12: 12 passed; C14: 22 passed; integrated homeowner design studio: 1 passed. The
   rendered C14 acceptance continues to label hardware evidence `deferred` even when a configured
   host fixture accepts a software profile;
 - package lint and typecheck for contracts, platform API and web all passed; and
-- `UV_CACHE_DIR=/tmp/c14-4-uv-cache CI=1 corepack pnpm verify` exited 0: 24 lint tasks,
+- `UV_CACHE_DIR=/tmp/c14-4-review-uv-cache CI=1 corepack pnpm verify` exited 0: 24 lint tasks,
   24 typecheck tasks, 45 unit dependency tasks and 24 builds passed; Ruff and mypy were clean;
   Python finished with 157 passed and 2 optional capability skips.
 
@@ -101,5 +116,7 @@ counted as acceptance evidence.
 ## Review vehicle
 
 Non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main` and is
-deliberately left unmerged. C14.4 is terminally closed by this review vehicle; it does not authorise
-C15 or any excluded native/device/provider/hardware/reconstruction work.
+authorised for normal merge after every required check succeeds on its final reviewed head. This
+supersedes the earlier leave-unmerged disposition; GitHub and `main` are the final disposition
+record. C14.4 does not authorise C15 or any excluded native/device/provider/hardware/reconstruction
+work.

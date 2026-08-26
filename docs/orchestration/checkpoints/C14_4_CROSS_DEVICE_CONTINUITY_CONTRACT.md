@@ -158,28 +158,32 @@ closed.
 
 ## Closeout — 2026-08-26
 
-- Contract freeze: `aa3eb2f`; implementation: `aae3379`.
+- Contract freeze: `aa3eb2f`; implementation: `aae3379`; independent-review correction:
+  `7b4eef258c203479815991445212590fe5633775`.
 - The two frozen project-scoped GET routes are implemented through shared schemas, in-memory and
   PostgreSQL/platform authorities, strict BFF boundaries and generated TypeScript/Swift clients.
 - OpenAPI `3.1.2` SHA-256 is
   `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`; generator version is
-  `interior-design-continuity-generator-1.0.0`. Generation/check is byte-stable and part of the
+  `interior-design-continuity-generator-1.0.1`. Generation/check is byte-stable and part of the
   contracts test command. Root dependency versions and `pnpm-lock.yaml` are unchanged.
 - C12 confirmation recovery is server-authoritative and exact-scoped. Browser recovery v2 retains
   only job/comparison selection and erases legacy locally retained confirmations on migration.
-- C14 discovery returns only succeeded C10 scenes with mapped cameras and valid current C13 rights,
-  while render creation independently revalidates the selected camera, immutable GLB/hash, embedded
-  C13 binding, live rights and frozen profile. Malformed/unavailable authority fails the request;
-  stale and forged selections are rejected.
+- C14 discovery returns only succeeded C10 scenes with mapped cameras and valid current C13 rights.
+  It rereads and validates the exact immutable GLB and its optional embedded C13 binding before
+  advertising a source; malformed bytes and missing or mismatched bound authority fail the request.
+  Render creation independently repeats camera, GLB/hash, embedded-binding, live-rights and frozen-
+  profile validation. Stale and forged selections are rejected.
 - Focused contracts, platform, web, PostgreSQL, integration, security, evaluation and Playwright
-  gates passed. Swift built and passed 2 tests. Final full
-  `UV_CACHE_DIR=/tmp/c14-4-uv-cache CI=1 corepack pnpm verify` passed all 24 lint, 24 typecheck,
-  45 unit dependency and 24 build tasks; Ruff/mypy passed; Python passed 157 with 2 optional
-  capability skips.
+  gates passed. Swift built and passed 3 tests, including authenticated uncached GET transport.
+  Final full `UV_CACHE_DIR=/tmp/c14-4-review-uv-cache CI=1 corepack pnpm verify` passed all 24 lint,
+  24 typecheck, 45 unit dependency and 24 build tasks; Ruff/mypy passed; Python passed 157 with 2
+  optional capability skips.
 - Durable evidence:
   `docs/evaluation/homeowner-journey/C14_4_CROSS_DEVICE_CONTINUITY_ACCEPTANCE_2026-08-26.md`.
 - Review vehicle: non-draft PR
-  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main` and is deliberately
-  left unmerged.
+  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main`. The independent
+  review supersedes the earlier leave-unmerged disposition and authorises normal merge after every
+  required check succeeds on the final reviewed head; GitHub and `main` are the final disposition
+  record.
 - Native C10–C14 UI, Xcode/Simulator/physical-device evidence, C8/C9 production, provider/render
   hardware acceptance, representative-home evidence and C15 were not run or opened.

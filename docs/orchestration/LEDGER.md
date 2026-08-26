@@ -954,32 +954,40 @@
 ### Closeout — 2026-08-26
 
 - Status: complete in non-draft PR
-  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), targeting `main` and deliberately
-  left unmerged. C15 remains closed.
+  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), targeting `main`. The independent
+  review supersedes only the earlier leave-unmerged disposition and authorises normal merge after
+  exact-head required checks pass. C15 remains closed.
 - Revisions: contract freeze `aa3eb2f`; executable implementation `aae3379`; durable acceptance and
-  predecessor-handoff correction `fa6611a`.
+  predecessor-handoff correction `fa6611a`; independently reviewed baseline
+  `5ecd850e242c36442fa415c0349f817692a3c5c4`; material correction
+  `7b4eef258c203479815991445212590fe5633775`.
 - C12 result: the unchanged persisted `c12-option-confirmation-v1` is readable only by exact
   authenticated tenant/project/job/option scope under `design-option:proposal:read`. Missing and
   foreign records are hidden as `404`; web recovery v2 stores no confirmation and migrates legacy
-  envelopes by erasing that local authority.
+  envelopes by erasing that local authority. Invalid, oversized and cross-project recovery records
+  are also removed rather than retained.
 - C14 result: `c14-render-eligible-sources-v1` is derived from succeeded authoritative C10 scenes,
   exact artifact/manifest/snapshot hashes, mapped cameras and exact current C13 binding/catalog
-  rights. Raw host capability remains separate. Render creation independently revalidates mapped
-  camera, immutable GLB/hash, embedded binding, live rights and frozen profile, so discovery is
-  never a lease.
+  rights. Discovery now rereads and validates the immutable GLB and optional embedded binding, so
+  malformed bytes and missing/mismatched bound authority fail before advertisement. Raw host
+  capability remains separate. Render creation independently repeats mapped-camera, GLB/hash,
+  embedded-binding, live-rights and frozen-profile checks, so discovery is never a lease.
 - Generated contract: OpenAPI `3.1.2` SHA-256
   `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`; generator
-  `interior-design-continuity-generator-1.0.0`; deterministic strict TypeScript and Swift 6 outputs.
+  `interior-design-continuity-generator-1.0.1`; deterministic strict TypeScript and Swift 6 outputs.
   Existing version pins are unchanged, no dependency was added and `pnpm-lock.yaml` did not change.
-- Focused evidence: contracts 15 files/85 tests; platform C12/C14 5/34; web 57/230; homeowner
-  integration 1/4; homeowner security 1/4; render security 2/5; render evaluation 1/4; live
-  PostgreSQL C12 1/2; Swift build and 2 tests; Playwright C12 12, C14 22 and integrated journey 1.
-- Full gate: `UV_CACHE_DIR=/tmp/c14-4-uv-cache CI=1 corepack pnpm verify` exited 0 with all 24 lint,
-  24 typecheck, 45 unit dependency and 24 build tasks passing; Ruff and mypy were clean; Python
-  passed 157 with 2 optional capability skips. Generated drift and `git diff --check` passed.
+- Independent-review evidence: focused review 16 files/92 passed/2 unavailable-service skips;
+  contracts 15/86; full platform 54 files/254 passed/51 unavailable-service skips; web 57/230;
+  live PostgreSQL C12 1/2; live C14 platform 6/35 plus full C1-C14 control plane 1/1; Swift build and
+  3 tests. Earlier Playwright evidence remains C12 12, C14 22 and integrated journey 1.
+- Full gate: `UV_CACHE_DIR=/tmp/c14-4-review-uv-cache CI=1 corepack pnpm verify` exited 0 with all
+  24 lint, 24 typecheck, 45 unit dependency and 24 build tasks passing; Ruff and mypy were clean;
+  Python passed 157 with 2 optional capability skips. Generated drift and `git diff --check`
+  passed.
 - Orchestration: one `gpt-5.6-sol` / `xhigh` primary session. The recorded mandatory parallelism
   gate was unsatisfied because both reads share one contract/generator/platform/web critical path;
-  no task, subagent or worktree was spawned and historical worktrees were untouched.
+  no task, subagent or worktree was spawned and historical worktrees were untouched. The later
+  independent review also used one `gpt-5.6-sol` / `xhigh` session and no worktree or subagent.
 - Contract impact: two additive project-scoped GET routes plus strict shared/OpenAPI/generated
   clients. Migration impact: none. Existing C12, C10 and C13 persistence remains authoritative.
 - Durable evidence:
