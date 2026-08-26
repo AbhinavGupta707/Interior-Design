@@ -18,12 +18,35 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.homedesignstudio.capture.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.homedesignstudio.capture.auth</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>HomeDesignAPIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
 	<key>HomeDesignEnvironment</key>
 	<string>$(APP_ENVIRONMENT)</string>
+	<key>HomeDesignOIDCAuthorizationEndpoint</key>
+	<string>$(OIDC_AUTHORIZATION_ENDPOINT)</string>
+	<key>HomeDesignOIDCClientID</key>
+	<string>$(OIDC_CLIENT_ID)</string>
+	<key>HomeDesignOIDCRedirectURI</key>
+	<string>$(OIDC_REDIRECT_URI)</string>
+	<key>HomeDesignOIDCScopes</key>
+	<string>$(OIDC_SCOPES)</string>
+	<key>HomeDesignOIDCTokenEndpoint</key>
+	<string>$(OIDC_TOKEN_ENDPOINT)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Capture rights-cleared photos, silent video, and supported depth as immutable evidence for your selected home design project.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

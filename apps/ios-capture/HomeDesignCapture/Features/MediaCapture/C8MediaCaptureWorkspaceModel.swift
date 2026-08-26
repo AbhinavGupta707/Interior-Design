@@ -84,6 +84,22 @@ final class C8MediaCaptureWorkspaceModel {
     )
   }
 
+  func reset() {
+    activeTask?.cancel()
+    activeTask = nil
+    pendingVideo = nil
+    projectId = nil
+    draft = nil
+    capabilities = nil
+    latestGuidance = [.completeCoverage]
+    captureKind = .photo
+    depthRequested = false
+    rightsBasis = .ownedByUser
+    serviceProcessingConsent = false
+    state = .loading
+    Task { await camera.stop() }
+  }
+
   func activate(projectId rawProjectId: String) async {
     activeTask?.cancel()
     state = .loading

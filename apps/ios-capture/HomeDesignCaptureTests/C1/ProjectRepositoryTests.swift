@@ -157,6 +157,105 @@ final class ProjectRepositoryTests: XCTestCase {
     )
     XCTAssertTrue(CaptureProject.localFixtures.allSatisfy(\.isFixture))
   }
+
+  func testLastProjectIsRecoveredOnlyWhenFreshAuthorisedListStillContainsIt() async {
+    let project = CaptureProject.projectService(
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "Recovered home",
+      status: "active"
+    )
+    let recovery = LastProjectStoreStub(value: project.id)
+    let repository = ProjectRepository(
+      service: ProjectServiceStub(outcome: .projects([project])),
+      recovery: recovery
+    )
+
+    await repository.load()
+    let stored = await recovery.value()
+
+    XCTAssertEqual(repository.recoveredProject, project)
+    XCTAssertEqual(stored, project.id)
+  }
+
+  func testRemovedMembershipClearsLastProjectRecovery() async {
+    let recovery = LastProjectStoreStub(value: "33333333-3333-4333-8333-333333333333")
+    let repository = ProjectRepository(
+      service: ProjectServiceStub(outcome: .projects([])),
+      recovery: recovery
+    )
+
+    await repository.load()
+    let stored = await recovery.value()
+
+    XCTAssertNil(repository.recoveredProject)
+    XCTAssertNil(stored)
+  }
+
+  func testResetRejectsLateProjectListFromThePreviousSession() async {
+    let service = DelayedProjectService()
+    let repository = ProjectRepository(service: service)
+    let load = Task { await repository.load() }
+    await service.waitUntilStarted()
+
+    repository.reset()
+    await service.complete(
+      [
+        CaptureProject.projectService(
+          id: "33333333-3333-4333-8333-333333333333",
+          name: "Prior account home",
+          status: "active"
+        ),
+      ]
+    )
+    await load.value
+
+    XCTAssertEqual(repository.state, .idle)
+    XCTAssertNil(repository.recoveredProject)
+  }
+
+  func testClearingRecoveryWaitsForProtectedStoreDeletion() async {
+    let project = CaptureProject.projectService(
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "Remembered home",
+      status: "active"
+    )
+    let recovery = LastProjectStoreStub(value: nil)
+    let repository = ProjectRepository(
+      service: ProjectServiceStub(outcome: .projects([project])),
+      recovery: recovery
+    )
+
+    _ = await repository.remember(project)
+    await repository.clearRecovery()
+    let stored = await recovery.value()
+
+    XCTAssertNil(repository.recoveredProject)
+    XCTAssertNil(stored)
+  }
+
+  func testResetRejectsAndErasesASelectionThatFinishesLate() async {
+    let project = CaptureProject.projectService(
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "Prior account home",
+      status: "active"
+    )
+    let recovery = DelayedLastProjectStore()
+    let repository = ProjectRepository(
+      service: ProjectServiceStub(outcome: .projects([project])),
+      recovery: recovery
+    )
+    let selection = Task { await repository.remember(project) }
+    await recovery.waitUntilSaveStarted()
+
+    repository.reset()
+    await recovery.completeSave()
+    let accepted = await selection.value
+    let stored = await recovery.value()
+
+    XCTAssertFalse(accepted)
+    XCTAssertNil(repository.recoveredProject)
+    XCTAssertNil(stored)
+  }
 }
 
 private struct ProjectServiceStub: ProjectServing {
@@ -206,6 +305,60 @@ private actor RetryingProjectService: ProjectServing {
   }
 
   func keys() -> [String] { creationKeys }
+}
+
+private actor DelayedProjectService: ProjectServing {
+  private var continuation: CheckedContinuation<[CaptureProject], Never>?
+  private var started = false
+
+  func authenticateAndListProjects() async -> [CaptureProject] {
+    started = true
+    return await withCheckedContinuation { continuation = $0 }
+  }
+
+  func waitUntilStarted() async {
+    while !started { await Task.yield() }
+  }
+
+  func complete(_ projects: [CaptureProject]) {
+    continuation?.resume(returning: projects)
+    continuation = nil
+  }
+}
+
+private actor LastProjectStoreStub: C14_6LastProjectStoring {
+  private var stored: String?
+  init(value: String?) { stored = value }
+  func clear() { stored = nil }
+  func load() -> String? { stored }
+  func save(projectId: String) { stored = projectId }
+  func value() -> String? { stored }
+}
+
+private actor DelayedLastProjectStore: C14_6LastProjectStoring {
+  private var saveContinuation: CheckedContinuation<Void, Never>?
+  private var saveStarted = false
+  private var stored: String?
+
+  func clear() { stored = nil }
+  func load() -> String? { stored }
+
+  func save(projectId: String) async {
+    saveStarted = true
+    await withCheckedContinuation { saveContinuation = $0 }
+    stored = projectId
+  }
+
+  func waitUntilSaveStarted() async {
+    while !saveStarted { await Task.yield() }
+  }
+
+  func completeSave() {
+    saveContinuation?.resume()
+    saveContinuation = nil
+  }
+
+  func value() -> String? { stored }
 }
 
 private struct QueuedResponse: Sendable {

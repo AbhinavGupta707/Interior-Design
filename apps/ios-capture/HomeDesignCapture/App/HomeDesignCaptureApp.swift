@@ -17,7 +17,9 @@ struct HomeDesignCaptureApp: App {
       switch bootstrap {
       case .ready(let configuration):
         #if DEBUG
-          if let scenario = C14_5UITestScenario.current() {
+          if let scenario = C14_6UITestScenario.current(configuration: configuration) {
+            C14_6UITestFixtureView(scenario: scenario)
+          } else if let scenario = C14_5UITestScenario.current() {
             C14_5UITestFixtureView(scenario: scenario)
           } else if let scenario = C8UITestFixtureScenario.current(configuration: configuration) {
             C8UITestFixtureView(scenario: scenario)

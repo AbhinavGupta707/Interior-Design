@@ -83,6 +83,11 @@ final class C14_5DesignStudioModel {
   }
   var designEligible: Bool { state == .ready && workspace?.designEligible == true }
 
+  func reset() {
+    clearProjectState()
+    state = .idle
+  }
+
   func activate(projectId rawProjectId: String, force: Bool = false) async {
     guard let id = UUID(uuidString: rawProjectId) else {
       clearProjectState()

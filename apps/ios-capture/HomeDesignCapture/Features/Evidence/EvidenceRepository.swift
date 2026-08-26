@@ -100,6 +100,22 @@ final class EvidenceRepository {
     self.recoveryStore = recoveryStore
   }
 
+  func reset() {
+    uploadTask?.cancel()
+    uploadTask = nil
+    projectId = nil
+    inventoryState = .idle
+    transferState = .idle
+    selection = nil
+    lastAccess = nil
+    kind = .plan
+    rightsBasis = .ownedByUser
+    serviceProcessingConsent = false
+    trainingUseConsent = .denied
+    attribution = ""
+    licenceURL = ""
+  }
+
   func activate(projectId: String) async {
     self.projectId = projectId
     await loadInventory()
