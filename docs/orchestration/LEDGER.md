@@ -3,12 +3,12 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/c14-cross-device-continuity`
+- Integration branch: `codex/c14-native-homeowner-studio`
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design` in the primary Mac checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4 are complete. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4/C14.5 are complete. C14.5 closes only the native confirmed-twin-to-render design loop plus authorised project creation and the adaptive hub. Production sign-in and native C1/C3/C4-C9 completion remain the next gap; C15 and C16 remain closed and C8 v2 remains acceptance-only.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -994,3 +994,110 @@
   `docs/evaluation/homeowner-journey/C14_4_CROSS_DEVICE_CONTINUITY_ACCEPTANCE_2026-08-26.md`.
 - Explicitly not run/opened: native C10–C14 UI, Xcode/Simulator/physical Apple device, camera,
   RoomPlan/LiDAR, C8/C9 production, provider/render hardware, representative home and C15.
+
+## C14.5 — Standalone iOS homeowner design loop
+
+### Activation — 2026-08-26
+
+- Status: open for implementation; no later checkpoint is authorised.
+- Contract: `docs/orchestration/checkpoints/C14_5_STANDALONE_IOS_HOMEOWNER_CONTRACT.md`.
+- Native audit:
+  `docs/evaluation/homeowner-journey/C14_5_NATIVE_APP_AUDIT_2026-08-26.md`.
+- Frozen base: clean `main` at `0f4018befecda80488b9fa72e2116f621a9ef57c`.
+- Integration branch: `codex/c14-native-homeowner-studio`.
+- Runtime: one primary `gpt-5.6-sol` session with `xhigh` reasoning because the work couples native
+  architecture, authenticated state recovery, cross-device exact pins, optimistic mutations,
+  artifact verification, accessibility and cross-form-factor integration.
+- Contract/migration/dependency impact: no backend or shared contract, no migration and no root
+  dependency/lockfile change. The C14.4 generated Swift package is consumed unchanged.
+
+### Audit and scope correction
+
+- The existing app is capture-first: project selection routes directly to device capture
+  eligibility. C2 evidence, C7 RoomPlan and C8 photo/video upload are real native branches, but no
+  native C10-C14 surface exists.
+- The requested target is an adaptive homeowner hub. Capture becomes one optional branch; design
+  becomes another branch enabled only by fresh server-authoritative prerequisites.
+- Complete native independence is not claimed. Before C14.5, native can list but not create a
+  project; has no C1 intake or C3 property workflow; cannot start/review C6 plan, C8 reconstruction
+  or C9 fusion; and cannot initialize/preview/commit C5 state. It cannot independently produce a
+  confirmed twin.
+- C14.5 includes authorised native project creation as the honest hub entry, but leaves intake,
+  property, C4-C9 proposal/confirmation and production C8/C9 as the precisely recorded next native
+  gap.
+- The design gate requires a changed C5 branch whose head is the exact current existing snapshot
+  and differs from its source, plus a succeeded exact C10 scene. Local recovery never satisfies it.
+
+### Baseline evidence and orchestration decision
+
+- Required documents, current iOS architecture and relevant C1-C14 platform/web journey authority
+  were audited before freeze.
+- XcodeGen regeneration from `apps/ios-capture/project.yml` was byte-stable.
+- The unmodified app built successfully with Xcode 26.4, Swift 6 strict concurrency, generic
+  `iOS Simulator`, isolated DerivedData and signing disabled.
+- The mandatory parallelism gate is unsatisfied: app root/navigation, shared bearer transport,
+  server-derived prerequisite state, C14.4 generated client, recovery and C10-C14 screens share the
+  same target and critical path. No task, subagent or worktree was spawned; historical worktrees
+  remain untouched.
+- Baseline build is not rendered Simulator, physical-device, RoomPlan/LiDAR, representative-home,
+  production C8/C9, provider/render-hardware or C15 evidence.
+
+### Closeout — 2026-08-26
+
+- Status: complete in non-draft PR
+  [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8), targeting `main`. No later
+  checkpoint is opened.
+- Revisions: contract/audit freeze `e1f72b5`; native implementation `79186d6`; degraded-state
+  hardening `ca415f9`; independent review began at exact PR head
+  `5d25370c5348d90bc306e363f839e853f2ad92a7` and material corrections are `1d83fc5`.
+- Product result: project selection now opens an adaptive homeowner hub. An authorised homeowner
+  can create or continue a server project, enter C2/C7/C8 evidence/capture as an optional branch,
+  and enter C10-C14 only after fresh server reads prove the exact confirmed twin. The design studio
+  covers pinned C10 exploration, attributable/revisioned C11 brief, persisted C12 option generation,
+  comparison and generated-client confirmation recovery, C13 specification/material decisions, and
+  C14 authoritative eligibility, submission, polling, fresh result access and verified viewing.
+- Authority result: project creation uses the server action, bounded typed decoding, one bearer
+  invalidation/retry and a pending idempotency key reused after uncertain failure. Design entry
+  requires the exact current C4 snapshot, a changed C5 branch whose head matches it but not its
+  immutable source, and a succeeded C10 scene pinned to the same snapshot ID/hash. Server role,
+  action checks, optimistic revisions, audit/provenance and exact pins remain authoritative;
+  viewer is read-only.
+- Recovery result: cold launch/cross-device continuation reloads the server. The protected local
+  envelope is capped at 4096 bytes and contains only safe presentation metadata; it cannot enable
+  design or mutation. Offline cold launch remains locked. A later outage may retain only a last
+  verified in-memory workspace for the same project as explicitly stale/read-only until a fresh
+  reload succeeds. Project switching clears prior state, cancels in-flight work and rejects late
+  old-project results or errors.
+- Artifact result: native result viewing refreshes signed access and then enforces origin, expiry,
+  response length, 64 MiB cap, MIME, byte count, SHA-256, PNG signature and decoded dimensions
+  through an ephemeral/no-cache streaming session before displaying the image.
+- Generated contract: the unchanged C14.4 Swift package is linked locally. OpenAPI `3.1.2` SHA-256
+  `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`, generator
+  `interior-design-continuity-generator-1.0.1`; regeneration produced zero drift. No backend/shared
+  contract, migration, generated output, root manifest or lockfile changed.
+- Independent review correction: stable exact-operation idempotency now spans C11-C14 mutations;
+  newest-first specification/render list semantics are respected; C12 option and C13 source
+  confirmation pins are cross-checked against the exact current brief, snapshot, job, option,
+  result snapshot and proposed branch; cross-project async state cannot leak. No backend/shared
+  contract, generated client, migration, dependency or lockfile changed.
+- Native gates: XcodeGen was byte-stable; generated Swift tests 3/3; native unit tests 141/141;
+  C14.5 UI acceptance 3/3 on iPhone Air and 3/3 on iPad Pro 13-inch (M5), both iOS 26.4; generic
+  Simulator Debug/Release builds and Xcode analysis passed; Release scans found no C7/C8/C14.5
+  fixture flags, scenario labels, fixture homeowner text or fixture-view symbols.
+- Repository/security gates: focused homeowner-design-studio integration 4/4 and security 4/4;
+  `pnpm test:c14` passed all locally available source/control-plane gates, with the unavailable live
+  C1-C14 production control-plane test skipped; full `pnpm verify` passed 24 lint, 24 typecheck, 45
+  unit dependency and 24 build tasks, Ruff/mypy, and Python 157 with 2 optional-runtime skips.
+- Durable evidence:
+  `docs/evaluation/homeowner-journey/C14_5_NATIVE_HOMEOWNER_ACCEPTANCE_2026-08-26.md`, including six
+  retained iPhone/iPad Simulator captures.
+- Precise next native gap: production OIDC sign-in plus C1 structured intake, C3 property context,
+  C6/C8 proposal jobs, C9 reconciliation and C4/C5 initialise/branch/preview/explicit-commit. Until
+  those stages exist natively, iOS cannot independently produce the confirmed twin and the whole
+  app is not described as standalone.
+- Explicitly not accepted or claimed: physical-device/camera, RoomPlan/LiDAR, representative-home,
+  production C8/C9, provider enhancement, render GPU/hardware/host, interactive native 3D, survey,
+  structural/regulatory/cost/availability/professional approval or C15 evidence.
+- Orchestration: one primary `gpt-5.6-sol` / `xhigh` session. The recorded mandatory parallelism
+  gate was unsatisfied; no task, subagent or worktree was spawned and historical worktrees were
+  untouched.

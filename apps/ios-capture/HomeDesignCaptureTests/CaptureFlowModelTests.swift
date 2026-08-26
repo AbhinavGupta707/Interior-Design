@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class CaptureFlowModelTests: XCTestCase {
-  func testSelectProjectEvaluatesCapabilityAndShowsEligibility() {
+  func testSelectProjectEvaluatesCapabilityAndOpensAdaptiveHub() {
     let model = CaptureFlowModel(
       capabilityChecker: StubCapabilityChecker(result: .eligible)
     )
@@ -13,7 +13,7 @@ final class CaptureFlowModelTests: XCTestCase {
 
     XCTAssertEqual(model.selectedProject, project)
     XCTAssertEqual(model.eligibility, .eligible)
-    XCTAssertEqual(model.path, [.eligibility])
+    XCTAssertEqual(model.path, [.projectHome])
   }
 
   func testEligibleDeviceRoutesOnlyToC0PreparationPlaceholder() {
@@ -21,10 +21,11 @@ final class CaptureFlowModelTests: XCTestCase {
       capabilityChecker: StubCapabilityChecker(result: .eligible)
     )
     model.selectProject(CaptureProject.localFixtures[0])
+    model.openCaptureEligibility()
 
     model.continueFromEligibility()
 
-    XCTAssertEqual(model.path, [.eligibility, .capturePreparation])
+    XCTAssertEqual(model.path, [.projectHome, .eligibility, .capturePreparation])
   }
 
   func testUnsupportedDeviceRoutesToManualFallbackBeforeEvidence() {
@@ -34,20 +35,21 @@ final class CaptureFlowModelTests: XCTestCase {
       )
     )
     model.selectProject(CaptureProject.localFixtures[0])
+    model.openCaptureEligibility()
 
     model.continueFromEligibility()
-    XCTAssertEqual(model.path, [.eligibility, .unsupportedCapture])
+    XCTAssertEqual(model.path, [.projectHome, .eligibility, .unsupportedCapture])
 
     model.useManualEvidence()
     XCTAssertEqual(
       model.path,
-      [.eligibility, .unsupportedCapture, .manualEvidence]
+      [.projectHome, .eligibility, .unsupportedCapture, .manualEvidence]
     )
 
     model.openEvidenceWorkspace()
     XCTAssertEqual(
       model.path,
-      [.eligibility, .unsupportedCapture, .manualEvidence, .evidenceWorkspace]
+      [.projectHome, .eligibility, .unsupportedCapture, .manualEvidence, .evidenceWorkspace]
     )
   }
 

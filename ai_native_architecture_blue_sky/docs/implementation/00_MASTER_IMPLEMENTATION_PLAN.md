@@ -5,7 +5,7 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (26 August 2026):** corrective checkpoints C14.1–C14.3 are closed and merged. C14.4 is closed and independently reviewed in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), adding server-authoritative C12 confirmation recovery, authoritative C14 eligible C10/C13/camera discovery and deterministic TypeScript/Swift clients for those two cross-device reads. The independent review supersedes the earlier leave-unmerged disposition and authorises normal merge after exact-head required checks pass. Native C10–C14 UI, physical-device testing, C8/C9 production work, provider/hardware acceptance and C15 remain closed; C8 v2 remains acceptance-only.
+**Current execution note (26 August 2026):** corrective checkpoints C14.1-C14.4 are closed and merged. C14.5 completes an adaptive native homeowner hub and the server-authoritative C10-C14 journey from an already confirmed twin: project creation/continuation, optional evidence/capture, exact prerequisite gating, exploration, brief, options, specification/material decisions and authoritative render submission/result viewing. The complete app is not yet standalone because production sign-in, native C1 intake, C3 property context, C6/C8/C9 proposal work and the C4/C5 confirmation path are still absent. C14.5 is in non-draft PR [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8). Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed; C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 

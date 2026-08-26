@@ -23,6 +23,10 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_VERSION: "6.0"
 
+packages:
+  CrossDeviceContinuityClient:
+    path: ../../packages/api-contracts/generated/swift
+
 targets:
   HomeDesignCapture:
     type: application
@@ -32,6 +36,7 @@ targets:
         excludes:
           - Resources/Info.plist
     dependencies:
+      - package: CrossDeviceContinuityClient
       - sdk: AVFoundation.framework
       - sdk: RoomPlan.framework
     configFiles:

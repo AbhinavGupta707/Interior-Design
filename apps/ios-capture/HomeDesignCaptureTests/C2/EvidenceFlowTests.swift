@@ -11,7 +11,7 @@ final class EvidenceFlowTests: XCTestCase {
 
     model.openEvidenceWorkspace()
 
-    XCTAssertEqual(model.path, [.eligibility, .evidenceWorkspace])
+    XCTAssertEqual(model.path, [.projectHome, .evidenceWorkspace])
   }
 }
 
