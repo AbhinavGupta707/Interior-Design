@@ -100,5 +100,6 @@ counted as acceptance evidence.
 
 ## Review vehicle
 
-The non-draft pull request targeting `main` is recorded in the checkpoint contract and orchestration
-ledger after creation. It is deliberately left unmerged.
+Non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main` and is
+deliberately left unmerged. C14.4 is terminally closed by this review vehicle; it does not authorise
+C15 or any excluded native/device/provider/hardware/reconstruction work.

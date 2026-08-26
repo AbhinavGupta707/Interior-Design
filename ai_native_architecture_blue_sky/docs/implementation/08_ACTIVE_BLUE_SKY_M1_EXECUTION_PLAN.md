@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 the user authorised C14.4 as the next smallest shared checkpoint before any C15 work. C14.1 and C14.2 are closed. C14.3 is merged on `main` after proving Windows/WSL web continuity from the confirmed exact-current twin through C11 consultation, C12 options, C13 specification, proposed C10 exploration and C14 geometry-safe stills. C14.4 is open solely to replace the two documented provisional seams with server-authoritative C12 confirmation recovery and exact C14 eligible C10/C13/camera discovery plus generated TypeScript/Swift clients. It does not begin native UI, physical-device, C8/C9 production, provider/hardware acceptance or C15 work.
+On 2026-08-26 C14.4 closed the two documented C14.3 provisional seams with server-authoritative C12 confirmation recovery and exact C14 eligible C10/C13/camera discovery plus generated TypeScript/Swift clients. C14.1–C14.3 remain merged on `main`; C14.4 is in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) and deliberately unmerged. No native UI, physical-device, C8/C9 production, provider/hardware acceptance or C15 work was opened.
 
 M1 includes:
 
@@ -342,7 +342,7 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 | Shared authority and generated clients | C12/C14 shared contracts, minimal OpenAPI/generated-client package, exact platform repositories/services/routes/composition and focused tests | tenant-safe read routes, exact pins, deterministic TypeScript/Swift generation and creation-time revalidation |
 | Web continuity and acceptance | exact C12/C14 BFF/features plus focused integration/security/regression evidence | cold/cross-device confirmation restoration and host-capability/eligible-source composition with malformed/stale state failing closed |
 
-**Status:** open from clean `main` commit `e38b32783a08e026d31a8424210b429730393a79` under `docs/orchestration/checkpoints/C14_4_CROSS_DEVICE_CONTINUITY_CONTRACT.md`. One exact `gpt-5.6-sol` / `xhigh` primary session owns the tightly coupled work. The mandatory parallelism gate is not satisfied, so no task or worktree is spawned.
+**Status:** closed from clean `main` commit `e38b32783a08e026d31a8424210b429730393a79`; contract freeze `aa3eb2f`, implementation `aae3379` and durable acceptance `fa6611a` are recorded under `docs/orchestration/checkpoints/C14_4_CROSS_DEVICE_CONTINUITY_CONTRACT.md`. Non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main` and remains unmerged. One exact `gpt-5.6-sol` / `xhigh` primary session completed the tightly coupled work. The mandatory parallelism gate was not satisfied, so no task or worktree was spawned.
 
 **Gate:** persisted server state is the only C12/C14 discovery authority; every response is tenant/project scoped and strict; exact C10/C13/hash/rights pins are preserved and revalidated at C14 creation; generated clients are drift-checked; native UI, physical-device, C8/C9 production, provider/hardware acceptance and C15 remain closed.
 

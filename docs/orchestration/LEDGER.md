@@ -8,7 +8,7 @@
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3 are complete. C14.4 is the only open checkpoint. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
+- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4 are complete. C15 remains closed; C8 v2 remains acceptance-only; C16 is not authorised.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -900,7 +900,8 @@
 
 ### Master activation — 2026-08-26
 
-- Status: open; C15 remains closed.
+- Activation status: opened from the exact predecessor below; terminal status is complete in the
+  closeout section. C15 remains closed.
 - Authority: user instruction dated 2026-08-26 to close only the two documented C14.3
   cross-device gaps before any native UI, physical-device, C8/C9 production, provider/hardware or
   C15 work.
@@ -949,3 +950,39 @@
   evidence is recorded and a non-draft PR targeting `main` is open and left unmerged.
 - Native C10–C14 UI, C15, physical-device evidence, C8/C9 production work, representative-home
   evidence and provider/render-hardware acceptance remain explicitly excluded.
+
+### Closeout — 2026-08-26
+
+- Status: complete in non-draft PR
+  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), targeting `main` and deliberately
+  left unmerged. C15 remains closed.
+- Revisions: contract freeze `aa3eb2f`; executable implementation `aae3379`; durable acceptance and
+  predecessor-handoff correction `fa6611a`.
+- C12 result: the unchanged persisted `c12-option-confirmation-v1` is readable only by exact
+  authenticated tenant/project/job/option scope under `design-option:proposal:read`. Missing and
+  foreign records are hidden as `404`; web recovery v2 stores no confirmation and migrates legacy
+  envelopes by erasing that local authority.
+- C14 result: `c14-render-eligible-sources-v1` is derived from succeeded authoritative C10 scenes,
+  exact artifact/manifest/snapshot hashes, mapped cameras and exact current C13 binding/catalog
+  rights. Raw host capability remains separate. Render creation independently revalidates mapped
+  camera, immutable GLB/hash, embedded binding, live rights and frozen profile, so discovery is
+  never a lease.
+- Generated contract: OpenAPI `3.1.2` SHA-256
+  `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`; generator
+  `interior-design-continuity-generator-1.0.0`; deterministic strict TypeScript and Swift 6 outputs.
+  Existing version pins are unchanged, no dependency was added and `pnpm-lock.yaml` did not change.
+- Focused evidence: contracts 15 files/85 tests; platform C12/C14 5/34; web 57/230; homeowner
+  integration 1/4; homeowner security 1/4; render security 2/5; render evaluation 1/4; live
+  PostgreSQL C12 1/2; Swift build and 2 tests; Playwright C12 12, C14 22 and integrated journey 1.
+- Full gate: `UV_CACHE_DIR=/tmp/c14-4-uv-cache CI=1 corepack pnpm verify` exited 0 with all 24 lint,
+  24 typecheck, 45 unit dependency and 24 build tasks passing; Ruff and mypy were clean; Python
+  passed 157 with 2 optional capability skips. Generated drift and `git diff --check` passed.
+- Orchestration: one `gpt-5.6-sol` / `xhigh` primary session. The recorded mandatory parallelism
+  gate was unsatisfied because both reads share one contract/generator/platform/web critical path;
+  no task, subagent or worktree was spawned and historical worktrees were untouched.
+- Contract impact: two additive project-scoped GET routes plus strict shared/OpenAPI/generated
+  clients. Migration impact: none. Existing C12, C10 and C13 persistence remains authoritative.
+- Durable evidence:
+  `docs/evaluation/homeowner-journey/C14_4_CROSS_DEVICE_CONTINUITY_ACCEPTANCE_2026-08-26.md`.
+- Explicitly not run/opened: native C10–C14 UI, Xcode/Simulator/physical Apple device, camera,
+  RoomPlan/LiDAR, C8/C9 production, provider/render hardware, representative home and C15.

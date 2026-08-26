@@ -156,7 +156,7 @@ behavior are proved, complete gates pass, documentation matches the exact eviden
 PR targeting `main` is open. C15 and all excluded native/provider/hardware/reconstruction work stay
 closed.
 
-## Acceptance candidate — 2026-08-26
+## Closeout — 2026-08-26
 
 - Contract freeze: `aa3eb2f`; implementation: `aae3379`.
 - The two frozen project-scoped GET routes are implemented through shared schemas, in-memory and
@@ -178,5 +178,8 @@ closed.
   capability skips.
 - Durable evidence:
   `docs/evaluation/homeowner-journey/C14_4_CROSS_DEVICE_CONTINUITY_ACCEPTANCE_2026-08-26.md`.
+- Review vehicle: non-draft PR
+  [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main` and is deliberately
+  left unmerged.
 - Native C10–C14 UI, Xcode/Simulator/physical-device evidence, C8/C9 production, provider/render
   hardware acceptance, representative-home evidence and C15 were not run or opened.

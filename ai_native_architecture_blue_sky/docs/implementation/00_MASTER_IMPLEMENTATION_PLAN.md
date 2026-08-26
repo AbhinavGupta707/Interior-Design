@@ -5,7 +5,7 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (26 August 2026):** corrective checkpoints C14.1–C14.3 are closed and merged. C14.4 is the only open checkpoint: it adds server-authoritative C12 confirmation recovery, authoritative C14 eligible C10/C13/camera discovery and deterministic TypeScript/Swift clients for those two cross-device reads. It does not open native C10–C14 UI, physical-device testing, C8/C9 production work, provider/hardware acceptance or C15; C8 v2 remains acceptance-only.
+**Current execution note (26 August 2026):** corrective checkpoints C14.1–C14.3 are closed and merged. C14.4 is closed in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), adding server-authoritative C12 confirmation recovery, authoritative C14 eligible C10/C13/camera discovery and deterministic TypeScript/Swift clients for those two cross-device reads. The PR remains deliberately unmerged. Native C10–C14 UI, physical-device testing, C8/C9 production work, provider/hardware acceptance and C15 remain closed; C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 
