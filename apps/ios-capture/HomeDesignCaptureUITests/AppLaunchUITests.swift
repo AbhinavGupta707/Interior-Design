@@ -31,6 +31,10 @@ final class AppLaunchUITests: XCTestCase {
     XCTAssertTrue(project.waitForExistence(timeout: 5))
     project.tap()
 
+    let roomCapture = app.buttons["Room capture"]
+    XCTAssertTrue(roomCapture.waitForExistence(timeout: 5))
+    roomCapture.tap()
+
     let manualRoute = app.buttons["View manual evidence route"]
     XCTAssertTrue(manualRoute.waitForExistence(timeout: 5))
     manualRoute.tap()

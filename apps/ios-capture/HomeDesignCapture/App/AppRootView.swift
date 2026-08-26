@@ -8,6 +8,7 @@ struct AppRootView: View {
   @State private var evidenceRepository: EvidenceRepository
   @State private var captureWorkspaceModel: C7CaptureWorkspaceModel
   @State private var mediaCaptureModel: C8MediaCaptureWorkspaceModel
+  @State private var designStudioModel: C14_5DesignStudioModel
 
   @MainActor
   init(
@@ -19,16 +20,12 @@ struct AppRootView: View {
     captureRole: C7WorkspaceRole = .owner,
     mediaCamera: (any C8CameraCaptureServing)? = nil,
     mediaCapabilityProvider: any C8CameraCapabilityProviding = C8SystemCameraCapabilityProvider(),
-    mediaPermissionProvider: any C8CameraPermissionProviding = C8SystemCameraPermissionProvider()
+    mediaPermissionProvider: any C8CameraPermissionProviding = C8SystemCameraPermissionProvider(),
+    designService: (any C14_5DesignStudioServing)? = nil,
+    designRecovery: (any C14_5RecoveryStoring)? = nil
   ) {
     self.configuration = configuration
     _flow = State(initialValue: CaptureFlowModel(capabilityChecker: capabilityChecker))
-    let service =
-      projectService
-      ?? C1ProjectAPIClient(
-        baseURL: configuration.apiBaseURL,
-        transport: URLSessionTransport()
-      )
     let refresher: any C7CaptureTokenRefreshing
     if configuration.environment == .local {
       refresher = C7LocalSessionTokenRefresher(baseURL: configuration.apiBaseURL)
@@ -40,6 +37,13 @@ struct AppRootView: View {
       ?? C7KeychainBackedTokenProvider(
         store: C7KeychainTokenStore(),
         refresher: refresher
+      )
+    let service =
+      projectService
+      ?? C1ProjectAPIClient(
+        baseURL: configuration.apiBaseURL,
+        transport: URLSessionTransport(),
+        tokenProvider: tokenProvider
       )
     _projectRepository = State(initialValue: ProjectRepository(service: service))
     let evidenceService = C2EvidenceAPIClient(
@@ -83,6 +87,18 @@ struct AppRootView: View {
         uploader: C8ImmutableEvidenceUploader(service: evidenceService)
       )
     )
+    let resolvedDesignService =
+      designService
+      ?? C14_5DesignStudioAPIClient(
+        baseURL: configuration.apiBaseURL,
+        tokenProvider: tokenProvider
+      )
+    _designStudioModel = State(
+      initialValue: C14_5DesignStudioModel(
+        service: resolvedDesignService,
+        recovery: designRecovery ?? C14_5ProtectedRecoveryStore()
+      )
+    )
   }
 
   var body: some View {
@@ -104,6 +120,22 @@ struct AppRootView: View {
   private func destination(for route: CaptureRoute) -> some View {
     if let project = flow.selectedProject, let eligibility = flow.eligibility {
       switch route {
+      case .projectHome:
+        C14_5HomeownerHubView(
+          project: project,
+          designModel: designStudioModel,
+          onOpenDesign: flow.openDesignStudio,
+          onOpenEvidence: flow.openEvidenceWorkspace,
+          onOpenCapture: flow.openCaptureEligibility,
+          onOpenMedia: flow.openMediaCapture,
+          onChooseProject: flow.reset
+        )
+      case .designStudio:
+        C14_5DesignStudioView(
+          project: project,
+          model: designStudioModel,
+          onBackToHub: flow.openProjectHome
+        )
       case .evidenceWorkspace:
         EvidenceWorkspaceView(
           repository: evidenceRepository,

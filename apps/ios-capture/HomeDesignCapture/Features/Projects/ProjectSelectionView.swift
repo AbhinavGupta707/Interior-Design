@@ -28,15 +28,29 @@ enum C1ProjectServiceError: Error, Equatable, Sendable {
 
 protocol ProjectServing: Sendable {
   func authenticateAndListProjects() async throws -> [CaptureProject]
+  func createProject(name: String, idempotencyKey: String) async throws -> CaptureProject
+}
+
+extension ProjectServing {
+  func createProject(name: String, idempotencyKey: String) async throws -> CaptureProject {
+    throw C1ProjectServiceError.unavailable
+  }
 }
 
 @MainActor
 @Observable
 final class ProjectRepository {
   private(set) var state: ProjectListState = .idle
+  private(set) var creationMessage: String?
+  private(set) var isCreating = false
+  var newProjectName = ""
 
   @ObservationIgnored
   private let service: any ProjectServing
+  @ObservationIgnored
+  private var pendingCreationName: String?
+  @ObservationIgnored
+  private var pendingCreationKey: String?
 
   init(service: any ProjectServing) {
     self.service = service
@@ -67,6 +81,42 @@ final class ProjectRepository {
 
   func useLocalFixture() {
     state = .loaded(CaptureProject.localFixtures, source: .localFixture)
+  }
+
+  func createProject() async {
+    let name = newProjectName.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !name.isEmpty, name.count <= 120, !isCreating else { return }
+    isCreating = true
+    creationMessage = nil
+    defer { isCreating = false }
+    if pendingCreationName != name || pendingCreationKey == nil {
+      pendingCreationName = name
+      pendingCreationKey = UUID().uuidString
+    }
+    guard let idempotencyKey = pendingCreationKey else { return }
+    do {
+      _ = try await service.createProject(name: name, idempotencyKey: idempotencyKey)
+      pendingCreationName = nil
+      pendingCreationKey = nil
+      newProjectName = ""
+      creationMessage = "Project created on the server. Choose it to open the homeowner hub."
+      await load()
+    } catch let error as C1ProjectServiceError {
+      switch error {
+      case .offline:
+        creationMessage = "Reconnect before creating a project. Nothing was saved locally."
+      case .expired:
+        creationMessage = "The session expired. Sign in again before creating a project."
+      case .forbidden:
+        creationMessage = "This role cannot create a project."
+      case .invalidResponse:
+        creationMessage = "The project response failed the frozen C1 contract."
+      case .unavailable:
+        creationMessage = "Project creation is temporarily unavailable."
+      }
+    } catch {
+      creationMessage = "Project creation failed safely. Nothing was inferred or saved locally."
+    }
   }
 }
 
@@ -105,15 +155,71 @@ struct C1ProjectAPIClient: ProjectServing, Sendable {
     let status: String
   }
 
+  private struct CreateProjectRequest: Encodable {
+    let name: String
+  }
+
   private let baseURL: URL
   private let transport: any C1HTTPTransport
+  private let tokenProvider: (any C7CaptureTokenProviding)?
 
-  init(baseURL: URL, transport: any C1HTTPTransport) {
+  init(
+    baseURL: URL,
+    transport: any C1HTTPTransport,
+    tokenProvider: (any C7CaptureTokenProviding)? = nil
+  ) {
     self.baseURL = baseURL
     self.transport = transport
+    self.tokenProvider = tokenProvider
   }
 
   func authenticateAndListProjects() async throws -> [CaptureProject] {
+    let (projectData, _) = try await authenticatedRequest(
+      path: "/v1/projects",
+      method: "GET",
+      body: nil,
+      idempotencyKey: nil
+    )
+    guard let projects = try? JSONDecoder().decode([ProjectResponse].self, from: projectData) else {
+      throw C1ProjectServiceError.invalidResponse
+    }
+    guard projects.count <= 1_000 else { throw C1ProjectServiceError.invalidResponse }
+
+    return try projects.map(Self.mapProject)
+  }
+
+  func createProject(name: String, idempotencyKey: String) async throws -> CaptureProject {
+    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty, trimmed.count <= 120, UUID(uuidString: idempotencyKey) != nil else {
+      throw C1ProjectServiceError.invalidResponse
+    }
+    let body = try JSONEncoder().encode(CreateProjectRequest(name: trimmed))
+    let (data, _) = try await authenticatedRequest(
+      path: "/v1/projects",
+      method: "POST",
+      body: body,
+      idempotencyKey: idempotencyKey
+    )
+    guard let project = try? JSONDecoder().decode(ProjectResponse.self, from: data) else {
+      throw C1ProjectServiceError.invalidResponse
+    }
+    return try Self.mapProject(project)
+  }
+
+  private func accessToken() async throws -> String {
+    if let tokenProvider {
+      do {
+        let token = try await tokenProvider.accessToken()
+        guard token.count >= 32, !token.contains("\n"), !token.contains("\r") else {
+          throw C1ProjectServiceError.invalidResponse
+        }
+        return token
+      } catch let error as C1ProjectServiceError {
+        throw error
+      } catch {
+        throw C1ProjectServiceError.expired
+      }
+    }
     var sessionRequest = URLRequest(url: endpoint("/v1/auth/local/session"))
     sessionRequest.httpMethod = "POST"
     sessionRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -126,30 +232,58 @@ struct C1ProjectAPIClient: ProjectServing, Sendable {
     try validate(sessionResponse)
     guard
       let session = try? JSONDecoder().decode(LocalSessionResponse.self, from: sessionData),
-      session.accessToken.count >= 32
+      session.accessToken.count >= 32,
+      !session.accessToken.contains("\n"),
+      !session.accessToken.contains("\r")
     else {
       throw C1ProjectServiceError.invalidResponse
     }
+    return session.accessToken
+  }
 
-    var projectRequest = URLRequest(url: endpoint("/v1/projects"))
-    projectRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-    projectRequest.setValue(
-      "Bearer \(session.accessToken)",
-      forHTTPHeaderField: "Authorization"
-    )
-    let (projectData, projectResponse) = try await perform(projectRequest)
-    try validate(projectResponse)
-    guard let projects = try? JSONDecoder().decode([ProjectResponse].self, from: projectData) else {
-      throw C1ProjectServiceError.invalidResponse
-    }
+  private static func mapProject(_ project: ProjectResponse) throws -> CaptureProject {
+    guard UUID(uuidString: project.id) != nil,
+          !project.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          project.name.count <= 120,
+          ["draft", "active", "archived"].contains(project.status)
+    else { throw C1ProjectServiceError.invalidResponse }
+    return CaptureProject.projectService(id: project.id, name: project.name, status: project.status)
+  }
 
-    return projects.map { project in
-      CaptureProject.projectService(
-        id: project.id,
-        name: project.name,
-        status: project.status
+  private func authenticatedRequest(
+    path: String,
+    method: String,
+    body: Data?,
+    idempotencyKey: String?
+  ) async throws -> (Data, HTTPURLResponse) {
+    for attempt in 0...1 {
+      let token = try await accessToken()
+      var request = URLRequest(
+        url: endpoint(path),
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutInterval: 30
       )
+      request.httpMethod = method
+      request.setValue("application/json", forHTTPHeaderField: "Accept")
+      request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+      if let body {
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      }
+      if let idempotencyKey {
+        request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
+      }
+      let (data, response) = try await perform(request)
+      if response.statusCode == 401, attempt == 0, let tokenProvider {
+        await tokenProvider.invalidate()
+        continue
+      }
+      try validate(response)
+      guard data.count <= 1_000_000 else { throw C1ProjectServiceError.invalidResponse }
+      return (data, response)
     }
+    throw C1ProjectServiceError.expired
   }
 
   private func endpoint(_ path: String) -> URL {
@@ -197,9 +331,9 @@ struct ProjectSelectionView: View {
             .font(.system(size: 36))
             .foregroundStyle(.tint)
             .accessibilityHidden(true)
-          Text("Prepare evidence for your home")
+          Text("Create or continue your home")
             .font(.title2.bold())
-          Text("Choose a project, then this app checks whether the existing C0 capture eligibility route is available on this device.")
+          Text("Choose a project to open its adaptive homeowner hub. Capture is one optional branch; design opens only from exact server-confirmed twin state.")
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 12)
@@ -207,12 +341,48 @@ struct ProjectSelectionView: View {
       }
 
       Section {
-        LabeledContent("Persona", value: "Alpha homeowner")
-        LabeledContent("Session", value: "Synthetic local fixture")
+        LabeledContent("Identity", value: environmentLabel == "Local" ? "Alpha homeowner" : "External sign-in")
+        LabeledContent("Session", value: environmentLabel == "Local" ? "Protected short-lived bearer" : "Required before project access")
       } header: {
-        Text("Local development identity")
+        Text(environmentLabel == "Local" ? "Local development identity" : "Authentication")
       } footer: {
-        Text("No tenant, user, or role fields are sent as authority. The bearer session remains in memory only.")
+        Text(
+          environmentLabel == "Local"
+            ? "No tenant, user, or role fields are sent as authority. Local development can refresh a protected short-lived bearer."
+            : "Production sign-in is not yet activated in this client. No project is available without a server-issued bearer."
+        )
+      }
+
+      Section {
+        TextField("Project name", text: $repository.newProjectName)
+          .textInputAutocapitalization(.words)
+          .accessibilityIdentifier("c14_5.project-name")
+        Button {
+          Task { await repository.createProject() }
+        } label: {
+          if repository.isCreating {
+            HStack { ProgressView(); Text("Creating project…") }
+          } else {
+            Label("Create project", systemImage: "plus.circle.fill")
+          }
+        }
+        .disabled(
+          repository.isCreating
+            || repository.newProjectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || repository.newProjectName.count > 120
+        )
+        .accessibilityIdentifier("c14_5.create-project")
+
+        if let creationMessage = repository.creationMessage {
+          Text(creationMessage)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("c14_5.project-creation-message")
+        }
+      } header: {
+        Text("New home")
+      } footer: {
+        Text("This creates the authorised server project only. Structured intake and property context are not yet native.")
       }
 
       projectContent
@@ -232,7 +402,7 @@ struct ProjectSelectionView: View {
       Section("Projects") {
         HStack(spacing: 12) {
           ProgressView()
-          Text("Loading synthetic projects…")
+          Text("Loading authorised projects…")
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -242,7 +412,7 @@ struct ProjectSelectionView: View {
         ContentUnavailableView(
           "No projects yet",
           systemImage: "folder",
-          description: Text("Create a project on the web, then retry this list.")
+          description: Text("Create a server project above, then continue to its homeowner hub.")
         )
         Button("Retry project loading") {
           Task { await repository.load() }
@@ -319,13 +489,13 @@ struct ProjectSelectionView: View {
             .padding(.vertical, 4)
           }
           .buttonStyle(.plain)
-          .accessibilityHint("Checks capture eligibility for this project")
+          .accessibilityHint("Opens the adaptive homeowner hub for this project")
         }
       } header: {
         Text("Projects")
       } footer: {
         Text(
-          "\(environmentLabel) configuration. Selection continues to device eligibility and the available native evidence routes."
+          "\(environmentLabel) configuration. Selection opens capture, evidence and server-gated design branches."
         )
       }
     }
