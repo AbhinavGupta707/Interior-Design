@@ -2,9 +2,15 @@ import type { FusionSource } from "@interior-design/contracts";
 import { createHash } from "node:crypto";
 import type { Sql } from "postgres";
 
-import type { FusionBaseVerifier, FusionSourceVerifier, VerifiedFusionSource } from "./types.js";
+import type {
+  FusionBaseVerifier,
+  FusionSourceDiscovery,
+  FusionSourceVerifier,
+  VerifiedFusionSource,
+} from "./types.js";
 
 interface SourceRow {
+  readonly coordinate_frame: FusionSource["coordinateFrame"];
   readonly element_count: number | string;
   readonly evidence_state: FusionSource["evidenceState"];
   readonly project_id: string;
@@ -14,6 +20,7 @@ interface SourceRow {
   readonly sha256: string | null;
   readonly payload: unknown;
   readonly tenant_id: string;
+  readonly scale_status: FusionSource["scaleStatus"];
 }
 
 function canonicalJson(value: unknown): string {
@@ -36,7 +43,9 @@ function payloadSha256(payload: unknown): string {
   return createHash("sha256").update(canonicalJson(payload)).digest("hex");
 }
 
-export class PostgresFusionVerification implements FusionSourceVerifier, FusionBaseVerifier {
+export class PostgresFusionVerification
+  implements FusionSourceVerifier, FusionBaseVerifier, FusionSourceDiscovery
+{
   readonly #sql: Sql;
 
   constructor(sql: Sql) {
@@ -83,6 +92,7 @@ export class PostgresFusionVerification implements FusionSourceVerifier, FusionB
         SELECT r.tenant_id, r.project_id, r.id AS reference_id,
           'c6-plan-proposal-v1' AS schema_version, r.result_sha256 AS sha256,
           jsonb_array_length(r.result_payload -> 'candidates') AS element_count,
+          'source-local-arbitrary' AS coordinate_frame, 'unknown' AS scale_status,
           'source-derived' AS evidence_state, r.result_payload AS payload,
           (j.state = 'proposed' AND a.status = 'ready'
             AND ar.service_processing_consent AND ar.training_use_consent = 'denied') AS rights_active
@@ -101,6 +111,7 @@ export class PostgresFusionVerification implements FusionSourceVerifier, FusionB
         SELECT r.tenant_id, r.project_id, r.id AS reference_id,
           'c7-capture-proposal-v1' AS schema_version, r.result_sha256 AS sha256,
           jsonb_array_length(r.result_payload -> 'elementSources') AS element_count,
+          'source-local-metric' AS coordinate_frame, 'metric-estimated' AS scale_status,
           'source-derived' AS evidence_state, r.result_payload AS payload,
           coalesce((SELECT e.permitted AND e.service_processing_consent
             AND e.training_use_consent = 'denied'
@@ -117,6 +128,9 @@ export class PostgresFusionVerification implements FusionSourceVerifier, FusionB
         SELECT r.tenant_id, r.project_id, r.id AS reference_id,
           'c8-reconstruction-result-v1' AS schema_version, NULL::text AS sha256,
           (r.result_payload -> 'geometry' ->> 'registeredFrameCount')::int AS element_count,
+          CASE WHEN r.result_payload -> 'geometry' ->> 'scaleStatus' = 'unknown'
+            THEN 'source-local-arbitrary' ELSE 'source-local-metric' END AS coordinate_frame,
+          r.result_payload -> 'geometry' ->> 'scaleStatus' AS scale_status,
           'source-derived' AS evidence_state, r.result_payload AS payload,
           NOT EXISTS (
             SELECT 1 FROM reconstruction_job_sources s
@@ -140,6 +154,7 @@ export class PostgresFusionVerification implements FusionSourceVerifier, FusionB
     const row = rows[0];
     if (row === undefined) return undefined;
     return {
+      coordinateFrame: row.coordinate_frame,
       elementCount: Number(row.element_count),
       evidenceState: row.evidence_state,
       kind: source.kind,
@@ -149,6 +164,64 @@ export class PostgresFusionVerification implements FusionSourceVerifier, FusionB
       schemaVersion: row.schema_version,
       sha256: row.sha256 ?? payloadSha256(row.payload),
       tenantId: row.tenant_id,
+      scaleStatus: row.scale_status,
     };
+  }
+
+  async listEligible(tenantId: string, projectId: string): Promise<readonly FusionSource[]> {
+    const references = await this.#sql<
+      { readonly kind: FusionSource["kind"]; readonly reference_id: string }[]
+    >`
+      SELECT 'plan-proposal' AS kind, r.id AS reference_id
+      FROM plan_processing_results r
+      WHERE r.tenant_id = ${tenantId}::uuid AND r.project_id = ${projectId}::uuid
+        AND r.status = 'proposal'
+      UNION ALL
+      SELECT 'roomplan-proposal' AS kind, r.id AS reference_id
+      FROM capture_results r
+      WHERE r.tenant_id = ${tenantId}::uuid AND r.project_id = ${projectId}::uuid
+        AND r.status = 'proposal'
+      UNION ALL
+      SELECT 'reconstruction-result' AS kind, r.id AS reference_id
+      FROM reconstruction_results r
+      WHERE r.tenant_id = ${tenantId}::uuid AND r.project_id = ${projectId}::uuid
+        AND r.status = 'completed'
+      ORDER BY reference_id DESC, kind ASC
+      LIMIT 96
+    `;
+    const discovered: FusionSource[] = [];
+    const discoveredIds = new Set<string>();
+    for (const reference of references) {
+      const placeholder: FusionSource = {
+        coordinateFrame: "source-local-arbitrary",
+        elementCount: 0,
+        evidenceState: "source-derived",
+        id: reference.reference_id,
+        kind: reference.kind,
+        referenceId: reference.reference_id,
+        rights: { serviceProcessingConsent: true, trainingUseConsent: "denied" },
+        scaleStatus: "unknown",
+        schemaVersion: "discovery-placeholder",
+        sha256: "0".repeat(64),
+      };
+      const verified = await this.verify(tenantId, projectId, placeholder);
+      if (verified === undefined || !verified.rightsActive) continue;
+      if (discoveredIds.has(verified.referenceId)) continue;
+      discoveredIds.add(verified.referenceId);
+      discovered.push({
+        coordinateFrame: verified.coordinateFrame,
+        elementCount: verified.elementCount,
+        evidenceState: verified.evidenceState,
+        id: verified.referenceId,
+        kind: verified.kind,
+        referenceId: verified.referenceId,
+        rights: { serviceProcessingConsent: true, trainingUseConsent: "denied" },
+        scaleStatus: verified.scaleStatus,
+        schemaVersion: verified.schemaVersion,
+        sha256: verified.sha256,
+      });
+      if (discovered.length === 32) break;
+    }
+    return discovered;
   }
 }

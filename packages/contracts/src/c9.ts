@@ -109,6 +109,11 @@ export const fusionSourceSchema = z
   });
 export type FusionSource = z.infer<typeof fusionSourceSchema>;
 
+export const fusionEligibleSourcesResponseSchema = z
+  .object({ sources: z.array(fusionSourceSchema).max(c9FusionPolicy.maximumSources) })
+  .strict();
+export type FusionEligibleSourcesResponse = z.infer<typeof fusionEligibleSourcesResponseSchema>;
+
 export const fusionPointMmSchema = z
   .object({
     xMm: z.int().min(-10_000_000).max(10_000_000),
@@ -601,6 +606,7 @@ export const c9RouteContract = Object.freeze({
     "/v1/projects/:projectId/fusion-jobs/:fusionJobId/proposal/operation-drafts",
   getJob: "/v1/projects/:projectId/fusion-jobs/:fusionJobId",
   getProposal: "/v1/projects/:projectId/fusion-jobs/:fusionJobId/proposal",
+  listEligibleSources: "/v1/projects/:projectId/fusion-sources",
   listJobs: "/v1/projects/:projectId/fusion-jobs",
   retryJob: "/v1/projects/:projectId/fusion-jobs/:fusionJobId/retry",
   reviewDiscrepancies:

@@ -88,6 +88,7 @@ describe("C9 multi-source fusion contracts", () => {
         "/v1/projects/:projectId/fusion-jobs/:fusionJobId/proposal/operation-drafts",
       getJob: "/v1/projects/:projectId/fusion-jobs/:fusionJobId",
       getProposal: "/v1/projects/:projectId/fusion-jobs/:fusionJobId/proposal",
+      listEligibleSources: "/v1/projects/:projectId/fusion-sources",
       listJobs: "/v1/projects/:projectId/fusion-jobs",
       retryJob: "/v1/projects/:projectId/fusion-jobs/:fusionJobId/retry",
       reviewDiscrepancies:

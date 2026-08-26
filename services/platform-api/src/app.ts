@@ -255,12 +255,12 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
         )
       : undefined;
   const c5 = composeC5
-    ? registerC5Module(
-        server,
-        config.runtimeEnvironment,
-        options.environment ?? process.env,
-        options.c5,
-      )
+    ? registerC5Module(server, config.runtimeEnvironment, options.environment ?? process.env, {
+        ...options.c5,
+        ...((options.c5?.property ?? c3?.backend) === undefined
+          ? {}
+          : { property: options.c5?.property ?? c3?.backend }),
+      })
     : undefined;
   const c6 =
     options.c6 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")

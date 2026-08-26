@@ -10,6 +10,7 @@ import {
 } from "../../../apps/web/src/features/homeowner-journey/journey-state";
 import { buildOperationDraftInput } from "../../../apps/web/src/features/plan-import/review-model";
 import { calibration, proposal, session } from "../../../apps/web/test/plan-import/fixtures";
+import { buildUnmeasuredHomeWorkspaceRequest as buildPlatformWorkspaceRequest } from "../../../services/platform-api/src/modules/models/operations/home-workspace";
 
 const projectId = "e1420000-0000-4000-8000-000000000001";
 const setupSnapshotId = "e1420000-0000-4000-8000-000000000002";
@@ -73,12 +74,14 @@ describe("C14.2 persisted homeowner setup integration", () => {
       }),
     ).toThrow();
 
-    const request = buildUnmeasuredHomeWorkspaceRequest({
+    const scope = {
       actorUserId: session.actor.userId,
       idempotencyKey: "integration-acknowledgement-key",
       projectId,
       propertyId: "e1420000-0000-4000-8000-000000000012",
-    });
+    };
+    const request = buildPlatformWorkspaceRequest(scope);
+    expect(request).toEqual(buildUnmeasuredHomeWorkspaceRequest(scope));
     const level = request.snapshot.elements.levels[0];
     expect(request.expectedCurrentSnapshotSha256).toBeNull();
     expect(request.snapshot).toMatchObject({

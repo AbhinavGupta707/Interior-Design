@@ -35,6 +35,7 @@ export interface FusionUuidFactory {
 }
 
 export interface VerifiedFusionSource {
+  readonly coordinateFrame: FusionSource["coordinateFrame"];
   readonly elementCount: number;
   readonly evidenceState: FusionSource["evidenceState"];
   readonly kind: FusionSource["kind"];
@@ -44,6 +45,7 @@ export interface VerifiedFusionSource {
   readonly schemaVersion: string;
   readonly sha256: string;
   readonly tenantId: string;
+  readonly scaleStatus: FusionSource["scaleStatus"];
 }
 
 export interface FusionSourceVerifier {
@@ -52,6 +54,10 @@ export interface FusionSourceVerifier {
     projectId: string,
     source: FusionSource,
   ): Promise<VerifiedFusionSource | undefined>;
+}
+
+export interface FusionSourceDiscovery {
+  listEligible(tenantId: string, projectId: string): Promise<readonly FusionSource[]>;
 }
 
 export interface FusionBaseVerifier {

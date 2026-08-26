@@ -3,6 +3,7 @@ import {
   modelCommitSchema,
   modelOperationsPreviewSchema,
   modelSnapshotRecordSchema,
+  propertyDossierSchema,
   projectSchema,
   type Actor,
   type KnownAttribution,
@@ -57,6 +58,7 @@ const previewId = "73000000-0000-4000-8000-000000000001";
 const commitId = "74000000-0000-4000-8000-000000000001";
 const operationId = "75000000-0000-4000-8000-000000000001";
 const clientOperationId = "76000000-0000-4000-8000-000000000001";
+const propertyId = "77000000-0000-4000-8000-000000000001";
 const tokenProvider = new LocalFixtureTokenProvider(
   "c5-route-session-secret-with-at-least-thirty-two-bytes",
 );
@@ -348,6 +350,49 @@ const project = projectSchema.parse({
   version: 1,
 });
 
+const propertyDossier = propertyDossierSchema.parse({
+  coverageWarnings: ["Synthetic property context establishes no interior."],
+  generatedAt: now,
+  interiorKnowledgeStatus: "unknown-without-evidence",
+  items: [
+    {
+      classification: "unknown",
+      interiorClaim: "none",
+      key: "interior-geometry",
+      label: "Interior geometry",
+      sourceRecordIds: [],
+      value: { kind: "unknown" },
+    },
+  ],
+  planningStatus: "not-reviewed",
+  property: {
+    address: { countryCode: "GB", line1: "14 Synthetic Mews" },
+    displayAddress: "14 Synthetic Mews",
+    identifiers: [],
+    interiorKnowledgeStatus: "unknown-without-evidence",
+    jurisdiction: "england",
+    mode: "manual",
+    projectId: alphaProjectId,
+    propertyId,
+    selectedAt: now,
+    source: {
+      coverage: "fixture-complete",
+      dataset: "Synthetic C5 route fixture",
+      datasetVersion: "1",
+      licence: { id: "synthetic", title: "Synthetic fixture" },
+      modelTrainingAllowed: false,
+      participantSharingAllowed: false,
+      providerId: "c5-route-fixture",
+      retrievedAt: now,
+      serviceProcessingAllowed: true,
+    },
+    updatedAt: now,
+    version: 1,
+  },
+  sources: [],
+  version: 1,
+});
+
 class FixtureProjectRepository implements ProjectRepository {
   create(command: CreateProjectCommand): Promise<Project> {
     void command;
@@ -580,6 +625,13 @@ function createFixtureServer(logger: false | FastifyLoggerOptions = false) {
     identity,
     new FixtureProjectRepository(),
     new ModelOperationService(repository),
+    {
+      getDossier(tenantId, projectId) {
+        return Promise.resolve(
+          tenantId === alphaTenantId && projectId === alphaProjectId ? propertyDossier : undefined,
+        );
+      },
+    },
   );
   activeServers.add(server);
   return { repository, server };
@@ -603,6 +655,7 @@ describe("C5 model operation routes", () => {
     const { server } = createFixtureServer();
     const route = (method: "GET" | "POST", url: string) => server.hasRoute({ method, url });
     expect(route("POST", "/v1/projects/:projectId/models/:profile/snapshots")).toBe(true);
+    expect(route("POST", "/v1/projects/:projectId/models/:profile/home-workspace")).toBe(true);
     expect(route("GET", "/v1/projects/:projectId/models/:profile/branches")).toBe(true);
     expect(route("POST", "/v1/projects/:projectId/models/:profile/branches")).toBe(true);
     expect(route("GET", "/v1/projects/:projectId/models/:profile/branches/:branchId")).toBe(true);
@@ -624,6 +677,48 @@ describe("C5 model operation routes", () => {
         "/v1/projects/:projectId/models/:profile/branches/:branchId/compare/:targetBranchId",
       ),
     ).toBe(true);
+  });
+
+  it("builds an acknowledgement-only unmeasured workspace with server-bound scope", async () => {
+    const { repository, server } = createFixtureServer();
+    const url = `/v1/projects/${alphaProjectId}/models/existing/home-workspace`;
+    const response = await server.inject({
+      headers: { ...auth("fixture|owner-alpha"), "idempotency-key": "c14-7-home-init-0001" },
+      method: "POST",
+      payload: { confirmUnmeasuredInterior: true },
+      url,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(repository.initializationCommands).toHaveLength(1);
+    const command = repository.initializationCommands[0];
+    expect(command).toMatchObject({
+      actor: { tenantId: alphaTenantId, userId: ownerUserId },
+      expectedCurrentSnapshotSha256: null,
+      profile: "existing",
+      projectId: alphaProjectId,
+      snapshot: { profile: "existing", projectId: alphaProjectId, propertyId },
+    });
+    expect(command?.snapshot.elements.levels).toHaveLength(1);
+    expect(command?.snapshot.elements.levels[0]).toMatchObject({
+      elevationMm: { knowledge: "unknown" },
+      name: { knowledge: "unknown" },
+      storeyHeightMm: { knowledge: "unknown" },
+    });
+    expect(command?.snapshot.elements.walls).toEqual([]);
+    expect(command?.snapshot.elements.spaces).toEqual([]);
+
+    const spoofed = await server.inject({
+      headers: { ...auth("fixture|owner-alpha"), "idempotency-key": "c14-7-home-init-0002" },
+      method: "POST",
+      payload: {
+        confirmUnmeasuredInterior: true,
+        propertyId: "77000000-0000-4000-8000-000000000099",
+      },
+      url,
+    });
+    expect(spoofed.statusCode).toBe(400);
+    expect(repository.initializationCommands).toHaveLength(1);
   });
 
   it("routes first import through initialization and rejects raw amendments", async () => {

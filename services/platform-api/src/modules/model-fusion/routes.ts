@@ -3,6 +3,7 @@ import {
   c9RouteContract,
   createFusionJobRequestSchema,
   createFusionOperationDraftRequestSchema,
+  fusionEligibleSourcesResponseSchema,
   fusionDiscrepancyDecisionSchema,
   fusionJobIdSchema,
   fusionJobSchema,
@@ -21,6 +22,7 @@ import type { IdentityService } from "../identity/service.js";
 import { parseIdempotencyKey } from "../projects/idempotency.js";
 import type { ProjectRepository } from "../projects/repository.js";
 import type { ModelFusionService } from "./service.js";
+import type { FusionSourceDiscovery } from "./types.js";
 
 const projectParamsSchema = z.object({ projectId: projectIdSchema }).strict();
 const jobParamsSchema = z
@@ -57,7 +59,27 @@ export function registerModelFusionRoutes(
   identity: IdentityService,
   projects: ProjectRepository,
   service: ModelFusionService,
+  sourceDiscovery?: FusionSourceDiscovery,
 ): void {
+  server.get(c9RouteContract.listEligibleSources, async (request, reply) => {
+    const params = parseRequest(projectParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "fusion:job:read",
+      identity,
+      projects,
+    );
+    if (sourceDiscovery === undefined) {
+      throw new Error("Fusion source discovery is unavailable in this composition.");
+    }
+    return reply.send(
+      fusionEligibleSourcesResponseSchema.parse({
+        sources: await sourceDiscovery.listEligible(actor.tenantId, params.projectId),
+      }),
+    );
+  });
+
   server.post(c9RouteContract.createJob, async (request, reply) => {
     const params = parseRequest(projectParamsSchema, request.params);
     const actor = await authorisedProject(

@@ -24,6 +24,7 @@ import type {
   FusionClock,
   FusionRepository,
   FusionSourceVerifier,
+  FusionSourceDiscovery,
   FusionTelemetry,
   FusionUuidFactory,
 } from "./modules/model-fusion/types.js";
@@ -48,6 +49,7 @@ export interface C9ModuleOptions {
   readonly projects?: ProjectRepository;
   readonly repository?: FusionRepository;
   readonly sourceVerifier?: FusionSourceVerifier;
+  readonly sourceDiscovery?: FusionSourceDiscovery;
   readonly telemetry?: FusionTelemetry;
   readonly tokenProvider?: SessionTokenProvider;
   readonly uuid?: FusionUuidFactory;
@@ -135,14 +137,20 @@ export function registerC9Module(
       ...(options.clock === undefined ? {} : { clock: options.clock }),
       ...(options.uuid === undefined ? {} : { uuid: options.uuid }),
     });
-  const verification = new PostgresFusionVerification(sql as Sql);
+  const verification = sql === undefined ? undefined : new PostgresFusionVerification(sql);
   const service = new ModelFusionService({
-    baseVerifier: options.baseVerifier ?? verification,
+    baseVerifier: options.baseVerifier ?? (verification as PostgresFusionVerification),
     repository,
-    sourceVerifier: options.sourceVerifier ?? verification,
+    sourceVerifier: options.sourceVerifier ?? (verification as PostgresFusionVerification),
     ...(options.telemetry === undefined ? {} : { telemetry: options.telemetry }),
   });
-  registerModelFusionRoutes(server, identity, projects, service);
+  registerModelFusionRoutes(
+    server,
+    identity,
+    projects,
+    service,
+    options.sourceDiscovery ?? verification,
+  );
 
   if (sql !== undefined && (ownsDatabase || options.closeDatabase === true)) {
     server.addHook("onClose", async () => {

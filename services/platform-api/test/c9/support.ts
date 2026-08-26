@@ -23,6 +23,7 @@ import type {
   FusionBaseVerifier,
   FusionDiscrepancyDecision,
   FusionRepository,
+  FusionSourceDiscovery,
   FusionSourceVerifier,
   PublishFusionProposalCommand,
   ReviewFusionDiscrepanciesCommand,
@@ -117,6 +118,7 @@ export function verifiedSource(
   overrides: Partial<VerifiedFusionSource> = {},
 ): VerifiedFusionSource {
   return {
+    coordinateFrame: source.coordinateFrame,
     elementCount: source.elementCount,
     evidenceState: source.evidenceState,
     kind: source.kind,
@@ -126,11 +128,14 @@ export function verifiedSource(
     schemaVersion: source.schemaVersion,
     sha256: source.sha256,
     tenantId: alphaTenantId,
+    scaleStatus: source.scaleStatus,
     ...overrides,
   };
 }
 
-export class MemoryFusionVerification implements FusionSourceVerifier, FusionBaseVerifier {
+export class MemoryFusionVerification
+  implements FusionSourceVerifier, FusionBaseVerifier, FusionSourceDiscovery
+{
   baseAvailable = true;
   readonly verified = new Map(sources.map((source) => [source.id, verifiedSource(source)]));
 
@@ -146,6 +151,13 @@ export class MemoryFusionVerification implements FusionSourceVerifier, FusionBas
     const verified = this.verified.get(source.id);
     return Promise.resolve(
       verified?.tenantId === tenantId && verified.projectId === projectId ? verified : undefined,
+    );
+  }
+
+  listEligible(tenantId: string, projectId: string) {
+    if (tenantId !== alphaTenantId || projectId !== alphaProjectId) return Promise.resolve([]);
+    return Promise.resolve(
+      sources.filter((source) => this.verified.get(source.id)?.rightsActive === true),
     );
   }
 }

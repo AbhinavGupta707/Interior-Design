@@ -39,7 +39,27 @@ describe("C9 public model-fusion routes", () => {
         repository,
         sourceVerifier: verification,
       }),
+      verification,
     );
+  });
+
+  it("lists only persisted rights-active source descriptors for readers", async () => {
+    const response = await server.inject({
+      headers: authorization("fixture|viewer-alpha"),
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/fusion-sources`,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json<{ readonly sources: readonly unknown[] }>().sources).toEqual(
+      fusionRequest.sources,
+    );
+
+    const foreign = await server.inject({
+      headers: authorization("fixture|owner-beta"),
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/fusion-sources`,
+    });
+    expect(foreign.statusCode).toBe(404);
   });
 
   afterEach(async () => server.close());

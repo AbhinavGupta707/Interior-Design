@@ -27,6 +27,7 @@ import {
   PostgresProjectRepository,
   type ProjectRepository,
 } from "./modules/projects/repository.js";
+import type { PropertyBackend } from "./modules/property/types.js";
 
 const LOCAL_DATABASE_URL =
   "postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design";
@@ -41,6 +42,7 @@ export interface C5ModuleOptions {
   readonly databaseUrl?: string;
   readonly identity?: IdentityService;
   readonly projects?: ProjectRepository;
+  readonly property?: Pick<PropertyBackend, "getDossier"> | undefined;
   readonly repository?: ModelOperationRepository;
   readonly tokenProvider?: SessionTokenProvider;
   readonly uuid?: ModelOperationUuidFactory;
@@ -126,7 +128,7 @@ export function registerC5Module(
       ...(options.uuid === undefined ? {} : { uuid: options.uuid }),
     });
   const service = new ModelOperationService(repository);
-  registerModelOperationRoutes(server, identity, projects, service);
+  registerModelOperationRoutes(server, identity, projects, service, options.property);
 
   if (sql !== undefined && (ownsDatabase || options.closeDatabase === true)) {
     server.addHook("onClose", async () => {
