@@ -12,10 +12,12 @@ On 2026-08-26 C14.6 completed the native cold-launch-to-capture/proposal-readine
 clean `main` at `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b`. Production-shaped sign-in/session
 recovery, project continuation, structured C1 intake, honest England C3 property context,
 rights-cleared C2 evidence and fresh prerequisite guidance are now native. The next unimplemented
-native boundary remains C6/C8/C9 processing and C4/C5 confirmation; no later checkpoint is open.
+native boundary remains C6/C8/C9 processing and C4/C5 confirmation. C14.7 is now frozen as the
+terminal native software-integration checkpoint to close that boundary, compile the exact confirmed
+twin through C10 and enter the existing C11-C14 loop before physical-device acceptance.
 Physical-device, RoomPlan/LiDAR, representative-home, production C6/C8/C9, live identity/property
-provider, deployment, confirmed-twin creation, provider/render-hardware and C15 acceptance remain
-closed.
+provider, deployment, provider/render-hardware and C15 acceptance remain closed; C14.7 will accept
+only the software path to confirmed-twin creation.
 
 M1 includes:
 
@@ -377,6 +379,15 @@ and understand the exact next capture or proposal prerequisite without using the
 |---|---|---|
 | Native authentication and onboarding authority | exact `apps/ios-capture/**` configuration, Keychain/session, project recovery, intake/property/readiness, hub/navigation and existing C2 composition paths | OAuth 2.1/OIDC Authorization Code + PKCE when configured, local fixture development path, server session/membership authority, optimistic C1/C3 mutations, honest property/manual fallback and fresh C2 readiness |
 | Integrated acceptance and closeout | exact C14.6 native tests plus homeowner audit/evidence, plans and ledger | iPhone/iPad cold/relaunch, adaptive/a11y/degraded checks, focused C1-C3/security regressions, full repository gates and explicit provider/hardware/proposal non-claims |
+
+### C14.7 — Native confirmed-twin integration — single primary session
+
+| Lane | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Platform authority bridge | additive C5/C9 shared contracts and platform/web composition | acknowledgement-only unmeasured initialization plus rights-filtered exact C6/C7/C8 source discovery, with server re-verification |
+| Native proposal and confirmation | `apps/ios-capture/**` | integrated C6/C8/C9 proposal flow, explicit human decisions/corrections, exact C5 preview/commit and C10 compilation |
+| Existing design handoff | native hub, navigation and C14.5 activation only | fresh exact confirmed-twin revalidation followed by the already-built C11-C14 studio |
+| Integrated acceptance and closeout | C14.7 contract/audit/acceptance, plans and ledger | contract/security/repository gates plus appropriate iPhone/iPad Simulator layouts, accessibility, recovery and explicit hardware/provider non-claims |
 
 **Status:** complete from clean `main` commit
 `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b` on

@@ -1221,3 +1221,25 @@
   no separate task or worktree was created.
 - Final claim boundary: native homeowner onboarding and proposal readiness only. Confirmed twin,
   physical-device acceptance, live provider/deployment and production C6/C8/C9 remain unaccepted.
+
+## C14.7 — Native confirmed-twin integration
+
+### Activation — 2026-08-26
+
+- Status: open for implementation; no later checkpoint is authorised.
+- Authority: user instruction dated 2026-08-26 to complete the remaining native software path in
+  one self-contained `gpt-5.6-sol` / `xhigh` session without subagents, tasks or worktrees.
+- Contract: `docs/orchestration/checkpoints/C14_7_NATIVE_CONFIRMED_TWIN_INTEGRATION_CONTRACT.md`.
+- Audit:
+  `docs/evaluation/homeowner-journey/C14_7_NATIVE_PROPOSAL_TO_TWIN_AUDIT_2026-08-26.md`.
+- Frozen base: `main` at `f97f61dc0139dc68fd47469bc700e84313ae9764`; the pre-existing
+  user-owned root `AGENTS.md` modification is preserved untouched and excluded from this checkpoint.
+- Integration branch: `codex/c14-7-native-confirmed-twin-integration`.
+- Contract impact: additive acknowledgement-only C5 safe-initialization and read-only C9 eligible-
+  source discovery routes. Existing C4-C10 contracts remain exact; no migration, generated-client,
+  root manifest or lockfile change is authorised.
+- Runtime/ownership: one primary Sol/xhigh session owns contract freeze, platform authority,
+  coupled native state/navigation, tests, independent final review and closeout. User prohibition on
+  delegation is controlling; no subagent, separate task or worktree is used.
+- Initial claim boundary: software and Simulator evidence only. No physical-device,
+  representative-home, production provider, real CUDA/C8/C9, render-hardware or C15 acceptance.

@@ -5,13 +5,15 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (26 August 2026):** corrective checkpoints C14.1-C14.6 are closed. C14.6
+**Current execution note (26 August 2026):** corrective checkpoints C14.1-C14.6 are closed. C14.7
+is frozen as the terminal native software-integration checkpoint from proposal processing through
+explicit confirmed-twin creation and the existing C11-C14 design loop. Its C14.6 baseline
 completed the next smallest native homeowner slice from clean `main` at
 `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b`: production-shaped sign-in/session recovery, project
 continuation, structured C1 renovation intake, honest England C3 property context, rights-cleared
 C2 evidence and truthful capture/proposal-readiness guidance. It does not start or accept C6/C8/C9
-jobs or C4/C5 confirmation, so the app still cannot independently create a confirmed twin. No
-later checkpoint is open. Live identity/property providers and deployment, physical-device,
+jobs or C4/C5 confirmation, so that baseline cannot independently create a confirmed twin. Live
+identity/property providers and deployment, physical-device,
 RoomPlan/LiDAR, representative-home, production C6/C8/C9, provider/render-hardware and C15
 acceptance remain closed; C8 v2 remains acceptance-only.
 
