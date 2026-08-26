@@ -20,9 +20,38 @@ confirmed-twin gate remain separate.
 - Runtime: one primary `gpt-5.6-sol` session with `xhigh` reasoning.
 - Contract/audit freeze: `6e8dfc8`.
 - Native implementation revision: `0e3ab58266dd21e877944433a64f9651ff23e810`.
-- The mandatory-parallelism gate was unsatisfied because authentication, Keychain/session recovery,
-  project switching, setup composition and adaptive navigation share one target and state graph. No
-  task, subagent or worktree was spawned.
+- Independent-review correction revision:
+  `dfcdb31c671925e86ca9c17b08b23188af5910e7`.
+- The implementation phase used one primary session because authentication, Keychain/session
+  recovery, project switching, setup composition and adaptive navigation share one target and state
+  graph. The independent PR review used the user-authorised single-checkout subagent protocol: the
+  primary `gpt-5.6-sol` / `xhigh` reviewer retained every materiality, correction and acceptance
+  decision while one Luna/medium evidence mapper and one Terra/high contract reviewer performed
+  bounded read-only work. No separate task or worktree was created.
+
+## Independent PR review reconciliation
+
+PR #9 was independently reviewed from exact head
+`66f3a4250949e30d74de9d1d867b4931a75fbc21` against the frozen C14.6 contract, this acceptance
+record, repository instructions and both governing plans. The review found and corrected material
+isolation and evidence defects before final acceptance:
+
+- Late project-list, inventory, upload, preview, file-selection and C1/C3 mutation completions can
+  no longer repopulate a reset or newly selected project. Reset also clears pending mutation bodies,
+  idempotency identities and mutation presentation state.
+- A same-project role downgrade now reactivates the setup boundary and immediately removes stale
+  owner/editor authority. Unknown roles fail closed and clear prior project state.
+- OAuth token exchange and foreground C2 traffic use ephemeral, no-cache sessions and explicit
+  `no-store` requests. Readiness validates bounded, project-matching evidence DTOs rather than
+  accepting cached or foreign asset state.
+- Project selection now resets every project-scoped model. The regular-width setup is a genuine
+  persistent sidebar/detail composition, and the UI evidence now covers intake, ambiguous/manual
+  England property selection, separate/default-denied consent, offline recovery and a real
+  Accessibility XXXL setup action on both form factors.
+
+The accepted claim remains only native homeowner onboarding and proposal readiness. This review is
+not a confirmed-twin, physical-device, production-provider/deployment, C6 execution/review, C8
+reconstruction or C9 fusion acceptance.
 
 ## Audited dependency result
 
@@ -90,15 +119,20 @@ new framework link. The generated C14.4 Swift client remains narrow and unchange
   status is not colour-only.
 - The UI suite drives the production root/hub/setup views through a Debug-only fixture. It covers a
   cold journey to later-C6 eligibility, relaunch where only a freshly revalidated project UUID is
-  restored, and large-text action operability.
+  restored, real large-text action operability, intake, ambiguous/manual England property
+  selection, consent separation/default denial and offline failure-closed behavior. The relaunch UI
+  test uses a fresh project repository/listing to revalidate the cached UUID; signed unit evidence,
+  not the fixture, proves the real Keychain restoration path.
 - Final named runs passed on iPhone Air and iPad Pro 13-inch (M5), both iOS 26.4. Release output was
   scanned for the C14.6 scenario flags, fixture property string and fixture view symbol; none were
   present.
 
 Retained captures:
 
-- [iPhone Air readiness](artifacts/c14_6/iphone_air/6A7D8A93-A0ED-440D-9C7D-596B2BD6769A.png)
-- [iPad Pro 13-inch readiness](artifacts/c14_6/ipad_pro_13/AEE7C579-94A4-4CBD-875A-8D27D1A81CD5.png)
+- [Final iPhone Air readiness](artifacts/c14_6/iphone_air/review_final/26D00898-13AA-4934-A683-72FCF24276C6.png)
+- [Final iPad Pro 13-inch readiness](artifacts/c14_6/ipad_pro_13/review_final/2B05C36D-D98F-4F2A-8920-E681296097A6.png)
+
+These final-review captures supersede the original pre-review layout captures for C14.6 acceptance.
 
 ## Verification ledger
 
@@ -109,17 +143,22 @@ Retained captures:
   `3b5a8346332757bc9190a293503e73cf5c5574356e8a009c35da4b666efa875a`.
 - Generated OpenAPI/TypeScript/Swift regeneration produced zero drift. The unchanged generated Swift
   package passed `swift test --package-path packages/api-contracts/generated/swift`: 3 passed.
-- The final locally signed iPhone Air suite passed 166 logical tests, 173 device invocations, 0
-  failed and 0 skipped. Its result is
-  `apps/ios-capture/.build/C14_6SignedKeychain/Logs/Test/Test-HomeDesignCapture-2026.08.26_11-50-10-+0100.xcresult`.
-- The affected C14.6 unit group passed 27/27. The first intentionally unsigned full-suite attempt
+- The final locally signed native suite passed 174 logical tests, 181 device invocations, 0 failed
+  and 0 skipped. Its result is
+  `apps/ios-capture/.build/C14_6ReviewSignedFull/Logs/Test/Test-HomeDesignCapture-2026.08.26_13-47-48-+0100.xcresult`.
+- The final affected authentication/setup/fixture/evidence group passed 32/32. Its result is
+  `apps/ios-capture/.build/C14_6ReviewTests/Logs/Test/Test-HomeDesignCapture-2026.08.26_13-52-16-+0100.xcresult`.
+  The first intentionally unsigned full-suite attempt
   showed that a real Keychain round-trip cannot run without app entitlements; the required locally
   signed rerun above passed and supersedes that invocation.
 - `xcodebuild ... -only-testing:HomeDesignCaptureUITests/C14_6HomeownerReadinessUITests test`
-  passed 3/3 on iPhone Air and 3/3 on iPad Pro 13-inch (M5), both iOS 26.4. Final result bundles are
-  `apps/ios-capture/.build/C14_6UI-iPhone/Logs/Test/Test-HomeDesignCapture-2026.08.26_11-47-46-+0100.xcresult`
+  passed 6/6 on iPhone Air and 6/6 on iPad Pro 13-inch (M5), both iOS 26.4. Final full result bundles
+  are
+  `apps/ios-capture/.build/C14_6ReviewUI-iPhone/Logs/Test/Test-HomeDesignCapture-2026.08.26_13-35-06-+0100.xcresult`
   and
-  `apps/ios-capture/.build/C14_6UI-iPad/Logs/Test/Test-HomeDesignCapture-2026.08.26_11-49-00-+0100.xcresult`.
+  `apps/ios-capture/.build/C14_6ReviewUI-iPad/Logs/Test/Test-HomeDesignCapture-2026.08.26_13-21-18-+0100.xcresult`.
+  After the final manual-source parity adjustment, the affected intake/property case passed 1/1 on
+  each form factor in the corresponding `13-48-46` iPhone and `13-47-48` iPad result bundles.
 - Generic iOS Simulator Debug/Release builds, unsigned generic physical-iOS Release compilation and
   Release `xcodebuild analyze` passed. Debug Info.plist contained the exact callback URI. Release
   fixture-exclusion scans returned no match.
@@ -132,7 +171,7 @@ Retained captures:
 - `corepack pnpm test:c14` passed all locally available C14 source/control-plane suites. Eight API
   capabilities and one disposable full-production control-plane case were explicitly skipped
   because their external/live services were unavailable; skips are not acceptance evidence.
-- `TEMP=/tmp TMP=/tmp TMPDIR=/tmp UV_CACHE_DIR=/tmp/c14-6-uv-cache CI=1 corepack pnpm verify`
+- `TEMP=/tmp TMP=/tmp TMPDIR=/tmp UV_CACHE_DIR=/tmp/c14-6-review-uv-cache CI=1 corepack pnpm verify`
   passed 24 lint, 24 typecheck, 45 unit-dependency and 24 build tasks; Ruff and mypy were clean; the
   Python suite passed 157 with 2 optional-runtime skips.
 - Final `git diff --check`, changed-source review and repository formatting gates passed.

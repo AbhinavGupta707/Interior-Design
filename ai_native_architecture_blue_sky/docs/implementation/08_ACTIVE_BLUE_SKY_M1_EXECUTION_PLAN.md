@@ -381,10 +381,13 @@ and understand the exact next capture or proposal prerequisite without using the
 **Status:** complete from clean `main` commit
 `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b` on
 `codex/c14-6-native-homeowner-readiness`; contract/audit freeze `6e8dfc8` and the native
-implementation revision `0e3ab58266dd21e877944433a64f9651ff23e810` and durable acceptance are recorded in
+implementation revision `0e3ab58266dd21e877944433a64f9651ff23e810`, independent-review correction
+`dfcdb31c671925e86ca9c17b08b23188af5910e7` and durable acceptance are recorded in
 `docs/evaluation/homeowner-journey/C14_6_NATIVE_HOMEOWNER_READINESS_ACCEPTANCE_2026-08-26.md`.
-One exact `gpt-5.6-sol` / `xhigh` primary session was used. The frozen parallelism gate was
-unsatisfied; no task, subagent or worktree was used. No later checkpoint is open.
+Implementation used one exact `gpt-5.6-sol` / `xhigh` primary session. Independent PR review used
+the same-checkout subagent protocol with one bounded Luna/medium evidence mapper and one bounded
+Terra/high contract reviewer; the primary Sol reviewer retained all material decisions and final
+verification. No separate task or worktree was used. No later checkpoint is open.
 
 **Gate:** a fresh server session and membership drive projects; protected recovery never grants
 authority; C1 intake and C3 property selection retain exact optimistic versions and idempotency;
