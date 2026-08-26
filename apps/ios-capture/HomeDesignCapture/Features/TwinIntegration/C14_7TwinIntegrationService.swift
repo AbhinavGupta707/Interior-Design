@@ -2,6 +2,7 @@ import CryptoKit
 import Foundation
 
 protocol C14_7TwinIntegrationServing: Sendable {
+  func resetPendingMutationKeys() async
   func loadWorkspace(projectId: UUID) async throws -> C14_7Workspace
   func initializeWorkspace(projectId: UUID) async throws
   func createPlanJob(projectId: UUID, asset: EvidenceAsset) async throws
@@ -191,6 +192,10 @@ actor C14_7TwinIntegrationAPIClient: C14_7TwinIntegrationServing {
     self.session = session
   }
 
+  func resetPendingMutationKeys() {
+    mutationKeys.reset()
+  }
+
   func loadWorkspace(projectId: UUID) async throws -> C14_7Workspace {
     let project = id(projectId)
     async let sessionValue: C14_5Session = get("/v1/session")
@@ -294,8 +299,7 @@ actor C14_7TwinIntegrationAPIClient: C14_7TwinIntegrationServing {
       body: body,
       idempotencyKey: key
     )
-    guard value.projectId == projectId, value.jobId == jobId,
-          value.sourceToModel.denominator > 0, value.residualMillimetres >= 0 else {
+    guard value.projectId == projectId, value.jobId == jobId, value.isValid else {
       throw C14_5DesignStudioError.invalidResponse
     }
     mutationKeys.complete(operation: operation, fingerprint: fingerprint)
@@ -696,7 +700,7 @@ actor C14_7TwinIntegrationAPIClient: C14_7TwinIntegrationServing {
   }
 
   private func nonCollinear(_ points: [C14_7FusionPoint]) -> Bool {
-    guard points.count >= 3 else { return false }
+    guard points.count >= 3, points.allSatisfy(\.isValid) else { return false }
     for first in 0..<(points.count - 2) {
       for second in (first + 1)..<(points.count - 1) {
         for third in (second + 1)..<points.count {

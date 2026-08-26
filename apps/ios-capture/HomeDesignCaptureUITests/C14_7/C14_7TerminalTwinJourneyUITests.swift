@@ -9,6 +9,13 @@ final class C14_7TerminalTwinJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["From evidence to confirmed twin"].waitForExistence(timeout: 10))
 
     openStage("Plan proposal", app: app)
+    let planJobPicker = app.buttons["c14_7.plan-job-picker"]
+    tap(planJobPicker, app: app)
+    let proposedJob = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "proposed · 14700000")
+    ).firstMatch
+    XCTAssertTrue(proposedJob.waitForExistence(timeout: 3))
+    proposedJob.tap()
     tap(app.buttons["c14_7.load-plan-proposal"], app: app)
     XCTAssertTrue(
       app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Proposal only"))

@@ -73,8 +73,10 @@ final class C14_7TwinIntegrationModel {
   @ObservationIgnored private let service: any C14_7TwinIntegrationServing
   private var projectId: UUID?
   private var planReviewStartedAt: Date?
+  private var planDraftReviewDurationMilliseconds: Int?
   private var loadTask: Task<Void, Never>?
   private var mutationTask: Task<Void, Never>?
+  private var serviceResetTask: Task<Void, Never>?
 
   init(service: any C14_7TwinIntegrationServing) { self.service = service }
 
@@ -130,8 +132,12 @@ final class C14_7TwinIntegrationModel {
     }
     let changed = projectId != nextProject
     guard changed || force || state == .idle else { return }
-    if changed { clearProjectState() }
+    if changed {
+      if projectId != nil { await service.resetPendingMutationKeys() }
+      clearProjectState()
+    }
     projectId = nextProject
+    await serviceResetTask?.value
     await reload()
   }
 
@@ -153,6 +159,11 @@ final class C14_7TwinIntegrationModel {
         try Task.checkCancellation()
         guard self.projectId == projectId else { return }
         workspace = next
+        if next.session.actor.role.canMutate == false {
+          await service.resetPendingMutationKeys()
+          try Task.checkCancellation()
+          guard self.projectId == projectId else { return }
+        }
         if next.session.actor.role.canMutate == false
           || previousBranch?.id != next.branch?.id
           || previousBranch?.revision != next.branch?.revision
@@ -185,6 +196,7 @@ final class C14_7TwinIntegrationModel {
   func reset() {
     loadTask?.cancel()
     mutationTask?.cancel()
+    serviceResetTask = Task { [service] in await service.resetPendingMutationKeys() }
     projectId = nil
     clearProjectState()
     state = .idle
@@ -236,6 +248,7 @@ final class C14_7TwinIntegrationModel {
         ($0.id, C14_7CandidateReview.initial($0))
       })
       planReviewStartedAt = Date()
+      planDraftReviewDurationMilliseconds = nil
     }
   }
 
@@ -266,10 +279,10 @@ final class C14_7TwinIntegrationModel {
           let actorId = workspace?.session.actor.userId,
           let reviewStartedAt = planReviewStartedAt else { return }
     let reviews = planReviews
-    let reviewDuration = min(
-      86_400_000,
-      max(1, Int(Date().timeIntervalSince(reviewStartedAt) * 1_000))
+    let reviewDuration = planDraftReviewDurationMilliseconds ?? min(
+      86_400_000, max(1, Int(Date().timeIntervalSince(reviewStartedAt) * 1_000))
     )
+    planDraftReviewDurationMilliseconds = reviewDuration
     mutate(success: "Reviewed C6 operations drafted against the exact branch.", reloads: false) {
       [weak self] service, projectId, _ in
       let draft = try await service.createPlanDraft(
@@ -287,6 +300,7 @@ final class C14_7TwinIntegrationModel {
       }
       activeOperations = draft.operations
       activeDraftLabel = "Reviewed plan proposal"
+      planDraftReviewDurationMilliseconds = nil
       preview = nil
       selectedStage = .confirmation
     }
@@ -464,6 +478,7 @@ final class C14_7TwinIntegrationModel {
         try Task.checkCancellation()
         try await Task.sleep(for: .seconds(1))
         let next = try await service.loadWorkspace(projectId: projectId)
+        try Task.checkCancellation()
         guard self.projectId == projectId else { throw CancellationError() }
         workspace = next
         if next.exactSucceededScene != nil { break }
@@ -526,16 +541,16 @@ final class C14_7TwinIntegrationModel {
 
   private func alignSelections(_ next: C14_7Workspace) {
     if !planAssets.contains(where: { $0.id == selectedPlanAssetId }) {
-      selectedPlanAssetId = planAssets.first?.id
+      selectedPlanAssetId = nil
     }
     if !next.planJobs.contains(where: { $0.id == selectedPlanJobId }) {
-      selectedPlanJobId = next.planJobs.last?.id
+      selectedPlanJobId = nil
     }
     if !next.reconstructionJobs.contains(where: { $0.id == selectedReconstructionJobId }) {
-      selectedReconstructionJobId = next.reconstructionJobs.last?.id
+      selectedReconstructionJobId = nil
     }
     if !next.fusionJobs.contains(where: { $0.id == selectedFusionJobId }) {
-      selectedFusionJobId = next.fusionJobs.last?.id
+      selectedFusionJobId = nil
     }
     let eligibleAssetIds = Set(reconstructionAssets.map(\.id))
     selectedReconstructionAssetIds.formIntersection(eligibleAssetIds)
@@ -563,6 +578,7 @@ final class C14_7TwinIntegrationModel {
     selectedPlanJobId = nil
     planReviews = [:]
     planReviewStartedAt = nil
+    planDraftReviewDurationMilliseconds = nil
     selectedReconstructionAssetIds = []
     selectedReconstructionJobId = nil
     selectedFusionSourceIds = []
@@ -575,6 +591,7 @@ final class C14_7TwinIntegrationModel {
     planProposal = nil
     planCalibration = nil
     planReviewStartedAt = nil
+    planDraftReviewDurationMilliseconds = nil
     planReviews = [:]
     reconstructionResult = nil
     fusionProposal = nil
@@ -586,12 +603,15 @@ final class C14_7TwinIntegrationModel {
   }
 
   private func validAnchors(_ anchors: [C14_7FusionAnchor]) -> Bool {
-    guard anchors.count >= 3 else { return false }
+    guard anchors.count >= 3,
+          anchors.allSatisfy({ $0.sourcePoint.isValid && $0.projectPoint.isValid }) else {
+      return false
+    }
     return nonCollinear(anchors.map(\.sourcePoint)) && nonCollinear(anchors.map(\.projectPoint))
   }
 
   private func nonCollinear(_ points: [C14_7FusionPoint]) -> Bool {
-    guard points.count >= 3 else { return false }
+    guard points.count >= 3, points.allSatisfy(\.isValid) else { return false }
     for first in 0..<(points.count - 2) {
       for second in (first + 1)..<(points.count - 1) {
         for third in (second + 1)..<points.count {

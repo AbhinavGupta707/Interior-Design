@@ -53,6 +53,12 @@ struct C14_7PlanJobsResponse: Codable, Sendable { let jobs: [C14_7PlanJob] }
 struct C14_7SourcePoint: Codable, Equatable, Sendable {
   var x: Int
   var y: Int
+
+  var isValid: Bool {
+    Self.contractRange.contains(x) && Self.contractRange.contains(y)
+  }
+
+  private static let contractRange = -1_000_000_000...1_000_000_000
 }
 
 struct C14_7PlanParser: Codable, Equatable, Sendable {
@@ -84,7 +90,9 @@ struct C14_7PlanSource: Codable, Equatable, Sendable {
     byteSize > 0 && byteSize <= EvidenceFileSupport.maximumBytes
       && ["pdf-micropoints", "svg-microunits", "pixels", "fixture-microunits"].contains(coordinateSpace)
       && EvidenceKind.plan.allowedMIMETypes.contains(detectedMimeType)
-      && heightSourceUnits > 0 && widthSourceUnits > 0 && pageIndex >= 0
+      && (1...1_000_000_000).contains(heightSourceUnits)
+      && (1...1_000_000_000).contains(widthSourceUnits)
+      && (0...19).contains(pageIndex)
       && rights.serviceProcessingConsent && rights.trainingUseConsent == .denied
       && C14_5ContractValidator.sha256(sha256)
   }
@@ -120,17 +128,33 @@ struct C14_7PlanCandidate: Codable, Equatable, Identifiable, Sendable {
     guard (0...100).contains(confidence), ["level", "wall", "opening", "space"].contains(kind)
     else { return false }
     switch kind {
-    case "level": return elevationMillimetres != nil && suggestedName?.isEmpty == false
+    case "level":
+      return elevationMillimetres.map({ (-10_000_000...10_000_000).contains($0) }) == true
+        && boundedName(suggestedName)
     case "wall":
-      return levelCandidateId != nil && start != nil && end != nil && start != end
+      return levelCandidateId != nil && start?.isValid == true && end?.isValid == true
+        && start != end && boundedPositive(heightMillimetres) && boundedPositive(thicknessMillimetres)
     case "opening":
-      return levelCandidateId != nil && hostWallCandidateId != nil && start != nil && end != nil
-        && start != end && ["door", "window", "unknown"].contains(openingKind ?? "")
+      return levelCandidateId != nil && hostWallCandidateId != nil
+        && start?.isValid == true && end?.isValid == true && start != end
+        && ["door", "window", "unknown"].contains(openingKind ?? "")
+        && boundedPositive(headHeightMillimetres)
+        && (sillHeightMillimetres.map({ (0...1_000_000).contains($0) }) ?? true)
     case "space":
-      return levelCandidateId != nil && (boundaryWallCandidateIds?.count ?? 0) >= 3
-        && suggestedName?.isEmpty == false
+      return levelCandidateId != nil && (3...200).contains(boundaryWallCandidateIds?.count ?? 0)
+        && boundedName(suggestedName)
     default: return false
     }
+  }
+
+  private func boundedName(_ value: String?) -> Bool {
+    guard let value else { return false }
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return !trimmed.isEmpty && trimmed.count <= 160
+  }
+
+  private func boundedPositive(_ value: Int?) -> Bool {
+    value.map({ (1...1_000_000).contains($0) }) ?? true
   }
 }
 
@@ -180,6 +204,20 @@ struct C14_7PlanCalibration: Codable, Equatable, Sendable {
   let proposalId: UUID
   let residualMillimetres: Int
   let sourceToModel: C14_7AffineTransform
+
+  var isValid: Bool {
+    let transform = sourceToModel
+    return (0...1_000_000).contains(residualMillimetres)
+      && (-1_000_000...1_000_000).contains(transform.a)
+      && (-1_000_000...1_000_000).contains(transform.b)
+      && (-1_000_000...1_000_000).contains(transform.c)
+      && (-1_000_000...1_000_000).contains(transform.d)
+      && (1...1_000_000).contains(transform.denominator)
+      && transform.rounding == "half-away-from-zero"
+      && (-10_000_000...10_000_000).contains(transform.translateXMillimetres)
+      && (-10_000_000...10_000_000).contains(transform.translateYMillimetres)
+      && transform.a * transform.d - transform.b * transform.c != 0
+  }
 }
 
 enum C14_7CandidateDecision: String, CaseIterable, Codable, Sendable {
@@ -312,6 +350,14 @@ struct C14_7FusionPoint: Codable, Equatable, Sendable {
   var xMm: Int
   var yMm: Int
   var zMm: Int
+
+  var isValid: Bool {
+    Self.contractRange.contains(xMm)
+      && Self.contractRange.contains(yMm)
+      && Self.contractRange.contains(zMm)
+  }
+
+  private static let contractRange = -10_000_000...10_000_000
 }
 
 struct C14_7FusionAnchor: Codable, Equatable, Identifiable, Sendable {
@@ -460,6 +506,10 @@ struct C14_7Workspace: Equatable, Sendable {
           branch.headSnapshotId != branch.sourceSnapshotId else { return nil }
     return sceneJobs.first {
       $0.state == "succeeded" && $0.sceneId != nil && $0.projectId == snapshot.projectId
+        && $0.request.sourceSnapshot.projectId == snapshot.projectId
+        && $0.request.sourceSnapshot.modelId == snapshot.modelId
+        && $0.request.sourceSnapshot.profile == "existing"
+        && $0.request.sourceSnapshot.schemaVersion == snapshot.schemaVersion
         && $0.request.sourceSnapshot.snapshotId == snapshot.id
         && $0.request.sourceSnapshot.snapshotSha256 == snapshot.snapshotSha256
     }

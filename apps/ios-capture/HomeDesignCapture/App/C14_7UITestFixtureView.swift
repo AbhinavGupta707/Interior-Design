@@ -70,6 +70,7 @@
 
     private let scenario: C14_7UITestScenario
     private var loadCount = 0
+    private var mutationKeyResetCount = 0
     private var phase: Phase
 
     init(scenario: C14_7UITestScenario) {
@@ -101,6 +102,11 @@
     }
 
     func observedLoadCount() -> Int { loadCount }
+    func observedMutationKeyResetCount() -> Int { mutationKeyResetCount }
+
+    func resetPendingMutationKeys() {
+      mutationKeyResetCount += 1
+    }
 
     func initializeWorkspace(projectId: UUID) async throws {
       throw C14_5DesignStudioError.rejected

@@ -79,6 +79,14 @@
       XCTAssertTrue(sourceText.contains(C14_7FixtureFactory.planAssetId.uuidString.lowercased()))
       XCTAssertFalse(sourceText.contains("appearance"))
 
+      let replayDraft = try C14_7PlanOperationBuilder.build(
+        proposal: C14_7FixtureFactory.planProposal,
+        calibration: C14_7FixtureFactory.calibration,
+        actorUserId: C14_5FixtureFactory.projectId,
+        reviews: [candidate.id: accepted]
+      )
+      XCTAssertEqual(replayDraft, sourceDraft, "An uncertain retry must reproduce the exact body.")
+
       var corrected = accepted
       corrected.decision = .corrected
       corrected.name = "Homeowner corrected level"
@@ -119,6 +127,28 @@
           sourceEnd: .init(x: 1, y: 1)
         )
       )
+      XCTAssertThrowsError(
+        try C14_7PlanOperationBuilder.calibrationBody(
+          knownLengthMillimetres: 1_000,
+          sourceStart: .init(x: Int.max, y: 0),
+          sourceEnd: .init(x: 0, y: 0)
+        )
+      )
+
+      let candidate = try XCTUnwrap(C14_7FixtureFactory.planProposal.candidates?.first)
+      var outOfRange = C14_7CandidateReview.initial(candidate)
+      outOfRange.decision = .corrected
+      outOfRange.elevationMillimetres = Int.max
+      XCTAssertThrowsError(
+        try C14_7PlanOperationBuilder.build(
+          proposal: C14_7FixtureFactory.planProposal,
+          calibration: C14_7FixtureFactory.calibration,
+          actorUserId: C14_5FixtureFactory.projectId,
+          reviews: [candidate.id: outOfRange]
+        )
+      )
+      XCTAssertFalse(C14_7FusionPoint(xMm: Int.max, yMm: 0, zMm: 0).isValid)
+      XCTAssertTrue(C14_7FusionPoint(xMm: 10_000_000, yMm: -10_000_000, zMm: 0).isValid)
     }
 
     func testExactConfirmedTwinRequiresChangedHeadAndMatchingSucceededScene() throws {
@@ -133,6 +163,39 @@
       let confirmed = C14_7FixtureFactory.committedWorkspace(role: .owner, confirmed: true)
       try C14_7ContractValidator.validate(confirmed, projectId: C14_7FixtureFactory.projectId)
       XCTAssertNotNil(confirmed.exactSucceededScene)
+
+      let exactJob = try XCTUnwrap(confirmed.sceneJobs.first)
+      let mismatchedJob = C14_5SceneJob(
+        id: exactJob.id,
+        projectId: exactJob.projectId,
+        request: .init(
+          label: exactJob.request.label,
+          sourceSnapshot: .init(
+            modelId: UUID(),
+            profile: exactJob.request.sourceSnapshot.profile,
+            projectId: exactJob.request.sourceSnapshot.projectId,
+            schemaVersion: exactJob.request.sourceSnapshot.schemaVersion,
+            snapshotId: exactJob.request.sourceSnapshot.snapshotId,
+            snapshotSha256: exactJob.request.sourceSnapshot.snapshotSha256
+          )
+        ),
+        safeCode: exactJob.safeCode,
+        sceneId: exactJob.sceneId,
+        state: exactJob.state,
+        version: exactJob.version
+      )
+      let mismatched = C14_7Workspace(
+        assets: confirmed.assets,
+        branches: confirmed.branches,
+        fusionJobs: confirmed.fusionJobs,
+        fusionSources: confirmed.fusionSources,
+        planJobs: confirmed.planJobs,
+        reconstructionJobs: confirmed.reconstructionJobs,
+        sceneJobs: [mismatchedJob],
+        session: confirmed.session,
+        snapshot: confirmed.snapshot
+      )
+      XCTAssertNil(mismatched.exactSucceededScene)
     }
 
     func testViewerRoleAndOfflineRefreshRemainReadOnly() async {
@@ -205,6 +268,9 @@
       let projectId = C14_7FixtureFactory.projectId.uuidString
       await model.activate(projectId: projectId)
 
+      XCTAssertNil(model.selectedPlanAssetId)
+      XCTAssertNil(model.selectedPlanJobId)
+
       let other = UUID(uuidString: "24700000-0000-4000-8000-000000000002")!
       let staleActivation = Task { await model.activate(projectId: other.uuidString) }
       while await service.observedLoadCount() < 2 { await Task.yield() }
@@ -216,11 +282,26 @@
       XCTAssertTrue(model.canMutate)
     }
 
+    func testResetClearsServicePendingMutationScopeBeforeReactivation() async {
+      let service = C14_7FixtureTwinService(scenario: .proposalJourney)
+      let model = C14_7TwinIntegrationModel(service: service)
+      let projectId = C14_7FixtureFactory.projectId.uuidString
+      await model.activate(projectId: projectId)
+
+      model.reset()
+      await model.activate(projectId: projectId)
+
+      let resetCount = await service.observedMutationKeyResetCount()
+      XCTAssertEqual(resetCount, 1)
+      XCTAssertEqual(model.state, .ready)
+    }
+
     func testFreshRoleDowngradeDiscardsLocalProposalIntent() async {
       let model = C14_7TwinIntegrationModel(
         service: C14_7FixtureTwinService(scenario: .roleDowngrade)
       )
       await model.activate(projectId: C14_7FixtureFactory.projectId.uuidString)
+      model.selectedPlanJobId = model.workspace?.planJobs.first?.id
       model.loadSelectedPlanProposal()
       while model.planProposal == nil { await Task.yield() }
       XCTAssertFalse(model.planReviews.isEmpty)

@@ -183,6 +183,7 @@ struct C14_7TwinIntegrationView: View {
             Text("\(asset.fileName) · \(asset.source.sha256.prefix(10))…").tag(Optional(asset.id))
           }
         }
+        .accessibilityIdentifier("c14_7.plan-asset-picker")
         Button("Start plan processing") { model.startPlanJob() }
           .buttonStyle(.borderedProminent)
           .disabled(!model.canMutate || model.selectedPlanAssetId == nil)
@@ -195,6 +196,7 @@ struct C14_7TwinIntegrationView: View {
             Text("\(job.state) · \(job.id.uuidString.prefix(8))").tag(Optional(job.id))
           }
         }
+        .accessibilityIdentifier("c14_7.plan-job-picker")
         Button("Load proposal") { model.loadSelectedPlanProposal() }
           .disabled(model.selectedPlanJobId == nil || model.isMutating)
           .accessibilityIdentifier("c14_7.load-plan-proposal")
@@ -333,6 +335,7 @@ struct C14_7TwinIntegrationView: View {
             Text("\(job.state) · \(job.id.uuidString.prefix(8))").tag(Optional(job.id))
           }
         }
+        .accessibilityIdentifier("c14_7.reconstruction-job-picker")
         Button("Inspect persisted result") { model.loadSelectedReconstructionResult() }
           .disabled(model.selectedReconstructionJobId == nil || model.isMutating)
         if let result = model.reconstructionResult {
