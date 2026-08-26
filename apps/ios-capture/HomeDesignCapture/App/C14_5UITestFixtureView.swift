@@ -91,21 +91,39 @@
   actor C14_5FixtureDesignService: C14_5DesignStudioServing {
     private var workspace: C14_5Workspace
     private let offlineAfterLoads: Int?
+    private let offlineForOtherProjects: Bool
+    private let otherProjectFailureDelayNanoseconds: UInt64?
     private var loadCount = 0
 
-    init(workspace: C14_5Workspace, offlineAfterLoads: Int? = nil) {
+    init(
+      workspace: C14_5Workspace,
+      offlineAfterLoads: Int? = nil,
+      offlineForOtherProjects: Bool = false,
+      otherProjectFailureDelayNanoseconds: UInt64? = nil
+    ) {
       self.workspace = workspace
       self.offlineAfterLoads = offlineAfterLoads
+      self.offlineForOtherProjects = offlineForOtherProjects
+      self.otherProjectFailureDelayNanoseconds = otherProjectFailureDelayNanoseconds
     }
 
-    func loadWorkspace(projectId: UUID) throws -> C14_5Workspace {
+    func loadWorkspace(projectId: UUID) async throws -> C14_5Workspace {
       loadCount += 1
       if let offlineAfterLoads, loadCount > offlineAfterLoads {
+        throw C14_5DesignStudioError.offline
+      }
+      if offlineForOtherProjects, workspace.snapshot?.projectId != projectId {
+        if let otherProjectFailureDelayNanoseconds {
+          await Task.detached {
+            try? await Task.sleep(nanoseconds: otherProjectFailureDelayNanoseconds)
+          }.value
+        }
         throw C14_5DesignStudioError.offline
       }
       guard workspace.snapshot?.projectId == projectId else { throw C14_5DesignStudioError.notFound }
       return workspace
     }
+    func observedLoadCount() -> Int { loadCount }
     func updateBrief(projectId: UUID, actorId: UUID, expectedRevision: Int, statement: String, category: String, classification: String) {}
     func acceptBrief(projectId: UUID, expectedRevision: Int) {}
     func createOptions(projectId: UUID, brief: C14_5BriefRecord, snapshot: C14_5Snapshot) {}

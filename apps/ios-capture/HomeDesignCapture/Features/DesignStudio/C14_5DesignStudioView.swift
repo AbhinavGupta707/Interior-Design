@@ -279,7 +279,7 @@ struct C14_5DesignStudioView: View {
       title: "Decide materials and products",
       detail: "Catalog rights, model revision and specification hashes remain visible. Price, availability and professional approval are not provided."
     ) {
-      if let specification = model.workspace?.specifications.last {
+      if let specification = model.workspace?.currentSpecification {
         exactPin(
           "Specification revision \(specification.currentRevision.revision)",
           specification.id.uuidString,
@@ -382,7 +382,7 @@ struct C14_5DesignStudioView: View {
         }
       }
 
-      if let job = model.workspace?.renderJobs.last {
+      if let job = model.workspace?.latestRenderJob {
         Divider()
         LabeledContent("Latest render", value: job.state.replacingOccurrences(of: "-", with: " ").capitalized)
         Text("Job \(job.id.uuidString) · version \(job.version)")

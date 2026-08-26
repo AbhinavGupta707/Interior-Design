@@ -450,6 +450,25 @@ struct C14_5Workspace: Equatable, Sendable {
   let renderJobs: [C14_5RenderJob]
   let renderResult: C14_5RenderResult?
 
+  var currentSpecification: C14_5Specification? {
+    guard let recoveredConfirmation,
+          let options,
+          let optionJob = optionJobs.first(where: { $0.id == options.jobId })
+    else { return nil }
+    return specifications.first {
+      let source = $0.currentRevision.sourceConfirmation
+      return source.confirmationId == recoveredConfirmation.id
+        && source.jobId == optionJob.id
+        && source.jobVersion == optionJob.version
+        && source.optionId == recoveredConfirmation.optionId
+        && source.resultSnapshotSha256 == recoveredConfirmation.resultSnapshotSha256
+        && $0.currentRevision.branchId == recoveredConfirmation.branchId
+        && $0.currentRevision.branchRevision >= recoveredConfirmation.branchRevision
+    }
+  }
+
+  var latestRenderJob: C14_5RenderJob? { renderJobs.first }
+
   var confirmedBranch: C14_5Branch? {
     guard let snapshot else { return nil }
     return branches.first {
@@ -531,9 +550,21 @@ enum C14_5ContractValidator {
         && sha256($0.baseBrief.contentSha256) && sha256($0.sourceModel.snapshotSha256)
     }
     let specificationsValid = workspace.specifications.allSatisfy {
-      $0.projectId == projectId && $0.currentRevision.revision > 0
+      $0.projectId == projectId && $0.schemaVersion == "c13-specification-v1"
+        && $0.status == "working" && $0.selectionBoard.revision > 0
+        && $0.currentRevision.revision > 0 && $0.currentRevision.branchRevision > 0
+        && $0.currentRevision.sourceConfirmation.profile == "proposed"
         && sha256($0.currentRevision.revisionSha256)
+        && sha256($0.currentRevision.catalogReleaseSha256)
         && sha256($0.currentRevision.modelSnapshotSha256)
+        && sha256($0.currentRevision.sourceConfirmation.resultSnapshotSha256)
+        && $0.currentRevision.lines.count <= 1_024
+        && $0.currentRevision.lines.allSatisfy {
+          ["selected", "shortlisted", "rejected", "needs-review"].contains($0.decisionStatus)
+            && ["furnishing", "finish", "light"].contains($0.kind)
+            && $0.notes.count <= 2_000
+            && sha256($0.assetVersionSha256)
+        }
     }
     let renderJobsValid = workspace.renderJobs.allSatisfy {
       $0.projectId == projectId && $0.version > 0
@@ -577,8 +608,19 @@ enum C14_5ContractValidator {
     }
 
     if let options = workspace.options {
-      guard let exactJob = workspace.optionJobs.first(where: { $0.id == options.jobId }),
+      guard let brief = workspace.brief,
+            brief.brief.status == "accepted",
+            let snapshot = workspace.snapshot,
+            let exactJob = workspace.optionJobs.first(where: { $0.id == options.jobId }),
             exactJob.state == "succeeded",
+            exactJob.baseBrief.briefId == brief.brief.id,
+            exactJob.baseBrief.revision == brief.brief.revision,
+            exactJob.baseBrief.contentSha256 == brief.contentSha256,
+            exactJob.sourceModel.modelId == snapshot.modelId,
+            exactJob.sourceModel.profile == snapshot.profile,
+            exactJob.sourceModel.snapshotId == snapshot.id,
+            exactJob.sourceModel.snapshotSha256 == snapshot.snapshotSha256,
+            exactJob.sourceModel.snapshotVersion == snapshot.version,
             let optionSet = options.optionSet
       else { throw C14_5DesignStudioError.invalidResponse }
       let optionRecordsValid = options.options.allSatisfy {
@@ -609,6 +651,9 @@ enum C14_5ContractValidator {
             confirmation.schemaVersion == "c12-option-confirmation-v1",
             sha256(confirmation.resultSnapshotSha256)
       else { throw C14_5DesignStudioError.invalidResponse }
+      if !workspace.specifications.isEmpty, workspace.currentSpecification == nil {
+        throw C14_5DesignStudioError.invalidResponse
+      }
     }
 
     if let eligibleSources = workspace.eligibleSources {

@@ -66,6 +66,8 @@ final class C14_5DesignStudioModel {
   @ObservationIgnored private let recovery: any C14_5RecoveryStoring
   private var projectId: UUID?
   private var loadTask: Task<Void, Never>?
+  private var mutationTask: Task<Void, Never>?
+  private var artifactTask: Task<Void, Never>?
 
   init(
     service: any C14_5DesignStudioServing,
@@ -83,10 +85,13 @@ final class C14_5DesignStudioModel {
 
   func activate(projectId rawProjectId: String, force: Bool = false) async {
     guard let id = UUID(uuidString: rawProjectId) else {
+      clearProjectState()
       state = .failure("The selected project identifier is invalid.")
       return
     }
-    guard force || projectId != id || state == .idle else { return }
+    let projectChanged = projectId != id
+    guard force || projectChanged || state == .idle else { return }
+    if projectChanged { clearProjectState() }
     projectId = id
     await reload()
   }
@@ -95,13 +100,15 @@ final class C14_5DesignStudioModel {
     guard let projectId else { return }
     loadTask?.cancel()
     state = .loading
-    verifiedArtifact = nil
     loadTask = Task { [weak self] in
       guard let self else { return }
       do {
         let next = try await service.loadWorkspace(projectId: projectId)
         try Task.checkCancellation()
+        guard self.projectId == projectId else { return }
         workspace = next
+        verifiedArtifact = nil
+        substitutionPreview = nil
         alignSelections(next)
         state = .ready
         announcement = next.designEligible
@@ -111,8 +118,10 @@ final class C14_5DesignStudioModel {
       } catch is CancellationError {
         return
       } catch let error as C14_5DesignStudioError {
+        guard self.projectId == projectId, !Task.isCancelled else { return }
         await present(error, projectId: projectId)
       } catch {
+        guard self.projectId == projectId, !Task.isCancelled else { return }
         await present(.unavailable, projectId: projectId)
       }
     }
@@ -129,7 +138,8 @@ final class C14_5DesignStudioModel {
         category: briefCategory,
         classification: briefClassification
       )
-      await MainActor.run { self.briefStatement = "" }
+      guard self.projectId == projectId, !Task.isCancelled else { throw CancellationError() }
+      self.briefStatement = ""
     }
   }
 
@@ -186,7 +196,7 @@ final class C14_5DesignStudioModel {
   func previewSubstitution() {
     runMutation(success: "Bounded material substitution preview created.", reloads: false) {
       [self] projectId, workspace in
-      guard let specification = workspace.specifications.last,
+      guard let specification = workspace.currentSpecification,
             let line = specification.currentRevision.lines.first,
             let replacement = workspace.catalogAssets.first(where: {
               $0.id == selectedReplacementId && $0.kind == line.kind
@@ -199,14 +209,15 @@ final class C14_5DesignStudioModel {
         line: line,
         replacement: replacement
       )
-      await MainActor.run { self.substitutionPreview = preview }
+      guard self.projectId == projectId, !Task.isCancelled else { throw CancellationError() }
+      self.substitutionPreview = preview
     }
   }
 
   func confirmSubstitution() {
     runMutation(success: "Exact substitution confirmed; proposed scene compilation requested.") {
       [self] projectId, workspace in
-      guard let specification = workspace.specifications.last,
+      guard let specification = workspace.currentSpecification,
             let preview = substitutionPreview
       else { throw C14_5DesignStudioError.rejected }
       try await service.confirmSubstitution(
@@ -214,7 +225,8 @@ final class C14_5DesignStudioModel {
         specification: specification,
         preview: preview
       )
-      await MainActor.run { self.substitutionPreview = nil }
+      guard self.projectId == projectId, !Task.isCancelled else { throw CancellationError() }
+      self.substitutionPreview = nil
     }
   }
 
@@ -245,9 +257,11 @@ final class C14_5DesignStudioModel {
           let artifact = result.manifest.artifacts.first(where: { $0.role == "geometry-safe-png" })
     else { return }
     isMutating = true
-    Task { [weak self] in
+    artifactTask = Task { [weak self] in
       guard let self else { return }
-      defer { Task { @MainActor in self.isMutating = false } }
+      defer {
+        if self.projectId == projectId { self.isMutating = false }
+      }
       do {
         let verified = try await service.verifiedArtifact(
           projectId: projectId,
@@ -255,14 +269,18 @@ final class C14_5DesignStudioModel {
           artifact: artifact,
           manifestSha256: result.manifestSha256
         )
-        await MainActor.run {
-          self.verifiedArtifact = verified
-          self.announcement = "Geometry-safe PNG verified by byte length and SHA-256."
-        }
+        try Task.checkCancellation()
+        guard self.projectId == projectId else { return }
+        self.verifiedArtifact = verified
+        self.announcement = "Geometry-safe PNG verified by byte length and SHA-256."
+      } catch is CancellationError {
+        return
       } catch let error as C14_5DesignStudioError {
-        await MainActor.run { self.announcement = self.message(for: error) }
+        guard self.projectId == projectId else { return }
+        self.announcement = self.message(for: error)
       } catch {
-        await MainActor.run { self.announcement = "Artifact verification failed safely." }
+        guard self.projectId == projectId else { return }
+        self.announcement = "Artifact verification failed safely."
       }
     }
   }
@@ -280,18 +298,26 @@ final class C14_5DesignStudioModel {
     guard !isMutating, canMutate, let projectId, let workspace else { return }
     isMutating = true
     announcement = ""
-    Task { [weak self] in
+    mutationTask = Task { [weak self] in
       guard let self else { return }
+      defer {
+        if self.projectId == projectId { self.isMutating = false }
+      }
       do {
         try await operation(projectId, workspace)
-        await MainActor.run { self.announcement = success }
+        try Task.checkCancellation()
+        guard self.projectId == projectId else { return }
+        self.announcement = success
         if reloads { await self.reload() }
+      } catch is CancellationError {
+        return
       } catch let error as C14_5DesignStudioError {
-        await MainActor.run { self.announcement = self.message(for: error) }
+        guard self.projectId == projectId else { return }
+        self.announcement = self.message(for: error)
       } catch {
-        await MainActor.run { self.announcement = "The server action failed safely." }
+        guard self.projectId == projectId else { return }
+        self.announcement = "The server action failed safely."
       }
-      await MainActor.run { self.isMutating = false }
     }
   }
 
@@ -322,7 +348,7 @@ final class C14_5DesignStudioModel {
       selectedOptionId = workspace.options?.options.first(where: { $0.status == "pending" })?.id
     }
     if workspace.catalogAssets.contains(where: { $0.id == selectedReplacementId }) != true {
-      if let line = workspace.specifications.last?.currentRevision.lines.first {
+      if let line = workspace.currentSpecification?.currentRevision.lines.first {
         selectedReplacementId = workspace.catalogAssets.first(where: {
           $0.kind == line.kind && $0.versionId != line.assetVersionId
         })?.id
@@ -357,5 +383,29 @@ final class C14_5DesignStudioModel {
     case .unavailable: "The service is unavailable. No completion state was inferred."
     case .invalidResponse: "The server response failed strict native validation."
     }
+  }
+
+  private func clearProjectState() {
+    loadTask?.cancel()
+    mutationTask?.cancel()
+    artifactTask?.cancel()
+    loadTask = nil
+    mutationTask = nil
+    artifactTask = nil
+    workspace = nil
+    verifiedArtifact = nil
+    substitutionPreview = nil
+    projectId = nil
+    selectedStage = .explore
+    briefStatement = ""
+    briefCategory = "spatial-need"
+    briefClassification = "preference"
+    selectedOptionId = nil
+    selectedReplacementId = nil
+    selectedSourceJobId = nil
+    selectedCameraId = nil
+    selectedProfileId = "cycles-cpu-geometry-safe-v1"
+    announcement = ""
+    isMutating = false
   }
 }

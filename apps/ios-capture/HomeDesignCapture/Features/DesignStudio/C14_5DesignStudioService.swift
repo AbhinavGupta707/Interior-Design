@@ -59,6 +59,36 @@ enum C14_5ArtifactVerifier {
   }
 }
 
+struct C14_5PendingMutationKeys: Sendable {
+  struct Token: Equatable, Sendable {
+    let entryId: UUID
+    let issuedAt: Date
+    let key: UUID
+  }
+
+  private var pendingByOperationAndFingerprint: [String: Token] = [:]
+
+  mutating func key(operation: String, fingerprint: String) -> UUID {
+    token(operation: operation, fingerprint: fingerprint).key
+  }
+
+  mutating func token(operation: String, fingerprint: String) -> Token {
+    let storageKey = storageKey(operation: operation, fingerprint: fingerprint)
+    if let pending = pendingByOperationAndFingerprint[storageKey] { return pending }
+    let token = Token(entryId: UUID(), issuedAt: Date(), key: UUID())
+    pendingByOperationAndFingerprint[storageKey] = token
+    return token
+  }
+
+  mutating func complete(operation: String, fingerprint: String) {
+    pendingByOperationAndFingerprint[storageKey(operation: operation, fingerprint: fingerprint)] = nil
+  }
+
+  private func storageKey(operation: String, fingerprint: String) -> String {
+    "\(operation.utf8.count):\(operation)|\(fingerprint.utf8.count):\(fingerprint)"
+  }
+}
+
 protocol C14_5DesignStudioServing: Sendable {
   func loadWorkspace(projectId: UUID) async throws -> C14_5Workspace
   func updateBrief(
@@ -194,6 +224,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
   private let session: URLSession
   private let decoder = JSONDecoder()
   private let encoder = JSONEncoder()
+  private var mutationKeys = C14_5PendingMutationKeys()
 
   init(
     baseURL: URL,
@@ -298,9 +329,13 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
     }
     let options: C14_5OptionsResponse?
     if let exactOptionJob {
-      options = try await optionalGet(
+      let response: C14_5OptionsResponse? = try await optionalGet(
         "/v1/projects/\(project)/design-option-jobs/\(id(exactOptionJob.id))/options"
       )
+      guard response?.jobId == exactOptionJob.id,
+            response?.projectId == projectId
+      else { throw C14_5DesignStudioError.invalidResponse }
+      options = response
     } else {
       options = nil
     }
@@ -356,7 +391,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
     let renderJobsResponse: C14_5RenderJobsResponse = try await get(
       "/v1/projects/\(project)/render-jobs"
     )
-    let succeededRender = renderJobsResponse.jobs.reversed().first { $0.state == "succeeded" }
+    let succeededRender = renderJobsResponse.jobs.first { $0.state == "succeeded" }
     let renderResult: C14_5RenderResult?
     if let succeededRender {
       renderResult = try await optionalGet(
@@ -402,7 +437,14 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           Self.briefCategories.contains(category),
           Self.briefClassifications.contains(classification)
     else { throw C14_5DesignStudioError.rejected }
-    let key = UUID()
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(actorId), String(expectedRevision), category, classification, trimmed,
+    ])
+    let pending = mutationKeys.token(
+      operation: "brief.update",
+      fingerprint: mutationFingerprint
+    )
+    let key = pending.key
     let body = BriefUpdate(
       expectedRevision: expectedRevision,
       idempotencyKey: key,
@@ -411,10 +453,10 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           entry: BriefEntryBody(
             category: category,
             classification: classification,
-            id: UUID(),
+            id: pending.entryId,
             priority: classification == "hard-constraint" ? 1 : 3,
             provenance: BriefEntryBody.Provenance(
-              capturedAt: ISO8601DateFormatter().string(from: Date()),
+              capturedAt: ISO8601DateFormatter().string(from: pending.issuedAt),
               method: "user-stated",
               statedByUserId: actorId
             ),
@@ -435,20 +477,27 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
     let brief: C14_5Brief = try decode(response.data)
     try validateBrief(brief, projectId: projectId, expectedMinimumRevision: expectedRevision + 1)
     try validateBriefHash(response.response)
+    mutationKeys.complete(operation: "brief.update", fingerprint: mutationFingerprint)
   }
 
   func acceptBrief(projectId: UUID, expectedRevision: Int) async throws {
     guard expectedRevision > 0 else { throw C14_5DesignStudioError.rejected }
+    let mutationFingerprint = fingerprint([id(projectId), String(expectedRevision)])
+    let key = mutationKeys.key(
+      operation: "brief.accept",
+      fingerprint: mutationFingerprint
+    )
     let response = try await sendRaw(
       path: "/v1/projects/\(id(projectId))/design-brief/accept",
       method: "POST",
-      body: ExpectedRevision(expectedRevision: expectedRevision, idempotencyKey: UUID()),
+      body: ExpectedRevision(expectedRevision: expectedRevision, idempotencyKey: key),
       idempotencyKey: nil
     )
     let brief: C14_5Brief = try decode(response.data)
     try validateBrief(brief, projectId: projectId, expectedMinimumRevision: expectedRevision + 1)
     guard brief.status == "accepted" else { throw C14_5DesignStudioError.invalidResponse }
     try validateBriefHash(response.response)
+    mutationKeys.complete(operation: "brief.accept", fingerprint: mutationFingerprint)
   }
 
   func createOptions(
@@ -475,14 +524,23 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         snapshotVersion: snapshot.version
       )
     )
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(brief.brief.id), String(brief.brief.revision), brief.contentSha256,
+      id(snapshot.id), snapshot.snapshotSha256, String(snapshot.version),
+    ])
+    let key = mutationKeys.key(
+      operation: "options.create",
+      fingerprint: mutationFingerprint
+    )
     let job: C14_5OptionJob = try await post(
       "/v1/projects/\(id(projectId))/design-option-jobs",
       body: body,
-      idempotencyKey: UUID()
+      idempotencyKey: key
     )
     guard job.projectId == projectId, job.baseBrief == body.baseBrief,
           job.sourceModel == body.sourceModel, job.requestedOptionCount == 2
     else { throw C14_5DesignStudioError.invalidResponse }
+    mutationKeys.complete(operation: "options.create", fingerprint: mutationFingerprint)
   }
 
   func confirmOption(
@@ -495,10 +553,27 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
   ) async throws -> OptionConfirmation {
     guard job.projectId == projectId, option.projectId == projectId,
           option.jobId == job.id, option.status == "pending",
-          set.jobId == job.id, set.optionIds.contains(option.id),
-          brief.brief.status == "accepted", snapshot.projectId == projectId
+          set.projectId == projectId, set.jobId == job.id, set.optionIds.contains(option.id),
+          brief.brief.projectId == projectId, brief.brief.status == "accepted",
+          job.baseBrief.briefId == brief.brief.id,
+          job.baseBrief.revision == brief.brief.revision,
+          job.baseBrief.contentSha256 == brief.contentSha256,
+          snapshot.projectId == projectId,
+          job.sourceModel.modelId == snapshot.modelId,
+          job.sourceModel.profile == snapshot.profile,
+          job.sourceModel.snapshotId == snapshot.id,
+          job.sourceModel.snapshotSha256 == snapshot.snapshotSha256,
+          job.sourceModel.snapshotVersion == snapshot.version
     else { throw C14_5DesignStudioError.rejected }
-    let key = UUID()
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(job.id), String(job.version), id(option.id), set.setSha256,
+      id(brief.brief.id), String(brief.brief.revision), brief.contentSha256,
+      id(snapshot.id), snapshot.snapshotSha256, String(snapshot.version),
+    ])
+    let key = mutationKeys.key(
+      operation: "options.confirm",
+      fingerprint: mutationFingerprint
+    )
     let body = OptionConfirm(
       expectedBriefContentSha256: brief.contentSha256,
       expectedBriefRevision: brief.brief.revision,
@@ -513,7 +588,13 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
       body: body,
       idempotencyKey: key
     )
-    return try await getConfirmation(projectId: projectId, jobId: job.id, optionId: option.id)
+    let confirmation = try await getConfirmation(
+      projectId: projectId,
+      jobId: job.id,
+      optionId: option.id
+    )
+    mutationKeys.complete(operation: "options.confirm", fingerprint: mutationFingerprint)
+    return confirmation
   }
 
   func createSpecification(
@@ -524,6 +605,14 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
     guard confirmation.projectId == projectId, release.status == "published",
           C14_5ContractValidator.sha256(release.manifestSha256)
     else { throw C14_5DesignStudioError.rejected }
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(confirmation.id), confirmation.resultSnapshotSha256,
+      id(release.releaseId), release.manifestSha256,
+    ])
+    let key = mutationKeys.key(
+      operation: "specification.create",
+      fingerprint: mutationFingerprint
+    )
     let specification: C14_5Specification = try await post(
       "/v1/projects/\(id(projectId))/specifications/from-c12-confirmation",
       body: SpecificationCreate(
@@ -531,11 +620,12 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         catalogReleaseSha256: release.manifestSha256,
         confirmationId: confirmation.id
       ),
-      idempotencyKey: UUID()
+      idempotencyKey: key
     )
     guard specification.projectId == projectId,
           specification.currentRevision.sourceConfirmation.confirmationId == confirmation.id
     else { throw C14_5DesignStudioError.invalidResponse }
+    mutationKeys.complete(operation: "specification.create", fingerprint: mutationFingerprint)
   }
 
   func createSubstitutionPreview(
@@ -550,6 +640,15 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           replacement.kind == line.kind,
           replacement.versionId != line.assetVersionId
     else { throw C14_5DesignStudioError.rejected }
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(specification.id), String(specification.currentRevision.revision),
+      String(specification.currentRevision.branchRevision), id(line.lineId), id(line.elementId),
+      id(replacement.versionId), replacement.versionSha256,
+    ])
+    let key = mutationKeys.key(
+      operation: "substitution.preview",
+      fingerprint: mutationFingerprint
+    )
     let preview: C14_5SubstitutionPreview = try await post(
       "/v1/projects/\(id(projectId))/specifications/\(id(specification.id))/substitutions",
       body: SubstitutionCreate(
@@ -558,7 +657,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         expectedSpecificationRevision: specification.currentRevision.revision,
         replacementAssetVersionId: replacement.versionId
       ),
-      idempotencyKey: UUID()
+      idempotencyKey: key
     )
     guard preview.specificationId == specification.id,
           preview.specificationRevision == specification.currentRevision.revision,
@@ -567,6 +666,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           preview.schemaVersion == "c13-substitution-preview-v1",
           C14_5ContractValidator.sha256(preview.candidateSnapshotSha256)
     else { throw C14_5DesignStudioError.invalidResponse }
+    mutationKeys.complete(operation: "substitution.preview", fingerprint: mutationFingerprint)
     return preview
   }
 
@@ -579,6 +679,14 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           preview.specificationId == specification.id,
           preview.specificationRevision == specification.currentRevision.revision
     else { throw C14_5DesignStudioError.rejected }
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(specification.id), String(specification.currentRevision.revision),
+      id(preview.id), preview.candidateSnapshotSha256,
+    ])
+    let key = mutationKeys.key(
+      operation: "substitution.confirm",
+      fingerprint: mutationFingerprint
+    )
     let confirmation: C14_5SubstitutionConfirmation = try await post(
       "/v1/projects/\(id(projectId))/specifications/\(id(specification.id))/substitutions/\(id(preview.id))/confirm",
       body: SubstitutionConfirm(
@@ -586,13 +694,14 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         expectedSpecificationRevision: specification.currentRevision.revision,
         previewId: preview.id
       ),
-      idempotencyKey: UUID()
+      idempotencyKey: key
     )
     guard confirmation.specificationId == specification.id,
           confirmation.specificationRevision == specification.currentRevision.revision + 1,
           confirmation.schemaVersion == "c13-substitution-confirmation-v1",
           C14_5ContractValidator.sha256(confirmation.resultSnapshotSha256)
     else { throw C14_5DesignStudioError.invalidResponse }
+    mutationKeys.complete(operation: "substitution.confirm", fingerprint: mutationFingerprint)
   }
 
   func createRender(
@@ -610,6 +719,16 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         specificationRevision: $0.specificationRevision
       )
     }
+    let mutationFingerprint = fingerprint([
+      id(projectId), id(source.source.sceneJobId), source.source.sceneManifestSha256,
+      source.source.sourceSnapshotSha256, id(camera.cameraId), profileId,
+      specification.map { id($0.specificationId) } ?? "none",
+      specification.map { String($0.specificationRevision) } ?? "none",
+    ])
+    let key = mutationKeys.key(
+      operation: "render.create",
+      fingerprint: mutationFingerprint
+    )
     let job: C14_5RenderJob = try await post(
       "/v1/projects/\(id(projectId))/render-jobs",
       body: RenderCreate(
@@ -621,7 +740,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
         sourceSceneJobId: source.source.sceneJobId,
         specification: specification
       ),
-      idempotencyKey: UUID()
+      idempotencyKey: key
     )
     guard job.projectId == projectId,
           job.request.cameraId == camera.cameraId,
@@ -629,6 +748,7 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
           job.request.profileId == profileId,
           job.request.enhancement == "disabled"
     else { throw C14_5DesignStudioError.invalidResponse }
+    mutationKeys.complete(operation: "render.create", fingerprint: mutationFingerprint)
   }
 
   func verifiedArtifact(
@@ -934,6 +1054,10 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
 
   private nonisolated func id(_ value: UUID) -> String {
     value.uuidString.lowercased()
+  }
+
+  private nonisolated func fingerprint(_ components: [String]) -> String {
+    components.map { "\($0.utf8.count):\($0)" }.joined(separator: "|")
   }
 
   private nonisolated static func allowedAccessURL(_ url: URL) -> Bool {

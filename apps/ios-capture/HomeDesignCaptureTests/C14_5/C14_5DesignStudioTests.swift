@@ -114,6 +114,160 @@ final class C14_5DesignStudioTests: XCTestCase {
     XCTAssertFalse(model.canMutate)
   }
 
+  func testProjectSwitchCannotExposeThePreviousProjectsVerifiedWorkspace() async {
+    let service = C14_5FixtureDesignService(
+      workspace: C14_5FixtureFactory.workspace(),
+      offlineForOtherProjects: true
+    )
+    let model = C14_5DesignStudioModel(
+      service: service,
+      recovery: C14_5FixtureRecoveryStore(summary: nil)
+    )
+
+    await model.activate(projectId: C14_5FixtureFactory.projectId.uuidString)
+    XCTAssertNotNil(model.workspace)
+
+    let otherProjectId = UUID(uuidString: "24000000-0000-4000-8000-000000000001")!
+    await model.activate(projectId: otherProjectId.uuidString)
+
+    XCTAssertNil(model.workspace)
+    XCTAssertNil(model.role)
+    XCTAssertFalse(model.designEligible)
+    XCTAssertFalse(model.canMutate)
+  }
+
+  func testCancelledProjectFailureCannotOverwriteTheNewProjectsReadyState() async {
+    let service = C14_5FixtureDesignService(
+      workspace: C14_5FixtureFactory.workspace(),
+      offlineForOtherProjects: true,
+      otherProjectFailureDelayNanoseconds: 100_000_000
+    )
+    let model = C14_5DesignStudioModel(
+      service: service,
+      recovery: C14_5FixtureRecoveryStore(summary: nil)
+    )
+    let originalProjectId = C14_5FixtureFactory.projectId.uuidString
+    let otherProjectId = UUID(uuidString: "24000000-0000-4000-8000-000000000002")!
+
+    await model.activate(projectId: originalProjectId)
+    let staleActivation = Task {
+      await model.activate(projectId: otherProjectId.uuidString)
+    }
+    while await service.observedLoadCount() < 2 { await Task.yield() }
+    await model.activate(projectId: originalProjectId)
+    await staleActivation.value
+
+    XCTAssertEqual(model.state, .ready)
+    XCTAssertEqual(model.workspace?.snapshot?.projectId, C14_5FixtureFactory.projectId)
+    XCTAssertTrue(model.designEligible)
+  }
+
+  func testPendingMutationIdentityIsReusedUntilTheExactOperationCompletes() {
+    var keys = C14_5PendingMutationKeys()
+    let first = keys.token(operation: "brief.update", fingerprint: "exact-request-a")
+    let retry = keys.token(operation: "brief.update", fingerprint: "exact-request-a")
+
+    XCTAssertEqual(first, retry)
+
+    let changed = keys.token(operation: "brief.update", fingerprint: "exact-request-b")
+    XCTAssertNotEqual(changed, first)
+    XCTAssertEqual(
+      keys.token(operation: "brief.update", fingerprint: "exact-request-a"),
+      first
+    )
+
+    keys.complete(operation: "brief.update", fingerprint: "exact-request-b")
+    let intentionalNewRequest = keys.token(
+      operation: "brief.update",
+      fingerprint: "exact-request-b"
+    )
+    XCTAssertNotEqual(intentionalNewRequest, changed)
+  }
+
+  func testOptionStateMustRemainPinnedToTheCurrentBriefAndSnapshot() throws {
+    let workspace = C14_5FixtureFactory.workspace()
+    let job = try XCTUnwrap(workspace.optionJobs.first)
+    let staleJob = C14_5OptionJob(
+      baseBrief: job.baseBrief,
+      id: job.id,
+      optionCount: job.optionCount,
+      projectId: job.projectId,
+      requestedDirections: job.requestedDirections,
+      requestedOptionCount: job.requestedOptionCount,
+      safeCode: job.safeCode,
+      sourceModel: C14_5OptionSource(
+        modelId: job.sourceModel.modelId,
+        profile: job.sourceModel.profile,
+        snapshotId: job.sourceModel.snapshotId,
+        snapshotSha256: String(repeating: "e", count: 64),
+        snapshotVersion: job.sourceModel.snapshotVersion
+      ),
+      state: job.state,
+      version: job.version
+    )
+    let staleWorkspace = replacing(workspace, optionJobs: [staleJob])
+
+    XCTAssertThrowsError(
+      try C14_5ContractValidator.validate(
+        staleWorkspace,
+        projectId: C14_5FixtureFactory.projectId
+      )
+    )
+  }
+
+  func testCurrentSpecificationAndLatestRenderFollowAuthoritativeListSemantics() throws {
+    let workspace = C14_5FixtureFactory.workspace()
+    let exactSpecification = try XCTUnwrap(workspace.currentSpecification)
+    let latestRender = try XCTUnwrap(workspace.latestRenderJob)
+    let unrelatedSource = C14_5ConfirmationSource(
+      confirmationId: exactSpecification.currentRevision.sourceConfirmation.confirmationId,
+      jobId: exactSpecification.currentRevision.sourceConfirmation.jobId,
+      jobVersion: exactSpecification.currentRevision.sourceConfirmation.jobVersion,
+      optionId: exactSpecification.currentRevision.sourceConfirmation.optionId,
+      profile: exactSpecification.currentRevision.sourceConfirmation.profile,
+      resultSnapshotId: exactSpecification.currentRevision.sourceConfirmation.resultSnapshotId,
+      resultSnapshotSha256: String(repeating: "e", count: 64),
+      resultSnapshotVersion: exactSpecification.currentRevision.sourceConfirmation.resultSnapshotVersion
+    )
+    let unrelatedRevision = C14_5SpecificationRevision(
+      branchId: exactSpecification.currentRevision.branchId,
+      branchRevision: exactSpecification.currentRevision.branchRevision,
+      catalogReleaseId: exactSpecification.currentRevision.catalogReleaseId,
+      catalogReleaseSha256: exactSpecification.currentRevision.catalogReleaseSha256,
+      lines: exactSpecification.currentRevision.lines,
+      modelSnapshotId: exactSpecification.currentRevision.modelSnapshotId,
+      modelSnapshotSha256: exactSpecification.currentRevision.modelSnapshotSha256,
+      revision: exactSpecification.currentRevision.revision,
+      revisionSha256: exactSpecification.currentRevision.revisionSha256,
+      sourceConfirmation: unrelatedSource
+    )
+    let unrelatedSpecification = C14_5Specification(
+      currentRevision: unrelatedRevision,
+      projectId: exactSpecification.projectId,
+      schemaVersion: exactSpecification.schemaVersion,
+      selectionBoard: exactSpecification.selectionBoard,
+      specificationId: UUID(),
+      status: exactSpecification.status
+    )
+    let newerRender = C14_5RenderJob(
+      id: UUID(),
+      projectId: latestRender.projectId,
+      request: latestRender.request,
+      resultId: nil,
+      safeCode: nil,
+      state: "queued",
+      version: 1
+    )
+    let reordered = replacing(
+      workspace,
+      specifications: [unrelatedSpecification, exactSpecification],
+      renderJobs: [newerRender, latestRender]
+    )
+
+    XCTAssertEqual(reordered.currentSpecification?.id, exactSpecification.id)
+    XCTAssertEqual(reordered.latestRenderJob?.id, newerRender.id)
+  }
+
   func testRecoveryEnvelopeContainsNoCredentialURLOrCustomerProse() throws {
     let data = try JSONEncoder().encode(C14_5FixtureFactory.recoverySummary())
     let value = try XCTUnwrap(String(data: data, encoding: .utf8))
@@ -200,6 +354,32 @@ final class C14_5DesignStudioTests: XCTestCase {
     XCTAssertEqual(
       ContinuityContract.generatorVersion,
       "interior-design-continuity-generator-1.0.1"
+    )
+  }
+
+  private func replacing(
+    _ workspace: C14_5Workspace,
+    optionJobs: [C14_5OptionJob]? = nil,
+    specifications: [C14_5Specification]? = nil,
+    renderJobs: [C14_5RenderJob]? = nil
+  ) -> C14_5Workspace {
+    C14_5Workspace(
+      session: workspace.session,
+      snapshot: workspace.snapshot,
+      branches: workspace.branches,
+      sceneJobs: workspace.sceneJobs,
+      scene: workspace.scene,
+      brief: workspace.brief,
+      optionJobs: optionJobs ?? workspace.optionJobs,
+      options: workspace.options,
+      recoveredConfirmation: workspace.recoveredConfirmation,
+      catalogReleases: workspace.catalogReleases,
+      catalogAssets: workspace.catalogAssets,
+      specifications: specifications ?? workspace.specifications,
+      eligibleSources: workspace.eligibleSources,
+      renderCapabilities: workspace.renderCapabilities,
+      renderJobs: renderJobs ?? workspace.renderJobs,
+      renderResult: workspace.renderResult
     )
   }
 }

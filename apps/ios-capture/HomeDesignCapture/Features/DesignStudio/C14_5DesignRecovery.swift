@@ -16,8 +16,8 @@ struct C14_5RecoverySummary: Codable, Equatable, Sendable {
     C14_5RecoverySummary(
       confirmedBranchId: workspace.confirmedBranch?.id,
       designEligible: workspace.designEligible,
-      latestRenderJobId: workspace.renderJobs.last?.id,
-      latestRenderState: workspace.renderJobs.last?.state,
+      latestRenderJobId: workspace.latestRenderJob?.id,
+      latestRenderState: workspace.latestRenderJob?.state,
       optionJobId: workspace.options?.jobId,
       projectId: projectId,
       sceneJobId: workspace.exactSceneJob?.id,
