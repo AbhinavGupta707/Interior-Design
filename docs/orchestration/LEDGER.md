@@ -1044,8 +1044,9 @@
 
 ### Closeout — 2026-08-26
 
-- Status: complete on `codex/c14-native-homeowner-studio`; non-draft PR targeting `main` is recorded
-  after creation. No later checkpoint is opened.
+- Status: complete in non-draft PR
+  [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8), targeting `main`. No later
+  checkpoint is opened.
 - Revisions: contract/audit freeze `e1f72b5`; native implementation `79186d6`; degraded-state
   hardening `ca415f9`.
 - Product result: project selection now opens an adaptive homeowner hub. An authorised homeowner

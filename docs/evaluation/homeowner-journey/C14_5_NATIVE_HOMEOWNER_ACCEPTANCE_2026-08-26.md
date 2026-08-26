@@ -21,7 +21,8 @@ produce the confirmed twin remain absent. The full audited dependency map is
 - Contract freeze and audit: `e1f72b5`.
 - Native implementation: `79186d6`.
 - Verified degraded-state hardening: `ca415f9`.
-- Review vehicle: non-draft PR targeting `main`; URL is recorded in the ledger after creation.
+- Review vehicle: non-draft PR
+  [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8) targeting `main`.
 - Orchestration: the frozen mandatory-parallelism gate was unsatisfied because navigation,
   authenticated authority, recovery, generated-client integration and the SwiftUI journey share
   one target and critical path. No task, subagent or worktree was spawned.
