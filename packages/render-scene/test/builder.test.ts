@@ -215,7 +215,9 @@ describe("C10/C13/GLB trust boundary", () => {
     const fixture = renderFixture();
     const absentJson = clonedRecord(fixture.glbJson);
     delete (absentJson.asset as { extras?: unknown }).extras;
-    const absent = replaceFixtureGlb(fixture, glbFromJsonAndBinary(absentJson, fixture.binary));
+    const absentGlb = glbFromJsonAndBinary(absentJson, fixture.binary);
+    expect(parseProtectedC10Glb(absentGlb).specificationBinding).toBeUndefined();
+    const absent = replaceFixtureGlb(fixture, absentGlb);
     expect(errorCode(() => buildRenderScene(absent.input))).toBe("C13_BINDING_MISMATCH");
 
     const duplicateJson = clonedRecord(fixture.glbJson);

@@ -28,6 +28,8 @@ import {
 import { asset as planAsset, job as planJob } from "../../../apps/web/test/plan-import/fixtures";
 import {
   availableCapabilities,
+  eligibleSources as eligibleSourcesFixture,
+  hostCapabilities,
   job as renderJobFixture,
   result as renderResultFixture,
 } from "../../../apps/web/test/render-stills/fixtures";
@@ -300,6 +302,31 @@ function renderCapabilities() {
   };
 }
 
+function renderEligibleSources() {
+  const fixture = eligibleSourcesFixture.sources[0];
+  if (!fixture) throw new Error("Expected synthetic render eligibility fixture");
+  return {
+    projectId: project.id,
+    schemaVersion: "c14-render-eligible-sources-v1" as const,
+    sources: [
+      {
+        cameras: fixture.cameras,
+        label: "Synthetic exact C13-backed proposed apartment scene",
+        source: {
+          ...fixture.source,
+          projectId: project.id,
+          sceneJobId: proposedSceneJobId,
+          specification: {
+            ...fixture.source.specification,
+            specificationId: initialSpecification.specificationId,
+            specificationRevision: 2,
+          },
+        },
+      },
+    ],
+  };
+}
+
 function renderJob() {
   const cameraId = renderCapabilities().sources[0]?.cameras[0]?.cameraId;
   if (!cameraId) throw new Error("Expected synthetic render camera");
@@ -556,6 +583,12 @@ async function installFixture(page: Page, state: AcceptanceState): Promise<void>
       state.mutations.push("c12.option.confirm");
       return fulfil(route, confirmationA);
     }
+    if (
+      path === `${jobs}/${optionJob.id}/options/${optionA.id}/confirmation` &&
+      method === "GET" &&
+      state.optionConfirmed
+    )
+      return fulfil(route, confirmationA);
 
     if (path === `${c13}/catalog/releases`) return fulfil(route, { releases: [release] });
     if (path === `${c13}/catalog/releases/${release.releaseId}`) return fulfil(route, release);
@@ -630,7 +663,8 @@ async function installFixture(page: Page, state: AcceptanceState): Promise<void>
     }
 
     const c14 = `/api/c14/projects/${project.id}`;
-    if (path === `${c14}/render-capabilities`) return fulfil(route, renderCapabilities());
+    if (path === `${c14}/render-capabilities`) return fulfil(route, hostCapabilities);
+    if (path === `${c14}/render-eligible-sources`) return fulfil(route, renderEligibleSources());
     if (path === `${c14}/render-jobs` && method === "GET")
       return fulfil(route, { jobs: state.renderCreated ? [renderJob()] : [] });
     if (path === `${c14}/render-jobs` && method === "POST") {

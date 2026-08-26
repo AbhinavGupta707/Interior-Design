@@ -1,7 +1,11 @@
 import {
+  ContinuityApiError,
+  CrossDeviceContinuityClient,
   createRenderJobRequestSchema,
   renderArtifactAccessSchema,
   renderArtifactSchema,
+  renderEligibleSourcesResponseSchema,
+  renderHostCapabilitiesSchema,
   renderJobSchema,
   renderResultSchema,
 } from "@interior-design/contracts";
@@ -15,7 +19,6 @@ import type { ZodType } from "zod";
 
 import {
   listRenderJobsResponseSchema,
-  renderCapabilitiesSchema,
   renderEnhancementJobSchema,
   renderEnhancementStatusSchema,
   requestEnhancementSchema,
@@ -27,6 +30,7 @@ import type {
   RenderCapabilities,
   RenderEnhancementStatus,
 } from "./contracts";
+import { composeRenderCapabilities } from "./capability-composition";
 
 export type RenderStillsProblemKind =
   | "conflict"
@@ -110,6 +114,26 @@ export function createRenderStillsClient(
   transport: RenderStillsTransport = fetch,
   createId: () => string = () => crypto.randomUUID(),
 ) {
+  const continuity = new CrossDeviceContinuityClient(async ({ path }) => {
+    let response: Response;
+    try {
+      response = await transport(path.replace(/^\/v1/u, "/api/c14"), { cache: "no-store" });
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") {
+        throw new RenderStillsProblem(
+          "interrupted",
+          "The render request was interrupted before confirmation. Durable server state was not inferred.",
+        );
+      }
+      throw new RenderStillsProblem(
+        "offline",
+        "You appear to be offline. Existing durable render results remain unchanged.",
+      );
+    }
+    if (!response.ok) throw await responseProblem(response);
+    return { body: await response.json().catch(() => undefined), status: response.status };
+  });
+
   async function request<T>(url: string, schema: ZodType<T>, init?: RequestInit): Promise<T> {
     let response: Response;
     try {
@@ -175,8 +199,26 @@ export function createRenderStillsClient(
         ),
       );
     },
-    getCapabilities(projectId: string): Promise<RenderCapabilities> {
-      return request(`${base(projectId)}/render-capabilities`, renderCapabilitiesSchema);
+    async getCapabilities(projectId: string): Promise<RenderCapabilities> {
+      try {
+        const [host, eligible] = await Promise.all([
+          request(`${base(projectId)}/render-capabilities`, renderHostCapabilitiesSchema),
+          continuity
+            .listRenderEligibleSources(projectId)
+            .then((value) => renderEligibleSourcesResponseSchema.parse(value)),
+        ]);
+        return composeRenderCapabilities(host, eligible);
+      } catch (reason) {
+        if (reason instanceof ContinuityApiError && reason.code === "INVALID_RESPONSE") {
+          throw new RenderStillsProblem(
+            "invalid-response",
+            "The service response did not match the strict C14 consumer contract.",
+            502,
+            "INVALID_UPSTREAM_RESPONSE",
+          );
+        }
+        throw reason;
+      }
     },
     getEnhancement(projectId: string, jobId: string): Promise<RenderEnhancementStatus> {
       return request(

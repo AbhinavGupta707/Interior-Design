@@ -2,7 +2,15 @@ import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "../../src/app/api/c14/[...segments]/route";
-import { access, availableCapabilities, enhancement, ids, job, result } from "./fixtures";
+import {
+  access,
+  eligibleSources,
+  enhancement,
+  hostCapabilities,
+  ids,
+  job,
+  result,
+} from "./fixtures";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -32,9 +40,14 @@ describe("C14 exact same-origin BFF", () => {
   it("proxies and validates capabilities, jobs, result, enhancement and fresh access", async () => {
     const cases = [
       {
-        payload: availableCapabilities,
+        payload: hostCapabilities,
         segments: ["projects", ids.project, "render-capabilities"],
         suffix: `/v1/projects/${ids.project}/render-capabilities`,
+      },
+      {
+        payload: eligibleSources,
+        segments: ["projects", ids.project, "render-eligible-sources"],
+        suffix: `/v1/projects/${ids.project}/render-eligible-sources`,
       },
       {
         payload: { jobs: [job] },
@@ -75,6 +88,7 @@ describe("C14 exact same-origin BFF", () => {
       vi.stubGlobal("fetch", fetchMock);
       const response = await GET(request(), context(testCase.segments));
       expect(response.status, testCase.suffix).toBe(200);
+      expect(response.headers.get("cache-control"), testCase.suffix).toBe("private, no-store");
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(url).toContain(testCase.suffix);
       expect(new Headers(init.headers).get("authorization")).toBe("Bearer server-owned-c14-token");
@@ -129,5 +143,24 @@ describe("C14 exact same-origin BFF", () => {
     const mismatch = await GET(request(), context(["projects", ids.project, "render-jobs"]));
     expect(mismatch.status).toBe(502);
     expect(JSON.stringify(await mismatch.json())).not.toContain(ids.tenant);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          ...eligibleSources,
+          sources: eligibleSources.sources.map((eligible) => ({
+            ...eligible,
+            source: { ...eligible.source, projectId: ids.tenant },
+          })),
+        }),
+      ),
+    );
+    const forgedEligibility = await GET(
+      request(),
+      context(["projects", ids.project, "render-eligible-sources"]),
+    );
+    expect(forgedEligibility.status).toBe(502);
+    expect(JSON.stringify(await forgedEligibility.json())).not.toContain(ids.tenant);
   });
 });

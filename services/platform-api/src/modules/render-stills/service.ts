@@ -81,6 +81,10 @@ export class RenderStillService {
     return this.#capabilities;
   }
 
+  listEligibleSources(tenantId: string, projectId: string) {
+    return this.#resolver.listEligibleSources(tenantId, projectId);
+  }
+
   async createJob(
     command: Omit<
       CreateRenderJobCommand,

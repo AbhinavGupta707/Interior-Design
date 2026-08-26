@@ -4,9 +4,10 @@ import { rendererFailure } from "./errors.js";
 import type { GlbInspection, GlbInspectionPort } from "./types.js";
 
 function binding(
-  value: Readonly<Record<string, unknown>>,
+  value: Readonly<Record<string, unknown>> | undefined,
 ): NonNullable<GlbInspection["c13SpecificationBinding"]> {
   if (
+    value === undefined ||
     typeof value.catalogReleaseId !== "string" ||
     typeof value.catalogReleaseSha256 !== "string" ||
     typeof value.specificationId !== "string" ||

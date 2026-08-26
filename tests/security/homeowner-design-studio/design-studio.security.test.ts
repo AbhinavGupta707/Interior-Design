@@ -69,22 +69,19 @@ describe("C14.3 product-integration security boundary", () => {
     expect(source).not.toMatch(/console\.(?:debug|error|info|log|warn)/u);
   });
 
-  it("keeps same-browser continuation bounded, project-scoped and server-issued", () => {
+  it("keeps same-browser selection bounded and leaves confirmation authority on the server", () => {
     const local = storage();
     saveDesignOptionRecovery(local, {
-      confirmations: [{ confirmation: confirmationA, optionId: ids.optionA }],
       projectId: ids.project,
       savedAt: "2026-08-25T20:00:00.000Z",
-      schemaVersion: "c12-design-options-recovery-v1",
+      schemaVersion: "c12-design-options-recovery-v2",
       selectedJobId: ids.job,
     });
 
     const serialized = [...local.values.values()].join("");
     expect(serialized.length).toBeLessThanOrEqual(8_000);
     expect(serialized).not.toMatch(/sourceBytes|signedUrl|token|credential|rawAddress/iu);
-    expect(readDesignOptionRecovery(local, ids.project)?.confirmations?.[0]?.confirmation).toEqual(
-      confirmationA,
-    );
+    expect(serialized).not.toContain(confirmationA.id);
     expect(readDesignOptionRecovery(local, "c1200000-0000-4000-8000-000000000099")).toBeUndefined();
   });
 

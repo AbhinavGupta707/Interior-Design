@@ -29,7 +29,7 @@ function request(method = "GET", body?: unknown, key = mutationKey) {
 }
 
 describe("C12 exact same-origin BFF", () => {
-  it("proxies all four read routes with strict project/job/option response validation", async () => {
+  it("proxies all five read routes with strict project/job/option response validation", async () => {
     const cases = [
       {
         payload: { jobs: [job], projectId: ids.project },
@@ -51,12 +51,26 @@ describe("C12 exact same-origin BFF", () => {
         segments: ["projects", ids.project, "design-option-jobs", ids.job, "options", ids.optionA],
         suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/options/${ids.optionA}`,
       },
+      {
+        payload: confirmationA,
+        segments: [
+          "projects",
+          ids.project,
+          "design-option-jobs",
+          ids.job,
+          "options",
+          ids.optionA,
+          "confirmation",
+        ],
+        suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/options/${ids.optionA}/confirmation`,
+      },
     ];
     for (const testCase of cases) {
       const fetchMock = vi.fn().mockResolvedValue(Response.json(testCase.payload));
       vi.stubGlobal("fetch", fetchMock);
       const response = await GET(request(), context(testCase.segments));
       expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
       expect(fetchMock).toHaveBeenCalledOnce();
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(url).toContain(testCase.suffix);

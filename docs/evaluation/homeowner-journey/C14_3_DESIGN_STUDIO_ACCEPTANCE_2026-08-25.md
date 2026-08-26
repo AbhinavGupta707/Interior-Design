@@ -181,12 +181,27 @@ No shared contract, service, BFF route, generated client or native iOS change wa
 either solution. The exact decision and Mac cases are in
 `docs/runbooks/ios/C14_3_DESIGN_STUDIO_MAC_HANDOFF.md`.
 
+### C14.4 resolution — 2026-08-26
+
+The two shared gaps above are closed by C14.4 implementation commit `aae3379` without changing any
+C14.3 mutation contract. C12 now has an exact tenant/project/job/option confirmation read and web
+stores no confirmation authority locally. C14 now has a separate strict eligible-source read derived
+from authoritative C10 scene/camera and C13 binding/rights state; the raw host capability route
+remains separate, and render creation still revalidates exact immutable bytes, hashes, bindings,
+rights, mapped camera and frozen profile.
+
+The generated TypeScript contract is consumed by web and an equivalent Swift 6 package is checked
+in for a later standalone iOS consumer. This resolves shared discovery only. Native C10–C14 UI,
+Simulator/physical-device cases, C8/C9 production evidence, providers, render hardware and C15 remain
+unrun and unopened. Durable C14.4 evidence is in
+`docs/evaluation/homeowner-journey/C14_4_CROSS_DEVICE_CONTINUITY_ACCEPTANCE_2026-08-26.md`.
+
 ## Remaining path to the complete one-bedroom-apartment product
 
-1. Run the Mac/iPad audit and choose the smallest cross-device C12 confirmation-resume and C14
-   eligible-source capability contract; then implement it once in the shared backend/generated
-   clients and consume it from both standalone web and iOS.
-2. Complete standalone iOS C10–C14 navigation, typed transport, persisted/offline recovery,
+1. Consume the frozen C14.4 Swift client from a later authorised standalone iOS C10–C14 flow and
+   run the remaining Mac/Simulator/device authentication, lifecycle, interruption and accessibility
+   cases without changing the shared contract by inference.
+2. Complete standalone iOS C10–C14 navigation, persisted/offline recovery,
    background behavior and accessible degraded states without embedding web-only assumptions.
 3. Capture a consented representative one-bedroom apartment on a named LiDAR-capable Apple device;
    preserve RoomPlan, depth and appearance as immutable evidence/proposals.

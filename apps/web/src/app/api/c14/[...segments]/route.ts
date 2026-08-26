@@ -1,6 +1,8 @@
 import {
   createRenderJobRequestSchema,
   renderArtifactAccessSchema,
+  renderEligibleSourcesResponseSchema,
+  renderHostCapabilitiesSchema,
   renderJobSchema,
   renderResultSchema,
 } from "@interior-design/contracts";
@@ -8,7 +10,6 @@ import { NextResponse } from "next/server";
 
 import {
   listRenderJobsResponseSchema,
-  renderCapabilitiesSchema,
   renderEnhancementJobSchema,
   renderEnhancementStatusSchema,
   requestEnhancementSchema,
@@ -41,7 +42,15 @@ export async function GET(request: Request, context: C14RouteContext): Promise<N
     return validatedC14Backend({
       accessToken: base.accessToken,
       path: `/v1/projects/${base.projectId}/render-capabilities`,
-      schema: renderCapabilitiesSchema,
+      schema: renderHostCapabilitiesSchema,
+    });
+  }
+  if (resource === "render-eligible-sources" && !jobValue) {
+    return validatedC14Backend({
+      accessToken: base.accessToken,
+      matches: (result) => result.projectId === base.projectId,
+      path: `/v1/projects/${base.projectId}/render-eligible-sources`,
+      schema: renderEligibleSourcesResponseSchema,
     });
   }
   if (resource !== "render-jobs") return routeUnavailable();

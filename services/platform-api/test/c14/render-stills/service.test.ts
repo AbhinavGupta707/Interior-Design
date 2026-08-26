@@ -57,6 +57,12 @@ describe("C14 render service", () => {
       capabilities,
       repository,
       resolver: {
+        listEligibleSources: () =>
+          Promise.resolve({
+            projectId: ids.project,
+            schemaVersion: "c14-render-eligible-sources-v1",
+            sources: [],
+          }),
         resolveForNewJob: () =>
           Promise.resolve({
             cacheSourceIdentitySha256: "4".repeat(64),
@@ -104,6 +110,12 @@ describe("C14 render service", () => {
     const worker = new RenderStillWorkerService({
       repository,
       resolver: {
+        listEligibleSources: () =>
+          Promise.resolve({
+            projectId: ids.project,
+            schemaVersion: "c14-render-eligible-sources-v1",
+            sources: [],
+          }),
         resolveForNewJob: () => Promise.resolve(undefined),
         revalidatePinnedSource: () => Promise.resolve(true),
       },
@@ -135,6 +147,12 @@ describe("C14 render service", () => {
     const worker = new RenderStillWorkerService({
       repository,
       resolver: {
+        listEligibleSources: () =>
+          Promise.resolve({
+            projectId: ids.project,
+            schemaVersion: "c14-render-eligible-sources-v1",
+            sources: [],
+          }),
         resolveForNewJob: () => Promise.resolve(undefined),
         revalidatePinnedSource: () => Promise.resolve(true),
       },
@@ -176,6 +194,12 @@ describe("C14 render service", () => {
     const worker = new RenderStillWorkerService({
       repository,
       resolver: {
+        listEligibleSources: () =>
+          Promise.resolve({
+            projectId: ids.project,
+            schemaVersion: "c14-render-eligible-sources-v1",
+            sources: [],
+          }),
         resolveForNewJob: () => Promise.resolve(undefined),
         revalidatePinnedSource: () => Promise.resolve(true),
       },

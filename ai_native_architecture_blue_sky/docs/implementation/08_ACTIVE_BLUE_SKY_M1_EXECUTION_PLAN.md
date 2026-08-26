@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-25 the user authorised the next smallest complete homeowner checkpoint before any C15 work. C14.1 is closed as the guided C9 → C5 → C10 bridge. C14.2 is closed as the Windows-testable persisted property/intake/evidence, honest canonical initialization and C6 plan-to-C10 journey. C14.3 is closed for Windows/WSL web continuity in unmerged PR #5: normal navigation now extends from the confirmed exact-current twin through C11 consultation, C12 options, C13 specification, proposed C10 exploration and C14 geometry-safe stills. The Mac/iPad audit and its two provisional shared API decisions remain pending; no later checkpoint is open. None of these corrective checkpoints production-routes C8 v2; C15 remains closed.
+On 2026-08-26 C14.4 closed the two documented C14.3 provisional seams with server-authoritative C12 confirmation recovery and exact C14 eligible C10/C13/camera discovery plus generated TypeScript/Swift clients. C14.1–C14.3 remain merged on `main`; C14.4 is independently reviewed in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), with normal merge authorised after exact-head required checks pass. No native UI, physical-device, C8/C9 production, provider/hardware acceptance or C15 work was opened.
 
 M1 includes:
 
@@ -329,9 +329,22 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 | Homeowner design-studio web | homeowner journey plus exact required C11/C12/C13/C10/C14 web features/tests | persisted stage state, exact-current gating, normal cross-workspace handoffs, role/degraded/stale recovery |
 | Independent design-loop acceptance | homeowner-design-studio E2E/integration/security/evaluation and Mac handoff paths | normal-navigation desktop/mobile evidence, exact pin/no-illicit-mutation assertions and provisional mobile API handoff |
 
-**Status:** open from clean GitHub-synchronised `main` commit `5b719f9ab83616affc0eeb7de2ba73279bd93d5f` under `docs/orchestration/checkpoints/C14_3_HOMEOWNER_DESIGN_STUDIO_CONTRACT.md`. The initial two-lane plan was replanned before implementation because Codex desktop misclassified the WSL project and rejected managed worktrees; both sequential bodies now remain in one exact `gpt-5.6-sol` / `xhigh` primary session.
+**Status:** closed and merged into `main`; exact closeout evidence and the two remaining shared gaps are recorded in `docs/orchestration/checkpoints/C14_3_HOMEOWNER_DESIGN_STUDIO_CONTRACT.md`.
 
 **Gate:** persisted server state drives the loop; the confirmed existing twin must be exact-current; C11 intent never becomes geometry; C12 confirmation changes only proposed state; C13/C10/C14 retain exact source/version pins; synthetic fixtures remain explicit; Mac/mobile assumptions remain provisional; C8 v2 and C15 remain closed.
+
+### C14.4 — Cross-device design-studio continuity — single primary session
+
+**Outcome:** web and a future standalone iOS consumer can recover the exact persisted C12 confirmation required by C13 and discover current server-authoritative C14 C10/C13/camera selections without browser-local authority or client inference.
+
+| Sequential body | Exclusive paths | Output and evidence |
+|---|---|---|
+| Shared authority and generated clients | C12/C14 shared contracts, minimal OpenAPI/generated-client package, exact platform repositories/services/routes/composition and focused tests | tenant-safe read routes, exact pins, deterministic TypeScript/Swift generation and creation-time revalidation |
+| Web continuity and acceptance | exact C12/C14 BFF/features plus focused integration/security/regression evidence | cold/cross-device confirmation restoration and host-capability/eligible-source composition with malformed/stale state failing closed |
+
+**Status:** closed from clean `main` commit `e38b32783a08e026d31a8424210b429730393a79`; contract freeze `aa3eb2f`, implementation `aae3379`, durable acceptance `fa6611a` and independent-review correction `7b4eef258c203479815991445212590fe5633775` are recorded under `docs/orchestration/checkpoints/C14_4_CROSS_DEVICE_CONTINUITY_CONTRACT.md`. Non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main`; the independent review supersedes the earlier leave-unmerged disposition and authorises normal merge after exact-head required checks pass. Both implementation and review used one exact `gpt-5.6-sol` / `xhigh` primary session without a task, subagent or worktree.
+
+**Gate:** persisted server state is the only C12/C14 discovery authority; every response is tenant/project scoped and strict; exact C10/C13/hash/rights pins are preserved and revalidated at C14 creation; generated clients are drift-checked; native UI, physical-device, C8/C9 production, provider/hardware acceptance and C15 remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

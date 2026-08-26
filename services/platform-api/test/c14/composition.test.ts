@@ -58,6 +58,52 @@ describe("C14 API composition", () => {
     });
     expect(body.profiles).toHaveLength(5);
     expect(body.profiles.every((profile) => !profile.available)).toBe(true);
+    const eligibility = await server.inject({
+      headers: { authorization: `Bearer ${tokenFor("fixture|owner-alpha")}` },
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/render-eligible-sources`,
+    });
+    expect(eligibility.statusCode).toBe(503);
+  });
+
+  it("authorises exact eligibility reads while hiding foreign project scope", async () => {
+    server = Fastify({ logger: false });
+    registerRequestCorrelation(server);
+    registerErrorHandling(server);
+    registerC14Module(
+      server,
+      "test",
+      {},
+      {
+        identity: fixtureIdentity(),
+        projects: new FixtureProjectRepository(),
+        repository: new StubRenderRepository(),
+        resolver: {
+          listEligibleSources: () =>
+            Promise.resolve({
+              projectId: alphaProjectId,
+              schemaVersion: "c14-render-eligible-sources-v1",
+              sources: [],
+            }),
+          resolveForNewJob: () => Promise.resolve(undefined),
+          revalidatePinnedSource: () => Promise.resolve(false),
+        },
+        storage: new InMemoryRenderObjectStorage(),
+      },
+    );
+    const viewer = await server.inject({
+      headers: { authorization: `Bearer ${tokenFor("fixture|viewer-alpha")}` },
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/render-eligible-sources`,
+    });
+    const foreign = await server.inject({
+      headers: { authorization: `Bearer ${tokenFor("fixture|owner-beta")}` },
+      method: "GET",
+      url: `/v1/projects/${alphaProjectId}/render-eligible-sources`,
+    });
+    expect(viewer.statusCode).toBe(200);
+    expect(viewer.headers["cache-control"]).toBe("private, no-store");
+    expect(foreign.statusCode).toBe(404);
   });
 
   it("advertises exactly one profile only with complete authorised-host pins", async () => {

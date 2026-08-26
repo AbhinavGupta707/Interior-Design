@@ -199,6 +199,15 @@ function configuredCapabilities(environment: C14EnvironmentSource): RenderCapabi
 }
 
 class UnavailableRenderSourceResolver implements RenderSourceResolver {
+  listEligibleSources(): Promise<never> {
+    return Promise.resolve().then(() => {
+      throw renderUnavailable(
+        "RENDER_CAPABILITY_UNAVAILABLE",
+        "No configured render source authority is available.",
+      );
+    });
+  }
+
   resolveForNewJob(): Promise<undefined> {
     return Promise.resolve().then(() => {
       throw renderUnavailable(

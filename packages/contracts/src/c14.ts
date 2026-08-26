@@ -15,6 +15,7 @@ export const c14RenderArtifactSchemaVersion = "c14-render-artifact-v1" as const;
 export const c14RenderOutputManifestSchemaVersion = "c14-render-output-manifest-v1" as const;
 export const c14EnhancementResultSchemaVersion = "c14-enhancement-result-v1" as const;
 export const c14GeometryGuardSchemaVersion = "c14-geometry-guard-v1" as const;
+export const c14RenderEligibleSourcesSchemaVersion = "c14-render-eligible-sources-v1" as const;
 
 export const c14RenderPolicy = Object.freeze({
   accessTtlSeconds: 300,
@@ -25,6 +26,7 @@ export const c14RenderPolicy = Object.freeze({
   maximumArtifactsPerResult: 32,
   maximumAttempts: 3,
   maximumCamerasPerJob: 8,
+  maximumEligibleSources: 100,
   maximumEstimatedJobBytes: 2 * 1024 * 1024 * 1024,
   maximumHeightPixels: 4_096,
   maximumLightsPerScene: 1_024,
@@ -63,6 +65,87 @@ export const renderSourceReferenceSchema = z
   })
   .strict();
 export type RenderSourceReference = z.infer<typeof renderSourceReferenceSchema>;
+
+export const renderEligibleCameraSchema = z
+  .object({
+    cameraId: modelElementIdSchema,
+    label: boundedLabelSchema,
+  })
+  .strict();
+export type RenderEligibleCamera = z.infer<typeof renderEligibleCameraSchema>;
+
+export const renderEligibleSourceSchema = z
+  .object({
+    cameras: z.array(renderEligibleCameraSchema).min(1).max(64),
+    label: boundedLabelSchema,
+    source: renderSourceReferenceSchema,
+  })
+  .strict()
+  .superRefine((eligible, context) => {
+    const cameraIds = eligible.cameras.map(({ cameraId }) => cameraId);
+    if (
+      new Set(cameraIds).size !== cameraIds.length ||
+      cameraIds.some((cameraId, index) => {
+        const previous = cameraIds[index - 1];
+        return previous !== undefined && previous >= cameraId;
+      })
+    ) {
+      context.addIssue({ code: "custom", message: "Eligible cameras must be unique and sorted." });
+    }
+  });
+export type RenderEligibleSource = z.infer<typeof renderEligibleSourceSchema>;
+
+export const renderEligibleSourcesResponseSchema = z
+  .object({
+    projectId: uuidSchema,
+    schemaVersion: z.literal(c14RenderEligibleSourcesSchemaVersion),
+    sources: z.array(renderEligibleSourceSchema).max(c14RenderPolicy.maximumEligibleSources),
+  })
+  .strict()
+  .superRefine((response, context) => {
+    const sceneJobIds = response.sources.map(({ source }) => source.sceneJobId);
+    if (
+      response.sources.some(({ source }) => source.projectId !== response.projectId) ||
+      new Set(sceneJobIds).size !== sceneJobIds.length ||
+      sceneJobIds.some((sceneJobId, index) => {
+        const previous = sceneJobIds[index - 1];
+        return previous !== undefined && previous >= sceneJobId;
+      })
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Eligible render sources must be project-scoped, unique and sorted.",
+      });
+    }
+  });
+export type RenderEligibleSourcesResponse = z.infer<typeof renderEligibleSourcesResponseSchema>;
+
+export const renderHostCapabilitiesSchema = z
+  .object({
+    acceptingNewJobs: z.boolean(),
+    enhancementProvider: z.enum(["disabled", "enabled"]),
+    hardwareEvidence: z.enum(["deferred", "verified-authorised-host"]),
+    profiles: z
+      .array(
+        z
+          .object({
+            available: z.boolean(),
+            capability: z.string().regex(/^[A-Za-z0-9_.:+-]{3,120}$/u),
+            profileId: z.enum([
+              "eevee-local-preview-v1",
+              "cycles-cpu-geometry-safe-v1",
+              "cycles-metal-geometry-safe-v1",
+              "cycles-cuda-high-resolution-v1",
+              "cycles-optix-high-resolution-v1",
+            ]),
+            reason: z.string().trim().min(1).max(240).optional(),
+          })
+          .strict(),
+      )
+      .max(5),
+  })
+  .strict();
+export type RenderHostCapabilities = z.infer<typeof renderHostCapabilitiesSchema>;
 
 const pointMmSchema = z
   .object({
@@ -555,6 +638,7 @@ export const c14RouteContract = Object.freeze({
   getJob: "/v1/projects/:projectId/render-jobs/:jobId",
   getResult: "/v1/projects/:projectId/render-jobs/:jobId/result",
   getEnhancement: "/v1/projects/:projectId/render-jobs/:jobId/enhancement",
+  listEligibleSources: "/v1/projects/:projectId/render-eligible-sources",
   listJobs: "/v1/projects/:projectId/render-jobs",
   retryJob: "/v1/projects/:projectId/render-jobs/:jobId/retry",
   requestEnhancement: "/v1/projects/:projectId/render-jobs/:jobId/enhancement",

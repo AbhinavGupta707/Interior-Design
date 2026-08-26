@@ -387,7 +387,10 @@ function verifySpecification(input: {
     specificationRevision: revision.revision,
     specificationRevisionSha256: revision.revisionSha256,
   };
-  if (!exactCanonicalEqual(glb.specificationBinding, expectedSpecificationBinding)) {
+  if (
+    glb.specificationBinding === undefined ||
+    !exactCanonicalEqual(glb.specificationBinding, expectedSpecificationBinding)
+  ) {
     return failRenderScene("C13_BINDING_MISMATCH");
   }
   return lines;

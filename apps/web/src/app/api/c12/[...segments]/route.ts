@@ -82,7 +82,7 @@ function optionSetMatches(
 export async function GET(request: Request, context: C12RouteContext): Promise<NextResponse> {
   const base = await c12RouteBase(request, context);
   if (base instanceof NextResponse) return base;
-  const [jobValue, child, optionValue, extra] = base.remainder;
+  const [jobValue, child, optionValue, action, extra] = base.remainder;
   if (extra) return routeUnavailable();
   if (!jobValue && base.remainder.length === 0) {
     return validatedC12Backend({
@@ -114,8 +114,20 @@ export async function GET(request: Request, context: C12RouteContext): Promise<N
     });
   }
   const optionId = parseC12Id(optionValue, "Design option");
-  if (optionId instanceof NextResponse || base.remainder.length !== 3) {
-    return optionId instanceof NextResponse ? optionId : routeUnavailable();
+  if (optionId instanceof NextResponse) {
+    return optionId;
+  }
+  if (action === "confirmation" && base.remainder.length === 4) {
+    return validatedC12Backend({
+      accessToken: base.accessToken,
+      matches: (confirmation) =>
+        confirmation.projectId === base.projectId && confirmation.optionId === optionId,
+      path: `${jobsPath(base)}/${jobId}/options/${optionId}/confirmation`,
+      schema: optionConfirmationSchema,
+    });
+  }
+  if (base.remainder.length !== 3) {
+    return routeUnavailable();
   }
   return validatedC12Backend({
     accessToken: base.accessToken,

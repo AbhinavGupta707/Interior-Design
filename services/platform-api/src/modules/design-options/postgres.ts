@@ -1244,6 +1244,15 @@ export class PostgresDesignOptionRepository implements DesignOptionRepository {
     return rows[0] === undefined ? undefined : mapOption(rows[0], this.#clock.now());
   }
 
+  async findConfirmation(tenantId: string, projectId: string, jobId: string, optionId: string) {
+    const rows = await this.#sql<ConfirmationRow[]>`
+      SELECT * FROM design_option_confirmations
+      WHERE tenant_id = ${tenantId}::uuid AND project_id = ${projectId}::uuid
+        AND job_id = ${jobId}::uuid AND option_id = ${optionId}::uuid LIMIT 1
+    `;
+    return rows[0] === undefined ? undefined : mapConfirmation(rows[0]);
+  }
+
   confirmOption(command: ConfirmOptionCommand) {
     return this.#sql.begin(async (transaction) => {
       await lockProject(transaction, command.actor.tenantId, command.projectId);

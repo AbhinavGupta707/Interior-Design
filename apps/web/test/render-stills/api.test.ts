@@ -8,6 +8,8 @@ import {
   access,
   availableCapabilities,
   enhancement,
+  eligibleSources,
+  hostCapabilities,
   ids,
   job,
   result,
@@ -27,7 +29,8 @@ describe("C14 strict render-stills client", () => {
   it("uses exact routes, fresh idempotency and frozen create pins", async () => {
     const transport = vi
       .fn()
-      .mockResolvedValueOnce(Response.json(availableCapabilities))
+      .mockResolvedValueOnce(Response.json(hostCapabilities))
+      .mockResolvedValueOnce(Response.json(eligibleSources))
       .mockResolvedValueOnce(Response.json({ jobs: [job] }))
       .mockResolvedValueOnce(Response.json(job, { status: 201 }))
       .mockResolvedValueOnce(Response.json(job))
@@ -49,13 +52,14 @@ describe("C14 strict render-stills client", () => {
       access,
     );
 
-    const [, createInit] = transport.mock.calls[2] as [string, RequestInit];
+    const [, createInit] = transport.mock.calls[3] as [string, RequestInit];
     expect(new Headers(createInit.headers).get("idempotency-key")).toBe(
       "c1400000-0000-4000-8000-000000000099",
     );
     expect(requestBody(createInit)).toEqual(job.request);
     expect(transport.mock.calls.map(([url]) => String(url))).toEqual([
       `/api/c14/projects/${ids.project}/render-capabilities`,
+      `/api/c14/projects/${ids.project}/render-eligible-sources`,
       `/api/c14/projects/${ids.project}/render-jobs`,
       `/api/c14/projects/${ids.project}/render-jobs`,
       `/api/c14/projects/${ids.project}/render-jobs/${ids.job}`,

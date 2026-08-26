@@ -5,7 +5,7 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (25 August 2026):** corrective checkpoints C14.1, C14.2 and the Windows/WSL web-continuity scope of C14.3 are closed. Non-draft PR #5 extends the normal persisted homeowner route from the confirmed exact-current C10 twin through C11 consultation, C12 alternatives/selection, C13 materials/specification, proposed C10 exploration and C14 geometry-safe stills. The evidence uses creator-owned synthetic apartment fixtures. Mac/iPad validation and two shared API decisions remain provisional; no later checkpoint is open, C15 remains closed and C8 v2 remains acceptance-only.
+**Current execution note (26 August 2026):** corrective checkpoints C14.1–C14.3 are closed and merged. C14.4 is closed and independently reviewed in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), adding server-authoritative C12 confirmation recovery, authoritative C14 eligible C10/C13/camera discovery and deterministic TypeScript/Swift clients for those two cross-device reads. The independent review supersedes the earlier leave-unmerged disposition and authorises normal merge after exact-head required checks pass. Native C10–C14 UI, physical-device testing, C8/C9 production work, provider/hardware acceptance and C15 remain closed; C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 

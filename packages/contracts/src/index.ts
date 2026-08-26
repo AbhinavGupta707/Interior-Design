@@ -850,3 +850,13 @@ export * from "./c11.js";
 export * from "./c12.js";
 export * from "./c13.js";
 export * from "./c14.js";
+export {
+  ContinuityApiError,
+  CrossDeviceContinuityClient,
+  continuityContract,
+  createFetchContinuityTransport,
+  type ContinuityOperationId,
+  type ContinuityTransport,
+  type ContinuityTransportRequest,
+  type ContinuityTransportResponse,
+} from "./generated/cross-device-continuity.js";

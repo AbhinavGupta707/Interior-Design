@@ -1,4 +1,6 @@
 import {
+  ContinuityApiError,
+  CrossDeviceContinuityClient,
   confirmOptionRequestSchema,
   createOptionJobRequestSchema,
   designOptionSchema,
@@ -97,6 +99,20 @@ export function createDesignOptionsClient(
   transport: DesignOptionsTransport = fetch,
   createId: () => string = () => crypto.randomUUID(),
 ) {
+  const continuity = new CrossDeviceContinuityClient(async ({ path }) => {
+    let response: Response;
+    try {
+      response = await transport(path.replace(/^\/v1/u, "/api/c12"), { cache: "no-store" });
+    } catch {
+      throw new DesignOptionsProblem(
+        "offline",
+        "You appear to be offline. Reconnect and retry; no option or branch was changed.",
+      );
+    }
+    if (!response.ok) throw await responseProblem(response);
+    return { body: await response.json().catch(() => undefined), status: response.status };
+  });
+
   async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
     let response: Response;
     try {
@@ -159,6 +175,27 @@ export function createDesignOptionsClient(
     },
     getJob(projectId: string, jobId: string): Promise<OptionJob> {
       return request(`${jobBase(projectId)}/${encodeURIComponent(jobId)}`, optionJobSchema);
+    },
+    async getConfirmation(
+      projectId: string,
+      jobId: string,
+      optionId: string,
+    ): Promise<OptionConfirmation> {
+      try {
+        return optionConfirmationSchema.parse(
+          await continuity.getOptionConfirmation(projectId, jobId, optionId),
+        );
+      } catch (reason) {
+        if (reason instanceof ContinuityApiError && reason.code === "INVALID_RESPONSE") {
+          throw new DesignOptionsProblem(
+            "invalid-response",
+            "The service response did not match the frozen C12 contracts.",
+            502,
+            "INVALID_UPSTREAM_RESPONSE",
+          );
+        }
+        throw reason;
+      }
     },
     getOption(projectId: string, jobId: string, optionId: string): Promise<DesignOption> {
       return request(

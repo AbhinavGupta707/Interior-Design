@@ -7,6 +7,8 @@ import {
   geometryGuardReportSchema,
   renderArtifactSchema,
   renderCameraSchema,
+  renderEligibleSourcesResponseSchema,
+  renderHostCapabilitiesSchema,
   renderJobSchema,
   renderProfileSchema,
 } from "../src/index.js";
@@ -17,10 +19,64 @@ describe("C14 frozen shared contracts", () => {
   it("freezes the disk multiplier, artifact ceiling and project-scoped routes", () => {
     expect(c14RenderPolicy.diskSafetyFloorBytes).toBe(15 * 1024 * 1024 * 1024);
     expect(c14RenderPolicy.diskSafetyJobMultiplier).toBe(3);
-    expect(Object.values(c14RouteContract)).toHaveLength(10);
+    expect(Object.values(c14RouteContract)).toHaveLength(11);
     expect(
       Object.values(c14RouteContract).every((route) => route.startsWith("/v1/projects/")),
     ).toBe(true);
+  });
+
+  it("freezes exact eligible sources separately from host capability", () => {
+    const projectId = "14000000-0000-4000-8000-000000000020";
+    const sceneJobId = "14000000-0000-4000-8000-000000000021";
+    const response = {
+      projectId,
+      schemaVersion: "c14-render-eligible-sources-v1" as const,
+      sources: [
+        {
+          cameras: [
+            {
+              cameraId: "14000000-0000-4000-8000-000000000022",
+              label: "Camera 000022",
+            },
+          ],
+          label: "Scene 000021",
+          source: {
+            projectId,
+            sceneArtifactId: "14000000-0000-4000-8000-000000000023",
+            sceneGlbSha256: hash("a"),
+            sceneId: "14000000-0000-4000-8000-000000000024",
+            sceneJobId,
+            sceneManifestSha256: hash("b"),
+            sourceSnapshotSha256: hash("c"),
+            specification: {
+              catalogReleaseId: "14000000-0000-4000-8000-000000000025",
+              catalogReleaseSha256: hash("d"),
+              specificationId: "14000000-0000-4000-8000-000000000026",
+              specificationRevision: 2,
+              specificationRevisionSha256: hash("e"),
+            },
+          },
+        },
+      ],
+    };
+    expect(renderEligibleSourcesResponseSchema.parse(response)).toEqual(response);
+    expect(
+      renderEligibleSourcesResponseSchema.safeParse({
+        ...response,
+        sources: response.sources.map((source) => ({
+          ...source,
+          source: { ...source.source, projectId: sceneJobId },
+        })),
+      }).success,
+    ).toBe(false);
+    expect(
+      renderHostCapabilitiesSchema.parse({
+        acceptingNewJobs: false,
+        enhancementProvider: "disabled",
+        hardwareEvidence: "deferred",
+        profiles: [],
+      }),
+    ).toBeDefined();
   });
 
   it("rejects degenerate cameras and contradictory render profiles", () => {

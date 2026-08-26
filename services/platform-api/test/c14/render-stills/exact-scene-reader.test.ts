@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
+  C10EmbeddedC13BindingInspector,
   EncryptedRenderArtifactBroker,
   S3ExactSceneGlbReader,
 } from "../../../src/modules/render-stills/index.js";
@@ -51,6 +52,11 @@ describe("C14 exact C10 GLB reader", () => {
     await expect(
       reader.read({ byteSize: bytes.byteLength, glbSha256: digest(bytes) }),
     ).rejects.toThrow("C10 GLB");
+  });
+
+  it("does not reinterpret malformed immutable bytes as an unbound C10 scene", async () => {
+    const inspector = new C10EmbeddedC13BindingInspector();
+    await expect(inspector.inspect(Buffer.from("not-a-glb"))).rejects.toBeDefined();
   });
 });
 

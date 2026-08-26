@@ -37,7 +37,7 @@ export interface ParsedRenderGlb {
   readonly meshHasUv: readonly boolean[];
   /** Exact protected geometry bounds before Blender imports the GLB. */
   readonly objectBounds: readonly ParsedRenderGlbObjectBounds[];
-  readonly specificationBinding: Readonly<Record<string, unknown>>;
+  readonly specificationBinding?: Readonly<Record<string, unknown>>;
 }
 
 interface AccessorRange {
@@ -533,7 +533,8 @@ function catalogBinding(value: unknown): Readonly<Record<string, unknown>> {
 
 function assetSpecificationBinding(
   asset: Readonly<Record<string, unknown>>,
-): Readonly<Record<string, unknown>> {
+): Readonly<Record<string, unknown>> | undefined {
+  if (asset.extras === undefined) return undefined;
   if (!isPlainRecord(asset.extras)) return failRenderScene("C13_BINDING_MISMATCH");
   const extras = asset.extras;
   if (!exactKeys(extras, ["c13SpecificationBinding"])) {
@@ -896,6 +897,6 @@ export function parseProtectedC10Glb(bytes: Uint8Array): ParsedRenderGlb {
     json,
     meshHasUv: Object.freeze(meshHasUv),
     objectBounds: Object.freeze(objectBounds),
-    specificationBinding,
+    ...(specificationBinding === undefined ? {} : { specificationBinding }),
   });
 }

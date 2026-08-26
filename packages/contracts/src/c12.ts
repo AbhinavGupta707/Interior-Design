@@ -661,6 +661,8 @@ export const c12RouteContract = Object.freeze({
   cancelJob: "/v1/projects/:projectId/design-option-jobs/:jobId/cancel",
   confirmOption: "/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirm",
   createJob: "/v1/projects/:projectId/design-option-jobs",
+  getConfirmation:
+    "/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirmation",
   getJob: "/v1/projects/:projectId/design-option-jobs/:jobId",
   getOption: "/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId",
   listJobs: "/v1/projects/:projectId/design-option-jobs",

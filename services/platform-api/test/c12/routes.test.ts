@@ -69,9 +69,15 @@ describe("C12 public design-option routes", () => {
       method: "GET",
       url: `${route}/${job.id}/options`,
     });
+    const missingConfirmation = await server.inject({
+      headers: authorization("fixture|viewer-alpha"),
+      method: "GET",
+      url: `${route}/${job.id}/options/${randomUUID()}/confirmation`,
+    });
     expect(listed.statusCode).toBe(200);
     expect(fetched.statusCode).toBe(200);
     expect(options.statusCode).toBe(200);
+    expect(missingConfirmation.statusCode).toBe(404);
     expect(options.json()).toMatchObject({ options: [] });
     expect(runtime.repository.branches).toHaveLength(0);
   });
@@ -97,9 +103,15 @@ describe("C12 public design-option routes", () => {
       method: "GET",
       url: `${route}/${randomUUID()}`,
     });
+    const foreignConfirmation = await server.inject({
+      headers: authorization("fixture|owner-beta"),
+      method: "GET",
+      url: `${route}/${randomUUID()}/options/${randomUUID()}/confirmation`,
+    });
     expect(viewer.statusCode).toBe(403);
     expect(foreignList.statusCode).toBe(404);
     expect(foreignGuess.statusCode).toBe(404);
+    expect(foreignConfirmation.statusCode).toBe(404);
     expect(runtime.repository.jobs).toHaveLength(0);
   });
 

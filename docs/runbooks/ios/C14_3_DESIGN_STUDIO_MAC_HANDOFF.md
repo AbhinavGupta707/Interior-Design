@@ -2,17 +2,18 @@
 
 ## Status and decision boundary
 
-**NOT RUN — Windows/Ubuntu WSL host, 2026-08-25.**
+**Native/device cases NOT RUN — shared C14.4 continuity contract accepted on Mac, 2026-08-26.**
 
 No Xcode build, Simulator, signed device build, RoomPlan/LiDAR/camera capture, background transfer,
 native C10–C14 flow or physical Apple-device case was run in C14.3. The repository's native client
 currently covers setup/evidence/capture through C8 and does not implement a standalone C10–C14
 design loop.
 
-This handoff is deliberately provisional. Do not edit/freeze shared contracts merely to mirror the
-current web implementation. First verify the existing platform behavior on Mac/iPad and return the
-evidence and recommendation to the primary orchestrator. C8 v1 remains authoritative; C8-v2 stays
-acceptance-only; reconstruction never becomes canonical truth without C5 validation and commit.
+The two provisional shared gaps are now resolved by C14.4 implementation commit `aae3379` and the
+pinned generated TypeScript/Swift contract. This does not satisfy any native UI, Xcode/Simulator,
+physical-device, authentication-lifecycle, background-transfer, RoomPlan/LiDAR or camera case below.
+C8 v1 remains authoritative; C8-v2 stays acceptance-only; reconstruction never becomes canonical
+truth without C5 validation and commit.
 
 ## Authentication, scoping and mutation rules
 
@@ -68,32 +69,26 @@ snapshot ID and SHA-256 equality.
 
 ## Exact existing C12 routes
 
-| Method | Route                                                                         | Mobile purpose and pins                                                                                                                               |
-| ------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/v1/projects/:projectId/design-option-jobs`                                  | Accepted brief ID/revision/hash plus exact existing model ID/snapshot ID/hash/version; request at least two directions; UUID idempotency header; 201. |
-| GET    | `/v1/projects/:projectId/design-option-jobs`                                  | Restore option jobs.                                                                                                                                  |
-| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId`                           | Poll exact version/state.                                                                                                                             |
-| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/cancel`                    | `{ expectedVersion }` plus UUID idempotency header.                                                                                                   |
-| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/retry`                     | Exact terminal version plus UUID idempotency header.                                                                                                  |
-| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId/options`                   | Restore bounded alternatives and confirmation status.                                                                                                 |
-| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId`         | Inspect one exact option.                                                                                                                             |
-| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirm` | Explicit proposed-only confirmation; header UUID must equal body idempotency key; 201 `OptionConfirmation`.                                           |
+| Method | Route                                                                              | Mobile purpose and pins                                                                                                                               |
+| ------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/v1/projects/:projectId/design-option-jobs`                                       | Accepted brief ID/revision/hash plus exact existing model ID/snapshot ID/hash/version; request at least two directions; UUID idempotency header; 201. |
+| GET    | `/v1/projects/:projectId/design-option-jobs`                                       | Restore option jobs.                                                                                                                                  |
+| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId`                                | Poll exact version/state.                                                                                                                             |
+| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/cancel`                         | `{ expectedVersion }` plus UUID idempotency header.                                                                                                   |
+| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/retry`                          | Exact terminal version plus UUID idempotency header.                                                                                                  |
+| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId/options`                        | Restore bounded alternatives and confirmation status.                                                                                                 |
+| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId`              | Inspect one exact option.                                                                                                                             |
+| GET    | `/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirmation` | Recover the unchanged exact server-issued `OptionConfirmation`; private/no-store; missing/foreign scope is hidden as 404.                             |
+| POST   | `/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirm`      | Explicit proposed-only confirmation; header UUID must equal body idempotency key; 201 `OptionConfirmation`.                                           |
 
-### Provisional C12 resume decision
+### C14.4 C12 resume decision
 
-`OptionConfirmation.id` is returned only by the confirm POST. The list/get responses report that an
-option is confirmed but do not return or locate the confirmation record, while C13 creation needs
-that ID. The web client now retains up to four opaque confirmations for same-browser recovery, then
-revalidates job/option/project status. That is not a cross-device contract.
-
-On Mac, prove the failure from: confirm on client A → terminate/delete local state → sign in on
-client B → attempt C13. Recommend one server-authoritative solution, without implementing it yet:
-
-- a scoped read/list confirmation route; or
-- a server-resolved “continue confirmed option” C13 command that accepts job/option plus exact pins.
-
-The choice must preserve tenant isolation, immutable confirmation provenance, idempotency and stale
-brief/model failure. It must not make browser storage authoritative.
+Use the exact confirmation GET above after restoring the confirmed option. The server scopes the
+repository lookup by authenticated tenant plus project/job/option and returns the unchanged opaque
+confirmation record required by C13. Web recovery v2 persists only job/comparison selection and
+erases legacy locally retained confirmation records. A standalone native client must likewise treat
+the server response as the only continuation authority and must not construct, rebase or cache a
+substitute confirmation.
 
 ## Exact existing C13 routes
 
@@ -123,6 +118,7 @@ Price, availability, supplier, delivery, regulation and professional approval re
 | Method | Route                                                                     | Mobile purpose and pins                                                                                                              |
 | ------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | GET    | `/v1/projects/:projectId/render-capabilities`                             | Raw authorised-host/provider/profile capability; private/no-store.                                                                   |
+| GET    | `/v1/projects/:projectId/render-eligible-sources`                         | Current exact C10 scene/artifact/hash, optional C13 revision/catalog pins and mapped cameras; private/no-store; not a lease.         |
 | POST   | `/v1/projects/:projectId/render-jobs`                                     | Exact scene job ID, camera ID, profile, lighting preset and paired optional specification ID/revision; UUID idempotency header; 201. |
 | GET    | `/v1/projects/:projectId/render-jobs`                                     | Restore render jobs.                                                                                                                 |
 | GET    | `/v1/projects/:projectId/render-jobs/:jobId`                              | Poll exact durable version/state.                                                                                                    |
@@ -133,7 +129,7 @@ Price, availability, supplier, delivery, regulation and professional approval re
 | GET    | `/v1/projects/:projectId/render-jobs/:jobId/enhancement`                  | Optional child status/result; 404/not-requested must not hide safe output.                                                           |
 | POST   | `/v1/projects/:projectId/render-jobs/:jobId/enhancement`                  | `{ expectedVersion }` plus UUID idempotency header; never mutates safe result.                                                       |
 
-### Provisional C14 capability decision
+### C14.4 C14 capability decision
 
 The platform capability response is intentionally host-focused:
 
@@ -141,20 +137,13 @@ The platform capability response is intentionally host-focused:
 acceptingNewJobs, enhancementProvider, hardwareEvidence, profiles[]
 ```
 
-The current web workspace expects a composed response containing renderer/provider presentation,
-lighting presets, and exact eligible `sources[]` with scene, specification and camera choices. Its
-BFF validates the raw platform payload directly against that richer schema, so host-live web use
-currently fails closed. More importantly, C13's authoritative scene-job binding is server-held and
-not exposed by list specifications; a client must not infer it merely from matching snapshot IDs.
-
-On Mac, exercise raw C10/C13/C14 calls after C13 substitution confirmation and after a cold reload.
-Recommend whether to:
-
-- extend C14 capability with authoritative eligible source/camera/spec bindings; or
-- add a separate scoped eligibility endpoint consumed by both clients.
-
-The server must derive the binding, rights status and cameras from exact C10/C13 authority, and
-revalidate them at C14 job creation. Do not add a web-only heuristic or freeze native DTOs first.
+Keep that raw response separate from `render-eligible-sources`. The new endpoint derives succeeded
+scenes, exact artifact/manifest/snapshot hashes and mapped cameras from C10, and exact optional
+specification/catalog hashes plus live referenced-rights state from C13. Web composes the two strict
+responses only for presentation. The eligibility response is a current snapshot, never a lease:
+C14 creation re-reads immutable GLB bytes, exact hashes and embedded C13 binding, rechecks rights,
+verifies the mapped camera and resolves the requested frozen profile. Native must use the generated
+Swift response rather than infer eligibility from render history or matching snapshot IDs.
 
 ## Required Mac and iPad cases
 
@@ -173,6 +162,10 @@ revalidate them at C14 job creation. Do not add a web-only heuristic or freeze n
 | M11 | Physical representative capture on a named LiDAR-capable iPad/iPhone.                              | Consented one-bedroom-apartment evidence, RoomPlan/depth/appearance separation, producer versions/hashes and no implicit canonical mutation. |
 | M12 | End-to-end shared project from capture to confirmed twin and design outputs.                       | Correlated C2/C5/C8/C9/C10–C14 IDs/hashes, uncertainties, permissions and screenshots/recording.                                             |
 
+M4 and M7 now have accepted shared software contracts and generated-client tests. Their native
+cold-install/authenticated execution is still NOT RUN and must not be inferred from web, Swift unit
+or platform integration evidence. M1–M3, M5–M6 and M8–M12 also remain NOT RUN.
+
 ## Evidence package and return handoff
 
 Return a restricted package containing:
@@ -180,14 +173,13 @@ Return a restricted package containing:
 - exact branch/commit, macOS, Xcode, Simulator and physical-device/iOS versions;
 - commands, start/end times, exit codes, xcresults and screenshots/recordings by case ID;
 - redacted request/response schema/status samples for C10–C14;
-- C12 confirmation cold-resume reproduction;
-- C14 raw capability and authoritative-source discovery reproduction;
-- selected shared-contract recommendation with alternatives and trade-offs;
+- native C12 confirmation cold-resume using the frozen generated operation;
+- C14 raw capability plus generated authoritative-source discovery after cold reload;
 - offline/background/idempotency journals and local artifact SHA-256 checks;
 - privacy/log scan proving no bearer token, signed locator, raw unrelated imagery/address or broad
   credential escaped; and
 - limitations for every unrun device/provider/representative-home case.
 
 Do not report Simulator fixtures as RoomPlan/LiDAR or representative-home evidence. Do not commit
-signing, endpoint, token or device-identifier changes. Return the handoff before shared contracts,
-generated clients or native C10–C14 models are frozen.
+signing, endpoint, token or device-identifier changes. Do not modify the frozen C14.4 continuity v1
+surface without an explicitly authorised versioned successor.

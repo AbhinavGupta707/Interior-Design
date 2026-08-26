@@ -1,10 +1,12 @@
 import {
   enhancementResultSchema,
   projectSchema,
+  renderEligibleSourcesResponseSchema,
   renderArtifactAccessSchema,
   renderArtifactSchema,
   renderJobSchema,
   renderResultSchema,
+  renderHostCapabilitiesSchema,
   sessionSchema,
 } from "@interior-design/contracts";
 import type { RenderArtifactRole } from "@interior-design/contracts";
@@ -121,24 +123,6 @@ export const capabilities = renderCapabilitiesSchema.parse({
   ],
 });
 
-export const availableCapabilities = renderCapabilitiesSchema.parse({
-  ...capabilities,
-  enhancementProvider: {
-    reason: "Deterministic test adapter enabled for fixture behavior only.",
-    state: "available",
-  },
-  profiles: capabilities.profiles.map((profile, index) =>
-    index === 0
-      ? { ...profile, reason: "Synthetic lifecycle fixture only.", state: "available" }
-      : profile,
-  ),
-  renderer: {
-    hardwareGate: "not-run",
-    reason: "Synthetic fixture capability. No Blender process or real render is involved.",
-    state: "available",
-  },
-});
-
 const source = {
   projectId: ids.project,
   sceneArtifactId: ids.sceneArtifact,
@@ -155,6 +139,79 @@ const source = {
     specificationRevisionSha256: hash("e"),
   },
 } as const;
+
+export const hostCapabilities = renderHostCapabilitiesSchema.parse({
+  acceptingNewJobs: true,
+  enhancementProvider: "enabled",
+  hardwareEvidence: "deferred",
+  profiles: [
+    {
+      available: true,
+      capability: "render.cycles.cpu.v1",
+      profileId: "cycles-cpu-geometry-safe-v1",
+      reason: "Synthetic lifecycle fixture only.",
+    },
+    {
+      available: false,
+      capability: "render.eevee.preview.v1",
+      profileId: "eevee-local-preview-v1",
+      reason: "Preview does not close the photoreal gate.",
+    },
+  ],
+});
+
+export const eligibleSources = renderEligibleSourcesResponseSchema.parse({
+  projectId: ids.project,
+  schemaVersion: "c14-render-eligible-sources-v1",
+  sources: [
+    {
+      cameras: [{ cameraId: ids.camera, label: "Living room · canonical eye level" }],
+      label: "Exact C13-backed living-room scene",
+      source,
+    },
+  ],
+});
+
+export const availableCapabilities = renderCapabilitiesSchema.parse({
+  ...capabilities,
+  enhancementProvider: {
+    reason: "The configured optional enhancement provider is available.",
+    state: "available",
+  },
+  profiles: [
+    {
+      label: "Cycles CPU · geometry safe",
+      profileId: "cycles-cpu-geometry-safe-v1",
+      reason: "Synthetic lifecycle fixture only.",
+      state: "available",
+    },
+    {
+      label: "Eevee local preview",
+      profileId: "eevee-local-preview-v1",
+      reason: "Preview does not close the photoreal gate.",
+      state: "deferred",
+    },
+  ],
+  renderer: {
+    hardwareGate: "deferred",
+    reason: "The platform currently accepts new work for at least one frozen render profile.",
+    state: "available",
+  },
+  sources: [
+    {
+      cameras: [{ cameraId: ids.camera, label: "Living room · canonical eye level" }],
+      label: "Exact C13-backed living-room scene",
+      sourceSceneJobId: ids.sceneJob,
+      specifications: [
+        {
+          label: "Specification revision 5",
+          specificationId: ids.specification,
+          specificationRevision: 5,
+        },
+      ],
+    },
+  ],
+});
 
 function artifact(role: RenderArtifactRole, id: string, digit: string) {
   return renderArtifactSchema.parse({
