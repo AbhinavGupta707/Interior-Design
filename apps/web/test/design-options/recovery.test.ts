@@ -18,28 +18,25 @@ function storage() {
 }
 
 describe("C12 private recovery boundary", () => {
-  it("stores bounded job/comparison IDs and the opaque server-issued C13 continuation", () => {
+  it("stores only bounded job/comparison IDs and no C13 continuation authority", () => {
     const local = storage();
     saveDesignOptionRecovery(local, {
       leftOptionId: ids.optionA,
-      confirmations: [{ confirmation: confirmationA, optionId: ids.optionA }],
       projectId: ids.project,
       rightOptionId: ids.optionB,
       savedAt: "2026-07-18T10:05:00.000Z",
-      schemaVersion: "c12-design-options-recovery-v1",
+      schemaVersion: "c12-design-options-recovery-v2",
       selectedJobId: ids.job,
     });
     const serialized = [...local.values.values()].join("");
     expect(serialized).not.toMatch(/brief statement|asset payload|operation|token|credential/iu);
     expect(readDesignOptionRecovery(local, ids.project)?.selectedJobId).toBe(ids.job);
-    expect(readDesignOptionRecovery(local, ids.project)?.confirmations?.[0]?.confirmation.id).toBe(
-      confirmationA.id,
-    );
+    expect(serialized).not.toContain(confirmationA.id);
     clearDesignOptionRecovery(local, ids.project);
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
   });
 
-  it("drops malformed, oversized, foreign, and duplicate-option recovery", () => {
+  it("drops malformed, oversized and foreign recovery", () => {
     const local = storage();
     local.setItem(`hds:c12:option-recovery:${ids.project}`, "{");
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
@@ -52,10 +49,29 @@ describe("C12 private recovery boundary", () => {
         projectId: "c1200000-0000-4000-8000-000000000099",
         rightOptionId: ids.optionA,
         savedAt: "2026-07-18T10:05:00.000Z",
-        schemaVersion: "c12-design-options-recovery-v1",
+        schemaVersion: "c12-design-options-recovery-v2",
         selectedJobId: ids.job,
       }),
     );
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
+  });
+
+  it("migrates legacy envelopes while deleting locally retained confirmations", () => {
+    const local = storage();
+    local.setItem(
+      `hds:c12:option-recovery:${ids.project}`,
+      JSON.stringify({
+        confirmations: [{ confirmation: confirmationA, optionId: ids.optionA }],
+        projectId: ids.project,
+        savedAt: "2026-07-18T10:05:00.000Z",
+        schemaVersion: "c12-design-options-recovery-v1",
+        selectedJobId: ids.job,
+      }),
+    );
+    expect(readDesignOptionRecovery(local, ids.project)).toMatchObject({
+      schemaVersion: "c12-design-options-recovery-v2",
+      selectedJobId: ids.job,
+    });
+    expect([...local.values.values()].join("")).not.toContain(confirmationA.id);
   });
 });

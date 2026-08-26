@@ -170,6 +170,28 @@ export function registerDesignOptionRoutes(
     );
   });
 
+  server.get(c12RouteContract.getConfirmation, async (request, reply) => {
+    const params = parseRequest(optionParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "design-option:proposal:read",
+      identity,
+      projects,
+    );
+    reply.header("cache-control", "private, no-store");
+    return reply.send(
+      optionConfirmationSchema.parse(
+        await service.getConfirmation(
+          actor.tenantId,
+          params.projectId,
+          params.jobId,
+          params.optionId,
+        ),
+      ),
+    );
+  });
+
   server.post(c12RouteContract.confirmOption, async (request, reply) => {
     const params = parseRequest(optionParamsSchema, request.params);
     const actor = await authorisedProject(

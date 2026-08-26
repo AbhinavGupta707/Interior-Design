@@ -178,6 +178,12 @@ export interface DesignOptionRepository {
   ): Promise<{ readonly job: OptionJob; readonly replayed: boolean }>;
   failAttempt(command: FailOptionAttemptCommand): Promise<OptionJob>;
   findJob(tenantId: string, projectId: string, jobId: string): Promise<OptionJob | undefined>;
+  findConfirmation(
+    tenantId: string,
+    projectId: string,
+    jobId: string,
+    optionId: string,
+  ): Promise<OptionConfirmation | undefined>;
   findOption(
     tenantId: string,
     projectId: string,

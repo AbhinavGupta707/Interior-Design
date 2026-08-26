@@ -69,9 +69,15 @@ describe("C12 public design-option routes", () => {
       method: "GET",
       url: `${route}/${job.id}/options`,
     });
+    const missingConfirmation = await server.inject({
+      headers: authorization("fixture|viewer-alpha"),
+      method: "GET",
+      url: `${route}/${job.id}/options/${randomUUID()}/confirmation`,
+    });
     expect(listed.statusCode).toBe(200);
     expect(fetched.statusCode).toBe(200);
     expect(options.statusCode).toBe(200);
+    expect(missingConfirmation.statusCode).toBe(404);
     expect(options.json()).toMatchObject({ options: [] });
     expect(runtime.repository.branches).toHaveLength(0);
   });

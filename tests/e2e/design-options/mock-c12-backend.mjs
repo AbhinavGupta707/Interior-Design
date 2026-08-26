@@ -199,6 +199,12 @@ const server = http.createServer(async (request, response) => {
       result = json(currentJob());
     }
   } else if (
+    url.pathname === `${jobsPath}/${ids.job}/options/${ids.optionA}/confirmation` &&
+    request.method === "GET" &&
+    confirmedOptionIds.has(ids.optionA)
+  ) {
+    result = json(confirmationA);
+  } else if (
     url.pathname === `${jobsPath}/${ids.job}/options/${ids.optionA}/confirm` &&
     request.method === "POST"
   ) {

@@ -365,6 +365,17 @@ describeWithPostgres("C12 live PostgreSQL lifecycle", () => {
       request: confirmationRequest(replayKey),
     });
     expect(replayed).toEqual({ confirmation: confirmed.confirmation, replayed: true });
+    await expect(
+      service.getConfirmation(actor.tenantId, project.id, succeeded.id, first.id),
+    ).resolves.toEqual(confirmed.confirmation);
+    await expect(
+      service.getConfirmation(
+        "c1200000-0000-4000-8000-000000000099",
+        project.id,
+        succeeded.id,
+        first.id,
+      ),
+    ).rejects.toMatchObject({ statusCode: 404 });
 
     optionClock.advance(1);
     const concurrent = await Promise.allSettled([

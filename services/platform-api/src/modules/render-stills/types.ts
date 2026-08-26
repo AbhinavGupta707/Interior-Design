@@ -7,6 +7,7 @@ import type {
   RenderArtifactRole,
   RenderJob,
   RenderJobState,
+  RenderEligibleSourcesResponse,
   RenderOutputManifest,
   RenderResult,
   RenderSourceReference,
@@ -41,6 +42,7 @@ export interface ResolvedRenderSource {
  * succeeded C10 scene, immutable GLB extras, C13 revision/release and active rights itself.
  */
 export interface RenderSourceResolver {
+  listEligibleSources(tenantId: string, projectId: string): Promise<RenderEligibleSourcesResponse>;
   resolveForNewJob(
     tenantId: string,
     projectId: string,

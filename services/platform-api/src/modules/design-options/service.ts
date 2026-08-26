@@ -205,6 +205,18 @@ export class DesignOptionService {
     return option;
   }
 
+  async getConfirmation(tenantId: string, projectId: string, jobId: string, optionId: string) {
+    await this.getOption(tenantId, projectId, jobId, optionId);
+    const confirmation = await this.#repository.findConfirmation(
+      tenantId,
+      projectId,
+      jobId,
+      optionId,
+    );
+    if (confirmation === undefined) throw notFound();
+    return confirmation;
+  }
+
   async cancelJob(command: TransitionOptionJobCommand) {
     const result = await this.#repository.cancelJob(command);
     this.#telemetry.record({

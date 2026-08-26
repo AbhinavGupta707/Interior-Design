@@ -54,6 +54,17 @@ describe("C12 browser client", () => {
     expect(new Headers(init.headers).get("idempotency-key")).toBe(key);
   });
 
+  it("recovers the exact server-issued confirmation through the generated client", async () => {
+    const transport = vi.fn().mockResolvedValue(Response.json(confirmationA));
+    const client = createDesignOptionsClient(transport, () => key);
+    await expect(client.getConfirmation(ids.project, ids.job, ids.optionA)).resolves.toEqual(
+      confirmationA,
+    );
+    expect(transport.mock.calls[0]?.[0]).toBe(
+      `/api/c12/projects/${ids.project}/design-option-jobs/${ids.job}/options/${ids.optionA}/confirmation`,
+    );
+  });
+
   it("binds cancel and retry to the exact displayed job identity and version", async () => {
     const transitionedJob = { ...job, version: job.version + 1 };
     const transport = vi

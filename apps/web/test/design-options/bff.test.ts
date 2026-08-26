@@ -29,7 +29,7 @@ function request(method = "GET", body?: unknown, key = mutationKey) {
 }
 
 describe("C12 exact same-origin BFF", () => {
-  it("proxies all four read routes with strict project/job/option response validation", async () => {
+  it("proxies all five read routes with strict project/job/option response validation", async () => {
     const cases = [
       {
         payload: { jobs: [job], projectId: ids.project },
@@ -50,6 +50,19 @@ describe("C12 exact same-origin BFF", () => {
         payload: optionA,
         segments: ["projects", ids.project, "design-option-jobs", ids.job, "options", ids.optionA],
         suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/options/${ids.optionA}`,
+      },
+      {
+        payload: confirmationA,
+        segments: [
+          "projects",
+          ids.project,
+          "design-option-jobs",
+          ids.job,
+          "options",
+          ids.optionA,
+          "confirmation",
+        ],
+        suffix: `/v1/projects/${ids.project}/design-option-jobs/${ids.job}/options/${ids.optionA}/confirmation`,
       },
     ];
     for (const testCase of cases) {

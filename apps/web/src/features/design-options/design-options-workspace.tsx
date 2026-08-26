@@ -136,16 +136,8 @@ export function DesignOptionsWorkspace({
         if (recovery) {
           setLeftOptionId(recovery.leftOptionId);
           setRightOptionId(recovery.rightOptionId);
-          setConfirmations(
-            Object.fromEntries(
-              (recovery.confirmations ?? []).map(({ confirmation, optionId }) => [
-                optionId,
-                confirmation,
-              ]),
-            ),
-          );
           setStatusMessage(
-            "Recovered the last job, comparison selection and any opaque C13 continuation. The server revalidates confirmed option state before use; no brief narrative or asset payload was stored in this browser.",
+            "Recovered the last job and comparison selection. Exact C13 continuation records are restored only from server-authoritative C12 state; no confirmation, brief narrative or asset payload is stored in this browser.",
           );
         } else if (!initial) {
           setStatusMessage("Job list and exact source pins refreshed.");
@@ -167,6 +159,17 @@ export function DesignOptionsWorkspace({
           designOptionsClient.getJob(projectId, jobId),
           designOptionsClient.listOptions(projectId, jobId),
         ]);
+        const recoveredConfirmations = await Promise.all(
+          options.options
+            .filter(({ status }) => status === "confirmed")
+            .map(
+              async (option) =>
+                [
+                  option.id,
+                  await designOptionsClient.getConfirmation(projectId, jobId, option.id),
+                ] as const,
+            ),
+        );
         setSelectedJob(job);
         setOptionsResponse(options);
         setWorkspace((current) =>
@@ -189,19 +192,7 @@ export function DesignOptionsWorkspace({
         setRightOptionId((current) =>
           current && ids.has(current) && current !== defaultLeft ? current : defaultRight,
         );
-        setConfirmations((current) =>
-          Object.fromEntries(
-            Object.entries(current).filter(([optionId, confirmation]) =>
-              options.options.some(
-                (option) =>
-                  option.id === optionId &&
-                  option.status === "confirmed" &&
-                  confirmation.optionId === option.id &&
-                  confirmation.projectId === projectId,
-              ),
-            ),
-          ),
-        );
+        setConfirmations(Object.fromEntries(recoveredConfirmations));
         if (announce) {
           setStatusMessage(
             `Job version ${String(job.version)} refreshed in state ${job.state}. ${String(options.options.length)} options available.`,
@@ -247,21 +238,14 @@ export function DesignOptionsWorkspace({
   useEffect(() => {
     if (!selectedJobId) return;
     saveDesignOptionRecovery(window.localStorage, {
-      ...(Object.keys(confirmations).length > 0
-        ? {
-            confirmations: Object.entries(confirmations)
-              .slice(0, 4)
-              .map(([optionId, confirmation]) => ({ confirmation, optionId })),
-          }
-        : {}),
       ...(leftOptionId ? { leftOptionId } : {}),
       projectId,
       ...(rightOptionId ? { rightOptionId } : {}),
       savedAt: new Date().toISOString(),
-      schemaVersion: "c12-design-options-recovery-v1",
+      schemaVersion: "c12-design-options-recovery-v2",
       selectedJobId,
     });
-  }, [confirmations, leftOptionId, projectId, rightOptionId, selectedJobId]);
+  }, [leftOptionId, projectId, rightOptionId, selectedJobId]);
 
   const sortedJobs = useMemo(
     () =>

@@ -29,6 +29,7 @@ async function primeApplication(request: APIRequestContext) {
     request.get("/api/c1/session", { headers }),
     request.get(`/api/c1/projects/${ids.project}`, { headers }),
     request.get(`/api/c14/projects/${ids.project}/render-capabilities`, { headers }),
+    request.get(`/api/c14/projects/${ids.project}/render-eligible-sources`, { headers }),
     request.get(`/api/c14/projects/${ids.project}/render-jobs`, { headers }),
   ]);
   for (const response of responses) await expect(response).toBeOK();
@@ -76,12 +77,12 @@ test("@workflow @keyboard owner follows exact pins through verification and a du
   ).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`jobId=${ids.job}$`, "u"));
   await expect(page.getByText("Synthetic fixture presentation · tests only")).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      level: 2,
-      name: "Real rendering is unavailable/deferred on this Mac",
-    }),
-  ).toBeVisible();
+  const capability = page.getByRole("region", {
+    name: "Render capability on this configured host",
+  });
+  await expect(capability).toBeVisible();
+  await expect(capability.getByText("Hardware gate")).toBeVisible();
+  await expect(capability.getByText("deferred", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("img", {
       name: /Geometry-locked deterministic render.+derived visualisation only/iu,

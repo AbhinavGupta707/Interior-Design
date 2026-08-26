@@ -462,6 +462,17 @@ describe("C12 durable in-memory runtime", () => {
       request: requestBody,
     });
     expect(replay).toEqual({ confirmation: first.confirmation, replayed: true });
+    await expect(
+      runtime.service.getConfirmation(tenantId, projectId, runtime.succeeded.id, firstOption.id),
+    ).resolves.toEqual(first.confirmation);
+    await expect(
+      runtime.service.getConfirmation(
+        tenantId,
+        projectId,
+        runtime.succeeded.id,
+        "c1200000-0000-4000-8000-000000000099",
+      ),
+    ).rejects.toMatchObject({ statusCode: 404 });
     expect(runtime.repository.branches).toHaveLength(1);
 
     await expect(

@@ -9,10 +9,11 @@ execFileSync("pnpm", ["--filter", "@interior-design/contracts", "build"], {
 
 const fixtures = await import("../../../apps/web/test/render-stills/fixtures.ts");
 const {
-  availableCapabilities,
   capabilities,
+  eligibleSources,
   enhancement,
   failedJob,
+  hostCapabilities,
   ids,
   job,
   ownerSession,
@@ -372,11 +373,21 @@ const server = http.createServer(async (request, response) => {
   } else if (url.pathname === `${projectBase}/render-capabilities`) {
     output = json(
       scenario === "provider-disabled"
-        ? capabilities
+        ? {
+            acceptingNewJobs: false,
+            enhancementProvider: "disabled",
+            hardwareEvidence: "deferred",
+            profiles: hostCapabilities.profiles.map((profile) => ({
+              ...profile,
+              available: false,
+            })),
+          }
         : scenario === "malformed"
-          ? { ...availableCapabilities, privateUnexpected: "PRIVATE_TOKEN" }
-          : availableCapabilities,
+          ? { ...hostCapabilities, privateUnexpected: "PRIVATE_TOKEN" }
+          : hostCapabilities,
     );
+  } else if (url.pathname === `${projectBase}/render-eligible-sources`) {
+    output = json(eligibleSources);
   } else if (url.pathname === jobsBase && request.method === "GET") {
     output =
       scenario === "service-error"

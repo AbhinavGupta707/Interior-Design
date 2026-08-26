@@ -678,6 +678,11 @@ export class InMemoryDesignOptionRepository implements DesignOptionRepository {
     return Promise.resolve(option === undefined ? undefined : this.#projectStatus(option));
   }
 
+  findConfirmation(tenantId: string, projectId: string, jobId: string, optionId: string) {
+    const confirmation = this.confirmations.get(key(tenantId, projectId, jobId, optionId));
+    return Promise.resolve(confirmation === undefined ? undefined : clone(confirmation));
+  }
+
   #projectStatus(option: DesignOption): DesignOption {
     if (
       option.status === "pending" &&
@@ -776,7 +781,7 @@ export class InMemoryDesignOptionRepository implements DesignOptionRepository {
       snapshotSha256: replay.snapshotSha256,
     });
     this.confirmations.set(
-      key(command.actor.tenantId, command.projectId, command.optionId),
+      key(command.actor.tenantId, command.projectId, command.jobId, command.optionId),
       confirmation,
     );
     this.#storeEffect(

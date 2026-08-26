@@ -13,6 +13,7 @@ import {
 } from "../../../packages/render-evaluation/test/fixtures";
 
 const featureRoot = path.resolve(process.cwd(), "apps/web/src/features/render-stills");
+const capabilitySource = readFileSync(path.join(featureRoot, "capability-composition.ts"), "utf8");
 const workspaceSource = readFileSync(path.join(featureRoot, "render-stills-workspace.tsx"), "utf8");
 const verificationSource = readFileSync(path.join(featureRoot, "artifact-verification.ts"), "utf8");
 const verifiedArtifactSource = readFileSync(
@@ -43,15 +44,20 @@ describe("C14 independent render-stills evidence evaluation", () => {
     });
   });
 
-  it("uses the exact authority labels and preserves the real-render hold", () => {
+  it("uses exact authority labels and preserves the hardware evidence boundary", () => {
     expect(workspaceSource).toContain(
       "“Geometry-locked deterministic render”</strong> is derived visualisation only.",
     );
     expect(workspaceSource).toContain(
       "“Illustrative optional enhancement”</strong> is never canonical.",
     );
-    expect(workspaceSource).toContain("Real rendering is unavailable/deferred on this Mac");
-    expect(workspaceSource).toContain("No Blender invocation is permitted here");
+    expect(workspaceSource).toContain("Render capability on this configured host");
+    expect(capabilitySource).toContain(
+      'host.hardwareEvidence === "verified-authorised-host" ? "satisfied" : "deferred"',
+    );
+    expect(capabilitySource).toContain(
+      "No authorised render host currently accepts new work for a frozen profile.",
+    );
     expect(workspaceSource).toContain("safe result remains independently visible");
     expect(workspaceSource).not.toMatch(
       /survey accurate|as-built verified|structurally safe|regulatory approved|cost guaranteed|in stock|professionally approved/iu,

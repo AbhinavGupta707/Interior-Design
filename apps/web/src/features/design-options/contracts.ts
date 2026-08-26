@@ -1,7 +1,6 @@
 import {
   createOptionJobRequestSchema,
   listOptionJobsResponseSchema,
-  optionConfirmationSchema,
   projectSchema,
   sessionSchema,
 } from "@interior-design/contracts";
@@ -40,45 +39,13 @@ export const designOptionsWorkspaceSchema = z
 export const designOptionRecoverySchema = z
   .object({
     leftOptionId: z.uuid().optional(),
-    confirmations: z
-      .array(
-        z
-          .object({ confirmation: optionConfirmationSchema, optionId: z.uuid() })
-          .strict()
-          .refine(({ confirmation, optionId }) => confirmation.optionId === optionId, {
-            message: "The recovered confirmation must match its option.",
-            path: ["confirmation", "optionId"],
-          }),
-      )
-      .max(4)
-      .optional(),
     projectId: z.uuid(),
     rightOptionId: z.uuid().optional(),
     savedAt: z.iso.datetime({ offset: true }),
-    schemaVersion: z.literal("c12-design-options-recovery-v1"),
+    schemaVersion: z.literal("c12-design-options-recovery-v2"),
     selectedJobId: z.uuid(),
   })
   .strict()
-  .superRefine(({ confirmations, projectId }, context) => {
-    if (!confirmations) return;
-    const optionIds = confirmations.map(({ optionId }) => optionId);
-    if (new Set(optionIds).size !== optionIds.length) {
-      context.addIssue({
-        code: "custom",
-        message: "Recovered confirmations must have unique option identifiers.",
-        path: ["confirmations"],
-      });
-    }
-    confirmations.forEach(({ confirmation }, index) => {
-      if (confirmation.projectId !== projectId) {
-        context.addIssue({
-          code: "custom",
-          message: "A recovered confirmation belongs to another project.",
-          path: ["confirmations", index, "confirmation", "projectId"],
-        });
-      }
-    });
-  })
   .refine(
     ({ leftOptionId, rightOptionId }) =>
       leftOptionId === undefined || rightOptionId === undefined || leftOptionId !== rightOptionId,

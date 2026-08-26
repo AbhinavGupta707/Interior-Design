@@ -148,6 +148,13 @@ const bundle = {
 } as const;
 
 describe("C12 frozen shared contracts", () => {
+  it("freezes server-authoritative confirmation recovery beside confirmation mutation", () => {
+    expect(Object.values(c12RouteContract)).toHaveLength(9);
+    expect(c12RouteContract.getConfirmation).toBe(
+      "/v1/projects/:projectId/design-option-jobs/:jobId/options/:optionId/confirmation",
+    );
+  });
+
   it("requires creator-owned synthetic rights, exact integer envelopes and content identity", () => {
     expect(interiorAssetRefSchema.parse(asset)).toEqual(asset);
     expect(
@@ -272,11 +279,12 @@ describe("C12 frozen shared contracts", () => {
     ).toBeDefined();
   });
 
-  it("freezes the eight exact job, option and confirmation routes", () => {
+  it("freezes the nine exact job, option and confirmation routes", () => {
     expect(Object.keys(c12RouteContract).sort()).toEqual([
       "cancelJob",
       "confirmOption",
       "createJob",
+      "getConfirmation",
       "getJob",
       "getOption",
       "listJobs",

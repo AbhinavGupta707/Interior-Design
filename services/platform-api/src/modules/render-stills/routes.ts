@@ -3,9 +3,11 @@ import {
   c14RouteContract,
   createRenderJobRequestSchema,
   projectIdSchema,
+  renderEligibleSourcesResponseSchema,
   renderArtifactAccessSchema,
   renderArtifactIdSchema,
   renderJobIdSchema,
+  renderHostCapabilitiesSchema,
   renderJobSchema,
   renderResultSchema,
   type Actor,
@@ -32,25 +34,6 @@ const artifactParamsSchema = z
 const transitionSchema = z.object({ expectedVersion: z.int().positive() }).strict();
 const emptySchema = z.object({}).strict();
 const listResponseSchema = z.object({ jobs: z.array(renderJobSchema).max(100) }).strict();
-const capabilitiesSchema = z
-  .object({
-    acceptingNewJobs: z.boolean(),
-    enhancementProvider: z.enum(["disabled", "enabled"]),
-    hardwareEvidence: z.enum(["deferred", "verified-authorised-host"]),
-    profiles: z
-      .array(
-        z
-          .object({
-            available: z.boolean(),
-            capability: z.string().regex(/^[A-Za-z0-9_.:+-]{3,120}$/u),
-            profileId: createRenderJobRequestSchema.shape.profileId,
-            reason: z.string().trim().min(1).max(240).optional(),
-          })
-          .strict(),
-      )
-      .max(5),
-  })
-  .strict();
 const enhancementResponseSchema = z
   .object({
     attempt: z.int().positive().max(3),
@@ -106,7 +89,24 @@ export function registerRenderStillRoutes(
     const params = parseRequest(projectParamsSchema, request.params);
     await authorisedProject(request, params.projectId, "render:job:read", identity, projects);
     reply.header("cache-control", "private, no-store");
-    return reply.send(capabilitiesSchema.parse(service.capabilities()));
+    return reply.send(renderHostCapabilitiesSchema.parse(service.capabilities()));
+  });
+
+  server.get(c14RouteContract.listEligibleSources, async (request, reply) => {
+    const params = parseRequest(projectParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "render:job:read",
+      identity,
+      projects,
+    );
+    reply.header("cache-control", "private, no-store");
+    return reply.send(
+      renderEligibleSourcesResponseSchema.parse(
+        await service.listEligibleSources(actor.tenantId, params.projectId),
+      ),
+    );
   });
 
   server.post(c14RouteContract.createJob, async (request, reply) => {

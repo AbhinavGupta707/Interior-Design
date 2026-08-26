@@ -104,6 +104,36 @@ export class C10RenderSceneAuthority implements AuthoritativeScenePort {
     this.#scenes = options.scenes;
   }
 
+  async listSucceededScenes(tenantId: string, projectId: string) {
+    const jobs = await this.#scenes.listJobs(tenantId, projectId);
+    const scenes = await Promise.all(
+      jobs
+        .filter(({ state }) => state === "succeeded")
+        .slice(0, 100)
+        .map(async (job) => {
+          const scene = await this.#scenes.findScene(tenantId, projectId, job.id);
+          if (scene === undefined || scene.projectId !== projectId) {
+            throw new Error("The succeeded C10 scene authority returned an invalid scoped record.");
+          }
+          const cameraIds = scene.manifest.elementMappings
+            .filter(({ elementType, status }) => elementType === "camera" && status === "mapped")
+            .map(({ elementId }) => elementId)
+            .sort((left, right) => left.localeCompare(right));
+          return {
+            cameraIds,
+            projectId,
+            sceneArtifactId: scene.artifact.id,
+            sceneGlbSha256: scene.artifact.glbSha256,
+            sceneId: scene.id,
+            sceneJobId: job.id,
+            sceneManifestSha256: scene.artifact.manifestSha256,
+            sourceSnapshotSha256: scene.manifest.sourceSnapshot.snapshotSha256,
+          };
+        }),
+    );
+    return scenes.sort((left, right) => left.sceneJobId.localeCompare(right.sceneJobId));
+  }
+
   async findSucceededScene(tenantId: string, projectId: string, sceneJobId: string) {
     const [job, scene] = await Promise.all([
       this.#scenes.findJob(tenantId, projectId, sceneJobId),
@@ -128,6 +158,10 @@ export class C10RenderSceneAuthority implements AuthoritativeScenePort {
       return undefined;
     }
     return {
+      cameraIds: scene.manifest.elementMappings
+        .filter(({ elementType, status }) => elementType === "camera" && status === "mapped")
+        .map(({ elementId }) => elementId)
+        .sort((left, right) => left.localeCompare(right)),
       glbBytes,
       projectId,
       sceneArtifactId: scene.artifact.id,
