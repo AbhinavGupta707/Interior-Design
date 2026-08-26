@@ -114,12 +114,13 @@ describe("C5 frozen contracts", () => {
     ).toBeDefined();
   });
 
-  it("freezes branch, preview, commit, history, compare and restore route boundaries", () => {
+  it("freezes workspace, branch, preview, commit, history, compare and restore route boundaries", () => {
     expect(Object.keys(c5RouteContract).sort()).toEqual([
       "commitOperations",
       "compareBranch",
       "createBranch",
       "getBranch",
+      "initializeHomeWorkspace",
       "listBranches",
       "listOperations",
       "previewOperations",

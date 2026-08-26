@@ -1221,3 +1221,78 @@
   no separate task or worktree was created.
 - Final claim boundary: native homeowner onboarding and proposal readiness only. Confirmed twin,
   physical-device acceptance, live provider/deployment and production C6/C8/C9 remain unaccepted.
+
+## C14.7 — Native confirmed-twin integration
+
+### Activation — 2026-08-26
+
+- Status: open for implementation; no later checkpoint is authorised.
+- Authority: user instruction dated 2026-08-26 to complete the remaining native software path in
+  one self-contained `gpt-5.6-sol` / `xhigh` session without subagents, tasks or worktrees.
+- Contract: `docs/orchestration/checkpoints/C14_7_NATIVE_CONFIRMED_TWIN_INTEGRATION_CONTRACT.md`.
+- Audit:
+  `docs/evaluation/homeowner-journey/C14_7_NATIVE_PROPOSAL_TO_TWIN_AUDIT_2026-08-26.md`.
+- Frozen base: `main` at `f97f61dc0139dc68fd47469bc700e84313ae9764`; the pre-existing
+  user-owned root `AGENTS.md` modification is preserved untouched and excluded from this checkpoint.
+- Integration branch: `codex/c14-7-native-confirmed-twin-integration`.
+- Contract impact: additive acknowledgement-only C5 safe-initialization and read-only C9 eligible-
+  source discovery routes. Existing C4-C10 contracts remain exact; no migration, generated-client,
+  root manifest or lockfile change is authorised.
+- Runtime/ownership: one primary Sol/xhigh session owns contract freeze, platform authority,
+  coupled native state/navigation, tests, independent final review and closeout. User prohibition on
+  delegation is controlling; no subagent, separate task or worktree is used.
+- Initial claim boundary: software and Simulator evidence only. No physical-device,
+  representative-home, production provider, real CUDA/C8/C9, render-hardware or C15 acceptance.
+
+### Software acceptance — 2026-08-26
+
+- Status: closed for the terminal native software path. Non-draft PR
+  [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) is the `main` integration
+  vehicle. No later checkpoint is open.
+- Independently reviewed correction:
+  `fd404f17cdaa44006af4d6463da9b04385948309`; the root `AGENTS.md` user modification remains
+  excluded and untouched.
+- Durable acceptance:
+  `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md` with
+  retained iPhone/iPad Simulator captures under
+  `docs/evaluation/homeowner-journey/artifacts/c14-7-native/`.
+- Accepted authority path: platform-owned acknowledgement-only unknown-home initialization and
+  rights-filtered/reverified C9 source discovery; native explicit C6/C8/C9 proposal review,
+  correction and discrepancy decisions; exact C5 preview/confirmation/commit; matching persisted
+  C10 success; fresh C14.5 revalidation and entry into the existing C11-C14 design loop.
+- Recovery/isolation acceptance: project and role changes, branch changes, cancellation, stale
+  responses, offline/relaunch and cold recovery discard mutation intent and cannot grant authority.
+  C8 appearance remains non-dimensional and no proposal/source/decision is silently selected.
+- Gate summary: focused contract/platform/web/integration selections passed; live repository
+  PostgreSQL C4-C10 passed 18 tests; `test:contract`, `test:integration`, 921 security tests, full
+  `pnpm verify`, C14/API/boundary checks and generated-client drift passed; 183 native unit tests
+  passed; C14.7 UI passed 3/3 on both iPhone Air and iPad Pro 13-inch (M5) Simulators; affected
+  C14.5/C14.6 UI regressions passed; XcodeGen was byte-stable; Debug/Release Simulator, unsigned
+  physical-target Release compilation, Release analysis and release-fixture exclusion passed.
+- Host/provider truth: `supabase start` was unavailable because repository PostgreSQL already held
+  the configured port; the live repository database was used and retained. No production identity,
+  property, C6/C8/C9, CUDA, deployment or render provider was configured or accepted.
+- Explicitly not accepted or claimed: physical-device/camera/background transfer/RoomPlan/LiDAR,
+  representative-home, production provider or real CUDA/C8/C9 execution, render hardware,
+  structural/regulatory/cost/availability/professional certainty or C15.
+
+### Independent PR review — 2026-08-26
+
+- Frozen review input: PR #10 head `058bf45cb1ddc2659c1b660e9425c4f1e14032a5` against exact
+  base `f97f61dc0139dc68fd47469bc700e84313ae9764`.
+- Runtime: primary `gpt-5.6-sol` / `xhigh` reviewer; one Luna/medium read-only evidence mapper for
+  native invalidation/Release-fixture evidence; one Terra/high read-only contract reviewer for the
+  authority chain and bounded arithmetic. Both were context-minimal and shared-checkout only. No
+  separate task or worktree was created; Sol retained materiality, corrections and final gates.
+- Material corrections: deterministic retry-stable operation/claim identity and frozen retry body;
+  bounded coordinate/calibration/fusion arithmetic; explicit job selection; cancellation-safe
+  compile polling; pending-key invalidation on project/sign-out/reset/role downgrade; exact C10
+  snapshot pins; calibration/proposal identity checks; and dependency-consistent C5 operations that
+  cannot silently mix corrected and accepted host/boundary geometry.
+- Local review gates: full repository verify, contract, integration, security, C14, API and boundary
+  gates passed; generated clients had no drift; focused C14.7 native unit tests passed 10/10; final-
+  code C14.7 UI passed 3/3 on iPhone 17 Pro Max and the adaptive-layout test passed on iPad (A16);
+  Release Simulator and unsigned physical-target builds, Release analysis and exact fixture-
+  exclusion scan passed.
+- Merge rule: all four named GitHub `ci.yml` checks must succeed on the exact final PR head; earlier
+  green runs do not transfer. Only then may PR #10 merge and disposable branch resources be removed.

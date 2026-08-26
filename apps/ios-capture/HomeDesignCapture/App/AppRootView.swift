@@ -11,6 +11,7 @@ struct AppRootView: View {
   @State private var mediaCaptureModel: C8MediaCaptureWorkspaceModel
   @State private var designStudioModel: C14_5DesignStudioModel
   @State private var homeSetupModel: C14_6HomeSetupModel
+  @State private var twinIntegrationModel: C14_7TwinIntegrationModel
 
   @MainActor
   init(
@@ -24,6 +25,7 @@ struct AppRootView: View {
     mediaCapabilityProvider: any C8CameraCapabilityProviding = C8SystemCameraCapabilityProvider(),
     mediaPermissionProvider: any C8CameraPermissionProviding = C8SystemCameraPermissionProvider(),
     homeSetupService: (any C14_6HomeSetupServing)? = nil,
+    twinIntegrationService: (any C14_7TwinIntegrationServing)? = nil,
     designService: (any C14_5DesignStudioServing)? = nil,
     designRecovery: (any C14_5RecoveryStoring)? = nil
   ) {
@@ -67,6 +69,16 @@ struct AppRootView: View {
             tokenProvider: tokenProvider
           ),
         evidenceService: evidenceService
+      )
+    )
+    _twinIntegrationModel = State(
+      initialValue: C14_7TwinIntegrationModel(
+        service: twinIntegrationService
+          ?? C14_7TwinIntegrationAPIClient(
+            baseURL: configuration.apiBaseURL,
+            tokenProvider: tokenProvider,
+            evidence: evidenceService
+          )
       )
     )
     let captureService = C7CaptureAPIClient(
@@ -163,9 +175,11 @@ struct AppRootView: View {
         C14_5HomeownerHubView(
           project: project,
           designModel: designStudioModel,
+          twinModel: twinIntegrationModel,
           readiness: homeSetupModel.readiness,
           onOpenSetup: flow.openHomeSetup,
           onOpenDesign: flow.openDesignStudio,
+          onOpenTwin: flow.openTwinIntegration,
           onOpenEvidence: flow.openEvidenceWorkspace,
           onOpenCapture: flow.openCaptureEligibility,
           onOpenMedia: flow.openMediaCapture,
@@ -187,6 +201,18 @@ struct AppRootView: View {
           onOpenCapture: flow.openCaptureEligibility,
           onOpenEvidence: flow.openEvidenceWorkspace,
           onOpenMedia: flow.openMediaCapture,
+          onBackToHub: flow.openProjectHome
+        )
+      case .twinIntegration:
+        C14_7TwinIntegrationView(
+          project: project,
+          model: twinIntegrationModel,
+          onContinueToDesign: {
+            Task {
+              await designStudioModel.activate(projectId: project.id, force: true)
+              if designStudioModel.designEligible { flow.openDesignStudio() }
+            }
+          },
           onBackToHub: flow.openProjectHome
         )
       case .designStudio:
@@ -295,6 +321,7 @@ struct AppRootView: View {
 
   private func resetProjectState() {
     homeSetupModel.reset()
+    twinIntegrationModel.reset()
     designStudioModel.reset()
     evidenceRepository.reset()
     captureWorkspaceModel.reset()

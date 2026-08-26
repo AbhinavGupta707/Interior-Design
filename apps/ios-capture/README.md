@@ -2,14 +2,30 @@
 
 Native SwiftUI homeowner app for protected sign-in and session recovery, authorised project
 creation/selection, England renovation intake and property context, rights-aware evidence upload,
-capture guidance, and the confirmed-twin-to-render design loop. The address and property dossier
-remain context only: neither establishes interior geometry, boundaries, survey truth or planning
-approval.
+capture guidance, explicit proposal review, confirmed-twin creation and the confirmed-twin-to-render
+design loop. The address and property dossier remain context only: neither establishes interior
+geometry, boundaries, survey truth or planning approval.
 
 The app can take a new homeowner from cold launch to a fresh server-derived statement that their
-setup is ready for capture or eligible to begin a later plan proposal. It does not run C6 plan
-processing, production C8 reconstruction, C9 fusion or C4/C5 confirmation, so it cannot yet create
-its own confirmed twin.
+setup is ready for capture or eligible to begin a plan proposal. From there, the normal homeowner
+hub exposes the existing C6 plan and C8 reconstruction proposal surfaces, optional C9
+reconciliation, explicit C4/C5 correction/preview/confirmation and exact C10 compilation. Only a
+fresh matching succeeded C10 scene unlocks the existing C11-C14 native design studio.
+
+## Confirmed-twin authority
+
+- Native never invents an initial interior. The only empty-home request is the exact
+  acknowledgement `{ confirmUnmeasuredInterior: true }`; the platform binds the actor/property and
+  constructs an unknown-dimension placeholder.
+- C6 candidates start unresolved. Accepted source values, explicit user corrections, exclusions
+  and remaining unknowns retain distinct provenance.
+- C8 appearance is visual context only. It never becomes dimensional evidence or a canonical
+  operation.
+- C9 sources are exact persisted, rights-filtered platform descriptors and are reverified when a
+  job is created. Sources, correspondences and discrepancy decisions are never selected silently.
+- C5 preview/commit and C10 compilation use exact persisted snapshot, branch, hash, result and
+  expiry pins. Project/role changes, stale responses, offline state and relaunch discard mutation
+  intent; local recovery cannot unlock the journey.
 
 ## Requirements
 

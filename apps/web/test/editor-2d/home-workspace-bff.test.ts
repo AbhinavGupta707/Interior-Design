@@ -28,67 +28,6 @@ function request(body: unknown, key = "persisted-home-workspace-key") {
   });
 }
 
-const session = {
-  actor: {
-    displayName: "Home Owner",
-    role: "owner" as const,
-    subject: "local:homeowner-alpha",
-    tenantId: uuid(80),
-    userId: actorUserId,
-  },
-  authMode: "local-fixture" as const,
-  expiresAt: "2099-08-23T12:00:00.000Z",
-};
-
-const propertySource = {
-  coverage: "unknown" as const,
-  dataset: "Manual property context",
-  datasetVersion: "c3-test-v1",
-  licence: { id: "manual", title: "Homeowner supplied context" },
-  modelTrainingAllowed: false as const,
-  participantSharingAllowed: false,
-  providerId: "manual-context",
-  retrievedAt: "2026-08-23T12:00:00.000Z",
-  serviceProcessingAllowed: true as const,
-};
-
-const dossier = {
-  coverageWarnings: ["Property context establishes no current interior."],
-  generatedAt: "2026-08-23T12:00:00.000Z",
-  interiorKnowledgeStatus: "unknown-without-evidence" as const,
-  items: [
-    {
-      classification: "unknown" as const,
-      interiorClaim: "none" as const,
-      key: "current-room-layout",
-      label: "Current room layout",
-      sourceRecordIds: [],
-      value: { kind: "unknown" as const },
-    },
-  ],
-  planningStatus: "not-reviewed" as const,
-  property: {
-    address: {
-      countryCode: "GB" as const,
-      line1: "14 Secret Mews",
-      locality: "Private Town",
-      postcode: "ZZ1 1ZZ",
-    },
-    displayAddress: "14 Secret Mews, Private Town, ZZ1 1ZZ",
-    identifiers: [],
-    interiorKnowledgeStatus: "unknown-without-evidence" as const,
-    jurisdiction: "england" as const,
-    mode: "manual" as const,
-    projectId,
-    propertyId,
-    selectedAt: "2026-08-23T12:00:00.000Z",
-    source: propertySource,
-    updatedAt: "2026-08-23T12:00:00.000Z",
-    version: 1,
-  },
-  sources: [],
-  version: 1,
-};
 function requestUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.href;
@@ -98,24 +37,19 @@ function requestUrl(input: RequestInfo | URL): string {
 function successfulInitializationFetch(capturedBodies: unknown[]) {
   return vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url = requestUrl(input);
-    if (url.endsWith("/v1/session")) return Response.json(session);
-    if (url.endsWith(`/v1/projects/${projectId}/property/dossier`)) {
-      return Response.json(dossier);
-    }
-    if (url.endsWith(`/v1/projects/${projectId}/models/existing/snapshots`)) {
+    if (url.endsWith(`/v1/projects/${projectId}/models/existing/home-workspace`)) {
       if (typeof init?.body !== "string") throw new Error("Expected a JSON request body.");
       const body: unknown = JSON.parse(init.body);
       capturedBodies.push(body);
-      const snapshot = (body as { snapshot: typeof snapshotRecord.snapshot }).snapshot;
       return Response.json(
         {
           ...snapshotRecord,
           canonicalByteLength: 2_048,
           createdBy: actorUserId,
           id: uuid(90),
-          modelId: snapshot.modelId,
+          modelId: snapshotRecord.snapshot.modelId,
           projectId,
-          snapshot,
+          snapshot: { ...snapshotRecord.snapshot, projectId, propertyId },
           snapshotSha256: "c".repeat(64),
           version: 1,
         },
@@ -164,7 +98,7 @@ describe("C14.2 persisted homeowner setup BFF", () => {
     ]);
   });
 
-  it("resolves actor and selected property server-side and reuses the exact keyed body", async () => {
+  it("forwards only acknowledgement while the platform owns actor, property and model state", async () => {
     const capturedBodies: unknown[] = [];
     const fetchMock = successfulInitializationFetch(capturedBodies);
     vi.stubGlobal("fetch", fetchMock);
@@ -174,19 +108,13 @@ describe("C14.2 persisted homeowner setup BFF", () => {
     expect([first.status, second.status]).toEqual([201, 201]);
     expect(capturedBodies).toHaveLength(2);
     expect(capturedBodies[1]).toEqual(capturedBodies[0]);
-
-    const body = capturedBodies[0] as {
-      snapshot: typeof snapshotRecord.snapshot;
-    };
-    expect(body.snapshot.propertyId).toBe(propertyId);
-    expect(body.snapshot.elements.levels[0]?.origin).toMatchObject({
-      actorUserId,
-      state: "user-asserted",
-    });
-    expect(JSON.stringify(body)).not.toMatch(/Secret Mews|Private Town|providerId/iu);
+    expect(capturedBodies[0]).toEqual({ confirmUnmeasuredInterior: true });
+    expect(JSON.stringify(capturedBodies)).not.toMatch(
+      /Secret Mews|Private Town|providerId|snapshot|propertyId|actor/iu,
+    );
 
     const mutationCall = fetchMock.mock.calls.find(([input]) =>
-      requestUrl(input).endsWith("/models/existing/snapshots"),
+      requestUrl(input).endsWith("/models/existing/home-workspace"),
     );
     expect(mutationCall).toBeDefined();
     const mutationHeaders = new Headers(mutationCall?.[1]?.headers);
@@ -219,22 +147,18 @@ describe("C14.2 persisted homeowner setup BFF", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("fails closed for viewer, expired session, and absent property", async () => {
+  it("fails closed for viewer, expired session, and absent property platform responses", async () => {
     const viewerFetch = vi
       .fn()
-      .mockResolvedValueOnce(
-        Response.json({ ...session, actor: { ...session.actor, role: "viewer" } }),
-      )
-      .mockResolvedValueOnce(Response.json(dossier));
+      .mockResolvedValueOnce(Response.json({ code: "FORBIDDEN" }, { status: 403 }));
     vi.stubGlobal("fetch", viewerFetch);
     const viewer = await POST(request({ confirmUnmeasuredInterior: true }), context());
     expect(viewer.status).toBe(403);
-    expect(viewerFetch).toHaveBeenCalledTimes(2);
+    expect(viewerFetch).toHaveBeenCalledTimes(1);
 
     const expiredFetch = vi
       .fn()
-      .mockResolvedValueOnce(Response.json({ ...session, expiresAt: "2020-01-01T00:00:00.000Z" }))
-      .mockResolvedValueOnce(Response.json(dossier));
+      .mockResolvedValueOnce(Response.json({ code: "SESSION_EXPIRED" }, { status: 401 }));
     vi.stubGlobal("fetch", expiredFetch);
     const expired = await POST(request({ confirmUnmeasuredInterior: true }), context());
     expect(expired.status).toBe(401);
@@ -242,11 +166,10 @@ describe("C14.2 persisted homeowner setup BFF", () => {
 
     const absentFetch = vi
       .fn()
-      .mockResolvedValueOnce(Response.json(session))
       .mockResolvedValueOnce(
         Response.json(
           { address: "14 Secret Mews", code: "PROPERTY_NOT_SELECTED", internal: "hidden" },
-          { status: 404 },
+          { status: 409 },
         ),
       );
     vi.stubGlobal("fetch", absentFetch);
@@ -258,43 +181,35 @@ describe("C14.2 persisted homeowner setup BFF", () => {
   });
 
   it("sanitizes unavailable model-service failures without echoing upstream data", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(Response.json(session))
-      .mockResolvedValueOnce(Response.json(dossier))
-      .mockResolvedValueOnce(
-        Response.json(
-          {
-            address: "14 Secret Mews",
-            code: "MODEL_BACKEND_UNAVAILABLE",
-            databaseLocator: "private-cluster",
-            detail: "raw provider failure",
-          },
-          { status: 503 },
-        ),
-      );
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          address: "14 Secret Mews",
+          code: "MODEL_BACKEND_UNAVAILABLE",
+          databaseLocator: "private-cluster",
+          detail: "raw provider failure",
+        },
+        { status: 503 },
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await POST(request({ confirmUnmeasuredInterior: true }), context());
     const body = await response.text();
     expect(response.status).toBe(503);
     expect(body).not.toMatch(/Secret Mews|private-cluster|raw provider failure/iu);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    const initializedFetch = vi
-      .fn()
-      .mockResolvedValueOnce(Response.json(session))
-      .mockResolvedValueOnce(Response.json(dossier))
-      .mockResolvedValueOnce(
-        Response.json(
-          {
-            code: "TYPED_OPERATION_REQUIRED",
-            databaseLocator: "private-cluster",
-            detail: "raw already initialized detail",
-          },
-          { status: 409 },
-        ),
-      );
+    const initializedFetch = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          code: "TYPED_OPERATION_REQUIRED",
+          databaseLocator: "private-cluster",
+          detail: "raw already initialized detail",
+        },
+        { status: 409 },
+      ),
+    );
     vi.stubGlobal("fetch", initializedFetch);
     const initialized = await POST(request({ confirmUnmeasuredInterior: true }), context());
     const initializedBody = await initialized.text();

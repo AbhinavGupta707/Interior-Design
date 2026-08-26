@@ -8,12 +8,8 @@ import {
   draft,
   fusionRequest,
   job,
-  planJob,
-  planProposal,
   proposal,
   project,
-  reconstructionJob,
-  reconstructionResult,
   session,
   snapshotRecord,
 } from "./fixtures";
@@ -34,7 +30,33 @@ function request(method = "GET", body?: unknown, key = "c9-test-key") {
 }
 
 describe("C9 same-origin BFF", () => {
-  it("composes exact C4/C5/C6/C7/C8 state and exposes bounded source descriptors only", async () => {
+  it("composes exact C4/C5 state with platform-authoritative source descriptors only", async () => {
+    const sourceDescriptors = [
+      {
+        coordinateFrame: "source-local-arbitrary",
+        elementCount: 4,
+        evidenceState: "source-derived",
+        id: "93000000-0000-4000-8000-000000000001",
+        kind: "plan-proposal",
+        referenceId: "93000000-0000-4000-8000-000000000001",
+        rights: { serviceProcessingConsent: true, trainingUseConsent: "denied" },
+        scaleStatus: "unknown",
+        schemaVersion: "c6-plan-proposal-v1",
+        sha256: "1".repeat(64),
+      },
+      {
+        coordinateFrame: "source-local-metric",
+        elementCount: 12,
+        evidenceState: "source-derived",
+        id: "93000000-0000-4000-8000-000000000002",
+        kind: "reconstruction-result",
+        referenceId: "93000000-0000-4000-8000-000000000002",
+        rights: { serviceProcessingConsent: true, trainingUseConsent: "denied" },
+        scaleStatus: "metric-estimated",
+        schemaVersion: "c8-reconstruction-result-v1",
+        sha256: "2".repeat(64),
+      },
+    ];
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json(session))
@@ -44,11 +66,7 @@ describe("C9 same-origin BFF", () => {
       .mockResolvedValueOnce(
         Response.json({ branches: [branch], profile: "existing", projectId: project.id }),
       )
-      .mockResolvedValueOnce(Response.json({ jobs: [planJob] }))
-      .mockResolvedValueOnce(Response.json([]))
-      .mockResolvedValueOnce(Response.json({ jobs: [reconstructionJob] }))
-      .mockResolvedValueOnce(Response.json(planProposal))
-      .mockResolvedValueOnce(Response.json(reconstructionResult));
+      .mockResolvedValueOnce(Response.json({ sources: sourceDescriptors }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await GET(request(), context(["projects", project.id, "workspace"]));
@@ -69,10 +87,17 @@ describe("C9 same-origin BFF", () => {
       geometryProducer: "unavailable",
       semanticProducer: "unavailable",
     });
-    expect(fetchMock).toHaveBeenCalledTimes(10);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
     for (const [, init] of fetchMock.mock.calls as [string, RequestInit][]) {
       expect(new Headers(init.headers).get("authorization")).toBe("Bearer server-owned-token");
     }
+    const urls = fetchMock.mock.calls.map(([input]) => String(input));
+    expect(urls.some((url) => url.endsWith(`/v1/projects/${project.id}/fusion-sources`))).toBe(
+      true,
+    );
+    expect(urls.join(" ")).not.toMatch(
+      /plan-processing-jobs|capture-sessions|reconstruction-jobs/u,
+    );
     expect(JSON.stringify(payload)).not.toMatch(/objectKey|signedUrl|credential|accessToken/u);
   });
 

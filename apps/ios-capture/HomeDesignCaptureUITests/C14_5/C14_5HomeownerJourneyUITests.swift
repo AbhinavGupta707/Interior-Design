@@ -10,7 +10,9 @@ final class C14_5HomeownerJourneyUITests: XCTestCase {
     let app = launch(scenario: "eligible-owner")
 
     XCTAssertTrue(app.staticTexts["Homeowner hub"].waitForExistence(timeout: 10))
-    XCTAssertTrue(app.staticTexts["Explicit C5 confirmation"].exists)
+    let confirmation = app.staticTexts["Explicit C5 confirmation"]
+    scrollToElement(confirmation, app: app)
+    XCTAssertTrue(confirmation.exists)
     let exactTwin = app.staticTexts.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Exact C10 twin")
     ).firstMatch
@@ -59,7 +61,9 @@ final class C14_5HomeownerJourneyUITests: XCTestCase {
     let lastVerified = app.staticTexts.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Last verified")
     ).firstMatch
-    XCTAssertTrue(lastVerified.waitForExistence(timeout: 10))
+    XCTAssertTrue(app.staticTexts["Homeowner hub"].waitForExistence(timeout: 10))
+    scrollToElement(lastVerified, app: app)
+    XCTAssertTrue(lastVerified.exists)
     let cacheWarning = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS %@", "It cannot enable design while offline.")
     ).firstMatch

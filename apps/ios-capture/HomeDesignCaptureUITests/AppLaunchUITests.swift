@@ -34,6 +34,11 @@ final class AppLaunchUITests: XCTestCase {
     XCTAssertTrue(evidence.waitForExistence(timeout: 5))
     evidence.tap()
     XCTAssertTrue(app.buttons["Choose a file"].waitForExistence(timeout: 10))
-    XCTAssertTrue(app.staticTexts["Training use"].exists)
+    let trainingConsent = app.switches["evidence.training-consent"]
+    for _ in 0 ..< 4 where !trainingConsent.exists {
+      app.swipeUp()
+    }
+    XCTAssertTrue(trainingConsent.waitForExistence(timeout: 5))
+    XCTAssertEqual(trainingConsent.value as? String, "0")
   }
 }

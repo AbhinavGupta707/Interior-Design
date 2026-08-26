@@ -3,9 +3,11 @@ import SwiftUI
 struct C14_5HomeownerHubView: View {
   let project: CaptureProject
   @Bindable var designModel: C14_5DesignStudioModel
+  let twinModel: C14_7TwinIntegrationModel?
   let readiness: C14_6ReadinessSummary?
   let onOpenSetup: () -> Void
   let onOpenDesign: () -> Void
+  let onOpenTwin: () -> Void
   let onOpenEvidence: () -> Void
   let onOpenCapture: () -> Void
   let onOpenMedia: () -> Void
@@ -14,9 +16,11 @@ struct C14_5HomeownerHubView: View {
   init(
     project: CaptureProject,
     designModel: C14_5DesignStudioModel,
+    twinModel: C14_7TwinIntegrationModel? = nil,
     readiness: C14_6ReadinessSummary? = nil,
     onOpenSetup: @escaping () -> Void = {},
     onOpenDesign: @escaping () -> Void,
+    onOpenTwin: @escaping () -> Void = {},
     onOpenEvidence: @escaping () -> Void,
     onOpenCapture: @escaping () -> Void,
     onOpenMedia: @escaping () -> Void,
@@ -24,9 +28,11 @@ struct C14_5HomeownerHubView: View {
   ) {
     self.project = project
     self.designModel = designModel
+    self.twinModel = twinModel
     self.readiness = readiness
     self.onOpenSetup = onOpenSetup
     self.onOpenDesign = onOpenDesign
+    self.onOpenTwin = onOpenTwin
     self.onOpenEvidence = onOpenEvidence
     self.onOpenCapture = onOpenCapture
     self.onOpenMedia = onOpenMedia
@@ -89,19 +95,41 @@ struct C14_5HomeownerHubView: View {
       designBranch
 
       Section {
-        Label("Next native product gap", systemImage: "point.forward.to.point.capsulepath")
-          .font(.headline)
-        Text("Sign-in, project recovery, structured intake, England property context and rights-cleared evidence readiness are native. C6/C8 proposal jobs, C9 reconciliation and exact C5 preview/commit are not. This app cannot yet produce its own confirmed twin.")
-          .foregroundStyle(.secondary)
+        branchButton(
+          title: twinModel?.confirmedTwin == true ? "Review confirmed home twin" : "Build and confirm home twin",
+          detail: twinDetail,
+          symbol: twinModel?.confirmedTwin == true ? "checkmark.seal.fill" : "point.3.connected.trianglepath.dotted",
+          action: onOpenTwin
+        )
+        .disabled(project.isFixture)
+        .accessibilityIdentifier("c14_7.open-twin")
         Button("Choose another project", action: onChooseProject)
       } header: {
-        Text("Journey boundary")
+        Text("Proposal to confirmed twin")
+      } footer: {
+        Text("Native uses server-authored C4-C10 contracts. Proposals, appearance outputs and recovery state cannot become canonical without exact preview and explicit confirmation.")
       }
     }
     .navigationTitle(project.name)
     .navigationBarTitleDisplayMode(.inline)
-    .task { await designModel.activate(projectId: project.id) }
-    .refreshable { await designModel.activate(projectId: project.id, force: true) }
+    .task {
+      async let design: Void = designModel.activate(projectId: project.id)
+      if let twinModel {
+        async let twin: Void = twinModel.activate(projectId: project.id)
+        _ = await (design, twin)
+      } else {
+        _ = await design
+      }
+    }
+    .refreshable {
+      async let design: Void = designModel.activate(projectId: project.id, force: true)
+      if let twinModel {
+        async let twin: Void = twinModel.activate(projectId: project.id, force: true)
+        _ = await (design, twin)
+      } else {
+        _ = await design
+      }
+    }
   }
 
   private var setupDetail: String {
@@ -117,6 +145,25 @@ struct C14_5HomeownerHubView: View {
       readiness.readyPlanCount > 0,
     ].filter { $0 }.count
     return "\(complete) of 3 setup prerequisites verified. Continue without using the website."
+  }
+
+  private var twinDetail: String {
+    guard let twinModel else {
+      return "Review explicit proposal and confirmation state in the native journey."
+    }
+    if twinModel.confirmedTwin {
+      return "Fresh exact C4/C5/C10 state confirms this twin; continue into the native design loop."
+    }
+    switch twinModel.state {
+    case .loading, .idle:
+      return "Checking proposal, branch and compilation state…"
+    case .stale:
+      return "Offline state is read-only. Reconnect before any proposal or confirmation action."
+    case .forbidden:
+      return "The current membership cannot access this project state."
+    default:
+      return "Review C6 plan or C8/C9 multi-source proposals, preview exact C5 operations, confirm, then compile C10."
+    }
   }
 
   @ViewBuilder
@@ -137,7 +184,7 @@ struct C14_5HomeownerHubView: View {
         .disabled(!designModel.designEligible || project.isFixture)
         .accessibilityIdentifier("c14_5.open-design")
         if !designModel.designEligible {
-          Text("Design is locked. Complete explicit C5 confirmation and exact C10 compilation through an available surface, then refresh this hub.")
+          Text("Design is locked. Use Build and confirm home twin, then return after exact C5 confirmation and matching C10 compilation.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -222,6 +269,8 @@ struct C14_5HomeownerHubView: View {
       .padding(.vertical, 4)
     }
     .buttonStyle(.plain)
+    .accessibilityLabel(title)
+    .accessibilityHint(detail)
   }
 
   private func recovery(title: String, detail: String) -> some View {

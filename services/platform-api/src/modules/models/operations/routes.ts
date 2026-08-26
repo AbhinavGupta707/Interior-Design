@@ -6,6 +6,7 @@ import {
   commitModelOperationsResponseSchema,
   createModelBranchRequestSchema,
   createModelSnapshotRequestSchema,
+  initializeHomeWorkspaceAcknowledgementSchema,
   listModelBranchesResponseSchema,
   modelBranchComparisonSchema,
   modelBranchIdSchema,
@@ -28,7 +29,9 @@ import { forbidden, notFound, parseRequest } from "../../identity/http.js";
 import type { IdentityService } from "../../identity/service.js";
 import { parseIdempotencyKey } from "../../projects/idempotency.js";
 import type { ProjectRepository } from "../../projects/repository.js";
+import type { PropertyBackend } from "../../property/types.js";
 import { BranchRevisionConflictError, ModelOperationValidationError } from "./errors.js";
+import { buildUnmeasuredHomeWorkspaceRequest } from "./home-workspace.js";
 import type { ModelOperationService } from "./service.js";
 
 export const c5OperationBodyLimitBytes = 10_486_784;
@@ -193,7 +196,62 @@ export function registerModelOperationRoutes(
   identity: IdentityService,
   projects: ProjectRepository,
   service: ModelOperationService,
+  property?: Pick<PropertyBackend, "getDossier">,
 ): void {
+  server.post<{ Params: { readonly profile: string; readonly projectId: string } }>(
+    c5RouteContract.initializeHomeWorkspace,
+    async (request, reply) => {
+      const params = parseRequest(projectProfileParamsSchema, request.params);
+      if (params.profile !== "existing") throw notFound();
+      const actor = await authorisedProject(
+        request,
+        params.projectId,
+        "model:snapshot:create",
+        identity,
+        projects,
+      );
+      parseRequest(initializeHomeWorkspaceAcknowledgementSchema, request.body);
+      if (property === undefined) {
+        throw new ApiError({
+          code: "PROPERTY_CONTEXT_UNAVAILABLE",
+          detail: "Property context is unavailable. No model state was changed.",
+          statusCode: 503,
+          title: "Property Context Unavailable",
+        });
+      }
+      const dossier = await property.getDossier(actor.tenantId, params.projectId);
+      if (dossier === undefined || dossier.property.projectId !== params.projectId) {
+        throw new ApiError({
+          code: "PROPERTY_NOT_SELECTED",
+          detail: "Select the project property before acknowledging an unmeasured interior.",
+          statusCode: 409,
+          title: "Property Confirmation Required",
+        });
+      }
+      const idempotencyKey = parseIdempotencyKey(request.headers["idempotency-key"]);
+      const body = buildUnmeasuredHomeWorkspaceRequest({
+        actorUserId: actor.userId,
+        idempotencyKey,
+        projectId: params.projectId,
+        propertyId: dossier.property.propertyId,
+      });
+      const result = await withConflictProblem(request, reply, () =>
+        service.initialize({
+          actor,
+          correlation: getRequestCorrelation(request),
+          expectedCurrentSnapshotSha256: null,
+          idempotencyKey,
+          profile: "existing",
+          projectId: params.projectId,
+          snapshot: body.snapshot,
+        }),
+      );
+      if (result.handled) return;
+      if (result.value.replayed) reply.header("Idempotent-Replay", "true");
+      return reply.status(201).send(modelSnapshotRecordSchema.parse(result.value.record));
+    },
+  );
+
   // Integrated C5 preserves the C4 import route only as a typed, one-time
   // initialization bridge. C4-only composition continues to own its legacy
   // route for checkpoint-isolated tests.

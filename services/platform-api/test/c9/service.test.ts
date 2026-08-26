@@ -63,6 +63,8 @@ describe("C9 model fusion service", () => {
     ["withdrawn rights", "rights", "FUSION_SOURCE_RIGHTS_WITHDRAWN"],
     ["changed hash", "hash", "FUSION_SOURCE_CHANGED"],
     ["changed element count", "count", "FUSION_SOURCE_CHANGED"],
+    ["changed coordinate frame", "coordinate", "FUSION_SOURCE_CHANGED"],
+    ["changed scale status", "scale", "FUSION_SOURCE_CHANGED"],
   ])("rejects %s before durable creation", async (_label, defect, code) => {
     const repository = new MemoryFusionRepository();
     const verification = new MemoryFusionVerification();
@@ -75,6 +77,13 @@ describe("C9 model fusion service", () => {
       verification.verified.set(planSourceId, { ...plan, sha256: "f".repeat(64) });
     if (plan && defect === "count")
       verification.verified.set(planSourceId, { ...plan, elementCount: plan.elementCount + 1 });
+    if (plan && defect === "coordinate")
+      verification.verified.set(planSourceId, {
+        ...plan,
+        coordinateFrame: "source-local-metric",
+      });
+    if (plan && defect === "scale")
+      verification.verified.set(planSourceId, { ...plan, scaleStatus: "metric-estimated" });
     const service = new ModelFusionService({
       baseVerifier: verification,
       repository,

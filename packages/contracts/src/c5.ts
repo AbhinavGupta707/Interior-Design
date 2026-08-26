@@ -422,12 +422,20 @@ export const modelOperationHistoryResponseSchema = z
   })
   .strict();
 
+export const initializeHomeWorkspaceAcknowledgementSchema = z
+  .object({ confirmUnmeasuredInterior: z.literal(true) })
+  .strict();
+export type InitializeHomeWorkspaceAcknowledgement = z.infer<
+  typeof initializeHomeWorkspaceAcknowledgementSchema
+>;
+
 export const c5RouteContract = Object.freeze({
   commitOperations: "/v1/projects/:projectId/models/:profile/branches/:branchId/commits",
   compareBranch:
     "/v1/projects/:projectId/models/:profile/branches/:branchId/compare/:targetBranchId",
   createBranch: "/v1/projects/:projectId/models/:profile/branches",
   getBranch: "/v1/projects/:projectId/models/:profile/branches/:branchId",
+  initializeHomeWorkspace: "/v1/projects/:projectId/models/:profile/home-workspace",
   listBranches: "/v1/projects/:projectId/models/:profile/branches",
   listOperations: "/v1/projects/:projectId/models/:profile/branches/:branchId/operations",
   previewOperations: "/v1/projects/:projectId/models/:profile/branches/:branchId/previews",

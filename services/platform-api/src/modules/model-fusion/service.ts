@@ -26,6 +26,7 @@ import type {
 
 function exactSourceMatches(requested: FusionSource, verified: VerifiedFusionSource): boolean {
   return (
+    verified.coordinateFrame === requested.coordinateFrame &&
     verified.tenantId.length > 0 &&
     verified.projectId.length > 0 &&
     verified.kind === requested.kind &&
@@ -34,7 +35,8 @@ function exactSourceMatches(requested: FusionSource, verified: VerifiedFusionSou
     verified.sha256 === requested.sha256 &&
     verified.elementCount === requested.elementCount &&
     verified.evidenceState === requested.evidenceState &&
-    verified.rightsActive
+    verified.rightsActive &&
+    verified.scaleStatus === requested.scaleStatus
   );
 }
 

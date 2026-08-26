@@ -1,22 +1,9 @@
 import {
   createModelSnapshotRequestSchema,
-  initializeHomeWorkspaceAcknowledgementSchema,
-  modelSnapshotRecordSchema,
   type KnownAttribution,
 } from "@interior-design/contracts";
 import { createHash } from "node:crypto";
-import { NextResponse } from "next/server";
 import type { z } from "zod";
-
-import {
-  backendRequest,
-  expireSession,
-  problemResponse,
-  safeBackendAction,
-} from "../../c1/_shared/backend";
-import type { C5RouteBase } from "./editor-proxy";
-
-export const homeWorkspaceAcknowledgementSchema = initializeHomeWorkspaceAcknowledgementSchema;
 
 type CreateModelSnapshotRequest = z.infer<typeof createModelSnapshotRequestSchema>;
 
@@ -27,8 +14,6 @@ interface HomeWorkspaceScope {
   readonly propertyId: string;
 }
 
-// Historical C14.2 deterministic oracle. Runtime construction now belongs to the platform route,
-// so neither browser nor native can become model authority.
 const method = Object.freeze({
   kind: "manual" as const,
   name: "Homeowner unmeasured workspace acknowledgement",
@@ -136,85 +121,5 @@ export function buildUnmeasuredHomeWorkspaceRequest(
       propertyId: scope.propertyId,
       schemaVersion: "c4-canonical-home-v1",
     },
-  });
-}
-
-async function safeInitializationProblem(response: Response): Promise<NextResponse> {
-  const payload: unknown = await response
-    .clone()
-    .json()
-    .catch(() => undefined);
-  const code =
-    typeof payload === "object" &&
-    payload !== null &&
-    "code" in payload &&
-    typeof (payload as { readonly code?: unknown }).code === "string"
-      ? (payload as { readonly code: string }).code
-      : undefined;
-  const next = NextResponse.json(
-    {
-      ...(code ? { code } : {}),
-      detail:
-        response.status === 401
-          ? "Your session expired. Sign in again before reloading the model workspace."
-          : response.status === 403
-            ? "The current role cannot initialize this model workspace."
-            : response.status === 409
-              ? "Workspace or property state changed. Reload exact server state before retrying."
-              : "The platform could not initialize the workspace. No client-supplied model state was accepted.",
-      status: response.status,
-      title: response.status === 401 ? "Session expired" : "Model setup unavailable",
-      type: "about:blank",
-    },
-    { headers: { "cache-control": "no-store" }, status: response.status },
-  );
-  return response.status === 401 ? expireSession(next) : next;
-}
-
-export async function initializeHomeWorkspace(
-  base: C5RouteBase,
-  idempotencyKey: string,
-): Promise<NextResponse> {
-  if (base.profile !== "existing") {
-    return problemResponse(
-      404,
-      "Home workspace unavailable",
-      "Only the existing-model profile can be initialized by this product action.",
-    );
-  }
-  return safeBackendAction(async () => {
-    const upstream = await backendRequest(
-      `/v1/projects/${base.projectId}/models/existing/home-workspace`,
-      {
-        accessToken: base.accessToken,
-        body: JSON.stringify({ confirmUnmeasuredInterior: true }),
-        headers: {
-          "content-type": "application/json",
-          "idempotency-key": idempotencyKey,
-        },
-        method: "POST",
-      },
-    );
-    if (!upstream.ok) return safeInitializationProblem(upstream);
-    const record = modelSnapshotRecordSchema.safeParse(
-      await upstream.json().catch(() => undefined),
-    );
-    if (
-      !record.success ||
-      record.data.projectId !== base.projectId ||
-      record.data.profile !== "existing" ||
-      record.data.snapshot.projectId !== base.projectId ||
-      record.data.snapshot.profile !== "existing"
-    ) {
-      return problemResponse(
-        502,
-        "Invalid model service response",
-        "The platform returned data outside the exact unmeasured workspace contract.",
-      );
-    }
-    return NextResponse.json(record.data, {
-      headers: { "cache-control": "no-store" },
-      status: upstream.status,
-    });
   });
 }

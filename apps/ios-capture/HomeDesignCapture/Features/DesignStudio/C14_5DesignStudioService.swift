@@ -84,6 +84,10 @@ struct C14_5PendingMutationKeys: Sendable {
     pendingByOperationAndFingerprint[storageKey(operation: operation, fingerprint: fingerprint)] = nil
   }
 
+  mutating func reset() {
+    pendingByOperationAndFingerprint.removeAll(keepingCapacity: false)
+  }
+
   private func storageKey(operation: String, fingerprint: String) -> String {
     "\(operation.utf8.count):\(operation)|\(fingerprint.utf8.count):\(fingerprint)"
   }

@@ -3,6 +3,7 @@ import Observation
 enum CaptureRoute: Hashable, Sendable {
   case projectHome
   case homeSetup
+  case twinIntegration
   case designStudio
   case evidenceWorkspace
   case eligibility
@@ -45,6 +46,11 @@ final class CaptureFlowModel {
   func openHomeSetup() {
     guard selectedProject?.isFixture == false else { return }
     path.append(.homeSetup)
+  }
+
+  func openTwinIntegration() {
+    guard selectedProject?.isFixture == false else { return }
+    path.append(.twinIntegration)
   }
 
   func openCaptureEligibility() {
