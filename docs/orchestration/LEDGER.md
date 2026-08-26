@@ -1296,3 +1296,32 @@
   exclusion scan passed.
 - Merge rule: all four named GitHub `ci.yml` checks must succeed on the exact final PR head; earlier
   green runs do not transfer. Only then may PR #10 merge and disposable branch resources be removed.
+
+## C14.8 — Device-neutral mobile capture foundation
+
+### Activation and contract freeze — 2026-08-26
+
+- Authority: user instruction dated 2026-08-26 to build one cohesive camera-first/LiDAR-optional
+  mobile capture checkpoint, one branch and one non-draft PR from latest clean `origin/main`, without
+  merging it.
+- Immutable predecessor: `f41123f75bad8f70770a499a78638f2f1fb06d84`; `origin/main` was fetched
+  before branch creation and matched exactly. The user-owned root `AGENTS.md` modification remains
+  present, untouched and excluded from all checkpoint commits.
+- Integration branch: `codex/c14-8-device-neutral-mobile-capture`.
+- Runtime/ownership: one primary `gpt-5.6-sol` / `xhigh` session is the sole implementation writer
+  and completion authority. Two early read-only audit processes were stopped immediately when the
+  user refined the protocol; they produced no accepted evidence or implementation. No worktree,
+  separate task or parallel implementation lane exists. At most one Terra/high same-checkout,
+  read-only final audit is permitted on an exact frozen head if materially useful.
+- Audit result: C7 is RoomPlan/LiDAR-specific and deliberately retains no camera frames; C8 already
+  provides immutable C2 RGB media but lacks synchronized ARKit camera evidence and uses synthetic
+  viewpoint advancement; C14.7 already consumes C8 only as proposal state. The smallest coherent
+  boundary keeps C2 RGB assets, extends C7 transport only for optional depth, adds immutable
+  `capture-envelope-v1`, and explicitly creates the existing C8 job only after server revalidation.
+- Frozen contract: `docs/orchestration/checkpoints/C14_8_DEVICE_NEUTRAL_MOBILE_CAPTURE_CONTRACT.md`.
+  Migration allocation is `0015_device_neutral_capture_envelopes.sql`. Existing C4-C10 authority,
+  C7 RoomPlan proposal conversion and C8 production adapter selection remain unchanged.
+- Initial claim boundary: software and Simulator evidence only unless an authorised physical device
+  is actually connected and usable. No physical camera/ARKit/depth/RoomPlan, representative-home,
+  production reconstruction, Windows/RTX 5080, provider, structural, regulatory, cost or
+  professional acceptance is inferred from fixtures or compilation.
