@@ -416,7 +416,9 @@ an exact matching succeeded C10 twin and the existing C11-C14 design studio.
 implementation `08d5de02b9d83dfdcaa58cb8f713523521b9ea75` and durable acceptance are recorded in
 `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md`. One exact
 `gpt-5.6-sol` / `xhigh` primary session performed planning, implementation, review, verification and
-closeout without a subagent, separate task or worktree. No later checkpoint is open.
+closeout without a subagent, separate task or worktree. Non-draft PR
+[#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) targets `main` and remains
+unmerged. No later checkpoint is open.
 
 **Gate:** fresh server membership and persisted C4-C10 state alone drive actions; empty-home
 initialization is acknowledgement-only and server-constructed; proposal candidates, sources,

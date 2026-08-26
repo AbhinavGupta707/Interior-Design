@@ -1246,8 +1246,9 @@
 
 ### Software acceptance — 2026-08-26
 
-- Status: terminal native software path accepted; publication of the required non-draft PR is the
-  remaining closeout action. No later checkpoint is open.
+- Status: closed for the terminal native software path. Non-draft PR
+  [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) targets `main` and remains
+  unmerged. No later checkpoint is open.
 - Verified implementation:
   `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`; the root `AGENTS.md` user modification remains
   excluded and untouched.

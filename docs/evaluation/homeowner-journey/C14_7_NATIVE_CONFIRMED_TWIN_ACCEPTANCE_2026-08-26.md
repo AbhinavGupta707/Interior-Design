@@ -29,6 +29,8 @@ production-provider, real CUDA/C8/C9, render-hardware, deployment or C15 accepta
 - Contract/audit freeze: `4a8263a`.
 - Verified implementation: `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`.
 - Branch: `codex/c14-7-native-confirmed-twin-integration`.
+- Non-draft PR: [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10), targeting
+  `main` and intentionally left unmerged by this session.
 - Runtime: one `gpt-5.6-sol` / `xhigh` primary session. No subagent, separate task or worktree was
   used.
 - The pre-existing user-owned root `AGENTS.md` modification remained unstaged, uncommitted and
