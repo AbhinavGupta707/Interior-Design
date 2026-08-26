@@ -376,6 +376,12 @@ describeWithPostgres("C12 live PostgreSQL lifecycle", () => {
         first.id,
       ),
     ).rejects.toMatchObject({ statusCode: 404 });
+    await expect(
+      service.getConfirmation(actor.tenantId, project.id, randomUUID(), first.id),
+    ).rejects.toMatchObject({ statusCode: 404 });
+    await expect(
+      service.getConfirmation(actor.tenantId, project.id, succeeded.id, randomUUID()),
+    ).rejects.toMatchObject({ statusCode: 404 });
 
     optionClock.advance(1);
     const concurrent = await Promise.allSettled([

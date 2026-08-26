@@ -38,12 +38,15 @@ describe("C12 private recovery boundary", () => {
 
   it("drops malformed, oversized and foreign recovery", () => {
     const local = storage();
-    local.setItem(`hds:c12:option-recovery:${ids.project}`, "{");
+    const key = `hds:c12:option-recovery:${ids.project}`;
+    local.setItem(key, "{");
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
-    local.setItem(`hds:c12:option-recovery:${ids.project}`, "x".repeat(8_001));
+    expect(local.values.has(key)).toBe(false);
+    local.setItem(key, "x".repeat(8_001));
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
+    expect(local.values.has(key)).toBe(false);
     local.setItem(
-      `hds:c12:option-recovery:${ids.project}`,
+      key,
       JSON.stringify({
         leftOptionId: ids.optionA,
         projectId: "c1200000-0000-4000-8000-000000000099",
@@ -54,6 +57,7 @@ describe("C12 private recovery boundary", () => {
       }),
     );
     expect(readDesignOptionRecovery(local, ids.project)).toBeUndefined();
+    expect(local.values.has(key)).toBe(false);
   });
 
   it("migrates legacy envelopes while deleting locally retained confirmations", () => {

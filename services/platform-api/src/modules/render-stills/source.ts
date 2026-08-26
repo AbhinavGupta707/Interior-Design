@@ -111,6 +111,24 @@ function exactSceneBytes(scene: AuthoritativeSucceededScene): boolean {
   );
 }
 
+function exactDiscoveryMatches(
+  discovery: AuthoritativeSceneDiscovery,
+  scene: AuthoritativeSucceededScene,
+): boolean {
+  return (
+    scene.projectId === discovery.projectId &&
+    scene.sceneArtifactId === discovery.sceneArtifactId &&
+    scene.sceneGlbSha256 === discovery.sceneGlbSha256 &&
+    scene.sceneId === discovery.sceneId &&
+    scene.sceneJobId === discovery.sceneJobId &&
+    scene.sceneManifestSha256 === discovery.sceneManifestSha256 &&
+    scene.sourceSnapshotSha256 === discovery.sourceSnapshotSha256 &&
+    scene.cameraIds.length === discovery.cameraIds.length &&
+    scene.cameraIds.every((cameraId, index) => cameraId === discovery.cameraIds[index]) &&
+    exactSceneBytes(scene)
+  );
+}
+
 /**
  * Resolves every hash from server-owned C10/C13 data and the immutable GLB. The request contributes
  * IDs and a named profile only; it never contributes an authoritative digest or rights assertion.
@@ -137,61 +155,73 @@ export class PortBackedRenderSourceResolver implements RenderSourceResolver {
     tenantId: string,
     projectId: string,
   ): Promise<RenderEligibleSourcesResponse> {
-    const scenes = await this.#scenes.listSucceededScenes(tenantId, projectId);
-    const eligible = await Promise.all(
-      scenes.map(async (scene) => {
-        if (scene.projectId !== projectId) {
-          throw new Error("The C10 render discovery authority returned invalid project scope.");
-        }
-        if (scene.cameraIds.length < 1) return undefined;
-        const authoritative = await this.#specifications.resolveSceneBinding(
-          tenantId,
-          projectId,
-          scene.sceneJobId,
-        );
-        if (
-          authoritative !== undefined &&
-          typeof authoritative.allReferencedRightsActive !== "boolean"
-        ) {
-          throw new Error("The C13 render discovery authority returned invalid rights state.");
-        }
-        if (authoritative !== undefined && !authoritative.allReferencedRightsActive)
-          return undefined;
-        const source = renderSourceReferenceSchema.parse({
-          projectId,
-          sceneArtifactId: scene.sceneArtifactId,
-          sceneGlbSha256: scene.sceneGlbSha256,
-          sceneId: scene.sceneId,
-          sceneJobId: scene.sceneJobId,
-          sceneManifestSha256: scene.sceneManifestSha256,
-          sourceSnapshotSha256: scene.sourceSnapshotSha256,
-          ...(authoritative === undefined
-            ? {}
-            : {
-                specification: {
-                  catalogReleaseId: authoritative.catalogReleaseId,
-                  catalogReleaseSha256: authoritative.catalogReleaseSha256,
-                  specificationId: authoritative.specificationId,
-                  specificationRevision: authoritative.specificationRevision,
-                  specificationRevisionSha256: authoritative.specificationRevisionSha256,
-                },
-              }),
-        });
-        const cameras = [...new Set(scene.cameraIds)]
-          .sort((left, right) => left.localeCompare(right))
-          .slice(0, 64)
-          .map((cameraId) => ({ cameraId, label: `Camera ${cameraId.slice(-6)}` }));
-        if (cameras.length < 1) return undefined;
-        return {
-          cameras,
-          label: `Scene ${scene.sceneJobId.slice(-6)}`,
-          source,
-        };
-      }),
-    );
-    const uniqueSources = new Map<string, NonNullable<(typeof eligible)[number]>>();
+    const discoveries = await this.#scenes.listSucceededScenes(tenantId, projectId);
+    const eligible: Array<RenderEligibleSourcesResponse["sources"][number]> = [];
+    for (const discovery of discoveries) {
+      if (discovery.projectId !== projectId) {
+        throw new Error("The C10 render discovery authority returned invalid project scope.");
+      }
+      if (discovery.cameraIds.length < 1) continue;
+
+      // Discovery is authoritative rather than optimistic: inspect the same immutable C10 bytes
+      // that creation will independently reread so a missing or mismatched C13 link cannot be
+      // advertised as an unbound scene.
+      const scene = await this.#scenes.findSucceededScene(
+        tenantId,
+        projectId,
+        discovery.sceneJobId,
+      );
+      if (scene === undefined || !exactDiscoveryMatches(discovery, scene)) {
+        throw new Error("The exact C10 render discovery authority is unavailable or inconsistent.");
+      }
+      const [authoritative, embedded] = await Promise.all([
+        this.#specifications.resolveSceneBinding(tenantId, projectId, scene.sceneJobId),
+        this.#embedded.inspect(scene.glbBytes),
+      ]);
+      if (
+        authoritative !== undefined &&
+        typeof authoritative.allReferencedRightsActive !== "boolean"
+      ) {
+        throw new Error("The C13 render discovery authority returned invalid rights state.");
+      }
+      if (
+        (authoritative === undefined) !== (embedded === undefined) ||
+        (authoritative !== undefined &&
+          (embedded === undefined || !exactBindingMatches(authoritative, embedded)))
+      ) {
+        throw new Error("The immutable C10 scene and C13 discovery authority do not match.");
+      }
+      if (authoritative !== undefined && !authoritative.allReferencedRightsActive) continue;
+
+      const source = renderSourceReferenceSchema.parse({
+        projectId,
+        sceneArtifactId: scene.sceneArtifactId,
+        sceneGlbSha256: scene.sceneGlbSha256,
+        sceneId: scene.sceneId,
+        sceneJobId: scene.sceneJobId,
+        sceneManifestSha256: scene.sceneManifestSha256,
+        sourceSnapshotSha256: scene.sourceSnapshotSha256,
+        ...(authoritative === undefined
+          ? {}
+          : {
+              specification: {
+                catalogReleaseId: authoritative.catalogReleaseId,
+                catalogReleaseSha256: authoritative.catalogReleaseSha256,
+                specificationId: authoritative.specificationId,
+                specificationRevision: authoritative.specificationRevision,
+                specificationRevisionSha256: authoritative.specificationRevisionSha256,
+              },
+            }),
+      });
+      const cameras = [...new Set(scene.cameraIds)]
+        .sort((left, right) => left.localeCompare(right))
+        .slice(0, 64)
+        .map((cameraId) => ({ cameraId, label: `Camera ${cameraId.slice(-6)}` }));
+      if (cameras.length < 1) continue;
+      eligible.push({ cameras, label: `Scene ${scene.sceneJobId.slice(-6)}`, source });
+    }
+    const uniqueSources = new Map<string, (typeof eligible)[number]>();
     for (const source of eligible) {
-      if (source === undefined) continue;
       const previous = uniqueSources.get(source.source.sceneJobId);
       if (previous !== undefined && JSON.stringify(previous) !== JSON.stringify(source)) {
         throw new Error("The render discovery authority returned conflicting scene records.");

@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   ContinuityApiError,
   CrossDeviceContinuityClient,
   continuityContract,
+  createFetchContinuityTransport,
   type ContinuityTransport,
 } from "../src/index.js";
 
@@ -25,7 +26,7 @@ const hash = (character: string) => character.repeat(64);
 
 describe("generated cross-device continuity TypeScript client", () => {
   it("embeds exact generator and OpenAPI pins", () => {
-    expect(continuityContract.generatorVersion).toBe("interior-design-continuity-generator-1.0.0");
+    expect(continuityContract.generatorVersion).toBe("interior-design-continuity-generator-1.0.1");
     expect(continuityContract.openApiVersion).toBe("3.1.2");
     expect(continuityContract.openApiSha256).toMatch(/^[a-f0-9]{64}$/u);
   });
@@ -89,5 +90,37 @@ describe("generated cross-device continuity TypeScript client", () => {
     await expect(client.listRenderEligibleSources(ids.project)).rejects.toBeInstanceOf(
       ContinuityApiError,
     );
+  });
+
+  it("uses an authenticated uncached JSON GET transport", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response("{}", {
+          headers: { "content-type": "application/json" },
+          status: 404,
+        }),
+      ),
+    );
+    const transport = createFetchContinuityTransport({
+      baseUrl: "https://continuity.example",
+      bearerToken: () => Promise.resolve("fixture-token"),
+      fetch: fetchMock,
+    });
+    await expect(
+      transport({
+        method: "GET",
+        operationId: "listRenderEligibleSources",
+        path: `/v1/projects/${ids.project}/render-eligible-sources`,
+      }),
+    ).resolves.toMatchObject({ body: {}, status: 404 });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe(
+      `https://continuity.example/v1/projects/${ids.project}/render-eligible-sources`,
+    );
+    expect(init).toMatchObject({ cache: "no-store", method: "GET" });
+    expect(new Headers(init.headers).get("accept")).toBe(
+      "application/json, application/problem+json",
+    );
+    expect(new Headers(init.headers).get("authorization")).toBe("Bearer fixture-token");
   });
 });

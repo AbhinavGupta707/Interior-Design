@@ -234,8 +234,9 @@ export class C13RenderSpecificationAuthority implements AuthoritativeSpecificati
 /** Parses C10's protected GLB rather than trusting a request-body C13 binding. */
 export class C10EmbeddedC13BindingInspector implements EmbeddedC13BindingPort {
   inspect(bytes: Uint8Array) {
-    try {
+    return Promise.resolve().then(() => {
       const binding = parseProtectedC10Glb(bytes).specificationBinding;
+      if (binding === undefined) return undefined;
       if (
         typeof binding.catalogReleaseId !== "string" ||
         typeof binding.catalogReleaseSha256 !== "string" ||
@@ -243,18 +244,16 @@ export class C10EmbeddedC13BindingInspector implements EmbeddedC13BindingPort {
         !Number.isSafeInteger(binding.specificationRevision) ||
         typeof binding.specificationRevisionSha256 !== "string"
       ) {
-        return Promise.resolve(undefined);
+        throw new Error("The embedded C13 binding is invalid.");
       }
-      return Promise.resolve({
+      return {
         catalogReleaseId: binding.catalogReleaseId,
         catalogReleaseSha256: binding.catalogReleaseSha256,
         specificationId: binding.specificationId,
         specificationRevision: binding.specificationRevision as number,
         specificationRevisionSha256: binding.specificationRevisionSha256,
-      });
-    } catch {
-      return Promise.resolve(undefined);
-    }
+      };
+    });
   }
 }
 

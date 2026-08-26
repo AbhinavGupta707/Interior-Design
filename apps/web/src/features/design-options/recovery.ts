@@ -36,8 +36,13 @@ export function readDesignOptionRecovery(
   storage: RecoveryStorage,
   projectId: string,
 ): DesignOptionRecovery | undefined {
-  const raw = storage.getItem(recoveryKey(projectId));
-  if (!raw || raw.length > 8_000) return undefined;
+  const key = recoveryKey(projectId);
+  const raw = storage.getItem(key);
+  if (!raw) return undefined;
+  if (raw.length > 8_000) {
+    storage.removeItem(key);
+    return undefined;
+  }
   const payload: unknown = (() => {
     try {
       return JSON.parse(raw) as unknown;
@@ -48,7 +53,10 @@ export function readDesignOptionRecovery(
   const parsed = designOptionRecoverySchema.safeParse(payload);
   if (parsed.success && parsed.data.projectId === projectId) return parsed.data;
   const legacy = legacyRecoverySchema.safeParse(payload);
-  if (!legacy.success || legacy.data.projectId !== projectId) return undefined;
+  if (!legacy.success || legacy.data.projectId !== projectId) {
+    storage.removeItem(key);
+    return undefined;
+  }
   const migrated = designOptionRecoverySchema.parse({
     ...(legacy.data.leftOptionId ? { leftOptionId: legacy.data.leftOptionId } : {}),
     projectId,
@@ -57,7 +65,7 @@ export function readDesignOptionRecovery(
     schemaVersion: "c12-design-options-recovery-v2",
     selectedJobId: legacy.data.selectedJobId,
   });
-  storage.setItem(recoveryKey(projectId), JSON.stringify(migrated));
+  storage.setItem(key, JSON.stringify(migrated));
   return migrated;
 }
 

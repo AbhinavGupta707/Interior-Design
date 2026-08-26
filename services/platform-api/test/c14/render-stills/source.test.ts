@@ -35,12 +35,15 @@ const binding: AuthoritativeSpecificationBinding = {
 function resolver(
   overrides: {
     readonly binding?: AuthoritativeSpecificationBinding | null;
+    readonly embeddedBinding?: AuthoritativeSpecificationBinding | null;
     readonly scene?: AuthoritativeSucceededScene;
   } = {},
 ) {
   const selectedBinding = overrides.binding === null ? undefined : (overrides.binding ?? binding);
+  const selectedEmbeddedBinding =
+    overrides.embeddedBinding === null ? undefined : (overrides.embeddedBinding ?? selectedBinding);
   return new PortBackedRenderSourceResolver({
-    embedded: { inspect: () => Promise.resolve(selectedBinding) },
+    embedded: { inspect: () => Promise.resolve(selectedEmbeddedBinding) },
     profiles: {
       resolve: () => ({ estimatedJobBytes: 1_000_000, requiredCapability: "cycles.cpu.v1" }),
     },
@@ -96,6 +99,20 @@ describe("C14 authoritative source resolution", () => {
   it("discovers unbound C10 scenes without fabricating a specification", async () => {
     const eligible = await resolver({ binding: null }).listEligibleSources(ids.tenant, ids.project);
     expect(eligible.sources[0]?.source.specification).toBeUndefined();
+  });
+
+  it("fails discovery when an embedded C13 binding is missing or mismatched in authority", async () => {
+    await expect(
+      resolver({ binding: null, embeddedBinding: binding }).listEligibleSources(
+        ids.tenant,
+        ids.project,
+      ),
+    ).rejects.toThrow(/do not match/u);
+    await expect(
+      resolver({
+        embeddedBinding: { ...binding, specificationRevisionSha256: hash("9") },
+      }).listEligibleSources(ids.tenant, ids.project),
+    ).rejects.toThrow(/do not match/u);
   });
 
   it("rejects a selection whose rights become stale after discovery", async () => {

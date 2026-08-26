@@ -88,6 +88,7 @@ describe("C14 exact same-origin BFF", () => {
       vi.stubGlobal("fetch", fetchMock);
       const response = await GET(request(), context(testCase.segments));
       expect(response.status, testCase.suffix).toBe(200);
+      expect(response.headers.get("cache-control"), testCase.suffix).toBe("private, no-store");
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(url).toContain(testCase.suffix);
       expect(new Headers(init.headers).get("authorization")).toBe("Bearer server-owned-c14-token");

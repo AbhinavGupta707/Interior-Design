@@ -70,6 +70,7 @@ describe("C12 exact same-origin BFF", () => {
       vi.stubGlobal("fetch", fetchMock);
       const response = await GET(request(), context(testCase.segments));
       expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
       expect(fetchMock).toHaveBeenCalledOnce();
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(url).toContain(testCase.suffix);

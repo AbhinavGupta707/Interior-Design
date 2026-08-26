@@ -252,7 +252,7 @@ export async function validatedC14Backend<T>(options: {
       );
     }
     return NextResponse.json(parsed.data, {
-      headers: { "cache-control": "no-store" },
+      headers: { "cache-control": "private, no-store" },
       status: response.status,
     });
   } catch {

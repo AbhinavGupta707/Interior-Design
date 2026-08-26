@@ -103,9 +103,15 @@ describe("C12 public design-option routes", () => {
       method: "GET",
       url: `${route}/${randomUUID()}`,
     });
+    const foreignConfirmation = await server.inject({
+      headers: authorization("fixture|owner-beta"),
+      method: "GET",
+      url: `${route}/${randomUUID()}/options/${randomUUID()}/confirmation`,
+    });
     expect(viewer.statusCode).toBe(403);
     expect(foreignList.statusCode).toBe(404);
     expect(foreignGuess.statusCode).toBe(404);
+    expect(foreignConfirmation.statusCode).toBe(404);
     expect(runtime.repository.jobs).toHaveLength(0);
   });
 
