@@ -1243,3 +1243,34 @@
   delegation is controlling; no subagent, separate task or worktree is used.
 - Initial claim boundary: software and Simulator evidence only. No physical-device,
   representative-home, production provider, real CUDA/C8/C9, render-hardware or C15 acceptance.
+
+### Software acceptance — 2026-08-26
+
+- Status: terminal native software path accepted; publication of the required non-draft PR is the
+  remaining closeout action. No later checkpoint is open.
+- Verified implementation:
+  `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`; the root `AGENTS.md` user modification remains
+  excluded and untouched.
+- Durable acceptance:
+  `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md` with
+  retained iPhone/iPad Simulator captures under
+  `docs/evaluation/homeowner-journey/artifacts/c14-7-native/`.
+- Accepted authority path: platform-owned acknowledgement-only unknown-home initialization and
+  rights-filtered/reverified C9 source discovery; native explicit C6/C8/C9 proposal review,
+  correction and discrepancy decisions; exact C5 preview/confirmation/commit; matching persisted
+  C10 success; fresh C14.5 revalidation and entry into the existing C11-C14 design loop.
+- Recovery/isolation acceptance: project and role changes, branch changes, cancellation, stale
+  responses, offline/relaunch and cold recovery discard mutation intent and cannot grant authority.
+  C8 appearance remains non-dimensional and no proposal/source/decision is silently selected.
+- Gate summary: focused contract/platform/web/integration selections passed; live repository
+  PostgreSQL C4-C10 passed 18 tests; `test:contract`, `test:integration`, 921 security tests, full
+  `pnpm verify`, C14/API/boundary checks and generated-client drift passed; 183 native unit tests
+  passed; C14.7 UI passed 3/3 on both iPhone Air and iPad Pro 13-inch (M5) Simulators; affected
+  C14.5/C14.6 UI regressions passed; XcodeGen was byte-stable; Debug/Release Simulator, unsigned
+  physical-target Release compilation, Release analysis and release-fixture exclusion passed.
+- Host/provider truth: `supabase start` was unavailable because repository PostgreSQL already held
+  the configured port; the live repository database was used and retained. No production identity,
+  property, C6/C8/C9, CUDA, deployment or render provider was configured or accepted.
+- Explicitly not accepted or claimed: physical-device/camera/background transfer/RoomPlan/LiDAR,
+  representative-home, production provider or real CUDA/C8/C9 execution, render hardware,
+  structural/regulatory/cost/availability/professional certainty or C15.

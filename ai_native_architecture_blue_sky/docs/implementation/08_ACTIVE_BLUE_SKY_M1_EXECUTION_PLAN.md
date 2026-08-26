@@ -8,16 +8,15 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 C14.6 completed the native cold-launch-to-capture/proposal-readiness journey from
-clean `main` at `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b`. Production-shaped sign-in/session
-recovery, project continuation, structured C1 intake, honest England C3 property context,
-rights-cleared C2 evidence and fresh prerequisite guidance are now native. The next unimplemented
-native boundary remains C6/C8/C9 processing and C4/C5 confirmation. C14.7 is now frozen as the
-terminal native software-integration checkpoint to close that boundary, compile the exact confirmed
-twin through C10 and enter the existing C11-C14 loop before physical-device acceptance.
-Physical-device, RoomPlan/LiDAR, representative-home, production C6/C8/C9, live identity/property
-provider, deployment, provider/render-hardware and C15 acceptance remain closed; C14.7 will accept
-only the software path to confirmed-twin creation.
+On 2026-08-26 C14.7 completed the terminal native software-integration path before physical-device
+acceptance. Starting from the C14.6 cold-launch/onboarding baseline, an authorised homeowner can now
+review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
+correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
+enter the existing C11-C14 native design loop. Server membership and persisted version/hash pins
+remain authoritative; geometry is never fabricated or silently selected, C8 appearance is never
+dimensional evidence and recovery state never grants authority. Physical-device, RoomPlan/LiDAR,
+representative-home, production C6/C8/C9, live identity/property provider, deployment,
+provider/render-hardware and C15 acceptance remain closed.
 
 M1 includes:
 
@@ -380,15 +379,6 @@ and understand the exact next capture or proposal prerequisite without using the
 | Native authentication and onboarding authority | exact `apps/ios-capture/**` configuration, Keychain/session, project recovery, intake/property/readiness, hub/navigation and existing C2 composition paths | OAuth 2.1/OIDC Authorization Code + PKCE when configured, local fixture development path, server session/membership authority, optimistic C1/C3 mutations, honest property/manual fallback and fresh C2 readiness |
 | Integrated acceptance and closeout | exact C14.6 native tests plus homeowner audit/evidence, plans and ledger | iPhone/iPad cold/relaunch, adaptive/a11y/degraded checks, focused C1-C3/security regressions, full repository gates and explicit provider/hardware/proposal non-claims |
 
-### C14.7 — Native confirmed-twin integration — single primary session
-
-| Lane | Exclusive ownership | Required output |
-| --- | --- | --- |
-| Platform authority bridge | additive C5/C9 shared contracts and platform/web composition | acknowledgement-only unmeasured initialization plus rights-filtered exact C6/C7/C8 source discovery, with server re-verification |
-| Native proposal and confirmation | `apps/ios-capture/**` | integrated C6/C8/C9 proposal flow, explicit human decisions/corrections, exact C5 preview/commit and C10 compilation |
-| Existing design handoff | native hub, navigation and C14.5 activation only | fresh exact confirmed-twin revalidation followed by the already-built C11-C14 studio |
-| Integrated acceptance and closeout | C14.7 contract/audit/acceptance, plans and ledger | contract/security/repository gates plus appropriate iPhone/iPad Simulator layouts, accessibility, recovery and explicit hardware/provider non-claims |
-
 **Status:** complete from clean `main` commit
 `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b` on
 `codex/c14-6-native-homeowner-readiness`; contract/audit freeze `6e8dfc8` and the native
@@ -398,14 +388,45 @@ implementation revision `0e3ab58266dd21e877944433a64f9651ff23e810`, independent-
 Implementation used one exact `gpt-5.6-sol` / `xhigh` primary session. Independent PR review used
 the same-checkout subagent protocol with one bounded Luna/medium evidence mapper and one bounded
 Terra/high contract reviewer; the primary Sol reviewer retained all material decisions and final
-verification. No separate task or worktree was used. No later checkpoint is open.
+verification. No separate task or worktree was used.
 
 **Gate:** a fresh server session and membership drive projects; protected recovery never grants
 authority; C1 intake and C3 property selection retain exact optimistic versions and idempotency;
 address context remains non-geometric; C2 rights and service/training consent remain separate;
 only fresh ready evidence qualifies for guidance. Plan-ready means eligible to begin later C6, not
-a completed proposal. Production C6/C8/C9, C4/C5 confirmation, live provider/deployment and all
-physical-device/hardware claims remain closed.
+a completed proposal. At C14.6 closure, production C6/C8/C9, C4/C5 confirmation,
+live provider/deployment and all physical-device/hardware claims remained closed.
+
+### C14.7 — Native confirmed-twin integration — single primary session
+
+**Outcome:** the normal native homeowner hub now connects server-authoritative C6/C8 proposal
+surfaces, optional C9 reconciliation and explicit C4/C5 review/correction/preview/confirmation to
+an exact matching succeeded C10 twin and the existing C11-C14 design studio.
+
+| Lane | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Platform authority bridge | additive C5/C9 shared contracts and platform/web composition | acknowledgement-only unmeasured initialization plus rights-filtered exact C6/C7/C8 source discovery, with server re-verification |
+| Native proposal and confirmation | `apps/ios-capture/**` | integrated C6/C8/C9 proposal flow, explicit human decisions/corrections, exact C5 preview/commit and C10 compilation |
+| Existing design handoff | native hub, navigation and C14.5 activation only | fresh exact confirmed-twin revalidation followed by the already-built C11-C14 studio |
+| Integrated acceptance and closeout | C14.7 contract/audit/acceptance, plans and ledger | contract/security/repository gates plus appropriate iPhone/iPad Simulator layouts, accessibility, recovery and explicit hardware/provider non-claims |
+
+**Status:** software-complete from clean `main` commit
+`f97f61dc0139dc68fd47469bc700e84313ae9764` on
+`codex/c14-7-native-confirmed-twin-integration`; contract/audit freeze `4a8263a`, verified
+implementation `08d5de02b9d83dfdcaa58cb8f713523521b9ea75` and durable acceptance are recorded in
+`docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md`. One exact
+`gpt-5.6-sol` / `xhigh` primary session performed planning, implementation, review, verification and
+closeout without a subagent, separate task or worktree. No later checkpoint is open.
+
+**Gate:** fresh server membership and persisted C4-C10 state alone drive actions; empty-home
+initialization is acknowledgement-only and server-constructed; proposal candidates, sources,
+correspondences and discrepancy decisions are never selected silently; C8 appearance never becomes
+dimensional evidence; C5 preview/commit and C10 retain exact version/hash/expiry pins; C14.5
+revalidates the matching succeeded scene; project/role changes, stale responses, offline/relaunch
+and recovery caches cannot advance authority. Contract, integration, security, repository, native
+unit, iPhone/iPad Simulator, accessibility, Debug/Release build, analysis and fixture-exclusion
+gates pass. Physical-device, RoomPlan/LiDAR, representative-home, production C6/C8/C9,
+live provider/deployment, render-hardware and C15 acceptance remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 
