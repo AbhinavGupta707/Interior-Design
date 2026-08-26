@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 C14.4 closed the two documented C14.3 provisional seams with server-authoritative C12 confirmation recovery and exact C14 eligible C10/C13/camera discovery plus generated TypeScript/Swift clients. C14.1–C14.3 remain merged on `main`; C14.4 is independently reviewed in non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7), with normal merge authorised after exact-head required checks pass. No native UI, physical-device, C8/C9 production, provider/hardware acceptance or C15 work was opened.
+On 2026-08-26 C14.5 completed the adaptive native homeowner hub and server-authoritative C10-C14 design loop from an already confirmed twin. Native project creation/continuation, optional evidence/capture entry and the exact confirmed-twin gate are now connected to exploration, brief, option confirmation, specification/material decisions, authoritative render submission and verified result viewing. This does **not** make the entire C1-C14 app standalone: production sign-in, C1 intake, C3 property context, C6/C8/C9 proposal work and the C4/C5 confirmation path remain the next native gap. C14.1-C14.4 are on `main`; C14.5 is carried by the non-draft review vehicle recorded in its ledger closeout. Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed.
 
 M1 includes:
 
@@ -345,6 +345,19 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 **Status:** closed from clean `main` commit `e38b32783a08e026d31a8424210b429730393a79`; contract freeze `aa3eb2f`, implementation `aae3379`, durable acceptance `fa6611a` and independent-review correction `7b4eef258c203479815991445212590fe5633775` are recorded under `docs/orchestration/checkpoints/C14_4_CROSS_DEVICE_CONTINUITY_CONTRACT.md`. Non-draft PR [#7](https://github.com/AbhinavGupta707/Interior-Design/pull/7) targets `main`; the independent review supersedes the earlier leave-unmerged disposition and authorises normal merge after exact-head required checks pass. Both implementation and review used one exact `gpt-5.6-sol` / `xhigh` primary session without a task, subagent or worktree.
 
 **Gate:** persisted server state is the only C12/C14 discovery authority; every response is tenant/project scoped and strict; exact C10/C13/hash/rights pins are preserved and revalidated at C14 creation; generated clients are drift-checked; native UI, physical-device, C8/C9 production, provider/hardware acceptance and C15 remain closed.
+
+### C14.5 — Adaptive native homeowner design loop — single primary session
+
+**Outcome:** project selection opens an adaptive native homeowner hub rather than a capture funnel. An authorised homeowner can create or continue a server project, enter evidence/capture as one optional branch and complete C10-C14 natively when fresh server reads prove the exact confirmed twin.
+
+| Sequential body | Exclusive paths | Output and evidence |
+|---|---|---|
+| Native authority and adaptive journey | exact `apps/ios-capture/**` project, navigation, project, hub and design-studio paths | authorised/idempotent project creation, fresh prerequisite gating, generated Swift continuity reads, exact-pinned C10-C14 mutations/results, protected bounded recovery and iPhone/iPad adaptive UI |
+| Integrated acceptance and closeout | exact C14.5 native tests plus homeowner-journey audit/evidence, plan and ledger paths | Swift/Xcode/repository/security gates, Debug-only fixture exclusion, Simulator layouts and explicit earlier-native dependency map |
+
+**Status:** complete from clean `main` commit `0f4018befecda80488b9fa72e2116f621a9ef57c` on `codex/c14-native-homeowner-studio`; contract/audit `e1f72b5`, implementation `79186d6` and degraded-state hardening `ca415f9` are recorded in `docs/evaluation/homeowner-journey/C14_5_NATIVE_HOMEOWNER_ACCEPTANCE_2026-08-26.md`. The non-draft review vehicle is recorded in the orchestration ledger. One `gpt-5.6-sol` / `xhigh` primary session was used; the frozen parallelism gate was unsatisfied and no task, subagent or worktree was spawned.
+
+**Gate:** server membership and exact current C4/C5/C10 pins alone unlock design; local recovery is never authority; owner/editor mutations and viewer read-only behavior preserve authentication, authorisation, provenance, optimistic revisions and idempotency; C12/C14 use the unchanged generated C14.4 Swift client; artifact bytes are verified before viewing; iPhone/iPad Simulator, Swift, Xcode, security, integration and repository gates pass. Whole-app standalone status remains unclaimed until production sign-in and native C1/C3/C4-C9 completion. Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 
