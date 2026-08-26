@@ -87,6 +87,33 @@ final class C14_5DesignStudioTests: XCTestCase {
     XCTAssertFalse(model.canMutate)
   }
 
+  func testReloadFailurePreservesLastVerifiedWorkspaceReadOnly() async {
+    let service = C14_5FixtureDesignService(
+      workspace: C14_5FixtureFactory.workspace(),
+      offlineAfterLoads: 1
+    )
+    let model = C14_5DesignStudioModel(
+      service: service,
+      recovery: C14_5FixtureRecoveryStore(summary: nil)
+    )
+
+    await model.activate(projectId: C14_5FixtureFactory.projectId.uuidString)
+    XCTAssertEqual(model.state, .ready)
+    XCTAssertTrue(model.canMutate)
+
+    await model.activate(
+      projectId: C14_5FixtureFactory.projectId.uuidString,
+      force: true
+    )
+
+    guard case .stale = model.state else {
+      return XCTFail("Expected retained last-verified state")
+    }
+    XCTAssertNotNil(model.workspace)
+    XCTAssertFalse(model.designEligible)
+    XCTAssertFalse(model.canMutate)
+  }
+
   func testRecoveryEnvelopeContainsNoCredentialURLOrCustomerProse() throws {
     let data = try JSONEncoder().encode(C14_5FixtureFactory.recoverySummary())
     let value = try XCTUnwrap(String(data: data, encoding: .utf8))

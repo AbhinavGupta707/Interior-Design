@@ -90,10 +90,19 @@
 
   actor C14_5FixtureDesignService: C14_5DesignStudioServing {
     private var workspace: C14_5Workspace
+    private let offlineAfterLoads: Int?
+    private var loadCount = 0
 
-    init(workspace: C14_5Workspace) { self.workspace = workspace }
+    init(workspace: C14_5Workspace, offlineAfterLoads: Int? = nil) {
+      self.workspace = workspace
+      self.offlineAfterLoads = offlineAfterLoads
+    }
 
     func loadWorkspace(projectId: UUID) throws -> C14_5Workspace {
+      loadCount += 1
+      if let offlineAfterLoads, loadCount > offlineAfterLoads {
+        throw C14_5DesignStudioError.offline
+      }
       guard workspace.snapshot?.projectId == projectId else { throw C14_5DesignStudioError.notFound }
       return workspace
     }

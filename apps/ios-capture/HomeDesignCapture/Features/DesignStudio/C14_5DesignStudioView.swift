@@ -21,6 +21,19 @@ struct C14_5DesignStudioView: View {
         } description: {
           Text("Every stage is re-read from server authority.")
         }
+      case .stale(_, let message) where model.workspace != nil:
+        VStack(spacing: 0) {
+          Label(
+            "Last-verified design state is read-only. \(message)",
+            systemImage: "wifi.slash"
+          )
+          .font(.footnote.weight(.semibold))
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(12)
+          .background(.yellow.opacity(0.16))
+          .accessibilityIdentifier("c14_5.stale-studio")
+          studio
+        }
       case .stale(_, let message):
         unavailable(title: "Offline state is read-only", detail: message)
       case .expired:

@@ -256,6 +256,27 @@ actor C14_5DesignStudioAPIClient: C14_5DesignStudioServing {
       scene = nil
     }
 
+    let prerequisiteWorkspace = C14_5Workspace(
+      session: session,
+      snapshot: snapshot,
+      branches: branchResponse.branches,
+      sceneJobs: sceneJobResponse.jobs,
+      scene: scene,
+      brief: nil,
+      optionJobs: [],
+      options: nil,
+      recoveredConfirmation: nil,
+      catalogReleases: [],
+      catalogAssets: [],
+      specifications: [],
+      eligibleSources: nil,
+      renderCapabilities: nil,
+      renderJobs: [],
+      renderResult: nil
+    )
+    try C14_5ContractValidator.validate(prerequisiteWorkspace, projectId: projectId)
+    guard prerequisiteWorkspace.designEligible else { return prerequisiteWorkspace }
+
     let brief = try await loadBrief(projectId: projectId)
     let optionJobsResponse: C14_5OptionJobsResponse = try await get(
       "/v1/projects/\(project)/design-option-jobs"
