@@ -370,6 +370,7 @@ final class C14_6HomeSetupModel {
   @ObservationIgnored private let evidenceService: any EvidenceServing
   @ObservationIgnored private let service: any C14_6HomeSetupServing
   @ObservationIgnored private var activationId = UUID()
+  @ObservationIgnored private var operationGeneration = 0
   @ObservationIgnored private var pendingIntakeBody: C14_6HomeIntake?
   @ObservationIgnored private var pendingIntakeKey: String?
   @ObservationIgnored private var pendingPropertyOperation: String?
@@ -400,10 +401,31 @@ final class C14_6HomeSetupModel {
 
   func activate(projectId: String, role: String, force: Bool = false) async {
     guard UUID(uuidString: projectId) != nil else {
+      reset()
       state = .failure(message: "The selected project identifier is invalid.")
       return
     }
-    if self.projectId == projectId, state == .ready, !force { return }
+    guard ["owner", "editor", "viewer"].contains(role) else {
+      reset()
+      state = .forbidden
+      return
+    }
+    if self.projectId == projectId, self.role == role, state == .ready, !force { return }
+    let projectChanged = self.projectId != projectId
+    operationGeneration &+= 1
+    let generation = operationGeneration
+    if projectChanged {
+      intake = nil
+      dossier = nil
+      resolution = nil
+      evidence = []
+      pendingIntakeBody = nil
+      pendingIntakeKey = nil
+      pendingPropertyOperation = nil
+      pendingPropertyKey = nil
+      populateDraft(.empty)
+    }
+    isMutating = false
     self.projectId = projectId
     self.role = role
     let requestId = UUID()
@@ -412,22 +434,36 @@ final class C14_6HomeSetupModel {
     mutationMessage = nil
     do {
       let loadedIntake = try await service.intake(projectId: projectId)
+      guard requestId == activationId,
+            isCurrent(projectId: projectId, generation: generation)
+      else { return }
       let loadedDossier = try await service.dossier(projectId: projectId)
+      guard requestId == activationId,
+            isCurrent(projectId: projectId, generation: generation)
+      else { return }
       let loadedEvidence = try await evidenceService.list(projectId: projectId)
-      guard requestId == activationId, self.projectId == projectId else { return }
+      guard requestId == activationId,
+            isCurrent(projectId: projectId, generation: generation)
+      else { return }
+      guard loadedEvidence.count <= 10_000,
+            loadedEvidence.allSatisfy({ $0.isValid(for: projectId) })
+      else { throw C14_6HomeSetupError.invalidResponse }
       intake = loadedIntake
       dossier = loadedDossier
       evidence = loadedEvidence
       populateDraft(loadedIntake?.intake ?? .empty)
       state = .ready
     } catch {
-      guard requestId == activationId, self.projectId == projectId else { return }
+      guard requestId == activationId,
+            isCurrent(projectId: projectId, generation: generation)
+      else { return }
       handle(error, retainsVerifiedState: intake != nil || dossier != nil || !evidence.isEmpty)
     }
   }
 
   func reset() {
     activationId = UUID()
+    operationGeneration &+= 1
     projectId = nil
     role = "viewer"
     intake = nil
@@ -435,12 +471,18 @@ final class C14_6HomeSetupModel {
     resolution = nil
     evidence = []
     mutationMessage = nil
+    isMutating = false
+    pendingIntakeBody = nil
+    pendingIntakeKey = nil
+    pendingPropertyOperation = nil
+    pendingPropertyKey = nil
     state = .idle
     populateDraft(.empty)
   }
 
   func saveIntake() async {
     guard let projectId, canMutate, !isMutating else { return }
+    let generation = operationGeneration
     let draft = buildIntake()
     guard draft.isValid else {
       mutationMessage = "Add at least one goal and keep every list item within 120 characters before saving."
@@ -453,7 +495,11 @@ final class C14_6HomeSetupModel {
     guard let idempotencyKey = pendingIntakeKey else { return }
     isMutating = true
     mutationMessage = nil
-    defer { isMutating = false }
+    defer {
+      if isCurrent(projectId: projectId, generation: generation) {
+        isMutating = false
+      }
+    }
     do {
       let saved = try await service.saveIntake(
         projectId: projectId,
@@ -461,19 +507,21 @@ final class C14_6HomeSetupModel {
         expectedVersion: intake?.version ?? 0,
         idempotencyKey: idempotencyKey
       )
-      guard self.projectId == projectId else { return }
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       intake = saved
       pendingIntakeBody = nil
       pendingIntakeKey = nil
       mutationMessage = "Renovation intake version \(saved.version) saved with server provenance."
       state = .ready
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       handleMutation(error)
     }
   }
 
   func resolveProperty() async {
     guard let projectId, canMutate, !isMutating else { return }
+    let generation = operationGeneration
     let query = propertyQuery.trimmingCharacters(in: .whitespacesAndNewlines)
     guard (3...160).contains(query.count) else {
       mutationMessage = "Enter at least three characters of an England address or postcode."
@@ -483,14 +531,18 @@ final class C14_6HomeSetupModel {
     let key = mutationKey(for: operation)
     isMutating = true
     mutationMessage = nil
-    defer { isMutating = false }
+    defer {
+      if isCurrent(projectId: projectId, generation: generation) {
+        isMutating = false
+      }
+    }
     do {
       let value = try await service.resolve(
         projectId: projectId,
         query: query,
         idempotencyKey: key
       )
-      guard self.projectId == projectId else { return }
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       resolution = value
       pendingPropertyOperation = nil
       pendingPropertyKey = nil
@@ -507,6 +559,7 @@ final class C14_6HomeSetupModel {
         mutationMessage = "Review the matched identity and its source before selecting it."
       }
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       handleMutation(error)
     }
   }
@@ -516,6 +569,7 @@ final class C14_6HomeSetupModel {
           resolution.candidates.contains(where: { $0.candidateId == candidate.candidateId }),
           candidate.jurisdiction == "england"
     else { return }
+    let generation = operationGeneration
     guard (C14_6ContractValidation.date(resolution.expiresAt)?.timeIntervalSinceNow ?? 0) > 0 else {
       mutationMessage = "This address resolution expired. Search again before selecting a property."
       return
@@ -524,7 +578,11 @@ final class C14_6HomeSetupModel {
     let key = mutationKey(for: operation)
     isMutating = true
     mutationMessage = nil
-    defer { isMutating = false }
+    defer {
+      if isCurrent(projectId: projectId, generation: generation) {
+        isMutating = false
+      }
+    }
     do {
       _ = try await service.selectCandidate(
         projectId: projectId,
@@ -533,16 +591,19 @@ final class C14_6HomeSetupModel {
         expectedVersion: currentPropertyVersion,
         idempotencyKey: key
       )
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       pendingPropertyOperation = nil
       pendingPropertyKey = nil
-      await reloadAfterPropertySelection(projectId: projectId)
+      await reloadAfterPropertySelection(projectId: projectId, generation: generation)
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       handleMutation(error)
     }
   }
 
   func selectManual() async {
     guard let projectId, canMutate, !isMutating else { return }
+    let generation = operationGeneration
     let postcode = Self.normalisedPostcode(manualPostcode)
     guard !manualLine1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
           Self.validEnglandPostcode(postcode)
@@ -564,7 +625,11 @@ final class C14_6HomeSetupModel {
     let key = mutationKey(for: operation)
     isMutating = true
     mutationMessage = nil
-    defer { isMutating = false }
+    defer {
+      if isCurrent(projectId: projectId, generation: generation) {
+        isMutating = false
+      }
+    }
     do {
       _ = try await service.selectManual(
         projectId: projectId,
@@ -572,25 +637,32 @@ final class C14_6HomeSetupModel {
         expectedVersion: currentPropertyVersion,
         idempotencyKey: key
       )
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       pendingPropertyOperation = nil
       pendingPropertyKey = nil
-      await reloadAfterPropertySelection(projectId: projectId)
+      await reloadAfterPropertySelection(projectId: projectId, generation: generation)
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       handleMutation(error)
     }
   }
 
-  private func reloadAfterPropertySelection(projectId: String) async {
+  private func reloadAfterPropertySelection(projectId: String, generation: Int) async {
     do {
       let value = try await service.dossier(projectId: projectId)
-      guard self.projectId == projectId else { return }
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       dossier = value
       resolution = nil
       mutationMessage = "Property context saved. Its address and source metadata are not interior geometry, a boundary or a survey."
       state = .ready
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       handleMutation(error)
     }
+  }
+
+  private func isCurrent(projectId: String, generation: Int) -> Bool {
+    self.projectId == projectId && operationGeneration == generation
   }
 
   private func mutationKey(for operation: String) -> String {

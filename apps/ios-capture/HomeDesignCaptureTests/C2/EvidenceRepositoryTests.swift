@@ -37,6 +37,52 @@ final class EvidenceRepositoryTests: XCTestCase {
     XCTAssertEqual(ready.inventoryState, .loaded([Fixture.asset(status: .ready)]))
   }
 
+  func testResetInvalidatesDelayedInventoryResult() async {
+    let service = DelayedEvidenceListService(asset: Fixture.asset(status: .ready))
+    let repository = EvidenceRepository(service: service, recoveryStore: MemoryRecoveryStore())
+
+    let activation = Task { await repository.activate(projectId: Fixture.projectId) }
+    await waitUntil { await service.hasStarted() }
+    repository.reset()
+    await activation.value
+
+    XCTAssertEqual(repository.inventoryState, .idle)
+    XCTAssertEqual(repository.transferState, .idle)
+  }
+
+  func testForeignProjectAssetCannotEnterAuthoritativeInventory() async {
+    let foreignProjectId = "66666666-6666-4666-8666-666666666666"
+    let repository = EvidenceRepository(
+      service: EvidenceServiceStub(
+        listResult: .success([Fixture.asset(status: .ready, projectId: foreignProjectId)])
+      ),
+      recoveryStore: MemoryRecoveryStore()
+    )
+
+    await repository.activate(projectId: Fixture.projectId)
+
+    XCTAssertEqual(
+      repository.inventoryState,
+      .failure("The evidence service response did not match c2-ingest-v1.")
+    )
+  }
+
+  func testC2InventoryRequestBypassesCaches() async throws {
+    let transport = RecordingEvidenceTransport(response: [Fixture.asset(status: .ready)])
+    let client = C2EvidenceAPIClient(
+      baseURL: URL(string: "https://api.example.test")!,
+      tokenProvider: EvidenceTokenProviderStub(),
+      transport: transport
+    )
+
+    _ = try await client.list(projectId: Fixture.projectId)
+    let observedRequest = await transport.recordedRequest()
+    let request = try XCTUnwrap(observedRequest)
+
+    XCTAssertEqual(request.cachePolicy, .reloadIgnoringLocalAndRemoteCacheData)
+    XCTAssertEqual(request.value(forHTTPHeaderField: "Cache-Control"), "no-store")
+  }
+
   func testActivationSurfacesSavedRecoveryWithoutPersistingCredentialsOrSignedURL() async throws {
     let store = MemoryRecoveryStore(recovery: Fixture.recovery)
     let repository = EvidenceRepository(service: EvidenceServiceStub(), recoveryStore: store)
@@ -138,13 +184,26 @@ final class EvidenceRepositoryTests: XCTestCase {
     }
     XCTFail("Condition was not reached before timeout")
   }
+
+  private func waitUntil(
+    timeout: Duration = .seconds(2),
+    condition: @escaping @Sendable () async -> Bool
+  ) async {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+    while clock.now < deadline {
+      if await condition() { return }
+      try? await Task.sleep(for: .milliseconds(20))
+    }
+    XCTFail("Condition was not reached before timeout")
+  }
 }
 
 private enum Fixture {
   static let projectId = "33333333-3333-4333-8333-333333333333"
   static let sessionId = "44444444-4444-4444-8444-444444444444"
 
-  static func asset(status: EvidenceStatus) -> EvidenceAsset {
+  static func asset(status: EvidenceStatus, projectId: String = projectId) -> EvidenceAsset {
     EvidenceAsset(
       createdAt: "2026-07-17T12:00:00.000Z",
       declaredMimeType: "application/pdf",
@@ -180,6 +239,62 @@ private enum Fixture {
     sha256: String(repeating: "a", count: 64),
     updatedAt: Date(timeIntervalSince1970: 0)
   )
+}
+
+private actor DelayedEvidenceListService: EvidenceServing {
+  private let asset: EvidenceAsset
+  private var started = false
+
+  init(asset: EvidenceAsset) { self.asset = asset }
+
+  func hasStarted() -> Bool { started }
+
+  func list(projectId: String) async throws -> [EvidenceAsset] {
+    started = true
+    try await Task.sleep(for: .milliseconds(150))
+    return [asset]
+  }
+
+  func abort(projectId: String, sessionId: String, idempotencyKey: String) {}
+  func access(projectId: String, assetId: String, representation: String) throws -> EvidenceAccess { throw EvidenceServiceError.unavailable }
+  func complete(projectId: String, sessionId: String, sha256: String, parts: [CompletedEvidencePart], idempotencyKey: String) throws -> EvidenceAsset { throw EvidenceServiceError.unavailable }
+  func createSession(projectId: String, selection: EvidenceSelection, sha256: String, rights: EvidenceRightsAssertion, idempotencyKey: String) throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
+  func session(projectId: String, sessionId: String) throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
+  func signPart(projectId: String, sessionId: String, partNumber: Int, byteSize: Int, checksumSha256: String, idempotencyKey: String) throws -> SignedEvidencePart { throw EvidenceServiceError.unavailable }
+  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) throws -> String { throw EvidenceServiceError.unavailable }
+}
+
+private actor EvidenceTokenProviderStub: C7CaptureTokenProviding {
+  func accessToken() -> String { String(repeating: "t", count: 48) }
+  func invalidate() {}
+}
+
+private actor RecordingEvidenceTransport: EvidenceHTTPTransport {
+  private let body: Data
+  private var request: URLRequest?
+
+  init(response: [EvidenceAsset]) {
+    body = try! JSONEncoder().encode(response)
+  }
+
+  func data(for request: URLRequest) throws -> (Data, HTTPURLResponse) {
+    self.request = request
+    return (
+      body,
+      HTTPURLResponse(
+        url: request.url!,
+        statusCode: 200,
+        httpVersion: "HTTP/1.1",
+        headerFields: ["Content-Type": "application/json"]
+      )!
+    )
+  }
+
+  func upload(for request: URLRequest, fromFile fileURL: URL) throws -> (Data, HTTPURLResponse) {
+    throw EvidenceServiceError.unavailable
+  }
+
+  func recordedRequest() -> URLRequest? { request }
 }
 
 private actor MemoryRecoveryStore: EvidenceRecoveryStoring {

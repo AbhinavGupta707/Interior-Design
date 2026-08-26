@@ -263,7 +263,7 @@ struct AppRootView: View {
   }
 
   private func selectProject(_ project: CaptureProject) {
-    homeSetupModel.reset()
+    resetProjectState()
     flow.selectProject(project)
   }
 

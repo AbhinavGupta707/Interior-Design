@@ -4,6 +4,7 @@
 
   enum C14_6UITestScenario: String {
     case coldLaunch = "cold-launch"
+    case offline = "offline"
     case recoveredLaunch = "recovered-launch"
 
     static func current(
@@ -38,7 +39,7 @@
     init(scenario: C14_6UITestScenario) {
       self.scenario = scenario
       _signedIn = State(initialValue: scenario == .recoveredLaunch)
-      let evidence = C14_6FixtureEvidenceService()
+      let evidence = C14_6FixtureEvidenceService(scenario: scenario)
       let resetRecovery = ProcessInfo.processInfo.environment["C14_6_UI_CLEAR_RECOVERY"] == "1"
       _projects = State(
         initialValue: ProjectRepository(
@@ -104,6 +105,10 @@
           onSelect: { project in
             Task {
               if await projects.remember(project) {
+                evidence.reset()
+                setup.reset()
+                design.reset()
+                flow.reset()
                 flow.selectProject(project)
               }
             }
@@ -112,7 +117,9 @@
             Task {
               await projects.clearRecovery()
               projects.reset()
+              evidence.reset()
               setup.reset()
+              design.reset()
               flow.reset()
               signedIn = false
             }
@@ -138,7 +145,7 @@
             onOpenEvidence: flow.openEvidenceWorkspace,
             onOpenCapture: {},
             onOpenMedia: {},
-            onChooseProject: flow.reset
+            onChooseProject: resetProjectState
           )
           .task { await setup.activate(projectId: project.id, role: actor.role) }
         case .homeSetup:
@@ -147,7 +154,7 @@
             role: actor.role,
             model: setup,
             onOpenCapture: {},
-            onOpenEvidence: {},
+            onOpenEvidence: flow.openEvidenceWorkspace,
             onOpenMedia: {},
             onBackToHub: flow.openProjectHome
           )
@@ -162,6 +169,13 @@
           ContentUnavailableView("Fixture boundary", systemImage: "testtube.2")
         }
       }
+    }
+
+    private func resetProjectState() {
+      evidence.reset()
+      setup.reset()
+      design.reset()
+      flow.reset()
     }
   }
 
@@ -231,7 +245,8 @@
       expectedVersion: Int,
       idempotencyKey: String
     ) async throws -> C14_6ProjectProperty {
-      C14_6FixtureFactory.property
+      savedDossier = C14_6FixtureFactory.dossier(for: C14_6FixtureFactory.property)
+      return C14_6FixtureFactory.property
     }
 
     func selectManual(
@@ -240,13 +255,32 @@
       expectedVersion: Int,
       idempotencyKey: String
     ) async throws -> C14_6ProjectProperty {
-      C14_6FixtureFactory.property
+      let property = C14_6ProjectProperty(
+        address: address,
+        displayAddress: address.displayValue,
+        identifiers: [],
+        interiorKnowledgeStatus: "unknown-without-evidence",
+        jurisdiction: "england",
+        location: nil,
+        mode: "manual",
+        projectId: projectId,
+        propertyId: "14600000-0000-4000-8000-000000000021",
+        selectedAt: "2026-08-26T10:02:00Z",
+        source: C14_6FixtureFactory.manualSource,
+        updatedAt: "2026-08-26T10:02:00Z",
+        version: expectedVersion + 1
+      )
+      savedDossier = C14_6FixtureFactory.dossier(for: property)
+      return property
     }
   }
 
   private struct C14_6FixtureEvidenceService: EvidenceServing {
+    let scenario: C14_6UITestScenario
+
     func list(projectId: String) async throws -> [EvidenceAsset] {
-      [C14_6FixtureFactory.plan]
+      if scenario == .offline { throw EvidenceServiceError.offline }
+      return [C14_6FixtureFactory.plan]
     }
     func abort(projectId: String, sessionId: String, idempotencyKey: String) async throws {}
     func access(projectId: String, assetId: String, representation: String) async throws -> EvidenceAccess { throw EvidenceServiceError.unavailable }
@@ -307,6 +341,22 @@
       serviceProcessingAllowed: true
     )
 
+    static let manualSource = C14_6PropertySource(
+      coverage: "unknown",
+      dataset: "User-provided property identity",
+      datasetVersion: "c3-manual-v1",
+      licence: C14_6PropertyLicence(
+        id: "user-provided",
+        title: "User-provided project data",
+        url: nil
+      ),
+      modelTrainingAllowed: false,
+      participantSharingAllowed: true,
+      providerId: "manual-entry",
+      retrievedAt: "2026-08-26T10:02:00Z",
+      serviceProcessingAllowed: true
+    )
+
     static let address = C14_6PropertyAddress(
       line1: "12 Example Mews",
       line2: nil,
@@ -360,6 +410,42 @@
       sources: [sourceRecord],
       version: 1
     )
+
+    static func dossier(for property: C14_6ProjectProperty) -> C14_6PropertyDossier {
+      let record = C14_6PropertySourceRecord(
+        fields: property.mode == "manual" ? ["user-entered-address"] : ["address", "uprn"],
+        id: property.mode == "manual"
+          ? "14600000-0000-4000-8000-000000000031"
+          : sourceRecord.id,
+        normalizedPayloadSha256: property.mode == "manual"
+          ? String(repeating: "c", count: 64)
+          : sourceRecord.normalizedPayloadSha256,
+        projectId: property.projectId,
+        propertyId: property.propertyId,
+        source: property.source
+      )
+      return C14_6PropertyDossier(
+        coverageWarnings: ["Address context does not establish the exact interior."],
+        generatedAt: "2026-08-26T10:02:00Z",
+        interiorKnowledgeStatus: "unknown-without-evidence",
+        items: [
+          C14_6DossierItem(
+            classification: property.mode == "manual" ? "user-stated" : "source-observation",
+            confidencePercent: nil,
+            interiorClaim: "none",
+            key: "property-address",
+            label: "Selected address",
+            note: "Identity context only.",
+            sourceRecordIds: [record.id],
+            value: .text(property.displayAddress)
+          )
+        ],
+        planningStatus: "not-reviewed",
+        property: property,
+        sources: [record],
+        version: property.version
+      )
+    }
 
     static let resolution = C14_6PropertyResolution(
       candidates: [

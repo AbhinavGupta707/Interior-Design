@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "A46873D7-074F-46C1-B3EF-835EF9D91587",
+        "deviceName" : "iPad Pro 13-inch (M5)",
+        "exportedFileName" : "2B05C36D-D98F-4F2A-8920-E681296097A6.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "C14.6 native homeowner readiness_0_1B722D97-8D70-4B25-833C-EE090ADDA76D.png",
+        "timestamp" : 1787746910.365
+      }
+    ],
+    "testIdentifier" : "C14_6HomeownerReadinessUITests/testColdLaunchProgressesToNativeProposalReadiness()",
+    "testIdentifierURL" : "test://com.apple.xcode/HomeDesignCapture/HomeDesignCaptureUITests/C14_6HomeownerReadinessUITests/testColdLaunchProgressesToNativeProposalReadiness"
+  }
+]

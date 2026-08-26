@@ -42,14 +42,24 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
   private let backgroundSession: URLSession
 
   init(
-    foregroundSession: URLSession = .shared,
+    foregroundSession: URLSession? = nil,
     backgroundIdentifier: String = "com.homedesignstudio.capture.c2-parts"
   ) {
-    self.foregroundSession = foregroundSession
+    if let foregroundSession {
+      self.foregroundSession = foregroundSession
+    } else {
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+      configuration.urlCache = nil
+      configuration.httpCookieStorage = nil
+      self.foregroundSession = URLSession(configuration: configuration)
+    }
     let configuration = URLSessionConfiguration.background(withIdentifier: backgroundIdentifier)
     configuration.isDiscretionary = false
     configuration.sessionSendsLaunchEvents = true
     configuration.waitsForConnectivity = true
+    configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+    configuration.urlCache = nil
     backgroundSession = URLSession(configuration: configuration)
   }
 
@@ -252,10 +262,15 @@ actor C2EvidenceAPIClient: EvidenceServing {
       } catch {
         throw EvidenceServiceError.expired
       }
-      var request = URLRequest(url: endpoint(path))
+      var request = URLRequest(
+        url: endpoint(path),
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutInterval: 30
+      )
       request.httpMethod = method
       request.setValue("application/json", forHTTPHeaderField: "Accept")
       request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+      request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
       if let bodyData {
         request.httpBody = bodyData
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

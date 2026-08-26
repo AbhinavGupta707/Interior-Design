@@ -1,5 +1,32 @@
 import SwiftUI
 
+private enum C14_6HomeSetupStep: String, CaseIterable, Identifiable {
+  case intake
+  case property
+  case evidence
+  case readiness
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .intake: "Renovation intake"
+    case .property: "Property context"
+    case .evidence: "Rights and evidence"
+    case .readiness: "Proposal readiness"
+    }
+  }
+
+  var symbol: String {
+    switch self {
+    case .intake: "list.clipboard"
+    case .property: "map"
+    case .evidence: "lock.doc"
+    case .readiness: "checklist"
+    }
+  }
+}
+
 struct C14_6HomeSetupView: View {
   let project: CaptureProject
   let role: String
@@ -10,37 +37,15 @@ struct C14_6HomeSetupView: View {
   let onBackToHub: () -> Void
 
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+  @State private var selectedRegularStep: C14_6HomeSetupStep = .intake
 
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 18) {
-        introduction
-        stateBanner
-        if let message = model.mutationMessage {
-          C14_6StatusBanner(title: "Setup update", detail: message, symbol: "info.circle")
-            .accessibilityIdentifier("c14_6.mutation-message")
-        }
-        if horizontalSizeClass == .regular {
-          HStack(alignment: .top, spacing: 18) {
-            intakeCard
-              .frame(maxWidth: .infinity, alignment: .top)
-            VStack(alignment: .leading, spacing: 18) {
-              propertyCard
-              evidenceCard
-              readinessCard
-            }
-            .frame(maxWidth: .infinity, alignment: .top)
-          }
-        } else {
-          intakeCard
-          propertyCard
-          evidenceCard
-          readinessCard
-        }
+    Group {
+      if horizontalSizeClass == .regular {
+        regularLayout
+      } else {
+        compactLayout
       }
-      .padding()
-      .frame(maxWidth: 1_180)
-      .frame(maxWidth: .infinity)
     }
     .navigationTitle("Home setup")
     .navigationBarTitleDisplayMode(.inline)
@@ -51,6 +56,97 @@ struct C14_6HomeSetupView: View {
     }
     .task { await model.activate(projectId: project.id, role: role) }
     .refreshable { await model.activate(projectId: project.id, role: role, force: true) }
+  }
+
+  private var compactLayout: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 18) {
+        introduction
+        statusContent
+        intakeCard
+        propertyCard
+        evidenceCard
+        readinessCard
+      }
+      .padding()
+      .frame(maxWidth: 760)
+      .frame(maxWidth: .infinity)
+    }
+  }
+
+  private var regularLayout: some View {
+    HStack(spacing: 0) {
+      VStack(alignment: .leading, spacing: 16) {
+        Label(project.name, systemImage: "house.and.flag.fill")
+          .font(.headline)
+          .padding(.horizontal, 16)
+          .accessibilityAddTraits(.isHeader)
+          .accessibilityIdentifier("c14_6.setup-sidebar")
+        ForEach(C14_6HomeSetupStep.allCases) { step in
+          Button {
+            selectedRegularStep = step
+          } label: {
+            HStack(spacing: 12) {
+              Image(systemName: step.symbol)
+                .frame(width: 22)
+              Text(step.title)
+              Spacer(minLength: 0)
+              if selectedRegularStep == step {
+                Image(systemName: "chevron.right")
+                  .font(.caption.weight(.semibold))
+              }
+            }
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .padding(.horizontal, 14)
+            .background(
+              selectedRegularStep == step ? Color.accentColor.opacity(0.14) : Color.clear,
+              in: RoundedRectangle(cornerRadius: 12)
+            )
+          }
+          .buttonStyle(.plain)
+          .accessibilityIdentifier("c14_6.step-\(step.rawValue)")
+          .accessibilityValue(selectedRegularStep == step ? "Selected" : "Not selected")
+        }
+        Spacer(minLength: 0)
+      }
+      .padding(.vertical, 18)
+      .padding(.horizontal, 10)
+      .frame(width: 265)
+      .background(.secondary.opacity(0.06))
+
+      Divider()
+
+      ScrollView {
+        VStack(alignment: .leading, spacing: 18) {
+          introduction
+          statusContent
+          selectedRegularCard
+        }
+        .padding(24)
+        .frame(maxWidth: 820)
+        .frame(maxWidth: .infinity, alignment: .top)
+      }
+      .accessibilityIdentifier("c14_6.setup-detail")
+    }
+  }
+
+  @ViewBuilder
+  private var selectedRegularCard: some View {
+    switch selectedRegularStep {
+    case .intake: intakeCard
+    case .property: propertyCard
+    case .evidence: evidenceCard
+    case .readiness: readinessCard
+    }
+  }
+
+  @ViewBuilder
+  private var statusContent: some View {
+    stateBanner
+    if let message = model.mutationMessage {
+      C14_6StatusBanner(title: "Setup update", detail: message, symbol: "info.circle")
+        .accessibilityIdentifier("c14_6.mutation-message")
+    }
   }
 
   private var introduction: some View {

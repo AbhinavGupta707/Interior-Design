@@ -70,6 +70,7 @@ final class C14_6AuthenticationTests: XCTestCase {
     XCTAssertTrue(body?.contains("grant_type=refresh_token") == true)
     XCTAssertTrue(body?.contains("client_secret") == false)
     XCTAssertEqual(sent.cachePolicy, .reloadIgnoringLocalAndRemoteCacheData)
+    XCTAssertEqual(sent.value(forHTTPHeaderField: "Cache-Control"), "no-store")
   }
 
   func testMissingRefreshCredentialFailsClosed() async {
