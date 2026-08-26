@@ -8,7 +8,7 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 C14.5 completed the adaptive native homeowner hub and server-authoritative C10-C14 design loop from an already confirmed twin. Native project creation/continuation, optional evidence/capture entry and the exact confirmed-twin gate are now connected to exploration, brief, option confirmation, specification/material decisions, authoritative render submission and verified result viewing. This does **not** make the entire C1-C14 app standalone: production sign-in, C1 intake, C3 property context, C6/C8/C9 proposal work and the C4/C5 confirmation path remain the next native gap. C14.1-C14.4 are on `main`; C14.5 is in non-draft PR [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8). Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed.
+On 2026-08-26 C14.5 completed and merged the adaptive native homeowner hub and server-authoritative C10-C14 design loop from an already confirmed twin. C14.6 is now frozen from clean `main` at `4d12e9ce16c0a94b741051f1f50cff8cef2afd0b` to close the next smallest native dependency: production-shaped sign-in/session recovery, project continuation, structured C1 intake, honest England C3 property context, rights-cleared C2 evidence and truthful capture/proposal-readiness guidance. It deliberately stops before C6/C8/C9 processing and C4/C5 confirmation. Physical-device, RoomPlan/LiDAR, representative-home, production C6/C8/C9, live identity/property provider, deployment, confirmed-twin creation, provider/render-hardware and C15 acceptance remain closed.
 
 M1 includes:
 
@@ -358,6 +358,34 @@ All four C9 tasks use exact `gpt-5.6-sol` with `xhigh` reasoning because robust 
 **Status:** complete from clean `main` commit `0f4018befecda80488b9fa72e2116f621a9ef57c` on `codex/c14-native-homeowner-studio`; contract/audit `e1f72b5`, implementation `79186d6` and degraded-state hardening `ca415f9` are recorded in `docs/evaluation/homeowner-journey/C14_5_NATIVE_HOMEOWNER_ACCEPTANCE_2026-08-26.md`. Non-draft PR [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8) targets `main`. One `gpt-5.6-sol` / `xhigh` primary session was used; the frozen parallelism gate was unsatisfied and no task, subagent or worktree was spawned.
 
 **Gate:** server membership and exact current C4/C5/C10 pins alone unlock design; local recovery is never authority; owner/editor mutations and viewer read-only behavior preserve authentication, authorisation, provenance, optimistic revisions and idempotency; C12/C14 use the unchanged generated C14.4 Swift client; artifact bytes are verified before viewing; iPhone/iPad Simulator, Swift, Xcode, security, integration and repository gates pass. Whole-app standalone status remains unclaimed until production sign-in and native C1/C3/C4-C9 completion. Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed.
+
+### C14.6 — Native homeowner onboarding and proposal readiness — single primary session
+
+**Outcome:** from cold launch, a new homeowner can restore or start a production-shaped session,
+create or resume an authorised project, save structured renovation intake, resolve or manually
+enter an England property identity, inspect source-aware context, upload rights-cleared evidence
+and understand the exact next capture or proposal prerequisite without using the web.
+
+| Sequential body | Exclusive paths | Output and evidence |
+|---|---|---|
+| Native authentication and onboarding authority | exact `apps/ios-capture/**` configuration, Keychain/session, project recovery, intake/property/readiness, hub/navigation and existing C2 composition paths | OAuth 2.1/OIDC Authorization Code + PKCE when configured, local fixture development path, server session/membership authority, optimistic C1/C3 mutations, honest property/manual fallback and fresh C2 readiness |
+| Integrated acceptance and closeout | exact C14.6 native tests plus homeowner audit/evidence, plans and ledger | iPhone/iPad cold/relaunch, adaptive/a11y/degraded checks, focused C1-C3/security regressions, full repository gates and explicit provider/hardware/proposal non-claims |
+
+**Status:** frozen for implementation from clean `main` commit
+`4d12e9ce16c0a94b741051f1f50cff8cef2afd0b` on
+`codex/c14-6-native-homeowner-readiness`. The contract is
+`docs/orchestration/checkpoints/C14_6_NATIVE_HOMEOWNER_READINESS_CONTRACT.md` and the actual
+web-dependency audit is
+`docs/evaluation/homeowner-journey/C14_6_NATIVE_WEB_DEPENDENCY_AUDIT_2026-08-26.md`. One exact
+`gpt-5.6-sol` / `xhigh` primary session is assigned. The frozen parallelism gate is unsatisfied;
+no task, subagent or worktree is used.
+
+**Gate:** a fresh server session and membership drive projects; protected recovery never grants
+authority; C1 intake and C3 property selection retain exact optimistic versions and idempotency;
+address context remains non-geometric; C2 rights and service/training consent remain separate;
+only fresh ready evidence qualifies for guidance. Plan-ready means eligible to begin later C6, not
+a completed proposal. Production C6/C8/C9, C4/C5 confirmation, live provider/deployment and all
+physical-device/hardware claims remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 
