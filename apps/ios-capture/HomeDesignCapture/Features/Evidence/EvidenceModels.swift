@@ -110,6 +110,32 @@ struct EvidenceAsset: Codable, Equatable, Identifiable, Sendable {
   let source: EvidenceSourceFingerprint
   let status: EvidenceStatus
   let updatedAt: String
+
+  func isValid(for expectedProjectId: String) -> Bool {
+    let failed = status == .quarantined || status == .rejected
+    return UUID(uuidString: id) != nil
+      && projectId == expectedProjectId
+      && UUID(uuidString: projectId) != nil
+      && C14_6ContractValidation.date(createdAt) != nil
+      && C14_6ContractValidation.date(updatedAt) != nil
+      && C14_6ContractValidation.boundedNonBlank(fileName, maximum: 255)
+      && !fileName.contains("/")
+      && !fileName.contains("\\")
+      && fileName.unicodeScalars.allSatisfy { $0.value >= 32 && $0.value != 127 }
+      && kind.allowedMIMETypes.contains(declaredMimeType)
+      && (detectedMimeType.map {
+        C14_6ContractValidation.boundedNonBlank($0, maximum: 200)
+      } ?? true)
+      && source.byteSize > 0
+      && source.byteSize <= EvidenceFileSupport.maximumBytes
+      && source.sha256.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil
+      && rights.serviceProcessingConsent
+      && (rights.attribution.map {
+        C14_6ContractValidation.boundedNonBlank($0, maximum: 500)
+      } ?? true)
+      && C14_6ContractValidation.validHTTPSURL(rights.licenceUrl)
+      && failed == (rejectionCode != nil)
+  }
 }
 
 enum EvidenceUploadSessionState: String, Codable, Sendable {

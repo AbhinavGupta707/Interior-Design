@@ -3,3 +3,8 @@
 APP_ENVIRONMENT = local
 API_BASE_URL = http:/$()/127.0.0.1:4100
 SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG $(inherited)
+OIDC_AUTHORIZATION_ENDPOINT =
+OIDC_CLIENT_ID =
+OIDC_REDIRECT_URI = com.homedesignstudio.capture.auth:/oauth/callback
+OIDC_SCOPES = openid profile email offline_access
+OIDC_TOKEN_ENDPOINT =

@@ -139,8 +139,16 @@ protocol C7CaptureAuthenticationTransport: Sendable {
 struct C7URLSessionAuthenticationTransport: C7CaptureAuthenticationTransport, @unchecked Sendable {
   private let session: URLSession
 
-  init(session: URLSession = .shared) {
-    self.session = session
+  init(session: URLSession? = nil) {
+    if let session {
+      self.session = session
+    } else {
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+      configuration.urlCache = nil
+      configuration.httpCookieStorage = nil
+      self.session = URLSession(configuration: configuration)
+    }
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {

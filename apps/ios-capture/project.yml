@@ -37,6 +37,7 @@ targets:
           - Resources/Info.plist
     dependencies:
       - package: CrossDeviceContinuityClient
+      - sdk: AuthenticationServices.framework
       - sdk: AVFoundation.framework
       - sdk: RoomPlan.framework
     configFiles:
@@ -50,6 +51,16 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         HomeDesignAPIBaseURL: $(API_BASE_URL)
         HomeDesignEnvironment: $(APP_ENVIRONMENT)
+        HomeDesignOIDCAuthorizationEndpoint: $(OIDC_AUTHORIZATION_ENDPOINT)
+        HomeDesignOIDCClientID: $(OIDC_CLIENT_ID)
+        HomeDesignOIDCRedirectURI: $(OIDC_REDIRECT_URI)
+        HomeDesignOIDCScopes: $(OIDC_SCOPES)
+        HomeDesignOIDCTokenEndpoint: $(OIDC_TOKEN_ENDPOINT)
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: com.homedesignstudio.capture.auth
+            CFBundleURLSchemes:
+              - com.homedesignstudio.capture.auth
         NSCameraUsageDescription: Capture rights-cleared photos, silent video, and supported depth as immutable evidence for your selected home design project.
         UIApplicationSupportsIndirectInputEvents: true
         UILaunchScreen:

@@ -31,6 +31,41 @@ protocol ProjectServing: Sendable {
   func createProject(name: String, idempotencyKey: String) async throws -> CaptureProject
 }
 
+protocol C14_6LastProjectStoring: Sendable {
+  func clear() async throws
+  func load() async throws -> String?
+  func save(projectId: String) async throws
+}
+
+actor C14_6LastProjectStore: C14_6LastProjectStoring {
+  private let store: any C14_6ProtectedStringStoring
+
+  init(
+    store: any C14_6ProtectedStringStoring = C14_6KeychainStringStore(
+      service: "com.homedesignstudio.capture.recovery",
+      account: "last-authorised-project"
+    )
+  ) {
+    self.store = store
+  }
+
+  func clear() async throws { try await store.delete() }
+
+  func load() async throws -> String? {
+    guard let value = try await store.load() else { return nil }
+    guard UUID(uuidString: value) != nil else {
+      try? await store.delete()
+      return nil
+    }
+    return value
+  }
+
+  func save(projectId: String) async throws {
+    guard UUID(uuidString: projectId) != nil else { return }
+    try await store.save(projectId)
+  }
+}
+
 extension ProjectServing {
   func createProject(name: String, idempotencyKey: String) async throws -> CaptureProject {
     throw C1ProjectServiceError.unavailable
@@ -43,25 +78,50 @@ final class ProjectRepository {
   private(set) var state: ProjectListState = .idle
   private(set) var creationMessage: String?
   private(set) var isCreating = false
+  private(set) var recoveredProject: CaptureProject?
   var newProjectName = ""
 
   @ObservationIgnored
   private let service: any ProjectServing
   @ObservationIgnored
+  private let recovery: any C14_6LastProjectStoring
+  @ObservationIgnored
   private var pendingCreationName: String?
   @ObservationIgnored
   private var pendingCreationKey: String?
+  @ObservationIgnored
+  private var loadRequestId = UUID()
+  @ObservationIgnored
+  private var creationRequestId = UUID()
+  @ObservationIgnored
+  private var selectionRequestId = UUID()
 
-  init(service: any ProjectServing) {
+  init(
+    service: any ProjectServing,
+    recovery: any C14_6LastProjectStoring = C14_6LastProjectStore()
+  ) {
     self.service = service
+    self.recovery = recovery
   }
 
   func load() async {
+    let requestId = UUID()
+    loadRequestId = requestId
     state = .loading
     do {
       let projects = try await service.authenticateAndListProjects()
+      let recoveredId = try? await recovery.load()
+      guard requestId == loadRequestId, !Task.isCancelled else { return }
       state = projects.isEmpty ? .empty : .loaded(projects, source: .projectService)
+      if let recoveredId,
+         let project = projects.first(where: { $0.id == recoveredId }) {
+        recoveredProject = project
+      } else {
+        recoveredProject = nil
+        try? await recovery.clear()
+      }
     } catch let error as C1ProjectServiceError {
+      guard requestId == loadRequestId, !Task.isCancelled else { return }
       switch error {
       case .offline:
         state = .offline
@@ -72,23 +132,63 @@ final class ProjectRepository {
       case .invalidResponse:
         state = .failure("The project service response did not match the frozen C1 contract.")
       case .unavailable:
-        state = .failure("The project service is unavailable. Try again or use the local fixture.")
+        state = .failure("The project service is unavailable. Try again.")
       }
     } catch {
-      state = .failure("Projects could not be loaded. Try again or use the local fixture.")
+      guard requestId == loadRequestId, !Task.isCancelled else { return }
+      state = .failure("Projects could not be loaded. Try again.")
     }
   }
 
   func useLocalFixture() {
+    loadRequestId = UUID()
+    selectionRequestId = UUID()
     state = .loaded(CaptureProject.localFixtures, source: .localFixture)
+  }
+
+  func remember(_ project: CaptureProject) async -> Bool {
+    let requestId = UUID()
+    selectionRequestId = requestId
+    if !project.isFixture {
+      try? await recovery.save(projectId: project.id)
+    }
+    guard requestId == selectionRequestId, !Task.isCancelled else {
+      try? await recovery.clear()
+      return false
+    }
+    recoveredProject = project
+    return true
+  }
+
+  func clearRecovery() async {
+    selectionRequestId = UUID()
+    recoveredProject = nil
+    try? await recovery.clear()
+  }
+
+  func reset() {
+    loadRequestId = UUID()
+    creationRequestId = UUID()
+    selectionRequestId = UUID()
+    state = .idle
+    creationMessage = nil
+    isCreating = false
+    newProjectName = ""
+    pendingCreationName = nil
+    pendingCreationKey = nil
+    recoveredProject = nil
   }
 
   func createProject() async {
     let name = newProjectName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !name.isEmpty, name.count <= 120, !isCreating else { return }
+    let requestId = UUID()
+    creationRequestId = requestId
     isCreating = true
     creationMessage = nil
-    defer { isCreating = false }
+    defer {
+      if requestId == creationRequestId { isCreating = false }
+    }
     if pendingCreationName != name || pendingCreationKey == nil {
       pendingCreationName = name
       pendingCreationKey = UUID().uuidString
@@ -96,12 +196,14 @@ final class ProjectRepository {
     guard let idempotencyKey = pendingCreationKey else { return }
     do {
       _ = try await service.createProject(name: name, idempotencyKey: idempotencyKey)
+      guard requestId == creationRequestId, !Task.isCancelled else { return }
       pendingCreationName = nil
       pendingCreationKey = nil
       newProjectName = ""
       creationMessage = "Project created on the server. Choose it to open the homeowner hub."
       await load()
     } catch let error as C1ProjectServiceError {
+      guard requestId == creationRequestId, !Task.isCancelled else { return }
       switch error {
       case .offline:
         creationMessage = "Reconnect before creating a project. Nothing was saved locally."
@@ -115,6 +217,7 @@ final class ProjectRepository {
         creationMessage = "Project creation is temporarily unavailable."
       }
     } catch {
+      guard requestId == creationRequestId, !Task.isCancelled else { return }
       creationMessage = "Project creation failed safely. Nothing was inferred or saved locally."
     }
   }
@@ -127,8 +230,15 @@ protocol C1HTTPTransport: Sendable {
 struct URLSessionTransport: C1HTTPTransport, @unchecked Sendable {
   private let session: URLSession
 
-  init(session: URLSession = .shared) {
-    self.session = session
+  init(session: URLSession? = nil) {
+    if let session {
+      self.session = session
+    } else {
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+      configuration.urlCache = nil
+      self.session = URLSession(configuration: configuration)
+    }
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -320,8 +430,11 @@ struct C1ProjectAPIClient: ProjectServing, Sendable {
 
 struct ProjectSelectionView: View {
   @Bindable var repository: ProjectRepository
+  let actor: C14_6Actor
+  let allowsFixtureFallback: Bool
   let environmentLabel: String
   let onSelect: (CaptureProject) -> Void
+  let onSignOut: () -> Void
 
   var body: some View {
     List {
@@ -341,16 +454,13 @@ struct ProjectSelectionView: View {
       }
 
       Section {
-        LabeledContent("Identity", value: environmentLabel == "Local" ? "Alpha homeowner" : "External sign-in")
-        LabeledContent("Session", value: environmentLabel == "Local" ? "Protected short-lived bearer" : "Required before project access")
+        LabeledContent("Identity", value: actor.displayName)
+        LabeledContent("Role", value: actor.role.capitalized)
+        LabeledContent("Session", value: "Server validated")
       } header: {
         Text(environmentLabel == "Local" ? "Local development identity" : "Authentication")
       } footer: {
-        Text(
-          environmentLabel == "Local"
-            ? "No tenant, user, or role fields are sent as authority. Local development can refresh a protected short-lived bearer."
-            : "Production sign-in is not yet activated in this client. No project is available without a server-issued bearer."
-        )
+        Text("Identity, tenant and role come from GET /v1/session. The client never submits them as authority.")
       }
 
       Section {
@@ -367,7 +477,8 @@ struct ProjectSelectionView: View {
           }
         }
         .disabled(
-          repository.isCreating
+          actor.role == "viewer"
+            || repository.isCreating
             || repository.newProjectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || repository.newProjectName.count > 120
         )
@@ -382,15 +493,28 @@ struct ProjectSelectionView: View {
       } header: {
         Text("New home")
       } footer: {
-        Text("This creates the authorised server project only. Structured intake and property context are not yet native.")
+        Text(
+          actor.role == "viewer"
+            ? "Viewer membership is read-only. Choose an existing authorised project."
+            : "This creates only an authorised server project. Open it to add structured intake, property context and evidence."
+        )
       }
 
       projectContent
     }
     .navigationTitle("Home Design Studio")
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button("Sign out", action: onSignOut)
+          .accessibilityIdentifier("c14_6.sign-out")
+      }
+    }
     .task {
       if repository.state == .idle {
         await repository.load()
+      }
+      if let recovered = repository.recoveredProject {
+        onSelect(recovered)
       }
     }
   }
@@ -423,12 +547,12 @@ struct ProjectSelectionView: View {
         title: "You’re offline",
         message: "Reconnect to load service projects. Nothing has been submitted.",
         retryTitle: "Try again",
-        showsFixtureFallback: true
+        showsFixtureFallback: allowsFixtureFallback
       )
     case .expired:
       recoverySection(
-        title: "Fixture session expired",
-        message: "Sign in to the local fixture again. No project data was changed.",
+        title: "Session expired",
+        message: "Sign in again. No project data was changed.",
         retryTitle: "Sign in again",
         showsFixtureFallback: false
       )
@@ -444,7 +568,7 @@ struct ProjectSelectionView: View {
         title: "Projects could not be loaded",
         message: message,
         retryTitle: "Retry project loading",
-        showsFixtureFallback: true
+        showsFixtureFallback: allowsFixtureFallback
       )
     case .loaded(let projects, let source):
       Section {
@@ -456,7 +580,11 @@ struct ProjectSelectionView: View {
         }
         ForEach(projects) { project in
           Button {
-            onSelect(project)
+            Task {
+              if await repository.remember(project) {
+                onSelect(project)
+              }
+            }
           } label: {
             HStack(spacing: 12) {
               Image(systemName: "house")
@@ -495,7 +623,7 @@ struct ProjectSelectionView: View {
         Text("Projects")
       } footer: {
         Text(
-          "\(environmentLabel) configuration. Selection opens capture, evidence and server-gated design branches."
+          "\(environmentLabel) configuration. Selection opens native setup, capture, evidence and server-gated design branches."
         )
       }
     }

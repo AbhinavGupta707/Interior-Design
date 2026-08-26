@@ -78,6 +78,7 @@ struct EvidenceWorkspaceView: View {
               .foregroundStyle(.secondary)
           }
         }
+        .accessibilityIdentifier("evidence.service-processing-consent")
 
         Toggle(
           isOn: Binding(
@@ -92,6 +93,7 @@ struct EvidenceWorkspaceView: View {
               .foregroundStyle(.secondary)
           }
         }
+        .accessibilityIdentifier("evidence.training-consent")
       }
 
       transferSection

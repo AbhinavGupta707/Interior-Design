@@ -2,6 +2,7 @@ import Observation
 
 enum CaptureRoute: Hashable, Sendable {
   case projectHome
+  case homeSetup
   case designStudio
   case evidenceWorkspace
   case eligibility
@@ -41,6 +42,11 @@ final class CaptureFlowModel {
     path.append(.designStudio)
   }
 
+  func openHomeSetup() {
+    guard selectedProject?.isFixture == false else { return }
+    path.append(.homeSetup)
+  }
+
   func openCaptureEligibility() {
     guard selectedProject != nil else { return }
     path.append(.eligibility)
@@ -64,6 +70,11 @@ final class CaptureFlowModel {
   func useManualEvidence() {
     guard selectedProject != nil else { return }
     path.append(.manualEvidence)
+  }
+
+  func finishBranch() {
+    guard selectedProject != nil else { return }
+    path = [.projectHome]
   }
 
   func reset() {

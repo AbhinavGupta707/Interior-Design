@@ -89,6 +89,7 @@ final class EvidenceRepository {
 
   @ObservationIgnored private let service: any EvidenceServing
   @ObservationIgnored private let recoveryStore: any EvidenceRecoveryStoring
+  @ObservationIgnored private var operationGeneration = 0
   @ObservationIgnored private var uploadTask: Task<Void, Never>?
   private var projectId: String?
 
@@ -100,24 +101,70 @@ final class EvidenceRepository {
     self.recoveryStore = recoveryStore
   }
 
+  func reset() {
+    uploadTask?.cancel()
+    uploadTask = nil
+    operationGeneration &+= 1
+    projectId = nil
+    inventoryState = .idle
+    transferState = .idle
+    selection = nil
+    lastAccess = nil
+    kind = .plan
+    rightsBasis = .ownedByUser
+    serviceProcessingConsent = false
+    trainingUseConsent = .denied
+    attribution = ""
+    licenceURL = ""
+  }
+
   func activate(projectId: String) async {
+    guard UUID(uuidString: projectId) != nil else {
+      reset()
+      inventoryState = .failure("The selected project identifier is invalid.")
+      return
+    }
+    uploadTask?.cancel()
+    uploadTask = nil
+    operationGeneration &+= 1
+    let generation = operationGeneration
+    if self.projectId != projectId {
+      transferState = .idle
+      selection = nil
+      lastAccess = nil
+    }
     self.projectId = projectId
-    await loadInventory()
+    await loadInventory(projectId: projectId, generation: generation)
+    guard isCurrent(projectId: projectId, generation: generation) else { return }
     do {
       if let recovery = try await recoveryStore.load(projectId: projectId) {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .paused(recovery)
       }
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       transferState = .failed("Saved upload recovery could not be read.", recovery: nil)
     }
   }
 
   func loadInventory() async {
     guard let projectId else { return }
+    await loadInventory(projectId: projectId, generation: operationGeneration)
+  }
+
+  private func loadInventory(projectId: String, generation: Int) async {
+    guard isCurrent(projectId: projectId, generation: generation) else { return }
     inventoryState = .loading
     do {
-      inventoryState = .loaded(try await service.list(projectId: projectId))
+      let assets = try await service.list(projectId: projectId)
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
+      guard assets.count <= 10_000, assets.allSatisfy({ $0.isValid(for: projectId) }) else {
+        inventoryState = .failure(message(for: .invalidResponse))
+        return
+      }
+      inventoryState = .loaded(assets)
     } catch let error as EvidenceServiceError {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       switch error {
       case .offline: inventoryState = .offline
       case .expired: inventoryState = .expired
@@ -125,35 +172,56 @@ final class EvidenceRepository {
       default: inventoryState = .failure(message(for: error))
       }
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       inventoryState = .failure("Evidence could not be loaded.")
     }
   }
 
   func selectFile(_ sourceURL: URL) async {
+    guard let projectId else {
+      transferState = .failed("Select an authorised project before adding evidence.", recovery: nil)
+      return
+    }
+    let generation = operationGeneration
+    let selectedKind = kind
+    var stagedURL: URL?
     do {
       guard let mimeType = EvidenceFileSupport.mimeType(for: sourceURL) else {
         throw EvidenceServiceError.unsupported("The selected file type is unsupported.")
       }
-      let stagedURL = try await recoveryStore.stage(sourceURL: sourceURL)
-      let values = try stagedURL.resourceValues(forKeys: [.fileSizeKey])
+      let staged = try await recoveryStore.stage(sourceURL: sourceURL)
+      stagedURL = staged
+      guard isCurrent(projectId: projectId, generation: generation) else {
+        try? FileManager.default.removeItem(at: staged)
+        return
+      }
+      let values = try staged.resourceValues(forKeys: [.fileSizeKey])
       let size = Int64(values.fileSize ?? 0)
       try EvidenceFileSupport.validate(
         fileName: sourceURL.lastPathComponent,
         size: size,
         mimeType: mimeType,
-        kind: kind
+        kind: selectedKind
       )
       selection = EvidenceSelection(
         fileName: sourceURL.lastPathComponent,
-        fileURL: stagedURL,
-        kind: kind,
+        fileURL: staged,
+        kind: selectedKind,
         mimeType: mimeType,
         size: size
       )
       transferState = .idle
     } catch let error as EvidenceServiceError {
+      guard isCurrent(projectId: projectId, generation: generation) else {
+        if let stagedURL { try? FileManager.default.removeItem(at: stagedURL) }
+        return
+      }
       transferState = .failed(message(for: error), recovery: nil)
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else {
+        if let stagedURL { try? FileManager.default.removeItem(at: stagedURL) }
+        return
+      }
       transferState = .failed("The selected file could not be staged for upload.", recovery: nil)
     }
   }
@@ -167,22 +235,39 @@ final class EvidenceRepository {
       transferState = .failed("Confirm service processing before uploading.", recovery: nil)
       return
     }
+    let generation = operationGeneration
+    let rights = rightsAssertion()
     uploadTask?.cancel()
     uploadTask = Task { [weak self] in
       guard let self else { return }
       do {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .hashing(progress: 0)
         let sha256 = try await EvidenceFileSupport.hash(fileURL: selection.fileURL) { progress in
-          await MainActor.run { self.transferState = .hashing(progress: progress) }
+          await MainActor.run {
+            guard self.isCurrent(projectId: projectId, generation: generation) else { return }
+            self.transferState = .hashing(progress: progress)
+          }
         }
         try Task.checkCancellation()
         let session = try await service.createSession(
           projectId: projectId,
           selection: selection,
           sha256: sha256,
-          rights: rightsAssertion(),
+          rights: rights,
           idempotencyKey: UUID().uuidString
         )
+        guard isCurrent(projectId: projectId, generation: generation) else {
+          try? await service.abort(
+            projectId: projectId,
+            sessionId: session.sessionId,
+            idempotencyKey: "abort-\(session.sessionId)"
+          )
+          return
+        }
+        guard session.asset.isValid(for: projectId) else {
+          throw EvidenceServiceError.invalidResponse
+        }
         let recovery = EvidenceRecoveryRecord(
           assetId: session.asset.id,
           completedParts: [],
@@ -197,18 +282,24 @@ final class EvidenceRepository {
           updatedAt: Date()
         )
         try await recoveryStore.save(recovery)
-        try await runUpload(recovery)
+        try await runUpload(recovery, generation: generation)
       } catch is CancellationError {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         if let recovery = try? await recoveryStore.load(projectId: projectId) {
+          guard isCurrent(projectId: projectId, generation: generation) else { return }
           transferState = .paused(recovery)
         } else {
           transferState = .idle
         }
       } catch let error as EvidenceServiceError {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         let recovery = try? await recoveryStore.load(projectId: projectId)
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .failed(message(for: error), recovery: recovery ?? nil)
       } catch {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         let recovery = try? await recoveryStore.load(projectId: projectId)
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .failed("The upload could not continue. Retry resumes recorded parts.", recovery: recovery ?? nil)
       }
     }
@@ -219,12 +310,21 @@ final class EvidenceRepository {
   }
 
   func resume(_ recovery: EvidenceRecoveryRecord) {
+    guard let projectId, recovery.projectId == projectId else {
+      transferState = .failed("The saved upload belongs to a different project and was not resumed.", recovery: nil)
+      return
+    }
+    let generation = operationGeneration
     uploadTask?.cancel()
     uploadTask = Task { [weak self] in
       guard let self else { return }
       var activeRecovery = recovery
       do {
         let session = try await service.session(projectId: recovery.projectId, sessionId: recovery.sessionId)
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
+        guard session.asset.isValid(for: projectId) else {
+          throw EvidenceServiceError.invalidResponse
+        }
         activeRecovery = EvidenceResumeReconciler.reconcile(
           recovery,
           recordedPartNumbers: session.recordedPartNumbers
@@ -233,27 +333,34 @@ final class EvidenceRepository {
         switch session.state {
         case .aborted, .expired:
           try await recoveryStore.clear(projectId: recovery.projectId)
+          guard isCurrent(projectId: projectId, generation: generation) else { return }
           transferState = .failed("The saved session is \(session.state.rawValue). Select the file again.", recovery: nil)
         case .completed:
           try await recoveryStore.clear(projectId: recovery.projectId)
+          guard isCurrent(projectId: projectId, generation: generation) else { return }
           transferState = .completed
-          await loadInventory()
+          await loadInventory(projectId: projectId, generation: generation)
         case .initiated, .uploading:
-          try await runUpload(activeRecovery)
+          try await runUpload(activeRecovery, generation: generation)
         }
       } catch is CancellationError {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .paused(activeRecovery)
       } catch let error as EvidenceServiceError {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .failed(message(for: error), recovery: activeRecovery)
       } catch {
+        guard isCurrent(projectId: projectId, generation: generation) else { return }
         transferState = .failed("The saved upload could not be reconciled.", recovery: activeRecovery)
       }
     }
   }
 
   func cancel(_ recovery: EvidenceRecoveryRecord?) async {
+    guard let projectId else { return }
+    let generation = operationGeneration
     uploadTask?.cancel()
-    if let recovery {
+    if let recovery, recovery.projectId == projectId {
       try? await service.abort(
         projectId: recovery.projectId,
         sessionId: recovery.sessionId,
@@ -261,31 +368,43 @@ final class EvidenceRepository {
       )
       try? await recoveryStore.clear(projectId: recovery.projectId)
     }
+    guard isCurrent(projectId: projectId, generation: generation) else { return }
     transferState = .idle
-    await loadInventory()
+    await loadInventory(projectId: projectId, generation: generation)
   }
 
   func requestPreview(asset: EvidenceAsset) async {
-    guard asset.status == .ready, let projectId else { return }
+    guard asset.status == .ready, let projectId, asset.isValid(for: projectId) else { return }
+    let generation = operationGeneration
     do {
-      lastAccess = try await service.access(
+      let access = try await service.access(
         projectId: projectId,
         assetId: asset.id,
         representation: "preview"
       )
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
+      lastAccess = access
     } catch let error as EvidenceServiceError {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       inventoryState = .failure(message(for: error))
     } catch {
+      guard isCurrent(projectId: projectId, generation: generation) else { return }
       inventoryState = .failure("Short-lived preview access could not be issued.")
     }
   }
 
-  private func runUpload(_ initialRecovery: EvidenceRecoveryRecord) async throws {
+  private func runUpload(_ initialRecovery: EvidenceRecoveryRecord, generation: Int) async throws {
     var recovery = initialRecovery
+    guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+      throw CancellationError()
+    }
     let totalParts = Int(ceil(Double(fileSize(recovery.fileURL)) / Double(recovery.partSize)))
     var completed = Set(recovery.completedParts.map(\.partNumber))
     for partNumber in 1...max(totalParts, 1) where !completed.contains(partNumber) {
       try Task.checkCancellation()
+      guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+        throw CancellationError()
+      }
       let offset = UInt64((partNumber - 1) * recovery.partSize)
       let length = min(recovery.partSize, max(0, fileSize(recovery.fileURL) - Int(offset)))
       let partURL = try await recoveryStore.partFile(
@@ -307,12 +426,18 @@ final class EvidenceRepository {
         checksumSha256: checksum,
         idempotencyKey: "part-\(recovery.sessionId)-\(partNumber)-\(checksumKey.prefix(12))"
       )
+      guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+        throw CancellationError()
+      }
       guard signed.requiredHeaders.contains(where: {
         $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
       }) else {
         throw EvidenceServiceError.checksumBindingMissing
       }
       let etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+      guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+        throw CancellationError()
+      }
       recovery.completedParts.append(
         CompletedEvidencePart(checksumSha256: checksum, etag: etag, partNumber: partNumber)
       )
@@ -322,18 +447,28 @@ final class EvidenceRepository {
       try await recoveryStore.save(recovery)
       transferState = .uploading(progress: Double(completed.count) / Double(max(totalParts, 1)))
     }
+    guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+      throw CancellationError()
+    }
     transferState = .completing
-    _ = try await service.complete(
+    let asset = try await service.complete(
       projectId: recovery.projectId,
       sessionId: recovery.sessionId,
       sha256: recovery.sha256,
       parts: recovery.completedParts,
       idempotencyKey: recovery.completionKey
     )
+    guard isCurrent(projectId: recovery.projectId, generation: generation),
+          asset.isValid(for: recovery.projectId)
+    else { throw EvidenceServiceError.invalidResponse }
     try await recoveryStore.clear(projectId: recovery.projectId)
     transferState = .completed
     selection = nil
-    await loadInventory()
+    await loadInventory(projectId: recovery.projectId, generation: generation)
+  }
+
+  private func isCurrent(projectId: String, generation: Int) -> Bool {
+    self.projectId == projectId && operationGeneration == generation
   }
 
   private func rightsAssertion() -> EvidenceRightsAssertion {

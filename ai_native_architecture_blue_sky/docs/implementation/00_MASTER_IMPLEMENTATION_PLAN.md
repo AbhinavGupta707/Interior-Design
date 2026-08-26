@@ -5,7 +5,15 @@
 **Initial jurisdiction:** England; subsequent UK expansion only after jurisdiction-specific review
 **Initial product milestone:** M1 — Complete Home Design System
 
-**Current execution note (26 August 2026):** corrective checkpoints C14.1-C14.4 are closed and merged. C14.5 completes an adaptive native homeowner hub and the server-authoritative C10-C14 journey from an already confirmed twin: project creation/continuation, optional evidence/capture, exact prerequisite gating, exploration, brief, options, specification/material decisions and authoritative render submission/result viewing. The complete app is not yet standalone because production sign-in, native C1 intake, C3 property context, C6/C8/C9 proposal work and the C4/C5 confirmation path are still absent. C14.5 is in non-draft PR [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8). Physical-device, RoomPlan/LiDAR, representative-home, production C8/C9, provider/render-hardware and C15 acceptance remain closed; C8 v2 remains acceptance-only.
+**Current execution note (26 August 2026):** corrective checkpoints C14.1-C14.6 are closed. C14.6
+completed the next smallest native homeowner slice from clean `main` at
+`4d12e9ce16c0a94b741051f1f50cff8cef2afd0b`: production-shaped sign-in/session recovery, project
+continuation, structured C1 renovation intake, honest England C3 property context, rights-cleared
+C2 evidence and truthful capture/proposal-readiness guidance. It does not start or accept C6/C8/C9
+jobs or C4/C5 confirmation, so the app still cannot independently create a confirmed twin. No
+later checkpoint is open. Live identity/property providers and deployment, physical-device,
+RoomPlan/LiDAR, representative-home, production C6/C8/C9, provider/render-hardware and C15
+acceptance remain closed; C8 v2 remains acceptance-only.
 
 ## 1. Executive answer
 

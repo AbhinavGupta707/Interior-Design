@@ -79,6 +79,21 @@ final class C7CaptureWorkspaceModel {
 
   var isReadOnly: Bool { !role.canMutate }
 
+  func reset() {
+    activeTask?.cancel()
+    activeTask = nil
+    operationGeneration += 1
+    projectId = nil
+    record = nil
+    captureLabel = ""
+    expectedRoomCountText = ""
+    mode = .singleRoom
+    rightsBasis = .ownedByUser
+    serviceProcessingConsent = false
+    resetReview()
+    state = .loading
+  }
+
   func activate(projectId rawProjectId: String) async {
     activeTask?.cancel()
     operationGeneration += 1

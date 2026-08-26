@@ -3,11 +3,35 @@ import SwiftUI
 struct C14_5HomeownerHubView: View {
   let project: CaptureProject
   @Bindable var designModel: C14_5DesignStudioModel
+  let readiness: C14_6ReadinessSummary?
+  let onOpenSetup: () -> Void
   let onOpenDesign: () -> Void
   let onOpenEvidence: () -> Void
   let onOpenCapture: () -> Void
   let onOpenMedia: () -> Void
   let onChooseProject: () -> Void
+
+  init(
+    project: CaptureProject,
+    designModel: C14_5DesignStudioModel,
+    readiness: C14_6ReadinessSummary? = nil,
+    onOpenSetup: @escaping () -> Void = {},
+    onOpenDesign: @escaping () -> Void,
+    onOpenEvidence: @escaping () -> Void,
+    onOpenCapture: @escaping () -> Void,
+    onOpenMedia: @escaping () -> Void,
+    onChooseProject: @escaping () -> Void
+  ) {
+    self.project = project
+    self.designModel = designModel
+    self.readiness = readiness
+    self.onOpenSetup = onOpenSetup
+    self.onOpenDesign = onOpenDesign
+    self.onOpenEvidence = onOpenEvidence
+    self.onOpenCapture = onOpenCapture
+    self.onOpenMedia = onOpenMedia
+    self.onChooseProject = onChooseProject
+  }
 
   var body: some View {
     List {
@@ -35,6 +59,14 @@ struct C14_5HomeownerHubView: View {
 
       Section("Continue your home") {
         branchButton(
+          title: "Home setup and readiness",
+          detail: setupDetail,
+          symbol: "checklist",
+          action: onOpenSetup
+        )
+        .disabled(project.isFixture)
+        .accessibilityIdentifier("c14_6.open-home-setup")
+        branchButton(
           title: "Evidence and documents",
           detail: "Upload or resume rights-cleared plans, photographs, video and documents.",
           symbol: "doc.badge.plus",
@@ -59,7 +91,7 @@ struct C14_5HomeownerHubView: View {
       Section {
         Label("Next native product gap", systemImage: "point.forward.to.point.capsulepath")
           .font(.headline)
-        Text("Project creation is native. Structured intake, property context, C6/C8 proposal jobs, C9 reconciliation and exact C5 preview/commit are not. This app cannot yet produce its own confirmed twin.")
+        Text("Sign-in, project recovery, structured intake, England property context and rights-cleared evidence readiness are native. C6/C8 proposal jobs, C9 reconciliation and exact C5 preview/commit are not. This app cannot yet produce its own confirmed twin.")
           .foregroundStyle(.secondary)
         Button("Choose another project", action: onChooseProject)
       } header: {
@@ -70,6 +102,21 @@ struct C14_5HomeownerHubView: View {
     .navigationBarTitleDisplayMode(.inline)
     .task { await designModel.activate(projectId: project.id) }
     .refreshable { await designModel.activate(projectId: project.id, force: true) }
+  }
+
+  private var setupDetail: String {
+    guard let readiness else {
+      return "Record renovation intent and property context, then verify fresh evidence prerequisites."
+    }
+    if readiness.laterPlanProcessingEligible {
+      return "Prerequisites verified for a later plan-processing request; no proposal has been started."
+    }
+    let complete = [
+      readiness.intakeComplete,
+      readiness.propertyContextSelected,
+      readiness.readyPlanCount > 0,
+    ].filter { $0 }.count
+    return "\(complete) of 3 setup prerequisites verified. Continue without using the website."
   }
 
   @ViewBuilder
