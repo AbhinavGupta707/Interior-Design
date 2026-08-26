@@ -1247,10 +1247,10 @@
 ### Software acceptance — 2026-08-26
 
 - Status: closed for the terminal native software path. Non-draft PR
-  [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) targets `main` and remains
-  unmerged. No later checkpoint is open.
-- Verified implementation:
-  `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`; the root `AGENTS.md` user modification remains
+  [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) is the `main` integration
+  vehicle. No later checkpoint is open.
+- Independently reviewed correction:
+  `fd404f17cdaa44006af4d6463da9b04385948309`; the root `AGENTS.md` user modification remains
   excluded and untouched.
 - Durable acceptance:
   `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md` with
@@ -1275,3 +1275,24 @@
 - Explicitly not accepted or claimed: physical-device/camera/background transfer/RoomPlan/LiDAR,
   representative-home, production provider or real CUDA/C8/C9 execution, render hardware,
   structural/regulatory/cost/availability/professional certainty or C15.
+
+### Independent PR review — 2026-08-26
+
+- Frozen review input: PR #10 head `058bf45cb1ddc2659c1b660e9425c4f1e14032a5` against exact
+  base `f97f61dc0139dc68fd47469bc700e84313ae9764`.
+- Runtime: primary `gpt-5.6-sol` / `xhigh` reviewer; one Luna/medium read-only evidence mapper for
+  native invalidation/Release-fixture evidence; one Terra/high read-only contract reviewer for the
+  authority chain and bounded arithmetic. Both were context-minimal and shared-checkout only. No
+  separate task or worktree was created; Sol retained materiality, corrections and final gates.
+- Material corrections: deterministic retry-stable operation/claim identity and frozen retry body;
+  bounded coordinate/calibration/fusion arithmetic; explicit job selection; cancellation-safe
+  compile polling; pending-key invalidation on project/sign-out/reset/role downgrade; exact C10
+  snapshot pins; calibration/proposal identity checks; and dependency-consistent C5 operations that
+  cannot silently mix corrected and accepted host/boundary geometry.
+- Local review gates: full repository verify, contract, integration, security, C14, API and boundary
+  gates passed; generated clients had no drift; focused C14.7 native unit tests passed 10/10; final-
+  code C14.7 UI passed 3/3 on iPhone 17 Pro Max and the adaptive-layout test passed on iPad (A16);
+  Release Simulator and unsigned physical-target builds, Release analysis and exact fixture-
+  exclusion scan passed.
+- Merge rule: all four named GitHub `ci.yml` checks must succeed on the exact final PR head; earlier
+  green runs do not transfer. Only then may PR #10 merge and disposable branch resources be removed.

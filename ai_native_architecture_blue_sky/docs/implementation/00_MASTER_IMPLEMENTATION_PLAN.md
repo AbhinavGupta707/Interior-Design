@@ -11,8 +11,8 @@ acceptance: an authorised homeowner can move from exact C6/C8 proposal state thr
 reconciliation and explicit C4/C5 review/correction/preview/confirmation, compile the exact
 persisted twin through C10 and enter the existing C11-C14 native design loop. Platform contracts
 remain authoritative, proposal/appearance state is not dimensional truth and recovery state grants
-no authority. The verified implementation is
-`08d5de02b9d83dfdcaa58cb8f713523521b9ea75`; durable evidence is recorded in
+no authority. The independently reviewed correction is
+`fd404f17cdaa44006af4d6463da9b04385948309`; durable evidence is recorded in
 `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md`. Live
 identity/property providers and deployment, physical-device, RoomPlan/LiDAR, representative-home,
 production C6/C8/C9, provider/render-hardware and C15 acceptance remain closed; C8 v2 remains

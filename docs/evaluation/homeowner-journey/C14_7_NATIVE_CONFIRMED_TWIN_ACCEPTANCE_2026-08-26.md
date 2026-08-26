@@ -27,14 +27,41 @@ production-provider, real CUDA/C8/C9, render-hardware, deployment or C15 accepta
 - Requested and verified base: `main` at
   `f97f61dc0139dc68fd47469bc700e84313ae9764`.
 - Contract/audit freeze: `4a8263a`.
-- Verified implementation: `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`.
+- Original verified implementation: `08d5de02b9d83dfdcaa58cb8f713523521b9ea75`.
+- Independent PR-review input: exact PR head
+  `058bf45cb1ddc2659c1b660e9425c4f1e14032a5` on the frozen base above.
+- Reviewed correction: `fd404f17cdaa44006af4d6463da9b04385948309`.
 - Branch: `codex/c14-7-native-confirmed-twin-integration`.
-- Non-draft PR: [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10), targeting
-  `main` and intentionally left unmerged by this session.
-- Runtime: one `gpt-5.6-sol` / `xhigh` primary session. No subagent, separate task or worktree was
-  used.
+- Non-draft PR: [#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10), targeting `main`.
+- Implementation runtime: one `gpt-5.6-sol` / `xhigh` primary session; no subagent, separate task or
+  worktree was used for implementation.
+- Independent PR-review runtime: one `gpt-5.6-sol` / `xhigh` primary reviewer retained materiality,
+  correction and final-verification authority. One Luna/medium evidence mapper and one Terra/high
+  contract reviewer performed bounded, read-only, context-minimal review in the same checkout. No
+  separate task or worktree was created.
 - The pre-existing user-owned root `AGENTS.md` modification remained unstaged, uncommitted and
   untouched by this checkpoint.
+
+## Independent PR-review reconciliation
+
+The exact frozen PR head preserved the shared platform/web authority refactor and the intended
+C6/C8-to-C5/C10-to-C14 chain, but independent review found material native-client defects. The
+review correction now:
+
+- makes operation and claim identities deterministic for uncertain retries, freezes the review
+  duration across the retry, and changes derived operation identities when corrected dependency
+  geometry changes;
+- bounds all source, correction, affine and fusion coordinates before integer arithmetic;
+- requires explicit plan, reconstruction and fusion job selection and rejects stale asynchronous
+  compile results after cancellation;
+- clears recovery-only pending mutation keys on project/sign-out/reset and fresh role downgrade;
+- requires calibration, proposal, project and job identity agreement plus every exact C10 source-
+  snapshot pin; and
+- rejects accepted or corrected dependent geometry combinations that would silently omit, mix or
+  fabricate level, host-wall or boundary-wall authority.
+
+The root `AGENTS.md` modification remained outside the index and outside both correction and
+close-out commits.
 
 ## Exact authority preserved
 
@@ -81,6 +108,9 @@ production-provider, real CUDA/C8/C9, render-hardware, deployment or C15 accepta
 | XcodeGen reproducibility                                                           | regenerate was byte-stable; project SHA-256 `c04f8b4f2f14ee7dd738a43438766c55bf1907876c0e4e12f46f4bb7a2139887`                        |
 | Native build matrix                                                                | generic Simulator Debug, generic Simulator Release and unsigned generic physical-iOS Release compilation passed                       |
 | Release analysis and fixture exclusion                                             | `xcodebuild analyze` passed; no `C14_7_UI_TEST_MODE`, fixture title or fixture-view identifier was present in the Release executable  |
+| Independent review: focused C14.7 unit suite                                       | 10/10 passed on the corrected tree                                                                                                    |
+| Independent review: final-code native UI reruns                                    | 3/3 passed on iPhone 17 Pro Max; adaptive-layout test passed on iPad (A16), iOS 26.4                                                  |
+| Independent review: final-code Release reruns                                      | generic Simulator and unsigned generic physical-iOS Release builds passed; analysis and fixture-exclusion scan passed                 |
 
 The final C14.7 xcresult summaries recorded 3/3 tests on each named Simulator. The iPhone suite
 covered compact Accessibility XXXL navigation; the iPad suite covered the regular-width stage

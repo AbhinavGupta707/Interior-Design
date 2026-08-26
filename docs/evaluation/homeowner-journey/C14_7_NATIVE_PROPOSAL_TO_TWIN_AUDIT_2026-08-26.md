@@ -36,10 +36,10 @@ route as well, removing two independent source-description implementations.
 
 ## Orchestration decision
 
-This checkpoint is intentionally one primary `gpt-5.6-sol` / `xhigh` session. Navigation, proposal
-state, exact optimistic pins, role/project invalidation and downstream C14.5 activation are one
-tightly coupled state graph; the user explicitly prohibited subagents, separate tasks and
-worktrees. No delegation is used.
+The implementation checkpoint was intentionally one primary `gpt-5.6-sol` / `xhigh` session.
+Navigation, proposal state, exact optimistic pins, role/project invalidation and downstream C14.5
+activation form one tightly coupled state graph; the implementation instruction prohibited
+subagents, separate tasks and worktrees, so no implementation delegation was used.
 
 ## Baseline claim boundary
 
@@ -48,7 +48,7 @@ home, production-provider, real CUDA/C8/C9, render-hardware or C15 evidence.
 
 ## Closeout reconciliation
 
-Implementation revision `08d5de02b9d83dfdcaa58cb8f713523521b9ea75` closes every software gap
+Reviewed correction `fd404f17cdaa44006af4d6463da9b04385948309` closes every software gap
 listed in the dependency map without moving authority into the native client. The platform now owns
 acknowledgement-only C5 initialization and exact rights-filtered C9 source discovery; the web BFFs
 delegate to those authorities. Native integrates the existing C6/C8/C9 proposal surfaces, explicit
@@ -60,3 +60,21 @@ software and Simulator evidence is recorded in
 `C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md`. Physical-device, representative-home,
 production-provider, real CUDA/C8/C9, render-hardware, deployment and C15 boundaries remain open
 external gates rather than hidden implementation gaps.
+
+## Independent PR review
+
+PR #10 was independently frozen at head `058bf45cb1ddc2659c1b660e9425c4f1e14032a5`
+against base `f97f61dc0139dc68fd47469bc700e84313ae9764`. The primary Sol/xhigh reviewer
+retained all materiality, correction and final-verification authority. Two context-minimal readers
+worked in the shared checkout only: a Luna/medium evidence mapper inspected native invalidation and
+Release-fixture boundaries, and a Terra/high contract reviewer inspected the authority chain and
+bounded arithmetic. Both were read-only; no separate task or worktree was created.
+
+The primary reviewer independently confirmed and corrected retry-unstable operation/claim identity,
+pending-key invalidation gaps, unbounded integer inputs, incomplete exact C10 source pins, silent
+job selection, stale compile polling and dependency-inconsistent C5 operations. The shared
+platform/web authority bridge, tenant/project/role checks, immutable provenance and C8 appearance
+non-authority remained intact. A final parent pass additionally bound derived operation identity to
+corrected host/boundary geometry. The corrected local repository, contract, integration, security,
+native unit, iPhone/iPad layout, Release build/analysis and fixture-exclusion gates passed before
+the PR was eligible for final-SHA GitHub checks and merge.

@@ -412,13 +412,15 @@ an exact matching succeeded C10 twin and the existing C11-C14 design studio.
 
 **Status:** software-complete from clean `main` commit
 `f97f61dc0139dc68fd47469bc700e84313ae9764` on
-`codex/c14-7-native-confirmed-twin-integration`; contract/audit freeze `4a8263a`, verified
-implementation `08d5de02b9d83dfdcaa58cb8f713523521b9ea75` and durable acceptance are recorded in
+`codex/c14-7-native-confirmed-twin-integration`; contract/audit freeze `4a8263a`, independently
+reviewed correction `fd404f17cdaa44006af4d6463da9b04385948309` and durable acceptance are recorded in
 `docs/evaluation/homeowner-journey/C14_7_NATIVE_CONFIRMED_TWIN_ACCEPTANCE_2026-08-26.md`. One exact
-`gpt-5.6-sol` / `xhigh` primary session performed planning, implementation, review, verification and
-closeout without a subagent, separate task or worktree. Non-draft PR
-[#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) targets `main` and remains
-unmerged. No later checkpoint is open.
+`gpt-5.6-sol` / `xhigh` primary session performed planning and implementation without a subagent,
+separate task or worktree. A later independent Sol/xhigh PR review used one bounded read-only
+Luna/medium evidence mapper and one bounded read-only Terra/high contract reviewer in the same
+checkout; the primary reviewer retained all corrections and final verification. Non-draft PR
+[#10](https://github.com/AbhinavGupta707/Interior-Design/pull/10) is the `main` integration vehicle.
+No later checkpoint is open.
 
 **Gate:** fresh server membership and persisted C4-C10 state alone drive actions; empty-home
 initialization is acknowledgement-only and server-constructed; proposal candidates, sources,
