@@ -21,11 +21,38 @@ produce the confirmed twin remain absent. The full audited dependency map is
 - Contract freeze and audit: `e1f72b5`.
 - Native implementation: `79186d6`.
 - Verified degraded-state hardening: `ca415f9`.
+- Independent review started from exact PR head
+  `5d25370c5348d90bc306e363f839e853f2ad92a7`; material native corrections: `1d83fc5`.
 - Review vehicle: non-draft PR
   [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8) targeting `main`.
 - Orchestration: the frozen mandatory-parallelism gate was unsatisfied because navigation,
   authenticated authority, recovery, generated-client integration and the SwiftUI journey share
   one target and critical path. No task, subagent or worktree was spawned.
+
+## Independent review correction
+
+The independent C14.5 review confirmed that production navigation is now an adaptive homeowner
+hub: evidence and capture are optional branches, while the design branch is enabled only by fresh
+server state. It also confirmed that bearer authentication, server project membership/action
+checks, owner/editor versus viewer behavior, optimistic revisions, generated contract pins,
+artifact verification and compact/regular accessibility behavior remain intact.
+
+Four material native defects were corrected before merge:
+
+- project changes now clear the prior verified workspace immediately, cancel in-flight work and
+  reject late results or errors from the old project, preventing cross-project stale-state display;
+- C11-C14 mutations now reuse a stable idempotency identity for each exact pending operation,
+  including stable brief-entry provenance, without one concurrent request displacing another;
+- newest-first specification/render list semantics are observed, and the current specification is
+  accepted only when its C12 confirmation, job, option, result snapshot and proposed branch pins
+  match the recovered server state;
+- current C12 options are rejected unless their succeeded job is pinned to the exact accepted brief
+  and current C4 snapshot; reload failure preserves only already-verified same-project state as
+  stale/read-only, and a fresh successful reload clears prior previews and verified artifacts.
+
+The corrections are confined to the existing native service/contracts/model/view, Debug fixture
+service and C14.5 unit tests. They add no route, shared schema, generated-client, migration,
+dependency or lockfile change.
 
 ## Post-checkpoint native journey
 
@@ -62,7 +89,8 @@ the confirmed twin that unlocks this checkpoint's native design loop.
   typed DTO validation. UUIDs, hashes, versions, scope relations, ordering and non-finite geometry
   fail closed.
 - Every mutable stage retains server action checks, exact version/hash/source pins, optimistic
-  revision and idempotency semantics. Offline mutation is neither queued nor inferred complete.
+  revision and stable exact-operation idempotency semantics. Offline mutation is neither queued nor
+  inferred complete.
 - C12 recovery uses the checked-in generated Swift contract. C14 discovery uses the generated
   eligible-source contract and remains distinct from host capability.
 - Render viewing requests fresh signed access, enforces final origin and expiry, caps the native
@@ -73,7 +101,9 @@ the confirmed twin that unlocks this checkpoint's native design loop.
   file paths, source/render bytes and eligibility/confirmation authority.
 - Cold launch always reloads authority. Offline cold launch stays locked. If a later refresh fails,
   only the last already-verified in-memory workspace remains visible as explicitly stale and
-  read-only; reconnecting must complete a fresh reload before any action is enabled.
+  read-only for that same project; switching projects clears it immediately. Late cancelled work
+  cannot overwrite the newly selected project. Reconnecting must complete a fresh reload before any
+  action is enabled.
 - Owners and editors receive allowed mutations; viewers remain read-only. Forbidden/not-found,
   expired, conflict/stale, gone, validation, throttled, offline and unavailable states remain
   distinct.
@@ -108,13 +138,14 @@ Evidence captures:
   `interior-design-continuity-generator-1.0.1`.
 - `swift test --package-path packages/api-contracts/generated/swift --scratch-path
 /tmp/C14_5SwiftContractBuild`: 3 passed, 0 failed.
-- iPhone Air unit suite via `xcodebuild ... -only-testing:HomeDesignCaptureTests test`: 136 passed,
+- iPhone Air unit suite via `xcodebuild ... -only-testing:HomeDesignCaptureTests test`: 141 passed,
   0 failed, 0 skipped.
 - iPhone Air C14.5 UI suite: 3 passed, 0 failed.
 - iPad Pro 13-inch (M5) C14.5 UI suite: 3 passed, 0 failed.
 - Generic iOS Simulator Debug and Release builds passed with Swift 6 strict concurrency and code
   signing disabled. `xcodebuild ... analyze` passed.
-- Release-binary fixture-exclusion scan found no `C14_5_UI_SCENARIO` or fixture homeowner text.
+- Release-binary fixture-exclusion scans found no C7/C8/C14.5 fixture flags, scenario labels,
+  fixture homeowner text or fixture-view symbols in the built executable.
 
 ### Repository, integration and security gates
 

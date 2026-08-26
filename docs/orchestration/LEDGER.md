@@ -1048,7 +1048,8 @@
   [#8](https://github.com/AbhinavGupta707/Interior-Design/pull/8), targeting `main`. No later
   checkpoint is opened.
 - Revisions: contract/audit freeze `e1f72b5`; native implementation `79186d6`; degraded-state
-  hardening `ca415f9`.
+  hardening `ca415f9`; independent review began at exact PR head
+  `5d25370c5348d90bc306e363f839e853f2ad92a7` and material corrections are `1d83fc5`.
 - Product result: project selection now opens an adaptive homeowner hub. An authorised homeowner
   can create or continue a server project, enter C2/C7/C8 evidence/capture as an optional branch,
   and enter C10-C14 only after fresh server reads prove the exact confirmed twin. The design studio
@@ -1064,7 +1065,9 @@
 - Recovery result: cold launch/cross-device continuation reloads the server. The protected local
   envelope is capped at 4096 bytes and contains only safe presentation metadata; it cannot enable
   design or mutation. Offline cold launch remains locked. A later outage may retain only a last
-  verified in-memory workspace as explicitly stale/read-only until a fresh reload succeeds.
+  verified in-memory workspace for the same project as explicitly stale/read-only until a fresh
+  reload succeeds. Project switching clears prior state, cancels in-flight work and rejects late
+  old-project results or errors.
 - Artifact result: native result viewing refreshes signed access and then enforces origin, expiry,
   response length, 64 MiB cap, MIME, byte count, SHA-256, PNG signature and decoded dimensions
   through an ephemeral/no-cache streaming session before displaying the image.
@@ -1072,9 +1075,15 @@
   `c5f4876952f321898ce4d8cda845bda73bb17b30f4e492bc3c43d3ebad4a2508`, generator
   `interior-design-continuity-generator-1.0.1`; regeneration produced zero drift. No backend/shared
   contract, migration, generated output, root manifest or lockfile changed.
-- Native gates: XcodeGen was byte-stable; generated Swift tests 3/3; native unit tests 136/136;
+- Independent review correction: stable exact-operation idempotency now spans C11-C14 mutations;
+  newest-first specification/render list semantics are respected; C12 option and C13 source
+  confirmation pins are cross-checked against the exact current brief, snapshot, job, option,
+  result snapshot and proposed branch; cross-project async state cannot leak. No backend/shared
+  contract, generated client, migration, dependency or lockfile changed.
+- Native gates: XcodeGen was byte-stable; generated Swift tests 3/3; native unit tests 141/141;
   C14.5 UI acceptance 3/3 on iPhone Air and 3/3 on iPad Pro 13-inch (M5), both iOS 26.4; generic
-  Simulator Debug/Release builds and Xcode analysis passed; Release fixture-string scan was clean.
+  Simulator Debug/Release builds and Xcode analysis passed; Release scans found no C7/C8/C14.5
+  fixture flags, scenario labels, fixture homeowner text or fixture-view symbols.
 - Repository/security gates: focused homeowner-design-studio integration 4/4 and security 4/4;
   `pnpm test:c14` passed all locally available source/control-plane gates, with the unavailable live
   C1-C14 production control-plane test skipped; full `pnpm verify` passed 24 lint, 24 typecheck, 45
