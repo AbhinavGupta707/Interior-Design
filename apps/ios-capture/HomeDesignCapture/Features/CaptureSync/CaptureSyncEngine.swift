@@ -426,6 +426,8 @@ actor C7CaptureSyncEngine {
     var record = initialRecord
     record.serverVersion = session.version
     switch session.state {
+    case .accepted:
+      throw C7CaptureServiceError.conflict
     case .created, .uploading:
       if record.package != nil { record.phase = .paused }
     case .uploaded, .processing:
@@ -475,7 +477,7 @@ actor C7CaptureSyncEngine {
       return C7CaptureSyncSnapshot(proposal: result, record: record)
     case .cancelled:
       return C7CaptureSyncSnapshot(proposal: nil, record: record)
-    case .created, .uploading, .uploaded, .processing, .cancelRequested, .failed:
+    case .accepted, .created, .uploading, .uploaded, .processing, .cancelRequested, .failed:
       return nil
     }
   }

@@ -39,7 +39,9 @@ targets:
       - package: CrossDeviceContinuityClient
       - sdk: AuthenticationServices.framework
       - sdk: AVFoundation.framework
+      - sdk: ARKit.framework
       - sdk: RoomPlan.framework
+      - sdk: SceneKit.framework
     configFiles:
       Debug: Configurations/Debug.xcconfig
       Release: Configurations/Release.xcconfig

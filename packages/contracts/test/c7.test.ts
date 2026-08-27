@@ -211,6 +211,14 @@ describe("C7 native capture contracts", () => {
         contentType: "model/vnd.usdz+zip",
       }).success,
     ).toBe(false);
+    expect(
+      createCaptureArtifactUploadRequestSchema.safeParse({
+        byteSize: 4_096,
+        contentType: "application/octet-stream",
+        kind: "depth-sequence",
+        sha256,
+      }).success,
+    ).toBe(true);
   });
 
   it("requires complete, unique, bounded structure package manifests", () => {

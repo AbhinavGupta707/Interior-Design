@@ -1,13 +1,17 @@
 import {
   captureArtifactUploadSessionSchema,
+  captureEnvelopeRecordSchema,
   captureSessionSchema,
   type CaptureArtifactUploadSession,
+  type CaptureEnvelopeRecord,
   type CaptureProposalResult,
   type CaptureSession,
 } from "@interior-design/contracts";
 
 import { captureConflict } from "../../src/modules/capture/errors.js";
+import { captureSha256 } from "../../src/modules/capture/canonical.js";
 import type {
+  AcceptCaptureEnvelopeCommand,
   CaptureBackend,
   CapturePackage,
   CaptureSessionMutationCommand,
@@ -25,10 +29,13 @@ import { c6Now, c6Project } from "../c6/support.js";
 export const c7CaptureSessionId = "87000000-0000-4000-8000-000000000001";
 export const c7ArtifactId = "87000000-0000-4000-8000-000000000002";
 export const c7UploadSessionId = "87000000-0000-4000-8000-000000000003";
+export const c14_8EnvelopeId = "87000000-0000-4000-8000-000000000008";
 
 export class MemoryCaptureBackend implements CaptureBackend {
   readonly sessions = new Map<string, CaptureSession>();
   readonly uploads = new Map<string, CaptureArtifactUploadSession>();
+  readonly envelopes = new Map<string, CaptureEnvelopeRecord>();
+  readonly reconstructionLinks = new Map<string, string>();
   readonly idempotency = new Map<
     string,
     { readonly body: string; readonly value: CaptureSession }
@@ -200,6 +207,62 @@ export class MemoryCaptureBackend implements CaptureBackend {
     return Promise.reject(
       new Error("Package finalization is covered by the live persistence test."),
     );
+  }
+
+  acceptEnvelope(
+    command: AcceptCaptureEnvelopeCommand,
+  ): Promise<MutationResult<CaptureEnvelopeRecord>> {
+    const existing = this.envelopes.get(command.captureSessionId);
+    if (existing !== undefined) return Promise.resolve({ replayed: true, value: existing });
+    const record = captureEnvelopeRecordSchema.parse({
+      acceptance: {
+        acceptedAt: c6Now,
+        acceptedBy: command.actor.userId,
+        captureSessionId: command.captureSessionId,
+        envelopeId: c14_8EnvelopeId,
+        envelopeSha256: captureSha256(command.request),
+        projectId: command.projectId,
+        schemaVersion: "capture-envelope-acceptance-v1",
+      },
+      envelope: command.request,
+    });
+    this.envelopes.set(command.captureSessionId, record);
+    return Promise.resolve({ replayed: false, value: record });
+  }
+
+  findEnvelope(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<CaptureEnvelopeRecord | undefined> {
+    const record = this.envelopes.get(captureSessionId);
+    return Promise.resolve(
+      tenantId === c6Project.tenantId && projectId === c6Project.id ? record : undefined,
+    );
+  }
+
+  findEnvelopeReconstructionJobId(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<string | undefined> {
+    return Promise.resolve(
+      tenantId === c6Project.tenantId && projectId === c6Project.id
+        ? this.reconstructionLinks.get(captureSessionId)
+        : undefined,
+    );
+  }
+
+  linkEnvelopeReconstruction(_input: {
+    readonly actorUserId: string;
+    readonly captureSessionId: string;
+    readonly envelopeId: string;
+    readonly projectId: string;
+    readonly reconstructionJobId: string;
+    readonly tenantId: string;
+  }): Promise<void> {
+    this.reconstructionLinks.set(_input.captureSessionId, _input.reconstructionJobId);
+    return Promise.resolve();
   }
 
   findProposal(

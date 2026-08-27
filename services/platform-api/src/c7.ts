@@ -22,6 +22,7 @@ import {
   PostgresProjectRepository,
   type ProjectRepository,
 } from "./modules/projects/repository.js";
+import type { ReconstructionService } from "./modules/reconstruction/service.js";
 import { loadS3AssetStorageConfig } from "./storage/config.js";
 import type { AssetObjectStorage } from "./storage/object-storage.js";
 import { S3AssetObjectStorage } from "./storage/s3.js";
@@ -40,6 +41,7 @@ export interface C7ModuleOptions {
   readonly databaseUrl?: string;
   readonly identity?: IdentityService;
   readonly projects?: ProjectRepository;
+  readonly reconstructionService?: ReconstructionService;
   readonly storage?: AssetObjectStorage;
   readonly tokenProvider?: SessionTokenProvider;
   readonly uuid?: CaptureUuidFactory;
@@ -130,7 +132,7 @@ export function registerC7Module(
       ...(options.clock === undefined ? {} : { clock: options.clock }),
       ...(options.uuid === undefined ? {} : { uuid: options.uuid }),
     });
-  registerCaptureRoutes(server, identity, projects, backend);
+  registerCaptureRoutes(server, identity, projects, backend, options.reconstructionService);
 
   if (sql !== undefined && (ownsDatabase || options.closeDatabase === true)) {
     server.addHook("onClose", async () => {
@@ -149,6 +151,20 @@ export function registerC7Module(
         if (rows.length !== 1) throw new Error("C7 database migration is not applied.");
       },
     });
+    if (options.reconstructionService !== undefined) {
+      readinessChecks.push({
+        name: "c14-8-capture-envelope-database",
+        check: async () => {
+          const rows = await sql<{ readonly id: string }[]>`
+            SELECT id FROM platform_schema_migrations
+            WHERE id = '0015_device_neutral_capture_envelopes' LIMIT 1
+          `;
+          if (rows.length !== 1) {
+            throw new Error("C14.8 capture-envelope migration is not applied.");
+          }
+        },
+      });
+    }
   }
   if (storage !== undefined) {
     readinessChecks.push({ name: "c7-object-storage", check: () => storage.readiness() });
@@ -180,14 +196,30 @@ export async function applyC7Migration(sql: Sql, filePath?: string): Promise<voi
   });
 }
 
+export async function applyC14_8Migration(sql: Sql, filePath?: string): Promise<void> {
+  const resolvedPath =
+    filePath ??
+    (await firstExistingPath([
+      path.resolve(
+        process.cwd(),
+        "services/platform-api/migrations/0015_device_neutral_capture_envelopes.sql",
+      ),
+      path.resolve(process.cwd(), "migrations/0015_device_neutral_capture_envelopes.sql"),
+    ]));
+  await sql.begin(async (transaction) => {
+    await transaction.file(resolvedPath);
+  });
+}
+
 async function runAdminCommand(command: string | undefined): Promise<void> {
-  if (!["migrate", "expire", "migrate-and-expire"].includes(command ?? "")) {
-    throw new Error("Expected one of: migrate, expire, migrate-and-expire.");
+  if (!["migrate", "migrate-c14-8", "expire", "migrate-and-expire"].includes(command ?? "")) {
+    throw new Error("Expected one of: migrate, migrate-c14-8, expire, migrate-and-expire.");
   }
   const runtimeEnvironment = runtimeEnvironmentSchema.parse(process.env.NODE_ENV ?? "development");
   const sql = createC1Sql(databaseUrl(runtimeEnvironment, process.env, undefined));
   try {
     if (command === "migrate" || command === "migrate-and-expire") await applyC7Migration(sql);
+    if (command === "migrate-c14-8") await applyC14_8Migration(sql);
     let expiredSessions = 0;
     if (command === "expire" || command === "migrate-and-expire") {
       const storage = new S3AssetObjectStorage(

@@ -9,6 +9,7 @@ struct C14_5HomeownerHubView: View {
   let onOpenDesign: () -> Void
   let onOpenTwin: () -> Void
   let onOpenEvidence: () -> Void
+  let onOpenGuided: () -> Void
   let onOpenCapture: () -> Void
   let onOpenMedia: () -> Void
   let onChooseProject: () -> Void
@@ -22,6 +23,7 @@ struct C14_5HomeownerHubView: View {
     onOpenDesign: @escaping () -> Void,
     onOpenTwin: @escaping () -> Void = {},
     onOpenEvidence: @escaping () -> Void,
+    onOpenGuided: @escaping () -> Void = {},
     onOpenCapture: @escaping () -> Void,
     onOpenMedia: @escaping () -> Void,
     onChooseProject: @escaping () -> Void
@@ -34,6 +36,7 @@ struct C14_5HomeownerHubView: View {
     self.onOpenDesign = onOpenDesign
     self.onOpenTwin = onOpenTwin
     self.onOpenEvidence = onOpenEvidence
+    self.onOpenGuided = onOpenGuided
     self.onOpenCapture = onOpenCapture
     self.onOpenMedia = onOpenMedia
     self.onChooseProject = onChooseProject
@@ -79,14 +82,21 @@ struct C14_5HomeownerHubView: View {
           action: onOpenEvidence
         )
         branchButton(
-          title: "Room capture",
-          detail: "Check this device, then resume supported RoomPlan capture or choose a manual route.",
+          title: "Guided camera capture",
+          detail: "Capture rooms with RGB keyframes, ARKit poses, live coverage and optional depth. Works without LiDAR.",
           symbol: "viewfinder",
+          action: onOpenGuided
+        )
+        .accessibilityIdentifier("c14_8.open-guided-capture")
+        branchButton(
+          title: "LiDAR / RoomPlan scan",
+          detail: "Add RoomPlan evidence on a compatible device. This is optional and never the camera prerequisite.",
+          symbol: "sensor.tag.radiowaves.forward",
           action: onOpenCapture
         )
         branchButton(
-          title: "Photo and video capture",
-          detail: "Capture protected media and upload it as immutable C2 evidence.",
+          title: "Additional photo and video evidence",
+          detail: "Capture protected standalone media and upload it as immutable C2 evidence.",
           symbol: "camera",
           action: onOpenMedia
         )

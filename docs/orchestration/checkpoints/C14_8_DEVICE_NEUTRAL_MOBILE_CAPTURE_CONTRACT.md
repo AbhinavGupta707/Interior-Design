@@ -29,11 +29,16 @@ C14.8 therefore adds one boundary rather than replacing those checkpoints:
 3. Coverage is room-scoped and records horizontal sector plus lower/middle/upper band. Missing and user-declared occluded cells remain explicit. Capture may be accepted incomplete only with those gaps retained.
 4. Motion, lighting, blur, tracking, interruption, thermal/resource pressure, and missing-area guidance are advisory quality evidence, never accuracy or completeness proof.
 5. Interruption or relaunch creates a new coordinate-space segment unless relocalisation is explicitly proven. Segments are never silently joined.
-6. Structural evidence, fixed fittings, movable furniture, appearance, and temporary clutter are separate envelope declarations. They are user assertions or unknowns, not automated geometry classifications.
-7. Every raw RGB/depth source is immutable and hash-pinned. Protected local journals contain no bearer token, signed URL, object key, address, or advertising identifier and are scoped to one project.
-8. Service processing consent is required; training use is fixed to denied. Rights withdrawal, role loss, project change, expiry, stale response, and source quarantine fail closed.
-9. Viewer is read-only. Owner/editor may capture, accept, and explicitly start reconstruction; the server remains authoritative.
-10. C8 output remains proposal-only, C8 appearance remains non-dimensional, C9 reconciliation remains explicit, C5 preview/commit remains the only canonical mutation path, and C10 consumes only a committed exact snapshot.
+6. Every segment declares ARKit right-handed, gravity-aligned, Y-up coordinates and micrometre
+   translation units. Camera samples declare camera-to-world pose, `[x,y,z,w]` quaternion order and
+   pinhole intrinsics for the retained native camera raster. Optional depth declares its exact ARKit
+   scene-depth image-plane alignment. Downstream tools may transform these values only through a
+   separately hashed derived manifest.
+7. Structural evidence, fixed fittings, movable furniture, appearance, and temporary clutter are separate envelope declarations. They are user assertions or unknowns, not automated geometry classifications.
+8. Every raw RGB/depth source is immutable and hash-pinned. Protected local journals contain no bearer token, signed URL, object key, address, or advertising identifier and are scoped to one project.
+9. Service processing consent is required; training use is fixed to denied. Rights withdrawal, role loss, project change, expiry, stale response, and source quarantine fail closed.
+10. Viewer is read-only. Owner/editor may capture, accept, and explicitly start reconstruction; the server remains authoritative.
+11. C8 output remains proposal-only, C8 appearance remains non-dimensional, C9 reconciliation remains explicit, C5 preview/commit remains the only canonical mutation path, and C10 consumes only a committed exact snapshot.
 
 ## Contract and migration freeze
 
@@ -55,6 +60,13 @@ C14.8 therefore adds one boundary rather than replacing those checkpoints:
 5. XcodeGen drift, Swift strict-concurrency build, Debug/Release build, static analysis, generated-contract drift, focused repository/security suites, and final diff review pass.
 6. If an authorised physical device is connected, run the bounded field matrix and record model/OS/build. Otherwise every physical row is `NOT RUN` with an exact handoff; no physical acceptance claim is allowed.
 7. The Windows/RTX 5080 handoff pins envelope inputs, candidates, versions, commands, metrics, artifact/hashing rules, and promotion prohibitions for COLMAP, VGGT/MASt3R, video-depth, and gsplat benchmarking. None is productionised here.
+
+## Operational handoffs
+
+- Physical Apple-device matrix:
+  `docs/runbooks/ios/C14_8_PHYSICAL_DEVICE_CAPTURE_HANDOFF.md`.
+- Accepted-capture Windows/RTX 5080 benchmark:
+  `docs/runbooks/development/C14_8_WINDOWS_RTX5080_CAPTURE_BENCHMARK.md`.
 
 ## Terminal rule
 

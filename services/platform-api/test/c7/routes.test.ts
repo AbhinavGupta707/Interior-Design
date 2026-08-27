@@ -57,6 +57,8 @@ describe("C7 frozen native capture routes", () => {
       "parts (POST)",
       "complete (POST)",
       "packages (POST)",
+      "envelope (POST, GET, HEAD)",
+      "reconstruction (POST)",
       "proposal (GET, HEAD)",
     ]) {
       expect(routes).toContain(suffix);

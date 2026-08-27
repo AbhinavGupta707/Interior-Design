@@ -110,6 +110,9 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "body.manifest",
         "body.licenceText",
         "body.sourceReceipt",
+        "body.cameraSamples",
+        "body.coordinateSegments",
+        "body.rooms",
         "req.body.query",
         "req.body.address",
         "req.body.displayAddress",
@@ -129,6 +132,9 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "req.body.artifacts",
         "req.body.licenceText",
         "req.body.sourceReceipt",
+        "req.body.cameraSamples",
+        "req.body.coordinateSegments",
+        "req.body.rooms",
         "request.body.query",
         "request.body.address",
         "request.body.displayAddress",
@@ -154,6 +160,9 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "request.body.artifacts",
         "request.body.licenceText",
         "request.body.sourceReceipt",
+        "request.body.cameraSamples",
+        "request.body.coordinateSegments",
+        "request.body.rooms",
         "*.providerUploadId",
         "*.provider_upload_id",
         "*.sourceObjectKey",
@@ -177,6 +186,9 @@ export function defaultLogger(config: PlatformApiConfig): LoggerSetting {
         "*.schedule",
         "*.licenceText",
         "*.sourceReceipt",
+        "*.cameraSamples",
+        "*.coordinateSegments",
+        "*.rooms",
         "*.attributionContact",
         "*.manifest",
         "*.glb",
@@ -271,15 +283,6 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.c6,
         )
       : undefined;
-  const c7 =
-    options.c7 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
-      ? registerC7Module(
-          server,
-          config.runtimeEnvironment,
-          options.environment ?? process.env,
-          options.c7,
-        )
-      : undefined;
   const c8 =
     options.c8 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
       ? registerC8Module(
@@ -288,6 +291,16 @@ export function createServer(options: CreateServerOptions = {}): FastifyInstance
           options.environment ?? process.env,
           options.c8,
         )
+      : undefined;
+  const captureReconstructionService = options.c7?.reconstructionService ?? c8?.service;
+  const c7 =
+    options.c7 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")
+      ? registerC7Module(server, config.runtimeEnvironment, options.environment ?? process.env, {
+          ...options.c7,
+          ...(captureReconstructionService === undefined
+            ? {}
+            : { reconstructionService: captureReconstructionService }),
+        })
       : undefined;
   const c9 =
     options.c9 !== undefined || (options.c1 === undefined && config.runtimeEnvironment !== "test")

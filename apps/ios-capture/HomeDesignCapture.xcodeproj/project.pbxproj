@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01167CE4079DE7D95AB69876 /* C14_8GuidedCaptureJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F23D8C62DC1CF32265606A4 /* C14_8GuidedCaptureJourneyUITests.swift */; };
 		011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46875F92E6AF8CA2844A69CB /* C7UITestFixtureView.swift */; };
 		069832BC9CF6D835FAB10CCB /* C14_5DesignStudioModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53518FE11C4E992E2AE41F04 /* C14_5DesignStudioModel.swift */; };
 		09D7CC666216C7D345613160 /* RoomCaptureDomain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009594AC33EE380D224ADCBF /* RoomCaptureDomain.swift */; };
@@ -19,14 +20,17 @@
 		21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC63546001772B6B43829640 /* RoomPlan.framework */; };
 		235BA8F422CD86FC06CA3160 /* C8EvidenceUploaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF544AF5CD07338CEBBB1EBB /* C8EvidenceUploaderTests.swift */; };
 		2499978C9C09493643249CC5 /* C8MediaCaptureWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BA1D6F8AAF626ECA4BDEF2 /* C8MediaCaptureWorkspaceModel.swift */; };
+		271C375367316ACA3E8A9033 /* C14_8CaptureFoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1935954B961EB64C7D7FBEDC /* C14_8CaptureFoundationTests.swift */; };
 		2A1A2895C4E3687EAE8DC301 /* C14_7TwinIntegrationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6680EF5B887D16E86D5647 /* C14_7TwinIntegrationModel.swift */; };
 		2A331873B4D3D342C23BE430 /* C8ReconstructionContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */; };
 		2C719CE891BE505F0845C92C /* C14_6AuthenticationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83092AB6A2ABCDAADE89B522 /* C14_6AuthenticationTests.swift */; };
+		32F2D3E9768E9C5C3282DD07 /* SceneKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A58EA85EF682535ADF8A8216 /* SceneKit.framework */; };
 		35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */; };
 		360C3C5191E23DDBB4CB29B6 /* FixtureRoomCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */; };
 		3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */; };
 		3CBFE5CEF7A25BFF97E89E67 /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79DE525CE2EA3C029B8AB6D5 /* AuthenticationServices.framework */; };
 		3DB1883D0119E7BF7B74240F /* CapturePreflightAndMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */; };
+		3EFD8BA96AE3F196A09B31BE /* C14_8UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ED836C4D459143C8A9EE90A /* C14_8UITestFixtureView.swift */; };
 		3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */; };
 		3FEF1AC7681DAD11BC58C420 /* C14_6HomeSetupContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE8C70B60C1E8764AF33382 /* C14_6HomeSetupContracts.swift */; };
 		404B3B8DEE54C8023D323D8E /* SyntheticRoomCaptureFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */; };
@@ -37,6 +41,7 @@
 		48A413F3EA84E3A1FF1F5F72 /* CaptureQualityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6847560C7C5511E7267625 /* CaptureQualityModels.swift */; };
 		4B468F9B8E087CB970FEA0C0 /* CaptureQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */; };
 		4F3490ACDDA54352DDF83C96 /* RoomCaptureArtifactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F189627CFAAF6E01994B21 /* RoomCaptureArtifactTests.swift */; };
+		51F3578E6E38437D13B11C5F /* C14_8GuidedCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F14F9074FE8FB59F3A173EA /* C14_8GuidedCaptureEngine.swift */; };
 		544ACD9C9573636D070A52E2 /* C14_5DesignStudioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D4BCA3E19A2B6636C34B6DE /* C14_5DesignStudioTests.swift */; };
 		549E509767633F74F07FD28E /* C14_5DesignStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B9486170E8B361E9267D81 /* C14_5DesignStudioView.swift */; };
 		561AC7177ECE5F41545D6F55 /* CaptureQualityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0254ED72823AE11B121D /* CaptureQualityView.swift */; };
@@ -68,21 +73,25 @@
 		8B28A9A5D5A81DCF56995C3E /* C14_7TerminalTwinJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A4BCD18CA8AF78D4276633 /* C14_7TerminalTwinJourneyUITests.swift */; };
 		8BAB4C9FFC9AB7FD04955A62 /* EvidenceFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A5BDE1F8A99F8C852E705 /* EvidenceFlowTests.swift */; };
 		8BF78FA2833FE954AC6F7CED /* C8WorkspaceAndHandoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6247780E2C890CB6B12E1BA /* C8WorkspaceAndHandoffTests.swift */; };
+		8E3F31D0EE4A7D59D9383A8F /* ARKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 746300EACACDF26EE2058C59 /* ARKit.framework */; };
 		9303E2679C975B2B3ADB0D81 /* AppLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */; };
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
 		940FDBB79B930C589F848D9E /* RoomCaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
+		A0ACEEE327276AAB4164223D /* C14_8GuidedCaptureModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B86FCF1ECC9892D5F3489B4 /* C14_8GuidedCaptureModel.swift */; };
 		A1C1339F90E84B6043AA5933 /* RoomCaptureStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */; };
 		A7855EECEEF453B5E44159EE /* C8UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770844001F2FE6982F857329 /* C8UITestFixtureView.swift */; };
 		B09CAE4757F6C861804F9EF3 /* CaptureFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */; };
 		B1237B82965F2BA5AD7D0207 /* C14_6HomeSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F38F9FD141A8FA0AF71B7DA /* C14_6HomeSetupView.swift */; };
 		B1A528CF35351323D878F3D1 /* CaptureWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */; };
 		B5191F0A3242C70FD5CEB0E3 /* C14_7TwinIntegrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67906FD3699FF600156187AA /* C14_7TwinIntegrationView.swift */; };
+		B6BEF6212725980010CB2184 /* C14_8CaptureEnvelopeContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56104228163E7E244A0FCCEB /* C14_8CaptureEnvelopeContracts.swift */; };
 		B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */; };
 		B9969B731C492DDA092C4A4C /* C8CaptureQuality.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */; };
 		BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */; };
 		BBD051DB9558BC2E86CC030E /* C14_6HomeSetupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18449A9C8A25F4868F6AC8E0 /* C14_6HomeSetupTests.swift */; };
 		BC1909C0108480485D0353A3 /* C14_5DesignStudioContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73ACD7764DA2AD6CE47F88DA /* C14_5DesignStudioContracts.swift */; };
+		BE57FACFB06936193530DCC4 /* C14_8GuidedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E533F6667F86822A9F1D692E /* C14_8GuidedCaptureView.swift */; };
 		C94532183AEDB4F45F9DA729 /* CaptureSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0947CB0F939A786E6C0DE386 /* CaptureSyncService.swift */; };
 		CAA19668E814C96F85EC5BF6 /* C14_5HomeownerHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69EA6D3FCDE5CA504D3CE94D /* C14_5HomeownerHubView.swift */; };
 		CD904CE1D341A213F844D942 /* C8AcceptanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30E406C190E5C4BEBB424EC /* C8AcceptanceUITests.swift */; };
@@ -99,12 +108,14 @@
 		DB91FEBD12707F2253613DBA /* RoomPlanCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */; };
 		DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */; };
 		DF03FE0A6FE67AA8BD47D1B9 /* C14_6FixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AEC227CCEB617893BD4E5F /* C14_6FixtureScenarioTests.swift */; };
+		E447F537833EDF8B69BAB7CE /* C14_8ProtectedCaptureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42E6797547AAA54603DF852 /* C14_8ProtectedCaptureStore.swift */; };
 		E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */; };
 		E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */; };
 		E98ACD942E6877AE91215850 /* CaptureCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */; };
 		EB6AFDD85483B2A1F09F107B /* RoomCaptureArtifacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */; };
 		EB91812A0818686AA92BB2C2 /* C14_6HomeownerReadinessUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E8A3E8DF37BEAF0292F9FA1 /* C14_6HomeownerReadinessUITests.swift */; };
 		EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */; };
+		EE2134266D2CC80EA3AFFC79 /* C14_8CaptureEnvelopeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD3B6DD21FB1698C21BE03D /* C14_8CaptureEnvelopeService.swift */; };
 		F43E33C4B4CAA81ECC9D7855 /* EvidenceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686974840BF7C7AA97D7F42B /* EvidenceRepository.swift */; };
 		F48DE2FDFF00664D90B5CAAF /* C14_5HomeownerJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7FA2F030E9F3CF7642290C /* C14_5HomeownerJourneyUITests.swift */; };
 		F5C1551AF49B951F1F148A4C /* CaptureSyncModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */; };
@@ -144,11 +155,13 @@
 		172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDesignCaptureApp.swift; sourceTree = "<group>"; };
 		1809F3FA3F44F7683744EBD5 /* CaptureTokenProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureTokenProvider.swift; sourceTree = "<group>"; };
 		18449A9C8A25F4868F6AC8E0 /* C14_6HomeSetupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6HomeSetupTests.swift; sourceTree = "<group>"; };
+		1935954B961EB64C7D7FBEDC /* C14_8CaptureFoundationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8CaptureFoundationTests.swift; sourceTree = "<group>"; };
 		1D4BCA3E19A2B6636C34B6DE /* C14_5DesignStudioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioTests.swift; sourceTree = "<group>"; };
 		1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContracts.swift; sourceTree = "<group>"; };
 		1FB72C5EE7B9029D382F808F /* CapturePreflightAndMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreflightAndMappingTests.swift; sourceTree = "<group>"; };
 		21C1BACB467572282EC44C7A /* C7UITestFixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7UITestFixtureScenarioTests.swift; sourceTree = "<group>"; };
 		25AEC227CCEB617893BD4E5F /* C14_6FixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6FixtureScenarioTests.swift; sourceTree = "<group>"; };
+		2AD3B6DD21FB1698C21BE03D /* C14_8CaptureEnvelopeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8CaptureEnvelopeService.swift; sourceTree = "<group>"; };
 		2B1F88666AE40660CBCD3D3A /* C14_6UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6UITestFixtureView.swift; sourceTree = "<group>"; };
 		2C338BE72776A66E8E31FAFB /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		2CAB53465834E55ED289D3E7 /* C8CapabilityAndStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CapabilityAndStorageTests.swift; sourceTree = "<group>"; };
@@ -166,9 +179,11 @@
 		47EDED16B3EF844FB1C64544 /* C14_7TwinIntegrationContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7TwinIntegrationContracts.swift; sourceTree = "<group>"; };
 		48EB186AC67396E926C3F733 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		4A6847560C7C5511E7267625 /* CaptureQualityModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityModels.swift; sourceTree = "<group>"; };
+		4B86FCF1ECC9892D5F3489B4 /* C14_8GuidedCaptureModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8GuidedCaptureModel.swift; sourceTree = "<group>"; };
 		4F1C4F146776B077CBBFA588 /* HomeDesignCapture.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeDesignCapture.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigurationLoaderTests.swift; sourceTree = "<group>"; };
 		53518FE11C4E992E2AE41F04 /* C14_5DesignStudioModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioModel.swift; sourceTree = "<group>"; };
+		56104228163E7E244A0FCCEB /* C14_8CaptureEnvelopeContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8CaptureEnvelopeContracts.swift; sourceTree = "<group>"; };
 		5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncModels.swift; sourceTree = "<group>"; };
 		575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRepositoryTests.swift; sourceTree = "<group>"; };
 		582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CaptureQuality.swift; sourceTree = "<group>"; };
@@ -189,6 +204,7 @@
 		732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7AcceptanceUITests.swift; sourceTree = "<group>"; };
 		73ACD7764DA2AD6CE47F88DA /* C14_5DesignStudioContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioContracts.swift; sourceTree = "<group>"; };
 		743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContractTests.swift; sourceTree = "<group>"; };
+		746300EACACDF26EE2058C59 /* ARKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARKit.framework; path = System/Library/Frameworks/ARKit.framework; sourceTree = SDKROOT; };
 		746DAB247CBDAA482176A04E /* EvidenceWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkspaceView.swift; sourceTree = "<group>"; };
 		75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureSurface.swift; sourceTree = "<group>"; };
 		770844001F2FE6982F857329 /* C8UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8UITestFixtureView.swift; sourceTree = "<group>"; };
@@ -199,13 +215,17 @@
 		879E165983B7BF350C32A8B1 /* C8MediaCaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8MediaCaptureWorkspaceView.swift; sourceTree = "<group>"; };
 		8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureCoordinator.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
+		8F23D8C62DC1CF32265606A4 /* C14_8GuidedCaptureJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8GuidedCaptureJourneyUITests.swift; sourceTree = "<group>"; };
 		93BA1D6F8AAF626ECA4BDEF2 /* C8MediaCaptureWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8MediaCaptureWorkspaceModel.swift; sourceTree = "<group>"; };
 		9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifacts.swift; sourceTree = "<group>"; };
 		9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticRoomCaptureFixtures.swift; sourceTree = "<group>"; };
 		99B9486170E8B361E9267D81 /* C14_5DesignStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioView.swift; sourceTree = "<group>"; };
+		9ED836C4D459143C8A9EE90A /* C14_8UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8UITestFixtureView.swift; sourceTree = "<group>"; };
+		9F14F9074FE8FB59F3A173EA /* C14_8GuidedCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8GuidedCaptureEngine.swift; sourceTree = "<group>"; };
 		A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7SyntheticFixtures.swift; sourceTree = "<group>"; };
 		A358A8C8088780616E6C981D /* C14_7PlanOperationBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7PlanOperationBuilder.swift; sourceTree = "<group>"; };
 		A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityTests.swift; sourceTree = "<group>"; };
+		A58EA85EF682535ADF8A8216 /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
 		B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncEngineTests.swift; sourceTree = "<group>"; };
 		B2F189627CFAAF6E01994B21 /* RoomCaptureArtifactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifactTests.swift; sourceTree = "<group>"; };
 		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
@@ -217,6 +237,7 @@
 		BC9EC5EE2FD81DDBFBF7396F /* C14_5UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5UITestFixtureView.swift; sourceTree = "<group>"; };
 		BF7F7F0E56058687BD3ECC77 /* EvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceService.swift; sourceTree = "<group>"; };
 		C30E406C190E5C4BEBB424EC /* C8AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8AcceptanceUITests.swift; sourceTree = "<group>"; };
+		C42E6797547AAA54603DF852 /* C14_8ProtectedCaptureStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8ProtectedCaptureStore.swift; sourceTree = "<group>"; };
 		C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureStateMachineTests.swift; sourceTree = "<group>"; };
 		C6247780E2C890CB6B12E1BA /* C8WorkspaceAndHandoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8WorkspaceAndHandoffTests.swift; sourceTree = "<group>"; };
 		C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreparationView.swift; sourceTree = "<group>"; };
@@ -230,6 +251,7 @@
 		D5A4BCD18CA8AF78D4276633 /* C14_7TerminalTwinJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7TerminalTwinJourneyUITests.swift; sourceTree = "<group>"; };
 		DF6680EF5B887D16E86D5647 /* C14_7TwinIntegrationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7TwinIntegrationModel.swift; sourceTree = "<group>"; };
 		E4FD66A87EAC9C4B168A6106 /* C7GoldenContractUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7GoldenContractUITests.swift; sourceTree = "<group>"; };
+		E533F6667F86822A9F1D692E /* C14_8GuidedCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8GuidedCaptureView.swift; sourceTree = "<group>"; };
 		E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureEngine.swift; sourceTree = "<group>"; };
 		E8140ACFC1F11199631D7FDB /* C14_5DesignRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignRecovery.swift; sourceTree = "<group>"; };
 		EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCapabilityTests.swift; sourceTree = "<group>"; };
@@ -246,7 +268,9 @@
 				48231EA16EF84BA962581D82 /* CrossDeviceContinuityClient in Frameworks */,
 				3CBFE5CEF7A25BFF97E89E67 /* AuthenticationServices.framework in Frameworks */,
 				D3825C56B4F4C84C312CE397 /* AVFoundation.framework in Frameworks */,
+				8E3F31D0EE4A7D59D9383A8F /* ARKit.framework in Frameworks */,
 				21322C5A52791B0C51795028 /* RoomPlan.framework in Frameworks */,
+				32F2D3E9768E9C5C3282DD07 /* SceneKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,12 +295,31 @@
 			path = CaptureEligibility;
 			sourceTree = "<group>";
 		};
+		0F3651583A7A588BDBBEED85 /* GuidedCapture */ = {
+			isa = PBXGroup;
+			children = (
+				2AD3B6DD21FB1698C21BE03D /* C14_8CaptureEnvelopeService.swift */,
+				4B86FCF1ECC9892D5F3489B4 /* C14_8GuidedCaptureModel.swift */,
+				E533F6667F86822A9F1D692E /* C14_8GuidedCaptureView.swift */,
+				C42E6797547AAA54603DF852 /* C14_8ProtectedCaptureStore.swift */,
+			);
+			path = GuidedCapture;
+			sourceTree = "<group>";
+		};
 		124369E2025C95B44F2AB1AC /* C14_5 */ = {
 			isa = PBXGroup;
 			children = (
 				1D4BCA3E19A2B6636C34B6DE /* C14_5DesignStudioTests.swift */,
 			);
 			path = C14_5;
+			sourceTree = "<group>";
+		};
+		13F4E6F8E99D997E7B05F060 /* C14_8 */ = {
+			isa = PBXGroup;
+			children = (
+				1935954B961EB64C7D7FBEDC /* C14_8CaptureFoundationTests.swift */,
+			);
+			path = C14_8;
 			sourceTree = "<group>";
 		};
 		216940923DCADDD2B4E3A6F2 /* App */ = {
@@ -288,6 +331,7 @@
 				BC9EC5EE2FD81DDBFBF7396F /* C14_5UITestFixtureView.swift */,
 				2B1F88666AE40660CBCD3D3A /* C14_6UITestFixtureView.swift */,
 				B71CCB4C1458DB26E9E114BA /* C14_7UITestFixtureView.swift */,
+				9ED836C4D459143C8A9EE90A /* C14_8UITestFixtureView.swift */,
 				172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */,
 			);
 			path = App;
@@ -406,6 +450,14 @@
 			path = Evidence;
 			sourceTree = "<group>";
 		};
+		74D7CCB216A6A9EA69E9B49F /* C14_8 */ = {
+			isa = PBXGroup;
+			children = (
+				8F23D8C62DC1CF32265606A4 /* C14_8GuidedCaptureJourneyUITests.swift */,
+			);
+			path = C14_8;
+			sourceTree = "<group>";
+		};
 		76DB48CAB98CF9A82C034775 /* Contract */ = {
 			isa = PBXGroup;
 			children = (
@@ -474,6 +526,7 @@
 			children = (
 				1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */,
 				70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */,
+				56104228163E7E244A0FCCEB /* C14_8CaptureEnvelopeContracts.swift */,
 			);
 			path = Capture;
 			sourceTree = "<group>";
@@ -481,6 +534,7 @@
 		A742D48DFB320D495E321DA8 /* AR */ = {
 			isa = PBXGroup;
 			children = (
+				9F14F9074FE8FB59F3A173EA /* C14_8GuidedCaptureEngine.swift */,
 				12E0691E44DAAC8F5BBC5049 /* CaptureCapability.swift */,
 				420629D8ADDED5EAF93BFBDF /* FixtureRoomCaptureEngine.swift */,
 				E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */,
@@ -520,6 +574,7 @@
 				124369E2025C95B44F2AB1AC /* C14_5 */,
 				E7B65E7965C6C61308647EBD /* C14_6 */,
 				C2CF099F30120E2105E233E6 /* C14_7 */,
+				13F4E6F8E99D997E7B05F060 /* C14_8 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -598,6 +653,7 @@
 				F5262870A95256265601DCD9 /* CaptureWorkspace */,
 				C014AA11558021121772EE24 /* DesignStudio */,
 				61D79269D6AF0E2D590E7817 /* Evidence */,
+				0F3651583A7A588BDBBEED85 /* GuidedCapture */,
 				C8C35B27AA8DEE5C2F4E6BF6 /* Home */,
 				F1A2B3D117234A7124F4827C /* HomeSetup */,
 				EC59D210FDEEE0C3C53466C3 /* ManualEvidence */,
@@ -713,9 +769,11 @@
 		F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				746300EACACDF26EE2058C59 /* ARKit.framework */,
 				79DE525CE2EA3C029B8AB6D5 /* AuthenticationServices.framework */,
 				2C338BE72776A66E8E31FAFB /* AVFoundation.framework */,
 				BC63546001772B6B43829640 /* RoomPlan.framework */,
+				A58EA85EF682535ADF8A8216 /* SceneKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -728,6 +786,7 @@
 				CEEEF0C4426810E9763CF5F5 /* C14_5 */,
 				4C5403FF46D12726AC410F0D /* C14_6 */,
 				3F9F1420A901D20AEE82D1B1 /* C14_7 */,
+				74D7CCB216A6A9EA69E9B49F /* C14_8 */,
 				D1CF9F25A84200C2EEA1C5EB /* AppLaunchUITests.swift */,
 			);
 			path = HomeDesignCaptureUITests;
@@ -852,6 +911,7 @@
 				F48DE2FDFF00664D90B5CAAF /* C14_5HomeownerJourneyUITests.swift in Sources */,
 				EB91812A0818686AA92BB2C2 /* C14_6HomeownerReadinessUITests.swift in Sources */,
 				8B28A9A5D5A81DCF56995C3E /* C14_7TerminalTwinJourneyUITests.swift in Sources */,
+				01167CE4079DE7D95AB69876 /* C14_8GuidedCaptureJourneyUITests.swift in Sources */,
 				EDAF21D76F1F2EB228B3919E /* C7AcceptanceUITests.swift in Sources */,
 				585F380C28C113C4F94FAC64 /* C7GoldenContractUITests.swift in Sources */,
 				CD904CE1D341A213F844D942 /* C8AcceptanceUITests.swift in Sources */,
@@ -882,6 +942,13 @@
 				60058BC3BD29EF640D086EBC /* C14_7TwinIntegrationService.swift in Sources */,
 				B5191F0A3242C70FD5CEB0E3 /* C14_7TwinIntegrationView.swift in Sources */,
 				6063934BB745BAC1D8FC6EDB /* C14_7UITestFixtureView.swift in Sources */,
+				B6BEF6212725980010CB2184 /* C14_8CaptureEnvelopeContracts.swift in Sources */,
+				EE2134266D2CC80EA3AFFC79 /* C14_8CaptureEnvelopeService.swift in Sources */,
+				51F3578E6E38437D13B11C5F /* C14_8GuidedCaptureEngine.swift in Sources */,
+				A0ACEEE327276AAB4164223D /* C14_8GuidedCaptureModel.swift in Sources */,
+				BE57FACFB06936193530DCC4 /* C14_8GuidedCaptureView.swift in Sources */,
+				E447F537833EDF8B69BAB7CE /* C14_8ProtectedCaptureStore.swift in Sources */,
+				3EFD8BA96AE3F196A09B31BE /* C14_8UITestFixtureView.swift in Sources */,
 				3FA7F55483697151333B4932 /* C7CaptureContracts.swift in Sources */,
 				011AE75745DEA575347A0807 /* C7UITestFixtureView.swift in Sources */,
 				893867B17EAFC9398FC88B6F /* C8CameraCapability.swift in Sources */,
@@ -936,6 +1003,7 @@
 				DF03FE0A6FE67AA8BD47D1B9 /* C14_6FixtureScenarioTests.swift in Sources */,
 				BBD051DB9558BC2E86CC030E /* C14_6HomeSetupTests.swift in Sources */,
 				7E52B000508308589A620715 /* C14_7TwinIntegrationTests.swift in Sources */,
+				271C375367316ACA3E8A9033 /* C14_8CaptureFoundationTests.swift in Sources */,
 				7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */,
 				D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */,
 				35D1B2B55BAADDD51B369B1C /* C7UITestFixtureScenarioTests.swift in Sources */,

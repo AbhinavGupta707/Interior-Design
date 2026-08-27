@@ -40,6 +40,13 @@ export const captureProposalIdSchema = uuidSchema;
 export const captureModeSchema = z.enum(["single-room", "structure"]);
 export type CaptureMode = z.infer<typeof captureModeSchema>;
 
+export const captureDeviceCapabilitySchema = z.enum([
+  "roomplan-lidar",
+  "arkit-rgb",
+  "arkit-rgb-depth",
+]);
+export type CaptureDeviceCapability = z.infer<typeof captureDeviceCapabilitySchema>;
+
 export const captureRightsSchema = z
   .object({
     basis: z.enum(["owned-by-user", "permission-granted", "public-domain", "licensed"]),
@@ -51,7 +58,7 @@ export const captureRightsSchema = z
 export const createCaptureSessionRequestSchema = z
   .object({
     captureLabel: z.string().trim().min(1).max(120),
-    deviceCapability: z.literal("roomplan-lidar"),
+    deviceCapability: captureDeviceCapabilitySchema,
     expectedRoomCount: z.int().min(1).max(c7CapturePolicy.maximumRoomCount).optional(),
     mode: captureModeSchema,
     rights: captureRightsSchema,
@@ -63,6 +70,7 @@ export const captureBriefSchema = z
   .object({
     captureLabel: z.string().trim().min(1).max(120),
     captureSessionId: captureSessionIdSchema,
+    deviceCapability: captureDeviceCapabilitySchema.optional(),
     expiresAt: z.iso.datetime({ offset: true }),
     expectedRoomCount: z.int().min(1).max(c7CapturePolicy.maximumRoomCount).optional(),
     instructionsVersion: boundedVersionSchema,
@@ -79,6 +87,7 @@ export const captureSessionStateSchema = z.enum([
   "uploading",
   "uploaded",
   "processing",
+  "accepted",
   "proposed",
   "abstained",
   "cancel-requested",
@@ -144,11 +153,16 @@ export const captureArtifactKindSchema = z.enum([
   "captured-structure-json",
   "roomplan-normalized-json",
   "quality-manifest-json",
+  "depth-sequence",
   "structure-usdz",
 ]);
 export type CaptureArtifactKind = z.infer<typeof captureArtifactKindSchema>;
 
-export const captureArtifactContentTypeSchema = z.enum(["application/json", "model/vnd.usdz+zip"]);
+export const captureArtifactContentTypeSchema = z.enum([
+  "application/json",
+  "application/octet-stream",
+  "model/vnd.usdz+zip",
+]);
 
 export const createCaptureArtifactUploadRequestSchema = z
   .object({
@@ -165,7 +179,11 @@ export const createCaptureArtifactUploadRequestSchema = z
       context.addIssue({ code: "custom", message: "Only room artifacts require a room ID." });
     }
     const expectedType =
-      artifact.kind === "structure-usdz" ? "model/vnd.usdz+zip" : "application/json";
+      artifact.kind === "structure-usdz"
+        ? "model/vnd.usdz+zip"
+        : artifact.kind === "depth-sequence"
+          ? "application/octet-stream"
+          : "application/json";
     if (artifact.contentType !== expectedType) {
       context.addIssue({ code: "custom", message: "The artifact kind and media type disagree." });
     }
