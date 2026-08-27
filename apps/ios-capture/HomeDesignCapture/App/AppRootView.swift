@@ -9,6 +9,7 @@ struct AppRootView: View {
   @State private var evidenceRepository: EvidenceRepository
   @State private var captureWorkspaceModel: C7CaptureWorkspaceModel
   @State private var mediaCaptureModel: C8MediaCaptureWorkspaceModel
+  @State private var guidedCaptureModel: C14_8GuidedCaptureModel
   @State private var designStudioModel: C14_5DesignStudioModel
   @State private var homeSetupModel: C14_6HomeSetupModel
   @State private var twinIntegrationModel: C14_7TwinIntegrationModel
@@ -117,6 +118,30 @@ struct AppRootView: View {
         uploader: C8ImmutableEvidenceUploader(service: evidenceService)
       )
     )
+    let guidedCapabilityProvider = C14_8SystemCapabilityProvider()
+    let guidedEngine: any C14_8GuidedCaptureServing
+    #if DEBUG && targetEnvironment(simulator)
+      guidedEngine = C14_8FixtureGuidedCaptureEngine()
+    #else
+      guidedEngine = C14_8ARKitGuidedCaptureEngine(
+        capability: guidedCapabilityProvider.current()
+      )
+    #endif
+    _guidedCaptureModel = State(
+      initialValue: C14_8GuidedCaptureModel(
+        capabilityProvider: guidedCapabilityProvider,
+        permissionProvider: mediaPermissionProvider,
+        engine: guidedEngine,
+        captureService: captureService,
+        envelopeService: C14_8CaptureEnvelopeAPIClient(
+          baseURL: configuration.apiBaseURL,
+          tokenProvider: tokenProvider
+        ),
+        evidenceService: evidenceService,
+        mediaUploader: C8ImmutableEvidenceUploader(service: evidenceService),
+        depthUploader: C14_8DepthUploader(service: captureService)
+      )
+    )
     let resolvedDesignService =
       designService
       ?? C14_5DesignStudioAPIClient(
@@ -181,6 +206,7 @@ struct AppRootView: View {
           onOpenDesign: flow.openDesignStudio,
           onOpenTwin: flow.openTwinIntegration,
           onOpenEvidence: flow.openEvidenceWorkspace,
+          onOpenGuided: flow.openGuidedCapture,
           onOpenCapture: flow.openCaptureEligibility,
           onOpenMedia: flow.openMediaCapture,
           onChooseProject: chooseProject
@@ -226,6 +252,15 @@ struct AppRootView: View {
           repository: evidenceRepository,
           project: project,
           onCheckCapture: flow.continueFromEligibility,
+          onDone: finishBranch
+        )
+      case .guidedCapture:
+        C14_8GuidedCaptureView(
+          model: guidedCaptureModel,
+          project: project,
+          actor: session.actor,
+          onOpenEvidence: flow.openEvidenceWorkspace,
+          onOpenRoomPlan: flow.openCaptureEligibility,
           onDone: finishBranch
         )
       case .eligibility:
@@ -326,6 +361,7 @@ struct AppRootView: View {
     evidenceRepository.reset()
     captureWorkspaceModel.reset()
     mediaCaptureModel.reset()
+    guidedCaptureModel.reset()
     flow.reset()
   }
 }

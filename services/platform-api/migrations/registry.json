@@ -78,6 +78,18 @@
       "checkpoint": "C13",
       "owner": "C13-L2",
       "path": "0013_specifications.sql"
+    },
+    {
+      "id": "0014",
+      "checkpoint": "C14",
+      "owner": "C14-L2",
+      "path": "0014_render_stills.sql"
+    },
+    {
+      "id": "0015",
+      "checkpoint": "C14.8",
+      "owner": "primary-sol-xhigh",
+      "path": "0015_device_neutral_capture_envelopes.sql"
     }
   ]
 }

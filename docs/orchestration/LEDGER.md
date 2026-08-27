@@ -1296,3 +1296,100 @@
   exclusion scan passed.
 - Merge rule: all four named GitHub `ci.yml` checks must succeed on the exact final PR head; earlier
   green runs do not transfer. Only then may PR #10 merge and disposable branch resources be removed.
+
+## C14.8 — Device-neutral mobile capture foundation
+
+### Activation and contract freeze — 2026-08-26
+
+- Authority: user instruction dated 2026-08-26 to build one cohesive camera-first/LiDAR-optional
+  mobile capture checkpoint, one branch and one non-draft PR from latest clean `origin/main`, without
+  merging it.
+- Immutable predecessor: `f41123f75bad8f70770a499a78638f2f1fb06d84`; `origin/main` was fetched
+  before branch creation and matched exactly. The user-owned root `AGENTS.md` modification remains
+  present, untouched and excluded from all checkpoint commits.
+- Integration branch: `codex/c14-8-device-neutral-mobile-capture`.
+- Runtime/ownership: one primary `gpt-5.6-sol` / `xhigh` session is the sole implementation writer
+  and completion authority. Two early read-only audit processes were stopped immediately when the
+  user refined the protocol; they produced no accepted evidence or implementation. No worktree,
+  separate task or parallel implementation lane exists. At most one Terra/high same-checkout,
+  read-only final audit is permitted on an exact frozen head if materially useful.
+- Audit result: C7 is RoomPlan/LiDAR-specific and deliberately retains no camera frames; C8 already
+  provides immutable C2 RGB media but lacks synchronized ARKit camera evidence and uses synthetic
+  viewpoint advancement; C14.7 already consumes C8 only as proposal state. The smallest coherent
+  boundary keeps C2 RGB assets, extends C7 transport only for optional depth, adds immutable
+  `capture-envelope-v1`, and explicitly creates the existing C8 job only after server revalidation.
+- Frozen contract: `docs/orchestration/checkpoints/C14_8_DEVICE_NEUTRAL_MOBILE_CAPTURE_CONTRACT.md`.
+  Migration allocation is `0015_device_neutral_capture_envelopes.sql`. Existing C4-C10 authority,
+  C7 RoomPlan proposal conversion and C8 production adapter selection remain unchanged.
+- Initial claim boundary: software and Simulator evidence only unless an authorised physical device
+  is actually connected and usable. No physical camera/ARKit/depth/RoomPlan, representative-home,
+  production reconstruction, Windows/RTX 5080, provider, structural, regulatory, cost or
+  professional acceptance is inferred from fixtures or compilation.
+
+### Independent final review and software PR — 2026-08-27
+
+- Status: non-draft PR [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11) is open as
+  the single C14.8 integration vehicle. It is not merged, and no later checkpoint is open.
+- Frozen review input: `179336aa123e9285c770c212579c6f22902eceb2` against exact base
+  `f41123f75bad8f70770a499a78638f2f1fb06d84`. One permitted Terra/high same-checkout reviewer was
+  read-only and inspected contract, privacy/consent, authorization, immutable evidence, optional
+  depth/RoomPlan binding, state isolation, Release fixtures and evidence claims. Sol/xhigh retained
+  sole implementation, materiality, correction and completion authority.
+- Review outcome: one material operational finding. `0015_device_neutral_capture_envelopes` was
+  required by composed readiness but absent from the established documented C7 admin lifecycle.
+  Correction `581c3580699f74d1150192c43384c785244975e0` adds an explicit ordered composed command,
+  applies `0007` and `0015` atomically after the separate C8 prerequisite, updates both platform and
+  physical-device runbooks, and tests the lifecycle. No other material finding remained.
+- Software gates: full repository verification passed all 24 JavaScript/TypeScript tasks plus
+  Ruff/mypy and Python 157/2 optional-runtime skips; platform contract tests passed 264 with 52
+  unavailable-service skips; spatial contracts passed 150 with 3 skips; authorization passed 921;
+  API seams passed 21; dependency boundaries passed 3; generated clients were byte-stable. The
+  final native source passed 196 logical tests/203 invocations, the guided Simulator UI passed 1/1,
+  and Simulator Release, unsigned generic-iOS Release, Release analysis and fixture exclusion
+  passed.
+- Hardware/provider truth: final device inventory contained only the Mac and iOS 26.4 Simulators.
+  Physical camera/ARKit/depth/RoomPlan and the Windows/RTX 5080 candidate benchmark remain `NOT RUN`.
+  Live C14.8 PostgreSQL remained unavailable locally and is an explicit physical/software handoff
+  gate; no experimental reconstruction candidate entered production.
+- Final synchronization rule: all four named GitHub `ci.yml` jobs must succeed on the exact final
+  closeout head before the checkpoint may be reported complete. Earlier green checks do not
+  transfer. PR #11 must not be merged by this session.
+- The user-owned root `AGENTS.md` modification remains present, untouched and excluded from every
+  checkpoint commit.
+
+### Independent merge review — 2026-08-27
+
+- Authority: the user's later instruction supersedes only the earlier leave-unmerged disposition.
+  Primary `gpt-5.6-sol` / `xhigh` owns materiality, corrections, final verification, merge and
+  cleanup. The exact frozen input was PR #11 head
+  `91581c3d7e90850e0cc5a7d752359639b0ff0fc5` against base
+  `f41123f75bad8f70770a499a78638f2f1fb06d84`. No worktree or separate task was used.
+- Delegation gate: one context-minimal Terra/high same-checkout read-only audit inspected only the
+  native C14.8 diff and relevant tests. It made no edit, ran only `git diff --check`, and reported no
+  confirmed material native defect. Sol independently inspected the highest-risk native, contract,
+  persistence, rights, replay, C8-proposal, migration and evidence paths.
+- Correction `dcf1b4f` closes three material defects: the mandatory RGB-keyframe capability must
+  match a retained keyframe source; acceptance replay must revalidate current rights and source
+  visibility; and an existing linked C8 job cannot silently replay a changed reconstruction
+  appearance request. No canonical, operation, fusion, scene, design or render authority changed.
+- Disposable PostgreSQL 16.14 under `/private/tmp/interior-design-pr11-pg.gO0yZE` closed the prior
+  live-database gap. A brand-new applicable C1-C8 plus `0015` database passed 2/2 C14.8 cases with
+  real accepted-envelope persistence, append-only enforcement, current-rights replay denial,
+  viewer-mutation denial, owner attribution, same-tenant viewer read, foreign-tenant hiding and zero
+  canonical snapshots for the tested projects. A second database applied exact-base migrations
+  `0001`-`0014`, upgraded via `migrate-c14-8` to all `0001`-`0015` markers and passed an idempotent
+  lifecycle rerun. Docker/Supabase's earlier `EOF` is historical, not a remaining gate.
+- Final local regression before evidence closeout: `pnpm verify` passed all 24 lint, typecheck and
+  build tasks, shared contracts 93/93, platform 264 plus the separate live 2/2, spatial 150/3
+  optional-runtime skips, Python 157/2 skips, authorization 921/921, C14, API 21/21 and dependency
+  boundary 3/3 gates. XcodeGen remained byte-stable at
+  `6ef49f967fd7de51b5b35da57461b90ac9914031c0fc7352cfd4121cd927914a`; the complete native unit
+  target re-passed 196 logical tests / 203 device invocations, and unsigned Release Simulator plus
+  generic-iOS products contained none of the C14.8 fixture scenario/view/engine/key/text.
+- Merge rule: the final evidence commit becomes the reviewed PR head. All four named GitHub
+  `ci.yml` checks must be successful on that exact SHA before normal merge. Earlier green checks do
+  not transfer. After merge, synchronize clean `main`, preserve the user-owned `AGENTS.md` change
+  and remove only disposable review infrastructure and merged branch refs.
+- Still outside review: no physical Apple-device camera, RGB delivery, ARKit pose/intrinsics,
+  interruption/background/relaunch, scene depth, RoomPlan, thermal, accessibility or
+  representative-home acceptance; no Windows/RTX 5080 candidate run or production promotion.

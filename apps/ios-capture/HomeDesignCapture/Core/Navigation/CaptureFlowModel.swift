@@ -6,6 +6,7 @@ enum CaptureRoute: Hashable, Sendable {
   case twinIntegration
   case designStudio
   case evidenceWorkspace
+  case guidedCapture
   case eligibility
   case mediaCapture
   case capturePreparation
@@ -66,6 +67,11 @@ final class CaptureFlowModel {
   func openMediaCapture() {
     guard selectedProject != nil else { return }
     path.append(.mediaCapture)
+  }
+
+  func openGuidedCapture() {
+    guard selectedProject != nil else { return }
+    path.append(.guidedCapture)
   }
 
   func continueFromEligibility() {

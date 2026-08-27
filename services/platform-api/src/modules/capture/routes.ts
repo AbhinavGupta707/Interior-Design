@@ -2,17 +2,22 @@ import { authoriseProjectAction, type ProjectAction } from "@interior-design/aut
 import {
   c7RouteContract,
   captureArtifactUploadSessionSchema,
+  captureEnvelopeReconstructionSchema,
+  captureEnvelopeRecordSchema,
+  captureEnvelopeRouteContract,
   capturePackageSchema,
   captureProposalResultSchema,
   captureSessionIdSchema,
   captureSessionSchema,
   completeCaptureArtifactUploadRequestSchema,
+  createCaptureEnvelopeRequestSchema,
   createCaptureArtifactUploadRequestSchema,
   createCapturePackageRequestSchema,
   createCaptureSessionRequestSchema,
   projectIdSchema,
   signCaptureArtifactPartRequestSchema,
   signedCaptureArtifactPartSchema,
+  startCaptureEnvelopeReconstructionRequestSchema,
   type Actor,
 } from "@interior-design/contracts";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -21,8 +26,10 @@ import { z } from "zod";
 import { getRequestCorrelation } from "../../correlation.js";
 import { forbidden, notFound, parseRequest } from "../identity/http.js";
 import type { IdentityService } from "../identity/service.js";
-import { parseIdempotencyKey } from "../projects/idempotency.js";
+import { parseIdempotencyKey, requestHash } from "../projects/idempotency.js";
 import type { ProjectRepository } from "../projects/repository.js";
+import type { ReconstructionService } from "../reconstruction/service.js";
+import { captureConflict } from "./errors.js";
 import type { CaptureBackend } from "./types.js";
 
 const projectParamsSchema = z.object({ projectId: projectIdSchema }).strict();
@@ -61,6 +68,7 @@ export function registerCaptureRoutes(
   identity: IdentityService,
   projects: ProjectRepository,
   backend: CaptureBackend,
+  reconstruction?: ReconstructionService,
 ): void {
   server.post(c7RouteContract.createSession, async (request, reply) => {
     const params = parseRequest(projectParamsSchema, request.params);
@@ -245,6 +253,139 @@ export function registerCaptureRoutes(
     });
     replayHeader(reply, result.replayed);
     return reply.status(201).send(capturePackageSchema.parse(result.value));
+  });
+
+  server.post(captureEnvelopeRouteContract.accept, async (request, reply) => {
+    const params = parseRequest(sessionParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "capture:package:finalize",
+      identity,
+      projects,
+    );
+    const result = await backend.acceptEnvelope({
+      actor,
+      captureSessionId: params.captureSessionId,
+      correlation: getRequestCorrelation(request),
+      idempotencyKey: parseIdempotencyKey(request.headers["idempotency-key"]),
+      projectId: params.projectId,
+      request: parseRequest(createCaptureEnvelopeRequestSchema, request.body),
+    });
+    replayHeader(reply, result.replayed);
+    return reply.status(201).send(captureEnvelopeRecordSchema.parse(result.value));
+  });
+
+  server.get(captureEnvelopeRouteContract.get, async (request, reply) => {
+    const params = parseRequest(sessionParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "capture:session:read",
+      identity,
+      projects,
+    );
+    const record = await backend.findEnvelope(
+      actor.tenantId,
+      params.projectId,
+      params.captureSessionId,
+    );
+    if (record === undefined) throw notFound();
+    return reply.send(captureEnvelopeRecordSchema.parse(record));
+  });
+
+  server.post(captureEnvelopeRouteContract.startReconstruction, async (request, reply) => {
+    if (reconstruction === undefined) {
+      throw captureConflict(
+        "CAPTURE_RECONSTRUCTION_UNAVAILABLE",
+        "The authenticated reconstruction service is not available.",
+      );
+    }
+    const params = parseRequest(sessionParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "reconstruction:job:create",
+      identity,
+      projects,
+    );
+    const body = parseRequest(startCaptureEnvelopeReconstructionRequestSchema, request.body);
+    parseIdempotencyKey(request.headers["idempotency-key"]);
+    const record = await backend.findEnvelope(
+      actor.tenantId,
+      params.projectId,
+      params.captureSessionId,
+    );
+    if (record === undefined) throw notFound();
+    if (record.acceptance.envelopeSha256 !== body.expectedEnvelopeSha256) {
+      throw captureConflict(
+        "CAPTURE_ENVELOPE_CHANGED",
+        "The accepted envelope hash does not match the reconstruction request.",
+      );
+    }
+    const existingJobId = await backend.findEnvelopeReconstructionJobId(
+      actor.tenantId,
+      params.projectId,
+      params.captureSessionId,
+    );
+    const reconstructionRequest = {
+      appearanceMode: body.appearanceMode,
+      label: `Guided capture ${params.captureSessionId.slice(0, 8)}`,
+      mode: "rgb-sfm" as const,
+      registrationAnchors: [],
+      rights: record.envelope.rights,
+      sources: record.envelope.mediaSources.map((source) => ({
+        assetId: source.assetId,
+        byteSize: source.byteSize,
+        detectedMimeType: source.mimeType,
+        kind: source.kind === "rgb-video" ? ("rgb-video" as const) : ("rgb-image" as const),
+        sha256: source.sha256,
+      })),
+    };
+    const result =
+      existingJobId === undefined
+        ? await reconstruction.createJob({
+            actor,
+            correlation: getRequestCorrelation(request),
+            idempotencyKey: record.acceptance.envelopeId,
+            projectId: params.projectId,
+            request: reconstructionRequest,
+          })
+        : await (async () => {
+            const job = await reconstruction.getJob(
+              actor.tenantId,
+              params.projectId,
+              existingJobId,
+            );
+            if (requestHash(job.request) !== requestHash(reconstructionRequest)) {
+              throw captureConflict(
+                "CAPTURE_RECONSTRUCTION_CHANGED",
+                "The accepted envelope already has reconstruction work with a different request.",
+              );
+            }
+            return { job, replayed: true };
+          })();
+    if (existingJobId === undefined) {
+      await backend.linkEnvelopeReconstruction({
+        actorUserId: actor.userId,
+        captureSessionId: params.captureSessionId,
+        envelopeId: record.acceptance.envelopeId,
+        projectId: params.projectId,
+        reconstructionJobId: result.job.id,
+        tenantId: actor.tenantId,
+      });
+    }
+    replayHeader(reply, result.replayed);
+    return reply.status(result.replayed ? 200 : 201).send(
+      captureEnvelopeReconstructionSchema.parse({
+        captureSessionId: params.captureSessionId,
+        envelopeId: record.acceptance.envelopeId,
+        envelopeSha256: record.acceptance.envelopeSha256,
+        projectId: params.projectId,
+        reconstructionJob: result.job,
+        schemaVersion: "capture-envelope-reconstruction-v1",
+      }),
+    );
   });
 
   server.get(c7RouteContract.getProposal, async (request, reply) => {

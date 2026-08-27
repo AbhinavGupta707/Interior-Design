@@ -65,6 +65,19 @@ final class CaptureFlowModelTests: XCTestCase {
     XCTAssertNil(model.eligibility)
     XCTAssertTrue(model.path.isEmpty)
   }
+
+  func testGuidedCaptureIsAnOptionalBranchOfTheHomeownerProduct() {
+    let model = CaptureFlowModel(
+      capabilityChecker: StubCapabilityChecker(result: .eligible)
+    )
+    model.selectProject(CaptureProject.localFixtures[0])
+
+    model.openGuidedCapture()
+
+    XCTAssertEqual(model.path, [.projectHome, .guidedCapture])
+    model.finishBranch()
+    XCTAssertEqual(model.path, [.projectHome])
+  }
 }
 
 private struct StubCapabilityChecker: CaptureCapabilityChecking {

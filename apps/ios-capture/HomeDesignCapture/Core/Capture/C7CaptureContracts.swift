@@ -22,6 +22,12 @@ enum C7CaptureMode: String, Codable, Sendable {
   case structure
 }
 
+enum C7CaptureDeviceCapability: String, Codable, Sendable {
+  case arkitRGB = "arkit-rgb"
+  case arkitRGBDepth = "arkit-rgb-depth"
+  case roomPlanLiDAR = "roomplan-lidar"
+}
+
 enum C7RightsBasis: String, Codable, Sendable {
   case licensed
   case ownedByUser = "owned-by-user"
@@ -50,12 +56,13 @@ struct C7CreateCaptureSessionRequest: Codable, Equatable, Sendable {
 
   init(
     captureLabel: String,
+    deviceCapability: C7CaptureDeviceCapability = .roomPlanLiDAR,
     expectedRoomCount: Int?,
     mode: C7CaptureMode,
     rights: C7CaptureRights
   ) {
     self.captureLabel = captureLabel
-    deviceCapability = "roomplan-lidar"
+    self.deviceCapability = deviceCapability.rawValue
     self.expectedRoomCount = expectedRoomCount
     self.mode = mode
     self.rights = rights
@@ -65,6 +72,7 @@ struct C7CreateCaptureSessionRequest: Codable, Equatable, Sendable {
 struct C7CaptureBrief: Codable, Equatable, Sendable {
   let captureLabel: String
   let captureSessionId: UUID
+  let deviceCapability: String?
   let expiresAt: String
   let expectedRoomCount: Int?
   let instructionsVersion: String
@@ -76,6 +84,7 @@ struct C7CaptureBrief: Codable, Equatable, Sendable {
 
 enum C7ServerCaptureState: String, Codable, Sendable {
   case abstained
+  case accepted
   case cancelRequested = "cancel-requested"
   case cancelled
   case created
@@ -161,12 +170,14 @@ enum C7CaptureArtifactKind: String, Codable, Sendable {
   case capturedRoomDataJSON = "captured-room-data-json"
   case capturedRoomJSON = "captured-room-json"
   case capturedStructureJSON = "captured-structure-json"
+  case depthSequence = "depth-sequence"
   case qualityManifestJSON = "quality-manifest-json"
   case roomPlanNormalizedJSON = "roomplan-normalized-json"
   case structureUSDZ = "structure-usdz"
 }
 
 enum C7CaptureArtifactContentType: String, Codable, Sendable {
+  case binary = "application/octet-stream"
   case json = "application/json"
   case usdz = "model/vnd.usdz+zip"
 }

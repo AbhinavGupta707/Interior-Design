@@ -30,6 +30,7 @@ enum C7SyntheticFixture {
     C7CaptureBrief(
       captureLabel: "VISIBLY SYNTHETIC capture",
       captureSessionId: sessionId,
+      deviceCapability: C7CaptureDeviceCapability.roomPlanLiDAR.rawValue,
       expiresAt: expiresAt,
       expectedRoomCount: mode == .singleRoom ? 1 : 2,
       instructionsVersion: "synthetic-instructions-v1",

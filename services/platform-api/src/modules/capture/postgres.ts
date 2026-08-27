@@ -2,13 +2,16 @@ import {
   c7CapturePolicy,
   captureArtifactUploadSessionSchema,
   captureBriefSchema,
+  captureEnvelopeRecordSchema,
   capturePackageSchema,
   captureProposalResultSchema,
   captureSessionSchema,
+  createCaptureEnvelopeRequestSchema,
   createCapturePackageRequestSchema,
   signedCaptureArtifactPartSchema,
   type CaptureArtifactUploadSession,
   type CaptureBrief,
+  type CaptureEnvelopeRecord,
   type CaptureProposalResult,
   type CaptureSession,
 } from "@interior-design/contracts";
@@ -35,6 +38,7 @@ import type {
   CapturePackage,
   CaptureSessionMutationCommand,
   CaptureUuidFactory,
+  AcceptCaptureEnvelopeCommand,
   CompleteArtifactUploadCommand,
   CreateArtifactUploadCommand,
   CreateCaptureSessionCommand,
@@ -102,6 +106,35 @@ interface ArtifactRow {
   readonly upload_state: string;
 }
 
+interface EnvelopeRow {
+  readonly accepted_at: Date | string;
+  readonly accepted_by: string;
+  readonly capture_session_id: string;
+  readonly envelope_id: string;
+  readonly envelope_payload: unknown;
+  readonly envelope_sha256: string;
+  readonly project_id: string;
+}
+
+interface EnvelopeAssetRow {
+  readonly basis: string;
+  readonly declared_mime_type: string;
+  readonly detected_mime_type: string | null;
+  readonly id: string;
+  readonly service_processing_consent: boolean;
+  readonly source_byte_size: number | string;
+  readonly source_sha256: string;
+  readonly status: string;
+  readonly training_use_consent: string;
+  readonly withdrawn: boolean;
+}
+
+interface RoomPlanPackageRow {
+  readonly brief_payload: unknown;
+  readonly manifest_sha256: string;
+  readonly result_payload: unknown;
+}
+
 interface OpenUploadRow {
   readonly artifact_id: string;
   readonly provider_upload_id: string;
@@ -155,6 +188,28 @@ function publicUpload(
     recordedPartNumbers: partNumbers,
     state: row.session_state,
     uploadSessionId: row.upload_session_id,
+  });
+}
+
+function publicEnvelope(row: EnvelopeRow): CaptureEnvelopeRecord {
+  const envelope = createCaptureEnvelopeRequestSchema.parse(row.envelope_payload);
+  if (captureSha256(envelope) !== row.envelope_sha256) {
+    throw captureConflict(
+      "CAPTURE_ENVELOPE_INTEGRITY_FAILURE",
+      "The immutable capture envelope failed its stored integrity check.",
+    );
+  }
+  return captureEnvelopeRecordSchema.parse({
+    acceptance: {
+      acceptedAt: iso(row.accepted_at),
+      acceptedBy: row.accepted_by,
+      captureSessionId: row.capture_session_id,
+      envelopeId: row.envelope_id,
+      envelopeSha256: row.envelope_sha256,
+      projectId: row.project_id,
+      schemaVersion: "capture-envelope-acceptance-v1",
+    },
+    envelope,
   });
 }
 
@@ -310,6 +365,7 @@ export class PostgresCaptureBackend implements CaptureBackend {
       const brief = captureBriefSchema.parse({
         captureLabel: command.request.captureLabel,
         captureSessionId,
+        deviceCapability: command.request.deviceCapability,
         expiresAt: new Date(now.getTime() + CAPTURE_BRIEF_TTL_MILLISECONDS).toISOString(),
         ...(command.request.expectedRoomCount === undefined
           ? {}
@@ -366,7 +422,11 @@ export class PostgresCaptureBackend implements CaptureBackend {
         action: "capture.session.create",
         actorUserId: command.actor.userId,
         captureSessionId,
-        metadata: { mode: brief.mode, state: "created" },
+        metadata: {
+          deviceCapability: command.request.deviceCapability,
+          mode: brief.mode,
+          state: "created",
+        },
         projectId: command.projectId,
         requestId: command.correlation.requestId,
         tenantId: command.actor.tenantId,
@@ -1049,6 +1109,434 @@ export class PostgresCaptureBackend implements CaptureBackend {
     });
   }
 
+  async acceptEnvelope(
+    command: AcceptCaptureEnvelopeCommand,
+  ): Promise<MutationResult<CaptureEnvelopeRecord>> {
+    const envelope = createCaptureEnvelopeRequestSchema.parse(command.request);
+    return this.#sql.begin(async (transaction) => {
+      const claim = captureClaim(
+        command,
+        `capture.envelope.accept:${command.captureSessionId}`,
+        envelope,
+      );
+      const idempotency = await claimIdempotency(transaction, claim);
+      if (idempotency.kind === "replay") {
+        const replayed = captureEnvelopeRecordSchema.parse(idempotency.body);
+        const current = await this.#findEnvelopeInTransaction(
+          transaction,
+          command.actor.tenantId,
+          command.projectId,
+          command.captureSessionId,
+        );
+        if (
+          current === undefined ||
+          current.acceptance.envelopeId !== replayed.acceptance.envelopeId ||
+          current.acceptance.envelopeSha256 !== replayed.acceptance.envelopeSha256
+        ) {
+          throw captureConflict(
+            "CAPTURE_ENVELOPE_UNAVAILABLE",
+            "The accepted envelope is no longer available under the current rights and source state.",
+          );
+        }
+        return { replayed: true, value: current };
+      }
+      const session = await this.#lockedSession(
+        transaction,
+        command.actor.tenantId,
+        command.projectId,
+        command.captureSessionId,
+      );
+      if (session === undefined) throw notFound();
+      assertCurrentRights(session);
+      assertUnexpired(session, this.#clock.now());
+      if (session.state !== "created" && session.state !== "uploading") {
+        throw captureConflict(
+          "CAPTURE_ENVELOPE_STATE_CONFLICT",
+          "A device-neutral envelope can be accepted only before another capture package is finalized.",
+        );
+      }
+      const brief = captureBriefSchema.parse(session.brief_payload);
+      if (
+        envelope.projectId !== command.projectId ||
+        envelope.captureSessionId !== command.captureSessionId ||
+        !exactRights(envelope.rights, brief.rights)
+      ) {
+        throw captureUnprocessable(
+          "CAPTURE_ENVELOPE_SCOPE_MISMATCH",
+          "The envelope identity or rights do not match the server-issued capture brief.",
+        );
+      }
+      if (envelope.capabilities.runtime !== "physical-device") {
+        throw captureUnprocessable(
+          "CAPTURE_ENVELOPE_FIXTURE_NOT_ACCEPTABLE",
+          "Simulator fixtures can exercise the journey but cannot be accepted as physical evidence.",
+        );
+      }
+      const expectedCapability = envelope.capabilities.sceneDepth ? "arkit-rgb-depth" : "arkit-rgb";
+      if (brief.deviceCapability !== expectedCapability) {
+        throw captureUnprocessable(
+          "CAPTURE_ENVELOPE_CAPABILITY_MISMATCH",
+          "The runtime capability declaration does not match the server-issued capture session.",
+        );
+      }
+
+      const assetIds = envelope.mediaSources.map(({ assetId }) => assetId);
+      const assetRows = await transaction<EnvelopeAssetRow[]>`
+        SELECT a.id, a.declared_mime_type, a.detected_mime_type,
+          a.source_byte_size, a.source_sha256, a.status,
+          r.basis, r.service_processing_consent, r.training_use_consent,
+          (w.asset_id IS NOT NULL) AS withdrawn
+        FROM assets a
+        JOIN asset_rights_assertions r
+          ON r.tenant_id = a.tenant_id
+         AND r.project_id = a.project_id
+         AND r.asset_id = a.id
+        LEFT JOIN reconstruction_rights_withdrawals w
+          ON w.tenant_id = a.tenant_id
+         AND w.project_id = a.project_id
+         AND w.asset_id = a.id
+        WHERE a.tenant_id = ${command.actor.tenantId}::uuid
+          AND a.project_id = ${command.projectId}::uuid
+          AND a.id = ANY(${transaction.array(assetIds)}::uuid[])
+        FOR SHARE OF a, r
+      `;
+      const assetsById = new Map(assetRows.map((row) => [row.id, row]));
+      if (assetRows.length !== envelope.mediaSources.length) {
+        throw captureUnprocessable(
+          "CAPTURE_ENVELOPE_SOURCE_SET_MISMATCH",
+          "Every RGB source must resolve to immutable evidence in this project.",
+        );
+      }
+      for (const source of envelope.mediaSources) {
+        const stored = assetsById.get(source.assetId);
+        if (
+          stored === undefined ||
+          !["uploaded", "processing", "ready"].includes(stored.status) ||
+          stored.withdrawn ||
+          stored.declared_mime_type !== source.mimeType ||
+          (stored.detected_mime_type !== null && stored.detected_mime_type !== source.mimeType) ||
+          Number(stored.source_byte_size) !== source.byteSize ||
+          stored.source_sha256 !== source.sha256 ||
+          stored.basis !== envelope.rights.basis ||
+          !stored.service_processing_consent ||
+          stored.training_use_consent !== "denied"
+        ) {
+          throw captureUnprocessable(
+            "CAPTURE_ENVELOPE_SOURCE_BINDING_MISMATCH",
+            "An RGB source changed, is unavailable, or lacks the required processing rights.",
+          );
+        }
+      }
+
+      const depthIds = envelope.depthSources.map(({ artifactId }) => artifactId);
+      const depthRows =
+        depthIds.length === 0
+          ? []
+          : await transaction<ArtifactRow[]>`
+              SELECT a.id, a.kind, a.content_type, a.room_id, a.source_byte_size,
+                a.source_sha256, a.state, u.state AS upload_state
+              FROM capture_artifacts a
+              JOIN capture_artifact_upload_sessions u
+                ON u.tenant_id = a.tenant_id
+               AND u.project_id = a.project_id
+               AND u.capture_session_id = a.capture_session_id
+               AND u.artifact_id = a.id
+              WHERE a.tenant_id = ${command.actor.tenantId}::uuid
+                AND a.project_id = ${command.projectId}::uuid
+                AND a.capture_session_id = ${command.captureSessionId}::uuid
+                AND a.id = ANY(${transaction.array(depthIds)}::uuid[])
+              FOR SHARE OF a, u
+            `;
+      const depthById = new Map(depthRows.map((row) => [row.id, row]));
+      for (const source of envelope.depthSources) {
+        const stored = depthById.get(source.artifactId);
+        if (
+          stored === undefined ||
+          stored.kind !== "depth-sequence" ||
+          stored.content_type !== "application/octet-stream" ||
+          stored.state !== "uploaded" ||
+          stored.upload_state !== "completed" ||
+          Number(stored.source_byte_size) !== source.byteSize ||
+          stored.source_sha256 !== source.sha256
+        ) {
+          throw captureUnprocessable(
+            "CAPTURE_ENVELOPE_DEPTH_BINDING_MISMATCH",
+            "A depth source does not match its completed immutable upload.",
+          );
+        }
+      }
+
+      for (const source of envelope.roomPlanSources) {
+        const packages = await transaction<RoomPlanPackageRow[]>`
+          SELECT p.manifest_sha256, b.brief_payload, r.result_payload
+          FROM capture_packages p
+          JOIN capture_briefs b
+            ON b.tenant_id = p.tenant_id
+           AND b.project_id = p.project_id
+           AND b.capture_session_id = p.capture_session_id
+          JOIN capture_sessions s
+            ON s.tenant_id = p.tenant_id
+           AND s.project_id = p.project_id
+           AND s.id = p.capture_session_id
+          JOIN capture_results r
+            ON r.tenant_id = p.tenant_id
+           AND r.project_id = p.project_id
+           AND r.capture_session_id = p.capture_session_id
+           AND r.package_id = p.id
+          WHERE p.tenant_id = ${command.actor.tenantId}::uuid
+            AND p.project_id = ${command.projectId}::uuid
+            AND p.capture_session_id = ${source.captureSessionId}::uuid
+            AND p.id = ${source.packageId}::uuid
+            AND s.state IN ('proposed', 'abstained')
+            AND NOT EXISTS (
+              SELECT 1 FROM capture_rights_events denied
+              WHERE denied.tenant_id = p.tenant_id
+                AND denied.project_id = p.project_id
+                AND denied.capture_session_id = p.capture_session_id
+                AND NOT denied.permitted
+            )
+          LIMIT 1 FOR SHARE OF p, b
+        `;
+        const roomPlanPackage = packages[0];
+        const roomPlanBrief =
+          roomPlanPackage === undefined
+            ? undefined
+            : captureBriefSchema.parse(roomPlanPackage.brief_payload);
+        const roomPlanResult =
+          roomPlanPackage === undefined
+            ? undefined
+            : captureProposalResultSchema.parse(roomPlanPackage.result_payload);
+        if (
+          roomPlanPackage?.manifest_sha256 !== source.packageManifestSha256 ||
+          roomPlanBrief === undefined ||
+          roomPlanResult?.captureSessionId !== source.captureSessionId ||
+          roomPlanResult.packageId !== source.packageId ||
+          roomPlanResult.packageManifestSha256 !== source.packageManifestSha256 ||
+          roomPlanBrief.deviceCapability !== "roomplan-lidar" ||
+          !exactRights(envelope.rights, roomPlanBrief.rights)
+        ) {
+          throw captureUnprocessable(
+            "CAPTURE_ENVELOPE_ROOMPLAN_BINDING_MISMATCH",
+            "A RoomPlan reference does not match an accepted immutable package.",
+          );
+        }
+      }
+
+      const envelopeId = this.#uuid.create();
+      const envelopeSha256 = captureSha256(envelope);
+      const acceptedAt = this.#clock.now();
+      await transaction`
+        INSERT INTO capture_envelopes (
+          tenant_id, project_id, capture_session_id, id, schema_version,
+          envelope_sha256, envelope_payload, accepted_by, accepted_at
+        ) VALUES (
+          ${command.actor.tenantId}::uuid, ${command.projectId}::uuid,
+          ${command.captureSessionId}::uuid, ${envelopeId}::uuid, 'capture-envelope-v1',
+          ${envelopeSha256}, ${transaction.json(json(envelope))},
+          ${command.actor.userId}::uuid, ${acceptedAt}
+        )
+      `;
+      for (const source of envelope.mediaSources) {
+        await transaction`
+          INSERT INTO capture_envelope_media_sources (
+            tenant_id, project_id, capture_session_id, envelope_id, asset_id,
+            source_kind, detected_mime_type, source_byte_size, source_sha256, created_at
+          ) VALUES (
+            ${command.actor.tenantId}::uuid, ${command.projectId}::uuid,
+            ${command.captureSessionId}::uuid, ${envelopeId}::uuid,
+            ${source.assetId}::uuid, ${source.kind}, ${source.mimeType},
+            ${source.byteSize}, ${source.sha256}, ${acceptedAt}
+          )
+        `;
+      }
+      for (const source of envelope.depthSources) {
+        await transaction`
+          INSERT INTO capture_envelope_depth_sources (
+            tenant_id, project_id, capture_session_id, envelope_id, artifact_id,
+            source_byte_size, source_sha256, created_at
+          ) VALUES (
+            ${command.actor.tenantId}::uuid, ${command.projectId}::uuid,
+            ${command.captureSessionId}::uuid, ${envelopeId}::uuid,
+            ${source.artifactId}::uuid, ${source.byteSize}, ${source.sha256}, ${acceptedAt}
+          )
+        `;
+      }
+      for (const source of envelope.roomPlanSources) {
+        await transaction`
+          INSERT INTO capture_envelope_roomplan_sources (
+            tenant_id, project_id, capture_session_id, envelope_id,
+            source_capture_session_id, source_package_id, package_manifest_sha256, created_at
+          ) VALUES (
+            ${command.actor.tenantId}::uuid, ${command.projectId}::uuid,
+            ${command.captureSessionId}::uuid, ${envelopeId}::uuid,
+            ${source.captureSessionId}::uuid, ${source.packageId}::uuid,
+            ${source.packageManifestSha256}, ${acceptedAt}
+          )
+        `;
+      }
+      await transaction`
+        UPDATE capture_sessions
+        SET state = 'accepted', retryable = false, safe_code = NULL,
+            updated_at = clock_timestamp(), version = version + 1
+        WHERE tenant_id = ${command.actor.tenantId}::uuid
+          AND project_id = ${command.projectId}::uuid
+          AND id = ${command.captureSessionId}::uuid
+          AND state IN ('created', 'uploading')
+      `;
+      const record = captureEnvelopeRecordSchema.parse({
+        acceptance: {
+          acceptedAt: acceptedAt.toISOString(),
+          acceptedBy: command.actor.userId,
+          captureSessionId: command.captureSessionId,
+          envelopeId,
+          envelopeSha256,
+          projectId: command.projectId,
+          schemaVersion: "capture-envelope-acceptance-v1",
+        },
+        envelope,
+      });
+      await appendUserEvent(transaction, {
+        action: "capture.envelope.accept",
+        actorUserId: command.actor.userId,
+        captureSessionId: command.captureSessionId,
+        metadata: {
+          depthSourceCount: envelope.depthSources.length,
+          envelopeId,
+          mediaSourceCount: envelope.mediaSources.length,
+          roomCount: envelope.rooms.length,
+          roomPlanSourceCount: envelope.roomPlanSources.length,
+        },
+        projectId: command.projectId,
+        requestId: command.correlation.requestId,
+        tenantId: command.actor.tenantId,
+        traceId: command.correlation.traceId,
+      });
+      await appendOutbox(transaction, {
+        captureSessionId: command.captureSessionId,
+        eventType: "capture.envelope.accepted",
+        payload: { envelopeId, envelopeSha256, state: "accepted" },
+        projectId: command.projectId,
+        tenantId: command.actor.tenantId,
+      });
+      await completeIdempotency(transaction, claim, 201, record);
+      return { replayed: false, value: record };
+    });
+  }
+
+  async findEnvelope(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<CaptureEnvelopeRecord | undefined> {
+    return this.#sql.begin((transaction) =>
+      this.#findEnvelopeInTransaction(transaction, tenantId, projectId, captureSessionId),
+    );
+  }
+
+  async #findEnvelopeInTransaction(
+    transaction: TransactionSql,
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<CaptureEnvelopeRecord | undefined> {
+    const rows = await transaction<EnvelopeRow[]>`
+      SELECT capture_session_id, id AS envelope_id, project_id,
+        envelope_sha256, envelope_payload, accepted_by, accepted_at
+      FROM capture_envelopes e
+      WHERE e.tenant_id = ${tenantId}::uuid
+        AND e.project_id = ${projectId}::uuid
+        AND e.capture_session_id = ${captureSessionId}::uuid
+        AND NOT EXISTS (
+          SELECT 1 FROM capture_rights_events denied
+          WHERE denied.tenant_id = e.tenant_id
+            AND denied.project_id = e.project_id
+            AND denied.capture_session_id = e.capture_session_id
+            AND NOT denied.permitted
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM capture_envelope_media_sources source
+          JOIN assets asset
+            ON asset.tenant_id = source.tenant_id
+           AND asset.project_id = source.project_id
+           AND asset.id = source.asset_id
+          JOIN asset_rights_assertions rights
+            ON rights.tenant_id = asset.tenant_id
+           AND rights.project_id = asset.project_id
+           AND rights.asset_id = asset.id
+          LEFT JOIN reconstruction_rights_withdrawals withdrawal
+            ON withdrawal.tenant_id = asset.tenant_id
+           AND withdrawal.project_id = asset.project_id
+           AND withdrawal.asset_id = asset.id
+          WHERE source.tenant_id = e.tenant_id
+            AND source.project_id = e.project_id
+            AND source.capture_session_id = e.capture_session_id
+            AND source.envelope_id = e.id
+            AND (
+              asset.status IN ('quarantined', 'rejected', 'aborted')
+              OR withdrawal.asset_id IS NOT NULL
+              OR NOT rights.service_processing_consent
+              OR rights.training_use_consent <> 'denied'
+              OR (
+                asset.detected_mime_type IS NOT NULL
+                AND asset.detected_mime_type <> source.detected_mime_type
+              )
+            )
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM capture_envelope_roomplan_sources source
+          JOIN capture_rights_events denied
+            ON denied.tenant_id = source.tenant_id
+           AND denied.project_id = source.project_id
+           AND denied.capture_session_id = source.source_capture_session_id
+           AND NOT denied.permitted
+          WHERE source.tenant_id = e.tenant_id
+            AND source.project_id = e.project_id
+            AND source.capture_session_id = e.capture_session_id
+            AND source.envelope_id = e.id
+        )
+      LIMIT 1
+    `;
+    return rows[0] === undefined ? undefined : publicEnvelope(rows[0]);
+  }
+
+  async findEnvelopeReconstructionJobId(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<string | undefined> {
+    const rows = await this.#sql<Array<{ readonly reconstruction_job_id: string }>>`
+      SELECT reconstruction_job_id FROM capture_envelope_reconstruction_links
+      WHERE tenant_id = ${tenantId}::uuid
+        AND project_id = ${projectId}::uuid
+        AND capture_session_id = ${captureSessionId}::uuid
+      LIMIT 1
+    `;
+    return rows[0]?.reconstruction_job_id;
+  }
+
+  async linkEnvelopeReconstruction(input: {
+    readonly actorUserId: string;
+    readonly captureSessionId: string;
+    readonly envelopeId: string;
+    readonly projectId: string;
+    readonly reconstructionJobId: string;
+    readonly tenantId: string;
+  }): Promise<void> {
+    await this.#sql`
+      INSERT INTO capture_envelope_reconstruction_links (
+        tenant_id, project_id, capture_session_id, envelope_id,
+        reconstruction_job_id, created_by, created_at
+      ) VALUES (
+        ${input.tenantId}::uuid, ${input.projectId}::uuid,
+        ${input.captureSessionId}::uuid, ${input.envelopeId}::uuid,
+        ${input.reconstructionJobId}::uuid, ${input.actorUserId}::uuid, clock_timestamp()
+      )
+      ON CONFLICT (tenant_id, project_id, capture_session_id, envelope_id) DO NOTHING
+    `;
+  }
+
   async findProposal(
     tenantId: string,
     projectId: string,
@@ -1087,10 +1575,14 @@ export class PostgresCaptureBackend implements CaptureBackend {
         await completeIdempotency(transaction, claim, 200, current);
         return { replayed: false, value: current };
       }
-      if (session.state === "proposed" || session.state === "abstained") {
+      if (
+        session.state === "accepted" ||
+        session.state === "proposed" ||
+        session.state === "abstained"
+      ) {
         throw captureConflict(
           "CAPTURE_RESULT_IMMUTABLE",
-          "A terminal capture result cannot be cancelled or replaced.",
+          "An accepted envelope or terminal capture result cannot be cancelled or replaced.",
         );
       }
       const processing = session.state === "processing" || session.state === "cancel-requested";

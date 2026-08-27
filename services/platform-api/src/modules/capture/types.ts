@@ -1,9 +1,11 @@
 import type {
   Actor,
+  CaptureEnvelopeRecord,
   CaptureArtifactUploadSession,
   CaptureProposalResult,
   CaptureSession,
   CreateCapturePackageRequest,
+  CreateCaptureEnvelopeRequest,
   CreateCaptureSessionRequest,
 } from "@interior-design/contracts";
 import type {
@@ -75,6 +77,10 @@ export interface FinalizeCapturePackageCommand extends CaptureSessionMutationCom
   readonly request: CreateCapturePackageRequest;
 }
 
+export interface AcceptCaptureEnvelopeCommand extends CaptureSessionMutationCommand {
+  readonly request: CreateCaptureEnvelopeRequest;
+}
+
 export interface WithdrawCaptureRightsCommand {
   readonly actorUserId?: string;
   readonly captureSessionId: string;
@@ -90,6 +96,9 @@ export interface MutationResult<T> {
 }
 
 export interface CaptureBackend {
+  acceptEnvelope(
+    command: AcceptCaptureEnvelopeCommand,
+  ): Promise<MutationResult<CaptureEnvelopeRecord>>;
   cancelSession(command: CaptureSessionMutationCommand): Promise<MutationResult<CaptureSession>>;
   completeArtifactUpload(
     command: CompleteArtifactUploadCommand,
@@ -106,6 +115,16 @@ export interface CaptureBackend {
     captureSessionId: string,
     uploadSessionId: string,
   ): Promise<CaptureArtifactUploadSession | undefined>;
+  findEnvelope(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<CaptureEnvelopeRecord | undefined>;
+  findEnvelopeReconstructionJobId(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<string | undefined>;
   findProposal(
     tenantId: string,
     projectId: string,
@@ -117,6 +136,14 @@ export interface CaptureBackend {
     captureSessionId: string,
   ): Promise<CaptureSession | undefined>;
   listSessions(tenantId: string, projectId: string): Promise<readonly CaptureSession[]>;
+  linkEnvelopeReconstruction(input: {
+    readonly actorUserId: string;
+    readonly captureSessionId: string;
+    readonly envelopeId: string;
+    readonly projectId: string;
+    readonly reconstructionJobId: string;
+    readonly tenantId: string;
+  }): Promise<void>;
   retrySession(command: CaptureSessionMutationCommand): Promise<MutationResult<CaptureSession>>;
   signArtifactPart(
     command: SignArtifactPartCommand,

@@ -8,13 +8,16 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 C14.7 completed the terminal native software-integration path before physical-device
-acceptance. Starting from the C14.6 cold-launch/onboarding baseline, an authorised homeowner can now
+On 2026-08-26 C14.7 completed the confirmed-twin native software-integration path. C14.8 is now the
+single active corrective checkpoint for a device-neutral, camera-first mobile capture foundation
+before physical-device acceptance. Starting from the C14.6 cold-launch/onboarding baseline, an
+authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
 enter the existing C11-C14 native design loop. Server membership and persisted version/hash pins
 remain authoritative; geometry is never fabricated or silently selected, C8 appearance is never
-dimensional evidence and recovery state never grants authority. Physical-device, RoomPlan/LiDAR,
+dimensional evidence and recovery state never grants authority. Physical-device camera/ARKit,
+RoomPlan/LiDAR,
 representative-home, production C6/C8/C9, live identity/property provider, deployment,
 provider/render-hardware and C15 acceptance remain closed.
 
@@ -431,6 +434,29 @@ and recovery caches cannot advance authority. Contract, integration, security, r
 unit, iPhone/iPad Simulator, accessibility, Debug/Release build, analysis and fixture-exclusion
 gates pass. Physical-device, RoomPlan/LiDAR, representative-home, production C6/C8/C9,
 live provider/deployment, render-hardware and C15 acceptance remain closed.
+
+### C14.8 — Device-neutral mobile capture foundation — single primary session
+
+**Outcome:** the standalone homeowner app gains an optional camera-first guided capture branch that
+works from RGB keyframes and ARKit camera evidence on ordinary non-LiDAR iPhones, retains optional
+depth/RoomPlan as additional evidence, accepts one immutable device-neutral Capture Envelope and
+explicitly bridges ready RGB sources into the existing C8 proposal journey.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Contract and platform boundary | shared capture envelope/C7 additive contracts, one allocated migration and exact capture/reconstruction composition | immutable asset/depth/RoomPlan references, hashes, rights/provenance, server re-verification, idempotent acceptance and proposal-only C8 handoff |
+| Native guided journey | exact `apps/ios-capture/**` capture capability, ARKit, protected state, guidance, hub/navigation and tests | RGB baseline, optional depth/RoomPlan quality tier, room/coverage/motion/light/blur/interruption/missing-area guidance and fail-safe recovery |
+| Integrated acceptance and handoffs | C14.8 contract/evaluation/runbook/ledger plus Windows benchmark handoff | repository/security/Swift/generated-contract/Simulator evidence, precise physical-device and RTX 5080 non-claims |
+
+**Execution:** one exact `gpt-5.6-sol` / `xhigh` primary session is the sole writer and completion
+authority. No worktree or parallel implementation lane is authorised. At most one same-checkout,
+read-only Terra/high final audit may review the frozen exact head.
+
+**Gate:** ordinary RGB capture is never blocked by LiDAR; capability and evidence origin are explicit;
+raw sources and the envelope are immutable/hash-pinned; missing/occluded geometry remains unknown;
+project/role/rights/relaunch/offline/stale-result paths fail closed; C8 remains proposal-only and
+C4/C5/C9/C10 authority is unchanged. Simulator cannot prove camera/ARKit/depth/RoomPlan behavior,
+and the Windows candidate benchmark cannot be inferred from Mac or fixture evidence.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

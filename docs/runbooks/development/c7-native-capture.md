@@ -21,7 +21,27 @@ C7_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/in
   pnpm --filter @interior-design/platform-api exec tsx src/c7.ts migrate
 ```
 
-The API readiness set includes `c7-database` and `c7-object-storage`. Readiness fails until migration `0007_native_capture` is recorded and the source, derived and quarantine buckets are reachable. Database lookup is `C7_DATABASE_URL`, then `C6_DATABASE_URL`, `C2_DATABASE_URL`, then `C1_DATABASE_URL`; production has no implicit database. Storage continues to use the C2 S3-compatible configuration boundary and requires production HTTPS/non-loopback configuration.
+The additive device-neutral envelope migration also requires the existing C8 migration marker. After
+applying the repository migrations through `0008_reconstruction`, initialize the composed C14.8
+capture path with the explicit ordered command:
+
+```sh
+C7_DATABASE_URL='postgresql://localdev:local-development-only@127.0.0.1:54321/interior_design_c7_test' \
+  pnpm --filter @interior-design/platform-api exec tsx src/c7.ts migrate-c14-8
+```
+
+`migrate-c14-8` idempotently applies `0007_native_capture` first and then
+`0015_device_neutral_capture_envelopes`; it fails safely if the separate C8 prerequisite has not
+been applied. The legacy `migrate` and `migrate-and-expire` commands remain valid for the standalone
+C7/RoomPlan lifecycle and do not apply `0015`. Operators enabling the composed C8-backed envelope
+routes must run the explicit C14.8 command before startup.
+
+The standalone API readiness set includes `c7-database` and `c7-object-storage`. When C8 is composed
+into C7, readiness additionally includes `c14-8-capture-envelope-database` and fails until
+`0015_device_neutral_capture_envelopes` is recorded. Database lookup is `C7_DATABASE_URL`, then
+`C6_DATABASE_URL`, `C2_DATABASE_URL`, then `C1_DATABASE_URL`; production has no implicit database.
+Storage continues to use the C2 S3-compatible configuration boundary and requires production
+HTTPS/non-loopback configuration.
 
 Migration `0007` creates:
 
@@ -47,6 +67,8 @@ The API registers exactly:
 - `POST /v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId/parts`
 - `POST /v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId/complete`
 - `POST /v1/projects/:projectId/capture-sessions/:captureSessionId/packages`
+- `POST|GET /v1/projects/:projectId/capture-sessions/:captureSessionId/envelope`
+- `POST /v1/projects/:projectId/capture-sessions/:captureSessionId/envelope/reconstruction`
 - `GET /v1/projects/:projectId/capture-sessions/:captureSessionId/proposal`
 
 Every mutation requires the existing bounded `Idempotency-Key`. The same tenant, actor, operation, key and canonical request body returns the stored response with `Idempotent-Replay: true`; any substitution conflicts. A signed part is valid only for the immutable planned byte count and SHA-256 checksum. Completion requires every consecutive part exactly once with the same checksum and provider token.
@@ -55,7 +77,9 @@ Finalization locks the session and all registered artifacts. It rejects incomple
 
 ## Lifecycle, cancellation and retry fencing
 
-Session states are `created`, `uploading`, `uploaded`, `processing`, `proposed`, `abstained`, `cancel-requested`, `cancelled` and `failed`.
+Session states are `created`, `uploading`, `uploaded`, `processing`, `accepted`, `proposed`,
+`abstained`, `cancel-requested`, `cancelled` and `failed`. `accepted` is the immutable terminal state
+for a device-neutral C14.8 envelope; reconstruction remains a separately authorized C8 proposal.
 
 - Cancelling before processing aborts open provider uploads, fences queued work and terminates the session.
 - Provider-abort failure never rolls back a rights, expiry or cancellation fence. The upload/artifact becomes terminal in PostgreSQL, its provider ID remains internally retained, and the source-bucket multipart lifecycle must reap any unconfirmed provider upload without reopening signing or finalization.
