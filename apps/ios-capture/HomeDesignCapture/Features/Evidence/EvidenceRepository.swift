@@ -438,7 +438,12 @@ final class EvidenceRepository {
           throw EvidenceServiceError.checksumBindingMissing
         }
         do {
-          etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+          etag = try await service.uploadPart(
+            projectId: recovery.projectId,
+            sessionId: recovery.sessionId,
+            fileURL: partURL,
+            signedPart: signed
+          )
         } catch EvidenceServiceError.signedURLExpired where signingGeneration < 2 {
           continue
         }

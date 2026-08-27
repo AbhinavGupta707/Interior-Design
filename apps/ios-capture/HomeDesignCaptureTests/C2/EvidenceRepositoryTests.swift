@@ -261,7 +261,12 @@ private actor DelayedEvidenceListService: EvidenceServing {
   func createSession(projectId: String, selection: EvidenceSelection, sha256: String, rights: EvidenceRightsAssertion, idempotencyKey: String) throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
   func session(projectId: String, sessionId: String) throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
   func signPart(projectId: String, sessionId: String, partNumber: Int, byteSize: Int, checksumSha256: String, idempotencyKey: String) throws -> SignedEvidencePart { throw EvidenceServiceError.unavailable }
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) throws -> String { throw EvidenceServiceError.unavailable }
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) throws -> String { throw EvidenceServiceError.unavailable }
 }
 
 private actor EvidenceTokenProviderStub: C7CaptureTokenProviding {
@@ -290,7 +295,11 @@ private actor RecordingEvidenceTransport: EvidenceHTTPTransport {
     )
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) throws -> (Data, HTTPURLResponse) {
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) throws -> (Data, HTTPURLResponse) {
     throw EvidenceServiceError.unavailable
   }
 
@@ -366,7 +375,12 @@ private actor EvidenceServiceStub: EvidenceServing {
     )
   }
 
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) -> String {
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) -> String {
     uploads += 1
     return "fixture-etag"
   }

@@ -355,6 +355,9 @@ actor C7CaptureSyncEngine {
       }
       do {
         return try await service.uploadArtifactPart(
+          projectId: record.projectId,
+          captureSessionId: record.id,
+          uploadSessionId: uploadSessionId,
           fileURL: partURL,
           signedPart: signed,
           expectedChecksum: checksum

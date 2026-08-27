@@ -413,5 +413,10 @@ private struct C14_6HomeSetupEvidenceService: EvidenceServing {
   func createSession(projectId: String, selection: EvidenceSelection, sha256: String, rights: EvidenceRightsAssertion, idempotencyKey: String) async throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
   func session(projectId: String, sessionId: String) async throws -> EvidenceUploadSession { throw EvidenceServiceError.unavailable }
   func signPart(projectId: String, sessionId: String, partNumber: Int, byteSize: Int, checksumSha256: String, idempotencyKey: String) async throws -> SignedEvidencePart { throw EvidenceServiceError.unavailable }
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) async throws -> String { throw EvidenceServiceError.unavailable }
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) async throws -> String { throw EvidenceServiceError.unavailable }
 }

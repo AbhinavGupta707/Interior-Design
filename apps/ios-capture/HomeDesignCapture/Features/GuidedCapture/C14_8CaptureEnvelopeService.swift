@@ -242,6 +242,9 @@ actor C14_8DepthUploader: C14_8DepthUploading {
         )
         do {
           etag = try await service.uploadArtifactPart(
+            projectId: projectId,
+            captureSessionId: captureSessionId,
+            uploadSessionId: upload.uploadSessionId,
             fileURL: fileURL,
             signedPart: signed,
             expectedChecksum: checksum

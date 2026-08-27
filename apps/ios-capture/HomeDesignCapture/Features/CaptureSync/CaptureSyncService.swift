@@ -46,6 +46,9 @@ protocol C7CaptureServing: Sendable {
     idempotencyKey: String
   ) async throws -> C7SignedArtifactPart
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String
@@ -59,122 +62,13 @@ protocol C7CaptureServing: Sendable {
 
 protocol C7CaptureHTTPTransport: Sendable {
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (
     Data, HTTPURLResponse
   )
-}
-
-/// Background URL sessions reject completion-handler upload tasks. This delegate-backed bridge
-/// uses the supported task API while retaining an async call site and bounded response buffering.
-final class BackgroundFileUploadSession: NSObject, URLSessionDataDelegate, @unchecked Sendable {
-  private final class CancellationBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var cancelled = false
-    private var task: URLSessionUploadTask?
-
-    func install(_ task: URLSessionUploadTask) -> Bool {
-      lock.withLock {
-        guard !cancelled else { return false }
-        self.task = task
-        return true
-      }
-    }
-
-    func cancel() {
-      let task = lock.withLock { () -> URLSessionUploadTask? in
-        cancelled = true
-        return self.task
-      }
-      task?.cancel()
-    }
-  }
-
-  private struct PendingUpload {
-    static let maximumResponseBytes = 1_048_576
-
-    var data = Data()
-    let continuation: CheckedContinuation<(Data, HTTPURLResponse), any Error>
-  }
-
-  private let configuration: URLSessionConfiguration
-  private let lock = NSLock()
-  private var pending: [Int: PendingUpload] = [:]
-  private lazy var session = URLSession(
-    configuration: configuration,
-    delegate: self,
-    delegateQueue: nil
-  )
-
-  init(identifier: String) {
-    let configuration = URLSessionConfiguration.background(withIdentifier: identifier)
-    configuration.isDiscretionary = false
-    configuration.sessionSendsLaunchEvents = true
-    configuration.waitsForConnectivity = true
-    configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-    configuration.urlCache = nil
-    self.configuration = configuration
-    super.init()
-  }
-
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (
-    Data, HTTPURLResponse
-  ) {
-    let cancellation = CancellationBox()
-    return try await withTaskCancellationHandler {
-      try Task.checkCancellation()
-      return try await withCheckedThrowingContinuation { continuation in
-        let task = session.uploadTask(with: request, fromFile: fileURL)
-        lock.withLock {
-          pending[task.taskIdentifier] = PendingUpload(continuation: continuation)
-        }
-        guard cancellation.install(task), !Task.isCancelled else {
-          cancellation.cancel()
-          let upload = lock.withLock { pending.removeValue(forKey: task.taskIdentifier) }
-          upload?.continuation.resume(throwing: CancellationError())
-          return
-        }
-        task.resume()
-      }
-    } onCancel: {
-      cancellation.cancel()
-    }
-  }
-
-  func urlSession(
-    _ session: URLSession,
-    dataTask: URLSessionDataTask,
-    didReceive data: Data
-  ) {
-    let exceededLimit = lock.withLock { () -> Bool in
-      guard var upload = pending[dataTask.taskIdentifier] else { return false }
-      guard upload.data.count <= PendingUpload.maximumResponseBytes - data.count else {
-        return true
-      }
-      upload.data.append(data)
-      pending[dataTask.taskIdentifier] = upload
-      return false
-    }
-    if exceededLimit { dataTask.cancel() }
-  }
-
-  func urlSession(
-    _ session: URLSession,
-    task: URLSessionTask,
-    didCompleteWithError error: (any Error)?
-  ) {
-    guard let upload = lock.withLock({ pending.removeValue(forKey: task.taskIdentifier) }) else {
-      return
-    }
-    if let error {
-      upload.continuation.resume(throwing: error)
-      return
-    }
-    guard let response = task.response as? HTTPURLResponse else {
-      upload.continuation.resume(throwing: C7CaptureServiceError.invalidResponse)
-      return
-    }
-    upload.continuation.resume(returning: (upload.data, response))
-  }
 }
 
 struct C7URLSessionCaptureTransport: C7CaptureHTTPTransport, @unchecked Sendable {
@@ -183,10 +77,12 @@ struct C7URLSessionCaptureTransport: C7CaptureHTTPTransport, @unchecked Sendable
 
   init(
     foregroundSession: URLSession = .shared,
-    backgroundIdentifier: String = "com.homedesignstudio.capture.c7-artifact-parts"
+    backgroundIdentifier: String = BackgroundFileUploadCoordinator.captureIdentifier
   ) {
     self.foregroundSession = foregroundSession
-    backgroundUploader = BackgroundFileUploadSession(identifier: backgroundIdentifier)
+    backgroundUploader = BackgroundFileUploadCoordinator.shared.uploader(
+      identifier: backgroundIdentifier
+    )
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -197,10 +93,14 @@ struct C7URLSessionCaptureTransport: C7CaptureHTTPTransport, @unchecked Sendable
     return (data, response)
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (
     Data, HTTPURLResponse
   ) {
-    try await backgroundUploader.upload(for: request, fromFile: fileURL)
+    try await backgroundUploader.upload(for: request, fromFile: fileURL, context: context)
   }
 }
 
@@ -319,6 +219,9 @@ actor C7CaptureAPIClient: C7CaptureServing {
   }
 
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String
@@ -343,7 +246,18 @@ actor C7CaptureAPIClient: C7CaptureServing {
       request.setValue(value, forHTTPHeaderField: name)
     }
     do {
-      let (_, response) = try await transport.upload(for: request, fromFile: fileURL)
+      let (_, response) = try await transport.upload(
+        for: request,
+        fromFile: fileURL,
+        context: BackgroundUploadContext(
+          captureSessionId: captureSessionId,
+          checksumSha256: expectedChecksum,
+          namespace: .captureArtifact,
+          partNumber: signedPart.partNumber,
+          projectId: projectId,
+          uploadSessionId: uploadSessionId
+        )
+      )
       switch response.statusCode {
       case 200..<300:
         guard let etag = response.value(forHTTPHeaderField: "ETag"), !etag.isEmpty,

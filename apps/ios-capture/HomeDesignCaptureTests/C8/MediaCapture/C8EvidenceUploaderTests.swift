@@ -66,7 +66,12 @@ private actor C8EvidenceServiceFixture: EvidenceServing {
     )
   }
 
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) throws -> String {
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) throws -> String {
     if expiringUploadAttempts > 0 {
       expiringUploadAttempts -= 1
       throw EvidenceServiceError.signedURLExpired
@@ -205,7 +210,8 @@ struct C8EvidenceUploaderTests {
     let task = Task {
       try await transport.upload(
         for: URLRequest(url: URL(string: "https://127.0.0.1:1/upload")!),
-        fromFile: source
+        fromFile: source,
+        context: nil
       )
     }
 
@@ -217,6 +223,98 @@ struct C8EvidenceUploaderTests {
     } catch {
       // A delegate-delivered transport or cancellation error is the expected safe boundary.
     }
+  }
+
+  @Test("background completion survives process relaunch without retaining signed authority")
+  func backgroundUploadRelaunchRecovery() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c8-background-relaunch-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let source = root.appendingPathComponent("opaque-source")
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("SYNTHETIC RELAUNCH RECOVERY".utf8).write(to: source)
+
+    let context = BackgroundUploadContext(
+      captureSessionId: nil,
+      checksumSha256: Data(repeating: 7, count: 32).base64EncodedString(),
+      namespace: .immutableEvidence,
+      partNumber: 1,
+      projectId: UUID(),
+      uploadSessionId: UUID()
+    )
+    let identifier = "com.homedesignstudio.capture.tests.relaunch.\(UUID().uuidString)"
+    let taskIdentifier = 41
+    let beforeTermination = BackgroundUploadRecoveryStore(root: root)
+    try beforeTermination.register(
+      sessionIdentifier: identifier,
+      taskIdentifier: taskIdentifier,
+      context: context
+    )
+
+    // A new store instance represents the relaunched process receiving URLSession delegate events.
+    let afterRelaunch = BackgroundUploadRecoveryStore(root: root)
+    afterRelaunch.recordCompletion(
+      sessionIdentifier: identifier,
+      taskIdentifier: taskIdentifier,
+      response: HTTPURLResponse(
+        url: URL(string: "https://signed.invalid/private-part")!,
+        statusCode: 200,
+        httpVersion: "HTTP/1.1",
+        headerFields: ["ETag": "recovered-etag"]
+      )
+    )
+    let uploader = BackgroundFileUploadSession(identifier: identifier, recovery: afterRelaunch)
+    let (_, response) = try await uploader.upload(
+      for: URLRequest(url: URL(string: "https://fresh.invalid/private-part")!),
+      fromFile: source,
+      context: context
+    )
+
+    #expect(response.statusCode == 200)
+    #expect(response.value(forHTTPHeaderField: "ETag") == "recovered-etag")
+    let persisted = try String(
+      contentsOf: root.appendingPathComponent("state.json"),
+      encoding: .utf8
+    )
+    #expect(!persisted.contains("signed.invalid"))
+    #expect(!persisted.contains("fresh.invalid"))
+    #expect(!persisted.localizedCaseInsensitiveContains("authorization"))
+  }
+
+  @Test("expired signed authority is not replayed after process relaunch")
+  func expiredBackgroundUploadIsNotRecovered() throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c8-background-expired-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let context = BackgroundUploadContext(
+      captureSessionId: nil,
+      checksumSha256: Data(repeating: 9, count: 32).base64EncodedString(),
+      namespace: .immutableEvidence,
+      partNumber: 1,
+      projectId: UUID(),
+      uploadSessionId: UUID()
+    )
+    let identifier = "com.homedesignstudio.capture.tests.expired.\(UUID().uuidString)"
+    let recovery = BackgroundUploadRecoveryStore(root: root)
+    try recovery.register(sessionIdentifier: identifier, taskIdentifier: 42, context: context)
+    recovery.recordCompletion(
+      sessionIdentifier: identifier,
+      taskIdentifier: 42,
+      response: HTTPURLResponse(
+        url: URL(string: "https://expired.invalid/private-part")!,
+        statusCode: 403,
+        httpVersion: "HTTP/1.1",
+        headerFields: ["ETag": "expired-etag"]
+      )
+    )
+
+    #expect(recovery.completion(for: context) == nil)
+    let persisted = try String(
+      contentsOf: root.appendingPathComponent("state.json"),
+      encoding: .utf8
+    )
+    #expect(!persisted.contains("expired.invalid"))
+    #expect(!persisted.contains("expired-etag"))
   }
 
   @Test("local bytes must still match the protected handle before C2 handoff")

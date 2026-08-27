@@ -29,12 +29,21 @@ protocol EvidenceServing: Sendable {
     checksumSha256: String,
     idempotencyKey: String
   ) async throws -> SignedEvidencePart
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) async throws -> String
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) async throws -> String
 }
 
 protocol EvidenceHTTPTransport: Sendable {
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (Data, HTTPURLResponse)
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (Data, HTTPURLResponse)
 }
 
 struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
@@ -43,7 +52,7 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
 
   init(
     foregroundSession: URLSession? = nil,
-    backgroundIdentifier: String = "com.homedesignstudio.capture.c2-parts"
+    backgroundIdentifier: String = BackgroundFileUploadCoordinator.evidenceIdentifier
   ) {
     if let foregroundSession {
       self.foregroundSession = foregroundSession
@@ -54,7 +63,9 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
       configuration.httpCookieStorage = nil
       self.foregroundSession = URLSession(configuration: configuration)
     }
-    backgroundUploader = BackgroundFileUploadSession(identifier: backgroundIdentifier)
+    backgroundUploader = BackgroundFileUploadCoordinator.shared.uploader(
+      identifier: backgroundIdentifier
+    )
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -65,8 +76,12 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
     return (data, response)
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (Data, HTTPURLResponse) {
-    try await backgroundUploader.upload(for: request, fromFile: fileURL)
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (Data, HTTPURLResponse) {
+    try await backgroundUploader.upload(for: request, fromFile: fileURL, context: context)
   }
 }
 
@@ -161,13 +176,35 @@ actor C2EvidenceAPIClient: EvidenceServing {
     )
   }
 
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) async throws -> String {
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) async throws -> String {
+    guard let canonicalProjectId = UUID(uuidString: projectId),
+      let canonicalSessionId = UUID(uuidString: sessionId),
+      let checksum = signedPart.requiredHeaders.first(where: {
+        $0.key.lowercased().contains("checksum-sha256")
+      })?.value
+    else { throw EvidenceServiceError.checksumBindingMissing }
     var request = URLRequest(url: signedPart.url)
     request.httpMethod = "PUT"
     for (name, value) in signedPart.requiredHeaders {
       request.setValue(value, forHTTPHeaderField: name)
     }
-    let (_, response) = try await performUpload(request, fileURL: fileURL)
+    let (_, response) = try await performUpload(
+      request,
+      fileURL: fileURL,
+      context: BackgroundUploadContext(
+        captureSessionId: nil,
+        checksumSha256: checksum,
+        namespace: .immutableEvidence,
+        partNumber: signedPart.partNumber,
+        projectId: canonicalProjectId,
+        uploadSessionId: canonicalSessionId
+      )
+    )
     guard (200..<300).contains(response.statusCode) else {
       if response.statusCode == 403 { throw EvidenceServiceError.signedURLExpired }
       throw EvidenceServiceError.unavailable
@@ -298,9 +335,13 @@ actor C2EvidenceAPIClient: EvidenceServing {
     }
   }
 
-  private func performUpload(_ request: URLRequest, fileURL: URL) async throws -> (Data, HTTPURLResponse) {
+  private func performUpload(
+    _ request: URLRequest,
+    fileURL: URL,
+    context: BackgroundUploadContext
+  ) async throws -> (Data, HTTPURLResponse) {
     do {
-      return try await transport.upload(for: request, fromFile: fileURL)
+      return try await transport.upload(for: request, fromFile: fileURL, context: context)
     } catch let error as URLError where error.code == .notConnectedToInternet {
       throw EvidenceServiceError.offline
     } catch is CancellationError {
@@ -557,7 +598,12 @@ actor C8ImmutableEvidenceUploader: C8ImmutableEvidenceUploading {
           $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
         }) else { throw EvidenceServiceError.checksumBindingMissing }
         do {
-          etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+          etag = try await service.uploadPart(
+            projectId: projectId,
+            sessionId: recovery.sessionId,
+            fileURL: partURL,
+            signedPart: signed
+          )
         } catch EvidenceServiceError.signedURLExpired where signingGeneration < 2 {
           continue
         }
