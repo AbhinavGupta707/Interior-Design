@@ -1,4 +1,5 @@
 import type { Actor, CreateCaptureEnvelopeRequest } from "@interior-design/contracts";
+import Fastify from "fastify";
 import { randomUUID } from "node:crypto";
 import type { Sql } from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -11,7 +12,11 @@ import { applyC5Migration } from "../../src/c5.js";
 import { applyC6Migration } from "../../src/c6.js";
 import { applyC14_8MigrationLifecycle, applyC7Migration } from "../../src/c7.js";
 import { applyC8Migration } from "../../src/c8.js";
+import { registerRequestCorrelation } from "../../src/correlation.js";
+import { registerErrorHandling } from "../../src/errors.js";
 import { PostgresCaptureBackend } from "../../src/modules/capture/postgres.js";
+import { registerCaptureRoutes } from "../../src/modules/capture/routes.js";
+import { PostgresProjectRepository } from "../../src/modules/projects/repository.js";
 import type {
   AbortMultipartUploadInput,
   AssetObjectStorage,
@@ -21,7 +26,7 @@ import type {
   SignUploadPartInput,
 } from "../../src/storage/object-storage.js";
 import { alphaTenantId } from "../c4/fixtures.js";
-import { actors } from "../c6/support.js";
+import { actors, fixtureIdentity, tokenFor } from "../c6/support.js";
 
 const databaseUrl =
   process.env.C14_8_TEST_DATABASE_URL ??
@@ -91,6 +96,14 @@ function owner(): Actor {
 
 function correlation(label: string, digit: string) {
   return { requestId: label, traceId: digit.repeat(32) };
+}
+
+function authorization(subject: Parameters<typeof tokenFor>[0]) {
+  return { authorization: `Bearer ${tokenFor(subject)}` };
+}
+
+function mutationHeaders(subject: Parameters<typeof tokenFor>[0], key: string) {
+  return { ...authorization(subject), "idempotency-key": key };
 }
 
 function envelope(input: {
@@ -355,6 +368,9 @@ describeWithPostgres("C14.8 live Postgres capture-envelope boundary", () => {
       )
     `;
     expect(await backend.findEnvelope(alphaTenantId, projectId, session.id)).toBeUndefined();
+    await expect(backend.acceptEnvelope(command)).rejects.toMatchObject({
+      code: "CAPTURE_ENVELOPE_UNAVAILABLE",
+    });
     const withdrawnSession = (await createSession("withdrawn-source")).value;
     await expect(
       backend.acceptEnvelope({
@@ -382,5 +398,112 @@ describeWithPostgres("C14.8 live Postgres capture-envelope boundary", () => {
       WHERE project_id = ${projectId}::uuid
     `;
     expect(canonicalAfter).toEqual(canonicalBefore);
+  });
+
+  it("persists an accepted envelope through the authenticated route while enforcing role and tenant scope", async () => {
+    const projectId = randomUUID();
+    const assetId = randomUUID();
+    await sql`
+      INSERT INTO projects (id, tenant_id, name)
+      VALUES (${projectId}::uuid, ${alphaTenantId}::uuid, 'C14.8 live route project')
+    `;
+    await sql`
+      INSERT INTO assets (
+        id, tenant_id, project_id, kind, file_name, declared_mime_type,
+        detected_mime_type, source_byte_size, source_sha256, source_object_key, status
+      ) VALUES (
+        ${assetId}::uuid, ${alphaTenantId}::uuid, ${projectId}::uuid, 'photograph',
+        'c14-8-route-room.jpg', 'image/jpeg', 'image/jpeg', 1024,
+        ${"8".repeat(64)}, ${`sources/${randomUUID()}`}, 'ready'
+      )
+    `;
+    await sql`
+      INSERT INTO asset_rights_assertions (
+        tenant_id, project_id, asset_id, basis,
+        service_processing_consent, training_use_consent
+      ) VALUES (
+        ${alphaTenantId}::uuid, ${projectId}::uuid, ${assetId}::uuid,
+        'owned-by-user', true, 'denied'
+      )
+    `;
+
+    const backend = new PostgresCaptureBackend(sql, new C14_8StorageFixture());
+    const session = (
+      await backend.createSession({
+        actor: owner(),
+        correlation: correlation("c14-8-route-session", "5"),
+        idempotencyKey: `c14-8-route-session-${randomUUID()}`,
+        projectId,
+        request: {
+          captureLabel: "Live route capture",
+          deviceCapability: "arkit-rgb",
+          expectedRoomCount: 1,
+          mode: "single-room",
+          rights: {
+            basis: "owned-by-user",
+            serviceProcessingConsent: true,
+            trainingUseConsent: "denied",
+          },
+        },
+      })
+    ).value;
+    const url = `/v1/projects/${projectId}/capture-sessions/${session.id}/envelope`;
+    const request = envelope({ assetId, captureSessionId: session.id, projectId });
+    const server = Fastify({ logger: false });
+    registerRequestCorrelation(server);
+    registerErrorHandling(server);
+    registerCaptureRoutes(server, fixtureIdentity(), new PostgresProjectRepository(sql), backend);
+
+    try {
+      const denied = await server.inject({
+        headers: mutationHeaders("fixture|viewer-alpha", `c14-8-viewer-${randomUUID()}`),
+        method: "POST",
+        payload: request,
+        url,
+      });
+      expect(denied.statusCode).toBe(403);
+
+      const accepted = await server.inject({
+        headers: mutationHeaders("fixture|owner-alpha", `c14-8-owner-${randomUUID()}`),
+        method: "POST",
+        payload: request,
+        url,
+      });
+      expect(accepted.statusCode).toBe(201);
+      const stored = await sql<
+        Array<{
+          readonly accepted_by: string;
+          readonly envelope_sha256: string;
+        }>
+      >`
+        SELECT accepted_by, envelope_sha256 FROM capture_envelopes
+        WHERE tenant_id = ${alphaTenantId}::uuid
+          AND project_id = ${projectId}::uuid
+          AND capture_session_id = ${session.id}::uuid
+      `;
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toEqual({
+        accepted_by: owner().userId,
+        envelope_sha256: accepted.json<{ acceptance: { envelopeSha256: string } }>().acceptance
+          .envelopeSha256,
+      });
+
+      const viewerRead = await server.inject({
+        headers: authorization("fixture|viewer-alpha"),
+        method: "GET",
+        url,
+      });
+      expect(viewerRead.statusCode).toBe(200);
+      expect(viewerRead.json()).toEqual(accepted.json());
+
+      const foreignRead = await server.inject({
+        headers: authorization("fixture|owner-beta"),
+        method: "GET",
+        url,
+      });
+      expect(foreignRead.statusCode).toBe(404);
+    } finally {
+      await server.close();
+    }
   });
 });

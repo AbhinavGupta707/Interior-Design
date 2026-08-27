@@ -512,6 +512,15 @@ export const createCaptureEnvelopeRequestSchema = z
         message: "The RGB video capability must match the accepted source set.",
       });
     }
+    if (
+      envelope.capabilities.rgbKeyframes !==
+      envelope.mediaSources.some(({ kind }) => kind === "rgb-keyframe")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "The RGB keyframe capability must match the accepted source set.",
+      });
+    }
     const depthSampleIds = envelope.depthSources.flatMap(({ sampleIds }) => sampleIds);
     unique(depthSampleIds, "A camera sample cannot bind more than one depth artifact.");
     for (const depth of envelope.depthSources) {

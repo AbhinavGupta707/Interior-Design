@@ -234,6 +234,23 @@ describe("C14.8 device-neutral capture envelope", () => {
     ).toBe(false);
   });
 
+  it("requires the claimed camera-first RGB keyframe baseline in the accepted source set", () => {
+    const envelope = validEnvelope();
+    expect(
+      createCaptureEnvelopeRequestSchema.safeParse({
+        ...envelope,
+        capabilities: { ...envelope.capabilities, rgbVideo: true },
+        mediaSources: [
+          {
+            ...envelope.mediaSources[0],
+            kind: "rgb-video",
+            mimeType: "video/mp4",
+          },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
   it("binds optional RoomPlan only as a distinct immutable package reference", () => {
     const envelope = validEnvelope();
     const source = {

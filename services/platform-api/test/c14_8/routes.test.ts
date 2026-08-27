@@ -279,5 +279,15 @@ describe("C14.8 authenticated capture envelope routes", () => {
     expect(replayed.statusCode).toBe(200);
     expect(replayed.headers["idempotent-replay"]).toBe("true");
     expect(reconstruction.jobs.size).toBe(1);
+
+    const changed = await server.inject({
+      headers: mutationHeaders("fixture|owner-alpha", "c14-8-reconstruct-changed-01"),
+      method: "POST",
+      payload: { appearanceMode: "disabled", expectedEnvelopeSha256: hash },
+      url: reconstructionURL,
+    });
+    expect(changed.statusCode).toBe(409);
+    expect(changed.json()).toMatchObject({ code: "CAPTURE_RECONSTRUCTION_CHANGED" });
+    expect(reconstruction.jobs.size).toBe(1);
   });
 });

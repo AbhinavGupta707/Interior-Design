@@ -26,7 +26,7 @@ import { z } from "zod";
 import { getRequestCorrelation } from "../../correlation.js";
 import { forbidden, notFound, parseRequest } from "../identity/http.js";
 import type { IdentityService } from "../identity/service.js";
-import { parseIdempotencyKey } from "../projects/idempotency.js";
+import { parseIdempotencyKey, requestHash } from "../projects/idempotency.js";
 import type { ProjectRepository } from "../projects/repository.js";
 import type { ReconstructionService } from "../reconstruction/service.js";
 import { captureConflict } from "./errors.js";
@@ -328,6 +328,20 @@ export function registerCaptureRoutes(
       params.projectId,
       params.captureSessionId,
     );
+    const reconstructionRequest = {
+      appearanceMode: body.appearanceMode,
+      label: `Guided capture ${params.captureSessionId.slice(0, 8)}`,
+      mode: "rgb-sfm" as const,
+      registrationAnchors: [],
+      rights: record.envelope.rights,
+      sources: record.envelope.mediaSources.map((source) => ({
+        assetId: source.assetId,
+        byteSize: source.byteSize,
+        detectedMimeType: source.mimeType,
+        kind: source.kind === "rgb-video" ? ("rgb-video" as const) : ("rgb-image" as const),
+        sha256: source.sha256,
+      })),
+    };
     const result =
       existingJobId === undefined
         ? await reconstruction.createJob({
@@ -335,25 +349,22 @@ export function registerCaptureRoutes(
             correlation: getRequestCorrelation(request),
             idempotencyKey: record.acceptance.envelopeId,
             projectId: params.projectId,
-            request: {
-              appearanceMode: body.appearanceMode,
-              label: `Guided capture ${params.captureSessionId.slice(0, 8)}`,
-              mode: "rgb-sfm",
-              registrationAnchors: [],
-              rights: record.envelope.rights,
-              sources: record.envelope.mediaSources.map((source) => ({
-                assetId: source.assetId,
-                byteSize: source.byteSize,
-                detectedMimeType: source.mimeType,
-                kind: source.kind === "rgb-video" ? "rgb-video" : "rgb-image",
-                sha256: source.sha256,
-              })),
-            },
+            request: reconstructionRequest,
           })
-        : {
-            job: await reconstruction.getJob(actor.tenantId, params.projectId, existingJobId),
-            replayed: true,
-          };
+        : await (async () => {
+            const job = await reconstruction.getJob(
+              actor.tenantId,
+              params.projectId,
+              existingJobId,
+            );
+            if (requestHash(job.request) !== requestHash(reconstructionRequest)) {
+              throw captureConflict(
+                "CAPTURE_RECONSTRUCTION_CHANGED",
+                "The accepted envelope already has reconstruction work with a different request.",
+              );
+            }
+            return { job, replayed: true };
+          })();
     if (existingJobId === undefined) {
       await backend.linkEnvelopeReconstruction({
         actorUserId: actor.userId,

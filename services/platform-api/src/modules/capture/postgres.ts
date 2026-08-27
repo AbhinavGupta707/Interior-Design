@@ -1121,7 +1121,24 @@ export class PostgresCaptureBackend implements CaptureBackend {
       );
       const idempotency = await claimIdempotency(transaction, claim);
       if (idempotency.kind === "replay") {
-        return { replayed: true, value: captureEnvelopeRecordSchema.parse(idempotency.body) };
+        const replayed = captureEnvelopeRecordSchema.parse(idempotency.body);
+        const current = await this.#findEnvelopeInTransaction(
+          transaction,
+          command.actor.tenantId,
+          command.projectId,
+          command.captureSessionId,
+        );
+        if (
+          current === undefined ||
+          current.acceptance.envelopeId !== replayed.acceptance.envelopeId ||
+          current.acceptance.envelopeSha256 !== replayed.acceptance.envelopeSha256
+        ) {
+          throw captureConflict(
+            "CAPTURE_ENVELOPE_UNAVAILABLE",
+            "The accepted envelope is no longer available under the current rights and source state.",
+          );
+        }
+        return { replayed: true, value: current };
       }
       const session = await this.#lockedSession(
         transaction,
@@ -1411,7 +1428,18 @@ export class PostgresCaptureBackend implements CaptureBackend {
     projectId: string,
     captureSessionId: string,
   ): Promise<CaptureEnvelopeRecord | undefined> {
-    const rows = await this.#sql<EnvelopeRow[]>`
+    return this.#sql.begin((transaction) =>
+      this.#findEnvelopeInTransaction(transaction, tenantId, projectId, captureSessionId),
+    );
+  }
+
+  async #findEnvelopeInTransaction(
+    transaction: TransactionSql,
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+  ): Promise<CaptureEnvelopeRecord | undefined> {
+    const rows = await transaction<EnvelopeRow[]>`
       SELECT capture_session_id, id AS envelope_id, project_id,
         envelope_sha256, envelope_payload, accepted_by, accepted_at
       FROM capture_envelopes e
