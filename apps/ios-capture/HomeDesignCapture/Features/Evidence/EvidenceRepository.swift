@@ -418,23 +418,32 @@ final class EvidenceRepository {
       let checksumKey = checksum.filter { character in
         character.isASCII && (character.isLetter || character.isNumber)
       }
-      let signed = try await service.signPart(
-        projectId: recovery.projectId,
-        sessionId: recovery.sessionId,
-        partNumber: partNumber,
-        byteSize: length,
-        checksumSha256: checksum,
-        idempotencyKey: "part-\(recovery.sessionId)-\(partNumber)-\(checksumKey.prefix(12))"
-      )
-      guard isCurrent(projectId: recovery.projectId, generation: generation) else {
-        throw CancellationError()
+      var etag: String?
+      for signingGeneration in 0...2 where etag == nil {
+        let signed = try await service.signPart(
+          projectId: recovery.projectId,
+          sessionId: recovery.sessionId,
+          partNumber: partNumber,
+          byteSize: length,
+          checksumSha256: checksum,
+          idempotencyKey:
+            "part-\(recovery.sessionId)-\(partNumber)-\(checksumKey.prefix(12))-\(signingGeneration)"
+        )
+        guard isCurrent(projectId: recovery.projectId, generation: generation) else {
+          throw CancellationError()
+        }
+        guard signed.requiredHeaders.contains(where: {
+          $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
+        }) else {
+          throw EvidenceServiceError.checksumBindingMissing
+        }
+        do {
+          etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+        } catch EvidenceServiceError.signedURLExpired where signingGeneration < 2 {
+          continue
+        }
       }
-      guard signed.requiredHeaders.contains(where: {
-        $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
-      }) else {
-        throw EvidenceServiceError.checksumBindingMissing
-      }
-      let etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+      guard let etag else { throw EvidenceServiceError.signedURLExpired }
       guard isCurrent(projectId: recovery.projectId, generation: generation) else {
         throw CancellationError()
       }

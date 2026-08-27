@@ -168,6 +168,25 @@ describe("C14.8 device-neutral capture envelope", () => {
     expect(createCaptureEnvelopeRequestSchema.parse(validEnvelope())).toEqual(validEnvelope());
   });
 
+  it("canonicalizes Foundation-style uppercase UUIDs before scope checks and hashing", () => {
+    const uppercaseEnvelope: unknown = JSON.parse(
+      JSON.stringify(validEnvelope()).replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/giu,
+        (value) => value.toUpperCase(),
+      ),
+    );
+
+    const parsed = createCaptureEnvelopeRequestSchema.parse(uppercaseEnvelope);
+    const encoded = JSON.stringify(parsed);
+    const parsedUUIDs =
+      encoded.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/giu) ?? [];
+
+    expect(parsedUUIDs.length).toBeGreaterThan(0);
+    expect(parsedUUIDs.every((value) => value === value.toLowerCase())).toBe(true);
+    expect(parsed.projectId).toBe(projectId);
+    expect(parsed.captureSessionId).toBe(captureSessionId);
+  });
+
   it("rejects simulated physical capability and depth without runtime support", () => {
     const envelope = validEnvelope();
     expect(

@@ -4,6 +4,10 @@ import Foundation
 protocol C14_8ProtectedCaptureStoring: Sendable {
   func clear(projectId: UUID) async throws
   func load(projectId: UUID) async throws -> C14_8GuidedCaptureDraft?
+  func recordMediaReceipt(
+    projectId: UUID,
+    receipt: C14_8MediaReceipt
+  ) async throws -> C14_8GuidedCaptureDraft
   func resolveDepth(projectId: UUID, handle: C14_8DepthHandle) async throws -> URL
   func save(_ draft: C14_8GuidedCaptureDraft) async throws
   func storeDepth(
@@ -67,6 +71,37 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
       to: url,
       options: [.atomic, .completeFileProtection]
     )
+  }
+
+  func recordMediaReceipt(
+    projectId: UUID,
+    receipt: C14_8MediaReceipt
+  ) throws -> C14_8GuidedCaptureDraft {
+    guard var current = try load(projectId: projectId), current.acceptance == nil else {
+      throw C14_8ProtectedStoreError.corrupt
+    }
+    if let existing = current.mediaReceipts.first(where: {
+      $0.localIdentifier == receipt.localIdentifier
+    }) {
+      guard existing == receipt else { throw C14_8ProtectedStoreError.corrupt }
+      return current
+    }
+    guard current.keyframes.contains(where: {
+      $0.localIdentifier == receipt.localIdentifier
+        && $0.byteSize == receipt.receipt.byteSize
+        && $0.sha256 == receipt.receipt.sha256
+    }) else { throw C14_8ProtectedStoreError.corrupt }
+    current.mediaReceipts.append(receipt)
+    current.updatedAt = max(Date(), current.updatedAt.addingTimeInterval(0.001))
+    try C14_8ContractValidator.validate(draft: current)
+    try encoder.encode(current).write(
+      to: journalURL(projectId),
+      options: [.atomic, .completeFileProtection]
+    )
+    guard try load(projectId: projectId) == current else {
+      throw C14_8ProtectedStoreError.corrupt
+    }
+    return current
   }
 
   func storeDepth(

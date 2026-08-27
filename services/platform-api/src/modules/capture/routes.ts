@@ -33,13 +33,25 @@ import type { ReconstructionService } from "../reconstruction/service.js";
 import { captureConflict } from "./errors.js";
 import type { CaptureBackend } from "./types.js";
 
-const projectParamsSchema = z.object({ projectId: projectIdSchema }).strict();
+const canonicalProjectIdSchema = projectIdSchema.transform((value) => value.toLowerCase());
+const canonicalCaptureSessionIdSchema = captureSessionIdSchema.transform((value) =>
+  value.toLowerCase(),
+);
+const canonicalUuidSchema = z.uuid().transform((value) => value.toLowerCase());
+const projectParamsSchema = z.object({ projectId: canonicalProjectIdSchema }).strict();
 const sessionParamsSchema = z
-  .object({ captureSessionId: captureSessionIdSchema, projectId: projectIdSchema })
+  .object({
+    captureSessionId: canonicalCaptureSessionIdSchema,
+    projectId: canonicalProjectIdSchema,
+  })
   .strict();
-const uploadParamsSchema = sessionParamsSchema.extend({ uploadSessionId: z.uuid() }).strict();
-const artifactParamsSchema = sessionParamsSchema.extend({ artifactId: z.uuid() }).strict();
-const packageParamsSchema = sessionParamsSchema.extend({ packageId: z.uuid() }).strict();
+const uploadParamsSchema = sessionParamsSchema
+  .extend({ uploadSessionId: canonicalUuidSchema })
+  .strict();
+const artifactParamsSchema = sessionParamsSchema
+  .extend({ artifactId: canonicalUuidSchema })
+  .strict();
+const packageParamsSchema = sessionParamsSchema.extend({ packageId: canonicalUuidSchema }).strict();
 const emptyMutationSchema = z.union([z.undefined(), z.object({}).strict()]);
 
 async function authorisedProject(

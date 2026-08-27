@@ -136,6 +136,8 @@ class MemoryQueue {
   acknowledgements = 0;
   advances: string[] = [];
   failures: Array<{ readonly retryable: boolean; readonly safeCode: string }> = [];
+  heartbeats = 0;
+  heartbeatState: "active" | "cancel-requested" = "active";
   published: ReconstructionResult[] = [];
   claimed = false;
   fencePublication = false;
@@ -165,6 +167,11 @@ class MemoryQueue {
     if (this.fencePublication) return Promise.reject(new Error("synthetic-fence"));
     this.failures.push({ retryable: command.retryable, safeCode: command.safeCode });
     return Promise.resolve({} as Awaited<ReturnType<ReconstructionRepository["failAttempt"]>>);
+  }
+
+  heartbeatAttempt() {
+    this.heartbeats += 1;
+    return Promise.resolve(this.heartbeatState);
   }
 
   acknowledgeCancellation(): Promise<void> {
@@ -224,15 +231,24 @@ const logger = {
   },
 };
 
-async function fixture(options: { readonly privacyAccepted?: boolean } = {}) {
+async function fixture(
+  options: {
+    readonly heartbeatState?: "active" | "cancel-requested";
+    readonly privacyAccepted?: boolean;
+    readonly sourceDelayMilliseconds?: number;
+  } = {},
+) {
   const bytes = await syntheticPng();
   const reconstructionSource = source(bytes);
   const durableLease = lease(reconstructionSource);
   const queue = new MemoryQueue(durableLease);
+  queue.heartbeatState = options.heartbeatState ?? "active";
   const processor = new MemoryProcessor();
   const storage = new MemoryStorage(bytes);
   const root = await temporaryRoot();
   const runner = new ReconstructionProcessingRunner({
+    heartbeatMilliseconds: 100,
+    leaseSeconds: 30,
     logger,
     media: new MediaPreparationPipeline({
       ...(options.privacyAccepted === false ? {} : { privacyReviewer: acceptingPrivacyReviewer }),
@@ -242,7 +258,14 @@ async function fixture(options: { readonly privacyAccepted?: boolean } = {}) {
     pollMilliseconds: 1,
     processor,
     queue,
-    sources: { load: () => Promise.resolve([reconstructionSource]) },
+    sources: {
+      load: async () => {
+        if (options.sourceDelayMilliseconds !== undefined) {
+          await new Promise((resolve) => setTimeout(resolve, options.sourceDelayMilliseconds));
+        }
+        return [reconstructionSource];
+      },
+    },
     storage,
     workerId: "c8-synthetic-worker",
   });
@@ -280,6 +303,23 @@ describe("C8 composed reconstruction runner", () => {
     expect(queue.failures).toEqual([
       { retryable: true, safeCode: "RECONSTRUCTION_STORAGE_UNAVAILABLE" },
     ]);
+  });
+
+  it("renews the durable lease throughout long media preparation", async () => {
+    const { queue, runner } = await fixture({ sourceDelayMilliseconds: 250 });
+    await runner.processNext();
+    expect(queue.heartbeats).toBeGreaterThanOrEqual(2);
+    expect(queue.published).toHaveLength(1);
+  });
+
+  it("aborts and acknowledges a cancellation observed by the heartbeat", async () => {
+    const { queue, runner } = await fixture({
+      heartbeatState: "cancel-requested",
+      sourceDelayMilliseconds: 150,
+    });
+    await runner.processNext();
+    expect(queue.acknowledgements).toBe(1);
+    expect(queue.published).toEqual([]);
   });
 
   it("acknowledges cancellation when the final durable publication fence closes", async () => {

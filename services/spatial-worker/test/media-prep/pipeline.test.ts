@@ -56,6 +56,20 @@ describe("C8 deterministic media preparation", () => {
     },
   );
 
+  it("uses the bounded media policy for cold FFmpeg version discovery", async () => {
+    const process = new SyntheticMediaProcess();
+    const bundle = await new MediaPreparationPipeline({
+      privacyReviewer: acceptingPrivacyReviewer,
+      process,
+      temporaryRoot: await temporaryRoot(),
+    }).prepare(requestFor(sourceFor(await syntheticPng())));
+
+    const versionCalls = process.calls.filter(({ arguments_ }) => arguments_[0] === "-version");
+    expect(versionCalls).toHaveLength(2);
+    expect(versionCalls.map(({ limits }) => limits.timeoutMs)).toEqual([30_000, 30_000]);
+    await bundle.cleanup();
+  });
+
   it("creates exact deterministic hashes, strips metadata, and never forwards request strings as flags", async () => {
     const bytes = await syntheticPng();
     const request = requestFor(

@@ -62,6 +62,18 @@ def test_fixture_verifies_and_tampering_fails(tmp_path: Path) -> None:
         module.verify_export(root)
 
 
+def test_room_story_remains_optional_in_frozen_envelope_schema(tmp_path: Path) -> None:
+    module = load_module()
+    root = make_fixture(tmp_path)
+    envelope = json.loads((root / "envelope.json").read_bytes())
+    envelope["rooms"][0].pop("story")
+    module.validate_envelope_shape(envelope)
+
+    envelope["rooms"][0]["unexpected"] = True
+    with pytest.raises(ValueError, match="room fields"):
+        module.validate_envelope_shape(envelope)
+
+
 def test_selection_policy_and_segment_safe_prior(tmp_path: Path) -> None:
     module = load_module()
     root = make_fixture(tmp_path)

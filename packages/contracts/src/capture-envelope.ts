@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { captureArtifactIdSchema, capturePackageIdSchema, captureSessionIdSchema } from "./c7.js";
 import { reconstructionJobSchema } from "./c8.js";
 
 export const captureEnvelopeSchemaVersion = "capture-envelope-v1" as const;
@@ -18,7 +17,9 @@ export const captureEnvelopePolicy = Object.freeze({
   maximumScanDurationMilliseconds: 21_600_000,
 } as const);
 
-const uuidSchema = z.uuid();
+// UUID identity is case-insensitive. Canonicalise every envelope UUID at the contract boundary so
+// native encoders (Foundation emits uppercase) cannot disagree with database or route casing.
+const uuidSchema = z.uuid().transform((value) => value.toLowerCase());
 const assetIdSchema = uuidSchema;
 const projectIdSchema = uuidSchema;
 const userIdSchema = uuidSchema;
@@ -249,7 +250,7 @@ export const captureMediaSourceSchema = z
 export const captureDepthSourceSchema = z
   .object({
     alignment: z.literal("arkit-scene-depth-image-plane"),
-    artifactId: captureArtifactIdSchema,
+    artifactId: uuidSchema,
     byteSize: z.int().positive().max(536_870_912),
     format: z.enum(["float16-metres-little-endian", "float32-metres-little-endian"]),
     heightPixels: z.int().positive().max(4_096),
@@ -280,8 +281,8 @@ export const captureDepthSourceSchema = z
 
 export const captureRoomPlanSourceSchema = z
   .object({
-    captureSessionId: captureSessionIdSchema,
-    packageId: capturePackageIdSchema,
+    captureSessionId: uuidSchema,
+    packageId: uuidSchema,
     packageManifestSha256: sha256HexSchema,
   })
   .strict();
@@ -365,7 +366,7 @@ export const createCaptureEnvelopeRequestSchema = z
       .min(1)
       .max(captureEnvelopePolicy.maximumCameraSamples),
     capabilities: captureCapabilityDeclarationSchema,
-    captureSessionId: captureSessionIdSchema,
+    captureSessionId: uuidSchema,
     coordinateSegments: z
       .array(captureCoordinateSegmentSchema)
       .min(1)
@@ -580,7 +581,7 @@ export const captureEnvelopeAcceptanceSchema = z
   .object({
     acceptedAt: z.iso.datetime({ offset: true }),
     acceptedBy: userIdSchema,
-    captureSessionId: captureSessionIdSchema,
+    captureSessionId: uuidSchema,
     envelopeId: captureEnvelopeIdSchema,
     envelopeSha256: sha256HexSchema,
     projectId: projectIdSchema,
@@ -617,7 +618,7 @@ export const startCaptureEnvelopeReconstructionRequestSchema = z
 
 export const captureEnvelopeReconstructionSchema = z
   .object({
-    captureSessionId: captureSessionIdSchema,
+    captureSessionId: uuidSchema,
     envelopeId: captureEnvelopeIdSchema,
     envelopeSha256: sha256HexSchema,
     projectId: projectIdSchema,

@@ -12,7 +12,12 @@ import type { PreparedMediaBundle } from "../media-prep/index.js";
 
 export type ReconstructionProcessingQueue = Pick<
   ReconstructionRepository,
-  "acknowledgeCancellation" | "advanceAttempt" | "claimNext" | "failAttempt" | "publishResult"
+  | "acknowledgeCancellation"
+  | "advanceAttempt"
+  | "claimNext"
+  | "failAttempt"
+  | "heartbeatAttempt"
+  | "publishResult"
 >;
 
 export interface LeasedReconstructionSource extends ReconstructionSource {

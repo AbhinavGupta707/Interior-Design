@@ -22,6 +22,7 @@ import type {
   CreateReconstructionJobCommand,
   EligibleReconstructionSource,
   FailReconstructionAttemptCommand,
+  HeartbeatReconstructionAttemptCommand,
   LeasedReconstructionAttempt,
   PublishReconstructionResultCommand,
   ReconstructionClock,
@@ -884,6 +885,57 @@ export class PostgresReconstructionRepository implements ReconstructionRepositor
         workerId: command.workerId,
       });
       return mapJob(row);
+    });
+  }
+
+  async heartbeatAttempt(
+    command: HeartbeatReconstructionAttemptCommand,
+  ): Promise<"active" | "cancel-requested"> {
+    validateWorker(command.workerId);
+    if (
+      !Number.isInteger(command.leaseSeconds) ||
+      command.leaseSeconds < 30 ||
+      command.leaseSeconds > 3_600
+    ) {
+      throw reconstructionConflict(
+        "RECONSTRUCTION_LEASE_INVALID",
+        "Lease duration must be an integer from 30 through 3600 seconds.",
+      );
+    }
+    return this.#sql.begin(async (transaction) => {
+      const rows = await transaction<AttemptRow[]>`
+        SELECT * FROM reconstruction_attempts
+        WHERE job_id = ${command.jobId}::uuid AND attempt = ${command.attempt}
+        LIMIT 1 FOR UPDATE
+      `;
+      const row = rows[0];
+      if (
+        row?.state === "cancel-requested" &&
+        row.lease_owner === command.workerId &&
+        row.lease_token === command.leaseToken
+      ) {
+        return "cancel-requested";
+      }
+      const attempt = assertLease(row, command, this.#clock.now());
+      const timestamp = nextTimestamp(this.#clock, attempt.updated_at);
+      const updated = await transaction<{ readonly job_id: string }[]>`
+        UPDATE reconstruction_attempts SET
+          lease_expires_at = ${timestamp} + (${command.leaseSeconds} * interval '1 second'),
+          updated_at = ${timestamp}, fence_version = fence_version + 1
+        WHERE tenant_id = ${attempt.tenant_id}::uuid
+          AND project_id = ${attempt.project_id}::uuid
+          AND job_id = ${command.jobId}::uuid AND attempt = ${command.attempt}
+          AND state = 'leased' AND lease_owner = ${command.workerId}
+          AND lease_token = ${command.leaseToken}::uuid
+        RETURNING job_id
+      `;
+      if (updated.length !== 1) {
+        throw reconstructionConflict(
+          "RECONSTRUCTION_LEASE_FENCED",
+          "The reconstruction heartbeat lost its lease fence.",
+        );
+      }
+      return "active";
     });
   }
 

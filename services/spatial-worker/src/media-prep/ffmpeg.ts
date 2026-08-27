@@ -72,7 +72,13 @@ export class FFmpegMediaTools {
   }
 
   async versions(signal?: AbortSignal): Promise<MediaToolVersions> {
-    const limits = { maximumOutputBytes: 16_384, timeoutMs: 5_000 };
+    // Cold dynamic-linker and codec discovery on a physical-acceptance host can
+    // legitimately exceed five seconds. Keep the probe bounded, but derive its
+    // deadline from the same media policy used by the decode path.
+    const limits = {
+      maximumOutputBytes: 16_384,
+      timeoutMs: Math.min(this.#policy.processTimeoutMilliseconds, 30_000),
+    };
     const [ffmpeg, ffprobe] = await Promise.all([
       this.#run("ffmpeg", ["-version"], limits, signal),
       this.#run("ffprobe", ["-version"], limits, signal),

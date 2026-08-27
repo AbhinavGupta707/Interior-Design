@@ -4,6 +4,26 @@ import Testing
 
 @Suite("C7 capture contract")
 struct C7CaptureContractTests {
+  @Test(
+    "session validation accepts every frozen device capability",
+    arguments: [
+      C7CaptureDeviceCapability.roomPlanLiDAR,
+      C7CaptureDeviceCapability.arkitRGBDepth,
+      C7CaptureDeviceCapability.arkitRGB,
+    ]
+  )
+  func sessionDeviceCapability(_ capability: C7CaptureDeviceCapability) throws {
+    try C7StrictCaptureValidator.validateSessionRequest(
+      C7CreateCaptureSessionRequest(
+        captureLabel: "Guided mobile capture",
+        deviceCapability: capability,
+        expectedRoomCount: 1,
+        mode: .singleRoom,
+        rights: C7CaptureRights(basis: .ownedByUser, serviceProcessingConsent: true)
+      )
+    )
+  }
+
   @Test("quantization is finite, bounded and half-away-from-zero")
   func quantization() throws {
     #expect(try C7RoomPlanQuantization.micrometres(fromMetres: 1.234_567_5) == 1_234_568)

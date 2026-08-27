@@ -674,19 +674,19 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
     rooms_by_segment: dict[str, set[str]] = {segment_id: set() for segment_id in segment_ids}
     for raw in cast("list[object]", arrays["rooms"]):
         room = as_object(raw, "room")
-        exact_keys(
-            room,
-            {
-                "coordinateSegmentIds",
-                "coverage",
-                "label",
-                "roomId",
-                "semanticDeclarations",
-                "sequence",
-                "story",
-            },
-            "room",
-        )
+        required_room_fields = {
+            "coordinateSegmentIds",
+            "coverage",
+            "label",
+            "roomId",
+            "semanticDeclarations",
+            "sequence",
+        }
+        if set(room) not in {
+            frozenset(required_room_fields),
+            frozenset(required_room_fields | {"story"}),
+        }:
+            raise ValueError("room fields do not match the frozen schema")
         room_id = str(room.get("roomId"))
         if UUID.fullmatch(room_id) is None or room_id in room_ids:
             raise ValueError("room identity is invalid")

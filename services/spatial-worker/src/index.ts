@@ -156,6 +156,7 @@ export async function runSpatialWorker(
   const reconstructionRunner =
     environment.C8_RECONSTRUCTION_WORKER_ENABLED === "true"
       ? new ReconstructionProcessingRunner({
+          heartbeatMilliseconds: Math.min(config.heartbeatMs, 15_000),
           leaseSeconds: Math.max(30, Math.min(3_600, Math.ceil(config.leaseMs / 1_000))),
           logger,
           media: new MediaPreparationPipeline({

@@ -3,7 +3,7 @@ import { writeFile } from "node:fs/promises";
 import { Readable } from "node:stream";
 import sharp from "sharp";
 
-import { ProcessExecutionError } from "../../src/subprocess.js";
+import { ProcessExecutionError, type ProcessLimits } from "../../src/subprocess.js";
 import type {
   MediaExecutable,
   MediaPreparationRequest,
@@ -63,6 +63,7 @@ export class SyntheticMediaProcess implements MediaProcessPort {
   readonly calls: {
     readonly arguments_: readonly string[];
     readonly executable: MediaExecutable;
+    readonly limits: ProcessLimits;
   }[] = [];
   failExtraction?: "output-limit" | "timeout";
   frameCount = 1;
@@ -76,8 +77,8 @@ export class SyntheticMediaProcess implements MediaProcessPort {
     width: 32,
   };
 
-  async run(executable: MediaExecutable, arguments_: readonly string[]) {
-    this.calls.push({ arguments_, executable });
+  async run(executable: MediaExecutable, arguments_: readonly string[], limits: ProcessLimits) {
+    this.calls.push({ arguments_, executable, limits });
     if (arguments_[0] === "-version") {
       return {
         exitCode: 0,
