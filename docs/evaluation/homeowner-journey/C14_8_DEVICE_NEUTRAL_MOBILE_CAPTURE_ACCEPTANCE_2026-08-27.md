@@ -25,7 +25,13 @@ candidate benchmarking are explicitly `NOT RUN`.
 - Branch: `codex/c14-8-device-neutral-mobile-capture`.
 - Contract freeze: `e803b23`.
 - Runtime: one `gpt-5.6-sol` / `xhigh` session; Sol is the sole implementation writer and
-  completion authority. No worktree, separate task or parallel implementation lane was used.
+  completion authority. No worktree, separate task or parallel implementation lane was used. One
+  permitted same-checkout, read-only Terra/high reviewer inspected frozen implementation head
+  `179336aa123e9285c770c212579c6f22902eceb2`; Sol independently validated and corrected its one
+  material migration-lifecycle finding in
+  `581c3580699f74d1150192c43384c785244975e0`.
+- Integration vehicle: non-draft PR
+  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11); it remains unmerged.
 - The user-owned root `AGENTS.md` modification remained untouched and outside every checkpoint
   commit.
 
@@ -69,9 +75,9 @@ Retained visual evidence:
 
 | Gate                                        | Result                                                                                                 |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Focused C7/C14.8 contracts/routes/migration | Passed: 5 files / 24 tests                                                                             |
+| Focused C7/C14.8 contracts/routes/migration | Passed: 5 files / 25 tests                                                                             |
 | Complete shared-contract unit suite         | Passed within `pnpm verify`: 16 files / 92 tests                                                       |
-| Platform contract/integration suite         | Passed: 56 files / 263 tests; 20 files / 52 unavailable-service cases skipped                          |
+| Platform contract/integration suite         | Passed: 56 files / 264 tests; 20 files / 52 unavailable-service cases skipped                          |
 | Live PostgreSQL C14.8 integration           | `NOT RUN`: Docker/Supabase returned `EOF`; `127.0.0.1:54322` was not serving                           |
 | Full repository verification                | Passed: 24 lint, 24 typecheck and 24 build tasks; Ruff/mypy clean; Python 157 passed / 2 skipped       |
 | Dedicated identity security                 | Passed: 921 tests                                                                                      |
@@ -85,6 +91,7 @@ Retained visual evidence:
 | C14.8 Release-fixture exclusion             | Passed on Simulator and generic iOS products; no scenario, fixture view/engine or fixture-journey text |
 | Physical Apple-device matrix                | `NOT RUN`: final inventory exposed only the Mac and Simulators                                         |
 | Windows / RTX 5080 reconstruction benchmark | `NOT RUN`: handoff only; no candidate was production-integrated                                        |
+| Independent contract/privacy/state audit    | One medium migration-lifecycle finding corrected; no other material finding                            |
 
 Xcode 26.4's default batch-mode compilation hit a compiler macro diagnostic in the pre-existing C7
 Swift Testing declarations (`@const value should be initialized with a compile-time value`). The
@@ -110,6 +117,8 @@ added to production. Their exact accepted-capture evaluation boundary is
 - Migration `0015_device_neutral_capture_envelopes.sql` adds append-only envelope/reference/link
   tables and the minimum C7 constraint extensions. It does not alter canonical, operation, fusion,
   scene, design or render tables.
+- The explicit composed admin lifecycle reapplies `0007` and `0015` in one transaction after the
+  separately required C8 migration, and readiness fails closed until the `0015` marker exists.
 - Native ARKit/SceneKit system-framework linkage, protected local capture journal, optional depth
   bytes, capability-aware guidance, exact acceptance and C8-start client composition.
 - No root manifest/lockfile, OpenAPI, experimental reconstruction provider or production GPU route.

@@ -68,6 +68,25 @@ C14.8 therefore adds one boundary rather than replacing those checkpoints:
 - Accepted-capture Windows/RTX 5080 benchmark:
   `docs/runbooks/development/C14_8_WINDOWS_RTX5080_CAPTURE_BENCHMARK.md`.
 
+## Independent review and software PR
+
+- Frozen review input: `179336aa123e9285c770c212579c6f22902eceb2` against exact base
+  `f41123f75bad8f70770a499a78638f2f1fb06d84`.
+- Review runtime: one permitted same-checkout, read-only Terra/high contract reviewer. It inspected
+  the committed capture-envelope, privacy/consent, authorization, immutable-source, optional
+  depth/RoomPlan, state-isolation, Release-fixture and evidence-claim boundaries. It made no edits;
+  Sol remained the sole writer and materiality/completion authority.
+- Material finding: the explicit C14.8 migration existed, but the established C7 runbook and admin
+  lifecycle did not provide a safe ordered composed migration path while readiness required marker
+  `0015_device_neutral_capture_envelopes`.
+- Correction: `581c3580699f74d1150192c43384c785244975e0` adds the explicit ordered lifecycle,
+  applies `0007` and `0015` atomically after the separate C8 prerequisite, documents standalone
+  versus composed readiness, and tests the command/runbook path. The reviewer reported no other
+  material authority, privacy, evidence-binding, state-isolation, fixture or overclaiming defect.
+- Integration vehicle: non-draft PR
+  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11). This session must not merge it.
+- The closeout head must pass all four named `ci.yml` jobs. Earlier green checks do not transfer.
+
 ## Terminal rule
 
 C14.8 may be called software-complete only when the final reviewed SHA passes every affected software gate and one non-draft PR is open. Physical Apple-device capture and Windows reconstruction benchmarking remain separately unaccepted until their exact evidence is recorded. The PR must not be merged by this session.
