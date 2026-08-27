@@ -1,6 +1,6 @@
 # C14.8 device-neutral mobile capture acceptance — 2026-08-27
 
-## Software outcome
+## Outcome
 
 C14.8 adds a camera-first guided capture branch to the standalone homeowner iOS app. An ordinary
 ARKit-capable, non-LiDAR iPhone is the baseline: retained RGB keyframes carry synchronized
@@ -16,8 +16,9 @@ optional depth and RoomPlan references before append-only acceptance. A separate
 may create the existing C8 job from exact ready RGB sources; it does not publish geometry or bypass
 C4/C5/C9/C10 authority.
 
-This record is software and Simulator evidence. Physical Apple-device capture and Windows/RTX 5080
-candidate benchmarking are explicitly `NOT RUN`.
+This record now combines the original software/Simulator evidence with one privacy-minimised
+physical non-LiDAR iPhone baseline. The Windows/RTX 5080 candidate benchmark remains `NOT RUN`;
+only its verified private input handoff was prepared.
 
 ## Authority and scope
 
@@ -34,8 +35,13 @@ candidate benchmarking are explicitly `NOT RUN`.
   one context-minimal, same-checkout Terra/high read-only native audit; it ran no repository suite
   and made no edit. Sol independently inspected every material boundary, made all corrections and
   retained final verification, merge and cleanup authority. No worktree or separate task was used.
-- Integration vehicle: non-draft PR
-  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11); it remains unmerged.
+- Original integration vehicle: non-draft PR
+  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11), subsequently merged before the
+  C14.9 benchmark checkpoint.
+- Physical follow-up: `gpt-5.6-sol` / `high`, branch
+  `codex/c14-8-physical-device-acceptance`, exact synchronized base
+  `da017f6259cada36a59a6b906459c6514386c279`, source correction head
+  `b89d6e24df1270c44acecc830cfc6a278021d137`. No subagent or implementation lane was used.
 - The user-owned root `AGENTS.md` modification remained untouched and outside every checkpoint
   commit.
 
@@ -53,6 +59,55 @@ candidate benchmarking are explicitly `NOT RUN`.
   anchors are intentional; C14.8 invents no cross-segment transform.
 - C9 remains the explicit multi-source reconciliation authority; C5 remains the only canonical
   preview/commit path; C10 consumes only an exact committed snapshot.
+
+## Physical non-LiDAR baseline
+
+One iPhone 12 running iOS 26.6 completed the ordinary guided-RGB journey against disposable,
+private local services. The phone used Wi-Fi and the Mac used the same private LAN; USB was needed
+only for initial development install/debug trust and was not needed for capture or authenticated
+transfer. Development signing used the user's Personal Team only at build/install time. No account,
+team, device, provisioning, credential, endpoint or machine-specific Xcode setting is committed.
+
+The exact accepted Capture Envelope identity is its canonical SHA-256
+`093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`. It declares:
+
+- runtime `physical-device`, quality tier `guided-rgb`, one room and 26 immutable RGB keyframes;
+- 26 synchronized ARKit camera samples with native-raster pinhole intrinsics and camera-to-world
+  poses, all retained samples reporting normal tracking;
+- two explicitly independent coordinate segments and one safely recovered interruption;
+- 24 declared coverage cells: 22 observed, one occluded and one missing;
+- zero depth sources and zero RoomPlan sources; scene depth and RoomPlan capability are false;
+- owner-supplied rights, service processing granted and model training denied.
+
+Real behavior was observed for camera permission, live camera delivery, ARKit world tracking,
+pose/intrinsic retention, lower/middle/upper and directional coverage guidance, motion/blur/
+low-light/tracking-limited guidance, a deliberate interruption, safe completed-keyframe retention,
+and fresh independent-segment recovery. The accepted summary correctly contains zero retained
+low-light, motion-warning, tracking-limited or unusable-blur samples because those warnings cleared
+before retention.
+
+All 26 C2 originals completed authenticated checksum-bound resumable transfer before server-side
+acceptance. Acceptance bound the exact C2/C7 fingerprints and did not create geometry. The explicit
+C8 action queued a proposal-only job; after a lease-heartbeat correction kept one attempt fenced
+through media preparation, the terminal result was the typed fail-closed abstention
+`RECONSTRUCTION_PRIVACY_REVIEW_REQUIRED`. No reconstruction geometry, C4/C5 operation, canonical
+snapshot, dimensional truth or appearance authority was published.
+
+The official C14.9 exporter then re-fetched the accepted physical envelope under current rights,
+downloaded the 26 immutable originals into private storage and passed offline verification. The
+privacy-minimised export-manifest SHA-256 is
+`e3aeaed3925640c25f35e252f84b358efdcbdc424ff39cef781a69416504db74`. The private transfer root,
+raw media, UUIDs, signed URLs, bearer credentials and alias salt are deliberately absent from Git,
+GitHub, this evidence record and screenshots.
+
+Material defects corrected during the same checkpoint were: development Info override naming;
+closed-timeline retry drift; microsecond-to-millisecond wire canonicalisation; UUID case
+canonicalisation; app-container file re-homing; completion reconciliation; bounded fresh signed-URL
+retry; background-upload response races; C8 worker media-probe timeout; reconstruction lease
+heartbeat/fencing; optional C14.9 room `story` verification; and export-attempt scoping for expiring
+signed access responses. Each correction has a focused regression. Production signing, TLS,
+authorization, source immutability, consent separation and proposal-only authority were not
+weakened.
 
 ## Simulator evidence
 
@@ -78,25 +133,27 @@ Retained visual evidence:
 
 ## Gate record
 
-| Gate                                        | Result                                                                                                      |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Focused C7/C14.8 contracts/routes/migration | Passed after correction: 4 files / 19 tests                                                                 |
-| Complete shared-contract unit suite         | Passed within `pnpm verify`: 16 files / 93 tests                                                            |
-| Platform contract/integration suite         | Passed: 56 files / 264 tests; 20 files / 53 unavailable-service cases skipped; live C14.8 run separately    |
-| Live PostgreSQL C14.8 integration           | Passed: fresh path 2/2 and exact-base upgrade through 0015; real persistence, role and tenant scope proven  |
-| Full repository verification                | Passed: 24 lint, 24 typecheck and 24 build tasks; Ruff/mypy clean; Python 157 passed / 2 skipped            |
-| Dedicated identity security                 | Passed: 921 tests                                                                                           |
-| C14 source/control-plane gate               | Passed; optional composed control-plane case remained unconfigured and is separate from the live C14.8 gate |
-| Generated contract drift                    | Passed: `node packages/api-contracts/scripts/generate.mjs --check`                                          |
-| Dependency and API seam gates               | Passed: 3 boundary tests and 21 API seam tests                                                              |
-| Complete native unit suite                  | Re-passed: 196 logical tests / 203 device invocations, zero failures/skips                                  |
-| Guided C14.8 Simulator UI journey           | Passed on unchanged native tree: 1/1 on iPhone 17 Pro Max Simulator, iOS 26.4 (23E244)                      |
-| XcodeGen regeneration                       | Byte-stable: `6ef49f967fd7de51b5b35da57461b90ac9914031c0fc7352cfd4121cd927914a`                             |
-| Release builds and analysis                 | Release builds re-passed on unchanged native tree; prior Release analysis remains passed                    |
-| C14.8 Release-fixture exclusion             | Passed on Simulator and generic iOS products; no scenario, fixture view/engine or fixture-journey text      |
-| Physical Apple-device matrix                | `NOT RUN`: final inventory exposed only the Mac and Simulators                                              |
-| Windows / RTX 5080 reconstruction benchmark | `NOT RUN`: handoff only; no candidate was production-integrated                                             |
-| Independent contract/privacy/state audit    | Three additional material replay/envelope findings corrected; prior migration correction retained           |
+| Gate                                        | Result                                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Focused C7/C14.8 contracts/routes/migration | Passed after correction: 4 files / 19 tests                                                                   |
+| Complete shared-contract unit suite         | Passed within final `pnpm verify`: 16 files / 95 tests                                                        |
+| Platform contract/integration suite         | Passed: 56 files / 266 tests; 20 files / 53 unavailable-service cases skipped; physical path run separately   |
+| Live PostgreSQL C14.8 integration           | Passed: fresh path 2/2 and exact-base upgrade through 0015; real persistence, role and tenant scope proven    |
+| Full repository verification                | Passed: 24 lint, 24 typecheck and 24 build tasks; Ruff/mypy clean; Python 157 passed / 2 skipped              |
+| Dedicated identity security                 | Passed: 921 tests                                                                                             |
+| C14 source/control-plane gate               | Passed; optional composed control-plane case remained unconfigured and is separate from the live C14.8 gate   |
+| Generated contract drift                    | Passed: `node packages/api-contracts/scripts/generate.mjs --check`                                            |
+| Dependency and API seam gates               | Passed: 3 boundary tests and 21 API seam tests                                                                |
+| Complete native unit suite                  | Re-passed: 196 logical tests / 203 device invocations, zero failures/skips                                    |
+| Complete native UI suite                    | Passed on corrected source head: 32/32 on iPhone 17 Pro Max Simulator, iOS 26.4                               |
+| Guided C14.8 Simulator UI journey           | Passed on unchanged native tree: 1/1 on iPhone 17 Pro Max Simulator, iOS 26.4 (23E244)                        |
+| XcodeGen regeneration                       | Byte-stable: `6ef49f967fd7de51b5b35da57461b90ac9914031c0fc7352cfd4121cd927914a`                               |
+| Release builds and analysis                 | Release builds re-passed on unchanged native tree; prior Release analysis remains passed                      |
+| C14.8 Release-fixture exclusion             | Passed on Simulator and generic iOS products; no scenario, fixture view/engine or fixture-journey text        |
+| Physical Apple-device matrix                | Passed one non-LiDAR baseline: iPhone 12/iOS 26.6, 26 RGB+ARKit samples, interruption/recovery and acceptance |
+| Private C14.9 export/verifier               | Passed: exact physical envelope and 26 originals; offline manifest verification; private storage only         |
+| Windows / RTX 5080 reconstruction benchmark | `NOT RUN`: verified input handoff only; no candidate run or production integration                            |
+| Independent contract/privacy/state audit    | Three additional material replay/envelope findings corrected; prior migration correction retained             |
 
 Xcode 26.4's default batch-mode compilation hit a compiler macro diagnostic in the pre-existing C7
 Swift Testing declarations (`@const value should be initialized with a compile-time value`). The
@@ -136,15 +193,16 @@ idempotent. Docker/Supabase's earlier `EOF` is historical and no longer an open 
 
 ## Hardware and provider truth
 
-`xcrun xctrace list devices` exposed the Mac and Simulators but no connected physical iPhone or
-iPad. No physical permission, RGB delivery, ARKit pose/intrinsics, scene depth, RoomPlan,
-interruption, background/relaunch upload, thermal, accessibility or representative-home acceptance
-is claimed. The exact next procedure is
-`docs/runbooks/ios/C14_8_PHYSICAL_DEVICE_CAPTURE_HANDOFF.md`.
+The earlier software closeout inventory contained no physical device; the follow-up described
+above supersedes only that physical non-LiDAR gap. It does not establish LiDAR, scene depth,
+RoomPlan, survey scale, thermal endurance, VoiceOver acceptance, representative-home performance
+or a multi-room/whole-apartment result.
 
-No Windows/RTX 5080 run was performed. COLMAP, VGGT, MASt3R, Video Depth Anything and gsplat were not
-added to production. Their exact accepted-capture evaluation boundary is
-`docs/runbooks/development/C14_8_WINDOWS_RTX5080_CAPTURE_BENCHMARK.md`.
+No Windows/RTX 5080 candidate run was performed. COLMAP, VGGT, MASt3R, Video Depth Anything and
+gsplat were not added to production or promoted. The accepted physical input is privately exported
+and verifier-clean, but benchmark execution must wait for this correction PR to merge and for the
+Windows checkout to synchronize to the exact merged head under
+`docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
 
 ## Contract and migration impact
 
@@ -161,9 +219,13 @@ added to production. Their exact accepted-capture evaluation boundary is
 
 ## Residual limits
 
-- Physical non-LiDAR iPhone acceptance is mandatory before calling camera-first capture physically
-  accepted. LiDAR evidence cannot substitute for it.
-- Windows results require a physical accepted capture and remain evaluation-only until a later
-  production contract explicitly promotes one candidate.
+- This is one room and one device baseline, not the full device/OS, deny-then-grant, offline,
+  expired-URL, role/rights withdrawal, storage-pressure, thermal or accessibility matrix.
+- The two coordinate segments remain independent; no cross-segment transform or common scale was
+  inferred. One coverage cell is missing and one is user-declared occluded.
+- Windows results require the merged correction head and remain evaluation-only even after a run;
+  no candidate receives production or canonical authority.
+- Physical dimensions, reference measurements, ground-truth accuracy, second-journey repeatability
+  and all C14.9 geometric/resource metrics remain required.
 - No survey, exact structure, regulatory, planning, cost, availability, accessibility-professional
   or other professional certainty is established.

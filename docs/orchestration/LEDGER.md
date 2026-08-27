@@ -1485,3 +1485,62 @@
   requires current tenant/project/actor rights on the envelope and every RoomPlan source, both
   cohorts for every independent segment, two fresh runs for every selected candidate, retained
   failure/resource evidence and separately rights-cleared ground truth for any accuracy claim.
+
+## C14.8 physical non-LiDAR acceptance follow-up — 2026-08-27
+
+- Authority: the user's physical-device instruction after C14.9 merged. The repository was
+  synchronized to clean `origin/main` at
+  `da017f6259cada36a59a6b906459c6514386c279`; branch
+  `codex/c14-8-physical-device-acceptance` preserves the user-owned root `AGENTS.md` modification
+  exactly and excludes it from every commit. One `gpt-5.6-sol` / `high` primary owns planning,
+  implementation, physical guidance, final verification and closeout; no subagent, worktree task or
+  implementation lane was used. Disposable clean Git worktrees were used only by the official
+  exporter to satisfy its exact-source check.
+- Signing/privacy boundary: one iPhone 12 on iOS 26.6 was temporarily development-signed and
+  installed with the user's Personal Team. Account, team, device, provisioning, credential,
+  endpoint and machine-specific Xcode values remain outside Git. A disposable private CA, local
+  API/database/object storage/worker and LAN TLS gateway were used. Raw room media, source UUIDs,
+  signed URLs, bearer credentials, alias salt and the private transfer path remain outside Git,
+  GitHub, committed evidence and screenshots.
+- Physical truth: one studio room, 26 retained RGB keyframes and 26 exact ARKit camera samples,
+  native-raster pinhole intrinsics, camera-to-world poses, two explicitly independent coordinate
+  segments and one safe interruption/recovery. Accepted coverage is 22 observed, one occluded and
+  one missing of 24 cells. Runtime is `physical-device`; quality tier is `guided-rgb`; all retained
+  tracking is normal. Scene depth and RoomPlan capability are false and there are zero depth and
+  RoomPlan sources. This is not LiDAR, depth or RoomPlan evidence.
+- Acceptance authority: canonical Capture Envelope SHA-256
+  `093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`; protected-journal SHA-256
+  `a7c64f6c37282026ea87587ded6a07bed8a56de7c626e5dd09687b914711e722`; installed corrected app
+  code SHA-256 `8858aa94d927deaede58b4d0a0e05913113d54a975a6d6f1c0e0ca5ac9183990`.
+  All 26 immutable C2 sources completed checksum-bound resumable transfer and exact server
+  acceptance under current owner rights, service processing granted and training denied.
+- Proposal-only truth: the explicit C8 action queued one authenticated reconstruction proposal.
+  After the worker lease heartbeat kept attempt 2 fenced throughout media preparation, it terminated
+  with immutable typed abstention `RECONSTRUCTION_PRIVACY_REVIEW_REQUIRED`. No geometry, appearance,
+  C4/C5 operation, canonical snapshot, dimension or production authority was published.
+- Same-checkpoint corrections: development Info override naming; frozen capture timeline retry;
+  microsecond wire canonicalisation; UUID casing at native/contract/route boundaries; protected
+  journal persistence; app-container re-homing; exact asset reconciliation; background upload races;
+  bounded fresh signed-part URLs; FFmpeg discovery timeout; reconstruction heartbeat/fencing; C14.9
+  optional room `story`; expiring export-access replay; and a brittle C14.6 Simulator switch hit
+  target. Source heads are `7e5c6b58c31922708bd8c3814cd4a095f2fdfde8`,
+  `5ff39f122d1329347173c3e95245715a154e380b` and package-integrity head
+  `b89d6e24df1270c44acecc830cfc6a278021d137`; no migration, production-signing, TLS,
+  authorization, consent-default, canonical or production-routing boundary was weakened.
+- Verification: complete `pnpm verify` passed formatting, 24/24 lint, 24/24 typecheck, 45/45 unit
+  tasks and 24/24 builds; contracts 95/95, platform 266 with 53 optional-service skips and spatial
+  worker 153 with 3 optional-runtime skips; Ruff/mypy passed and Python passed 157/2 skips. The
+  focused C14.9 evaluator suite passes 9/9. Native unit evidence remains 196 logical tests / 203
+  invocations; the final corrected native UI source passes 32/32 on the iPhone 17 Pro Max
+  Simulator, iOS 26.4, with zero failures or skips.
+- Private C14.9 handoff: the official exporter reauthorized and downloaded all 26 originals from an
+  exact clean source checkout, then passed offline verification. Export-manifest SHA-256 is
+  `e3aeaed3925640c25f35e252f84b358efdcbdc424ff39cef781a69416504db74`. The private transfer root is
+  intentionally reported only to the user. Windows/RTX 5080 candidate execution remains `NOT RUN`;
+  begin it only after this correction PR merges, Windows synchronizes to the exact merged head and
+  the runbook's disk/RAM/VRAM/image/right checks pass.
+- Residual limits: one room/device only; one missing and one occluded coverage cell; independent
+  segments not registered; no survey scale, physical dimensions, ground truth, accuracy,
+  deny/grant/offline/role-withdrawal/storage/thermal/accessibility matrix, second journey or Windows
+  resource/repeatability metrics. Structural, regulatory, cost, availability and professional
+  certainty remain unclaimed.
