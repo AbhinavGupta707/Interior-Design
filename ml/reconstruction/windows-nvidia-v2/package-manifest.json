@@ -7,7 +7,7 @@
     "Dockerfile.colmap": "72e8e6a08580439f2d8766deaa19410c2bf7b98e4a9903e029c8aacbc17a077f",
     "Dockerfile.open3d": "e3b8a4d1767fe30e9aa9a5aa99a57bb608e3a23ce82f6133c4c6a07ec99f8f06",
     "README.md": "2755cba88b5beaf55d67a99fc7cc703f13b9a2d84015c6b496e52be097c86b4e",
-    "capture_benchmark.py": "f25bdf01c6aa54905e021d445eb391984f8c8d261944088536a21e7fc3685c7f",
+    "capture_benchmark.py": "bfb17fdb00e903f559ad371bed28673dce3805a2495a6c2bf871200522b0d4e0",
     "capture_host_inventory.py": "696a98c571fe8f8f2e03790c518c4afd073a4f293474bc4286d176089ae2754a",
     "capture_metrics.py": "228ec50f6ff08f7c148497343ada8f8b9c27b8d0897eb300bd393e83486edbae",
     "direct_gsplat.py": "967759707685aed7520988239b9d84d71a3c7811b73b77e2e8db2c3b46afea6b",
