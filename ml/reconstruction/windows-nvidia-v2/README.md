@@ -114,26 +114,38 @@ supplied metre unit is not independently established scale.
 
 ## Direct gsplat appearance
 
-C8 v2 does not override Nerfstudio. `direct_gsplat.py` is a bounded project-owned
-trainer that accepts the exact `c8-direct-gsplat-input-v2` schema:
+C8 v2 does not override Nerfstudio. `direct_gsplat.py` remains the bounded
+project-owned C8 trainer for the exact `c8-direct-gsplat-input-v2` schema:
 
-- 2–500 hash-pinned, same-size PNG RGB frames;
+- 2-500 hash-pinned, same-size PNG RGB frames;
 - calibrated 3x3 intrinsics and 4x4 world-to-camera matrices;
-- 3–100,000 explicit initial Gaussian proposals;
+- 3-100,000 explicit initial Gaussian proposals;
 - processing permission required and training permission denied;
-- 3–10,000 optimizer steps, a fixed seed and bounded learning rate; and
+- 3-10,000 optimizer steps, a fixed seed and bounded learning rate; and
 - right-handed local coordinates in arbitrary units.
 
-It performs real gsplat rasterization, backward gradients and Adam updates, reserves
-the final frame for held-out MSE/PSNR, and atomically exports:
+The C8 entrypoint preserves its accepted real gsplat rasterization, rasterizer
+backward and Adam updates. C14.9 does not replace that contract.
+`direct_gsplat_capture.py` is a separate capture-evaluation entrypoint over the
+same validated input. It keeps every geometry value fixed, uses real gsplat
+forward renders, and applies deterministic CPU float64 Adam updates only to one
+global gain per RGB channel. It deliberately disables gsplat CUDA backward
+because its atomic accumulation repeatedly violated C14.9's frozen two-run
+threshold.
+
+Both entrypoints reserve the final frame for held-out MSE/PSNR and atomically
+export:
 
 - `appearance.ply`, independently parseable but non-dimensional;
-- `appearance-checkpoint.json`, data only—never pickle; and
+- `appearance-checkpoint.json`, data only - never pickle; and
 - `appearance-result.json`, including losses, hashes, versions and resource peaks.
 
-The output directory must be empty. Output never establishes canonical geometry,
-dimensions, collision surfaces or scale. Appearance remains experimental until
-rights-cleared representative-home and physical-capture evaluation is separately run.
+The capture adapter emits v3 checkpoint/result schemas with its method and
+deterministic controls. Its repeatability result is not a quality or accuracy
+claim. The output directory must be empty. No output establishes canonical
+geometry, dimensions, collision surfaces or scale. Appearance remains
+experimental until rights-cleared representative-home and physical-capture
+evaluation is separately run.
 
 ## Acceptance runner and exposure
 
@@ -194,17 +206,26 @@ comparison reproducible without customer, provider or phone data.
 ## C14.9 Capture Envelope evaluation
 
 C14.9 adds a secure, offline-verifiable path from one accepted physical
-`capture-envelope-v1` to the same quarantined package. `capture_benchmark.py` exports exact C2/C7
-bytes through freshly authorized access, verifies a private immutable tree, freezes normal and
-inclusive per-segment selections, prepares COLMAP inputs/ARKit priors and emits a non-production
-routing plan. `open3d_capture.py` consumes only exact sample-bound depth;
-`prepare_gsplat_capture.py` produces a hash-bound direct-gsplat input; and `capture_metrics.py`
-builds the common two-run record. `generate_capture_benchmark_fixture.py` is synthetic executable
-evidence only.
+`capture-envelope-v1` to the quarantined evaluation package. `capture_benchmark.py` exports exact
+C2/C7 bytes through freshly authorized access, rejects redirects and non-HTTPS transfer
+authorities, verifies a private immutable tree, freezes normal and inclusive selections separately
+for every coordinate segment, converts ARKit camera-to-world evidence into OpenCV/COLMAP
+world-to-camera proposals, and emits a non-production routing plan. It never joins coordinate
+segments or treats camera, depth, reconstruction, render, or appearance output as canonical truth.
+
+`open3d_capture.py` consumes only exact sample-bound depth and reports explicit eligible,
+integrated, missing, finite, non-finite, and non-positive denominators.
+`prepare_gsplat_capture.py` consumes cameras, images, and points from the same retained COLMAP text
+model directory; its output and `direct_gsplat.py` remain non-dimensional appearance evidence.
+`capture_metrics.py` requires the complete two-run candidate/cohort/segment matrix, exact
+selection/policy/image/config/deterministic-control linkage, non-empty artifact hashes, frozen
+metric vocabulary, explicit failures and resource/isolation ceilings. The synthetic
+`generate_capture_benchmark_fixture.py` proves software executability only.
 
 Experimental pins live in `experimental-candidates.json`. VGGT is licence/hash blocked; MASt3R and
 Video Depth Anything are quarantined but remain dependency-lock/image blocked. The verifier
-requires exact source/submodule/weight/registry/fully-hashed-lock/local-image evidence before the
-offline policy can select either. Nothing here changes production C8 routing or dimensional truth.
-Use the exact sequence and non-claims in
+requires an exact clean source tree including untracked state, exact recursive submodules, weights,
+registry, fully hashed lock, a symlink-free confined candidate root, and the exact local image
+before policy selection. Nothing here changes production C8 routing, establishes physical or
+representative accuracy, or creates dimensional truth. Use the exact sequence and non-claims in
 `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.

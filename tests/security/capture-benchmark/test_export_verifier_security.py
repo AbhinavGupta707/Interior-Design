@@ -43,6 +43,7 @@ def test_extra_file_and_symlink_are_rejected(tmp_path: Path) -> None:
     verifier = module()
     root = fixture(tmp_path)
     (root / "unlisted.txt").write_text("secret")
+    (root / "unlisted.txt").chmod(0o600)
     with pytest.raises(ValueError, match="unlisted"):
         verifier.verify_export(root)
     (root / "unlisted.txt").unlink()
@@ -56,8 +57,23 @@ def test_traversal_and_secret_keys_are_rejected(tmp_path: Path) -> None:
     root = fixture(tmp_path)
     path = root / "export-manifest.json"
     manifest = json.loads(path.read_bytes())
-    manifest["signedUrl"] = "https://storage.invalid/?credential=secret"
+    manifest["generator"]["credential"] = "must-never-be-retained"
     path.write_bytes(verifier.canonical_bytes(manifest) + b"\n")
     with pytest.raises(ValueError, match="forbidden"):
         verifier.verify_export(root)
     assert "storage.invalid" not in str(pytest.raises)
+
+
+def test_private_permissions_and_hard_links_are_rejected(tmp_path: Path) -> None:
+    verifier = module()
+    root = fixture(tmp_path)
+    image = next((root / "rgb").iterdir())
+    image.chmod(0o640)
+    with pytest.raises(ValueError, match="private"):
+        verifier.verify_export(root)
+    image.chmod(0o600)
+    linked = root / "hard-linked-copy"
+    os.link(image, linked)
+    linked.chmod(0o600)
+    with pytest.raises(ValueError, match="hard-linked"):
+        verifier.verify_export(root)

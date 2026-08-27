@@ -121,6 +121,8 @@ interface PackageRow {
   readonly manifest_payload: unknown;
   readonly manifest_sha256: string;
   readonly project_id: string;
+  readonly rights_permitted?: boolean;
+  readonly session_state?: string;
 }
 
 interface EnvelopeRow {
@@ -514,16 +516,34 @@ export class PostgresCaptureBackend implements CaptureBackend {
     packageId: string,
   ): Promise<CapturePackage | undefined> {
     const rows = await this.#sql<PackageRow[]>`
-      SELECT id, project_id, manifest_sha256, manifest_payload, created_at
-      FROM capture_packages
-      WHERE tenant_id = ${tenantId}::uuid
-        AND project_id = ${projectId}::uuid
-        AND capture_session_id = ${captureSessionId}::uuid
-        AND id = ${packageId}::uuid
+      SELECT p.id, p.project_id, p.manifest_sha256, p.manifest_payload, p.created_at,
+        s.state AS session_state,
+        NOT EXISTS (
+          SELECT 1 FROM capture_rights_events denied
+          WHERE denied.tenant_id = p.tenant_id
+            AND denied.project_id = p.project_id
+            AND denied.capture_session_id = p.capture_session_id
+            AND NOT denied.permitted
+        ) AS rights_permitted
+      FROM capture_packages p
+      JOIN capture_sessions s
+        ON s.tenant_id = p.tenant_id
+       AND s.project_id = p.project_id
+       AND s.id = p.capture_session_id
+      WHERE p.tenant_id = ${tenantId}::uuid
+        AND p.project_id = ${projectId}::uuid
+        AND p.capture_session_id = ${captureSessionId}::uuid
+        AND p.id = ${packageId}::uuid
       LIMIT 1
     `;
     const row = rows[0];
-    if (row === undefined) return undefined;
+    if (
+      row === undefined ||
+      row.rights_permitted !== true ||
+      !["proposed", "abstained"].includes(row.session_state ?? "")
+    ) {
+      return undefined;
+    }
     const manifest = createCapturePackageRequestSchema.parse(row.manifest_payload);
     if (captureSha256(manifest) !== row.manifest_sha256) {
       throw captureConflict(
@@ -594,6 +614,19 @@ export class PostgresCaptureBackend implements CaptureBackend {
       );
       let packageBound = false;
       if (!directDepth) {
+        const sourceSession = await this.#lockedSession(
+          transaction,
+          command.actor.tenantId,
+          command.projectId,
+          artifact.capture_session_id,
+        );
+        if (
+          sourceSession === undefined ||
+          !["proposed", "abstained"].includes(sourceSession.state)
+        ) {
+          throw notFound();
+        }
+        assertCurrentRights(sourceSession);
         const packageRows = await transaction<PackageRow[]>`
           SELECT p.id, p.project_id, p.manifest_sha256, p.manifest_payload, p.created_at
           FROM capture_packages p

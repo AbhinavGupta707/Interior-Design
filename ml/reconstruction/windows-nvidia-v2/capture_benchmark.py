@@ -19,11 +19,13 @@ import stat
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from datetime import UTC, datetime
+from http.client import HTTPMessage
 from pathlib import Path, PurePosixPath
-from typing import Any, BinaryIO, cast
+from typing import IO, Any, BinaryIO, cast
 
 SCHEMA_EXPORT = "capture-benchmark-export-v1"
 SCHEMA_SELECTION = "capture-benchmark-selection-v1"
@@ -79,6 +81,95 @@ def safe_relative(value: str) -> PurePosixPath:
     return path
 
 
+def confined_path(root: Path, value: str, *, directory: bool) -> Path:
+    relative = safe_relative(value)
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("confined path contains a symlink")
+    resolved = current.resolve(strict=True)
+    if root != resolved and root not in resolved.parents:
+        raise ValueError("confined path escapes its root")
+    if directory:
+        if not current.is_dir():
+            raise ValueError("confined directory is invalid")
+    elif not current.is_file():
+        raise ValueError("confined file is invalid")
+    return current
+
+
+def exact_keys(value: dict[str, Any], expected: set[str], name: str) -> None:
+    if set(value) != expected:
+        raise ValueError(f"{name} fields do not match the frozen schema")
+
+
+def integer_in_range(value: object, minimum: int, maximum: int) -> bool:
+    return not isinstance(value, bool) and isinstance(value, int) and minimum <= value <= maximum
+
+
+def validate_transfer(value: object) -> None:
+    transfer = as_object(value, "transfer")
+    exact_keys(transfer, {"partCount", "reconciledAt", "resumable", "state"}, "transfer")
+    if (
+        not integer_in_range(transfer.get("partCount"), 1, 10_000)
+        or transfer.get("resumable") is not True
+        or transfer.get("state") != "complete"
+        or not isinstance(transfer.get("reconciledAt"), str)
+    ):
+        raise ValueError("transfer receipt is invalid")
+
+
+def contains_forbidden_key(value: object) -> bool:
+    forbidden = {
+        "authorization",
+        "bearertoken",
+        "credential",
+        "credentials",
+        "objectkey",
+        "signedurl",
+        "url",
+    }
+    if isinstance(value, dict):
+        return any(
+            str(key).replace("_", "").casefold() in forbidden or contains_forbidden_key(child)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(contains_forbidden_key(child) for child in value)
+    return False
+
+
+def validated_https_url(value: object, *, origin_only: bool = False) -> str:
+    if not isinstance(value, str) or value.strip() != value:
+        raise ValueError("HTTPS URL is invalid")
+    parsed = urllib.parse.urlsplit(value)
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or (origin_only and (parsed.query or parsed.path not in {"", "/"}))
+    ):
+        raise ValueError("HTTPS URL is invalid")
+    return value
+
+
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: IO[bytes],
+        code: int,
+        msg: str,
+        headers: HTTPMessage,
+        newurl: str,
+    ) -> None:
+        del req, fp, code, msg, headers, newurl
+        return None
+
+
 def private_write(path: Path, content: bytes) -> None:
     if path.exists() or path.is_symlink() or not path.parent.is_dir():
         raise ValueError(f"unsafe output target: {path.name}")
@@ -109,7 +200,8 @@ def api_json(
     body: object | None = None,
     idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-    if not base_url.startswith(("http://", "https://")) or token.strip() != token or not token:
+    base_url = validated_https_url(base_url, origin_only=True)
+    if token.strip() != token or not token or not endpoint.startswith("/"):
         raise ValueError("API URL or bearer token is invalid")
     headers = {"Accept": "application/json", "Authorization": f"Bearer {token}"}
     data = None
@@ -124,7 +216,7 @@ def api_json(
         base_url.rstrip("/") + endpoint, data=data, headers=headers, method=method
     )
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
+        with urllib.request.build_opener(NoRedirectHandler).open(request, timeout=60) as response:
             if response.status < 200 or response.status >= 300:
                 raise RuntimeError(f"API request failed with status {response.status}")
             return as_object(json.load(response), "API response")
@@ -135,6 +227,7 @@ def api_json(
 
 
 def download_verified(url: str, destination: Path, size: int, expected_sha256: str) -> None:
+    url = validated_https_url(url)
     if size <= 0 or size > MAX_DOWNLOAD_BYTES or SHA256.fullmatch(expected_sha256) is None:
         raise ValueError("declared download size or hash is invalid")
     descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -143,7 +236,9 @@ def download_verified(url: str, destination: Path, size: int, expected_sha256: s
     try:
         with os.fdopen(descriptor, "wb") as output:
             try:
-                response: BinaryIO = urllib.request.urlopen(url, timeout=120)
+                response: BinaryIO = urllib.request.build_opener(NoRedirectHandler).open(
+                    url, timeout=120
+                )
             except (urllib.error.HTTPError, urllib.error.URLError):
                 raise RuntimeError("signed object download failed") from None
             with response:
@@ -216,8 +311,15 @@ def export_capture(args: argparse.Namespace) -> None:
     ).stdout.strip()
     if head != args.source_commit:
         raise ValueError("source commit does not match the checked-out benchmark code")
-    subprocess.run(["git", "diff", "--quiet"], cwd=REPOSITORY_ROOT, check=True)
-    subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPOSITORY_ROOT, check=True)
+    status = subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if status:
+        raise ValueError("benchmark source checkout must be exactly clean")
     project_id = args.project_id
     session_id = args.capture_session_id
     if UUID.fullmatch(project_id) is None or UUID.fullmatch(session_id) is None:
@@ -336,7 +438,7 @@ def export_capture(args: argparse.Namespace) -> None:
             content_type = cast("str", artifact.get("contentType"))
             access = api_json(
                 args.base_url,
-                f"/v1/projects/{project_id}/capture-sessions/{session_id}/artifacts/{artifact_id}/access",
+                f"/v1/projects/{project_id}/capture-sessions/{package_session_id}/artifacts/{artifact_id}/access",
                 token,
                 body={},
             )
@@ -366,7 +468,7 @@ def export_capture(args: argparse.Namespace) -> None:
         "acceptedByAlias": alias(salt, "actor", cast("str", acceptance.get("acceptedBy"))),
         "actorAlias": alias(salt, "actor", actor_id),
         "captureSessionAlias": alias(salt, "capture", session_id),
-        "envelopeId": acceptance.get("envelopeId"),
+        "envelopeAlias": alias(salt, "envelope", cast("str", acceptance.get("envelopeId"))),
         "envelopeSha256": envelope_sha,
         "exportedAt": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "files": sorted(files, key=lambda item: cast("str", item["path"])),
@@ -388,98 +490,688 @@ def export_capture(args: argparse.Namespace) -> None:
     )
 
 
+def validate_envelope_shape(envelope: dict[str, Any]) -> None:
+    exact_keys(
+        envelope,
+        {
+            "cameraSamples",
+            "capabilities",
+            "captureSessionId",
+            "coordinateSegments",
+            "depthSources",
+            "endedAt",
+            "generator",
+            "intent",
+            "mediaSources",
+            "projectId",
+            "quality",
+            "rights",
+            "roomPlanSources",
+            "rooms",
+            "schemaVersion",
+            "startedAt",
+            "transferState",
+        },
+        "Capture Envelope",
+    )
+    if envelope.get("schemaVersion") != "capture-envelope-v1":
+        raise ValueError("Capture Envelope schema is unsupported")
+    if any(
+        UUID.fullmatch(str(envelope.get(key))) is None for key in ("projectId", "captureSessionId")
+    ):
+        raise ValueError("Capture Envelope identity is invalid")
+    generator = as_object(envelope["generator"], "generator")
+    exact_keys(generator, {"name", "version"}, "generator")
+    if (
+        generator.get("name") != "ios-guided-capture"
+        or not isinstance(generator.get("version"), str)
+        or not cast("str", generator["version"]).strip()
+        or envelope.get("intent") not in {"room-by-room", "small-apartment"}
+        or envelope.get("transferState") != "complete"
+    ):
+        raise ValueError("Capture Envelope generator or mode is invalid")
+    rights = as_object(envelope["rights"], "rights")
+    exact_keys(
+        rights,
+        {"basis", "serviceProcessingConsent", "trainingUseConsent"},
+        "rights",
+    )
+    if (
+        rights.get("serviceProcessingConsent") is not True
+        or rights.get("trainingUseConsent") != "denied"
+    ):
+        raise ValueError("Capture Envelope processing rights are not permitted")
+    capabilities = as_object(envelope["capabilities"], "capabilities")
+    exact_keys(
+        capabilities,
+        {
+            "appBuild",
+            "appVersion",
+            "arWorldTracking",
+            "cameraIntrinsics",
+            "cameraPoses",
+            "deviceModelIdentifier",
+            "operatingSystemVersion",
+            "qualityTier",
+            "rgbKeyframes",
+            "rgbVideo",
+            "roomPlan",
+            "runtime",
+            "sceneDepth",
+            "schemaVersion",
+        },
+        "capabilities",
+    )
+    quality = as_object(envelope["quality"], "quality")
+    exact_keys(
+        quality,
+        {
+            "interruptionCount",
+            "lowLightSampleCount",
+            "missingCoverageCellCount",
+            "motionWarningSampleCount",
+            "occludedCoverageCellCount",
+            "trackingLimitedSampleCount",
+            "unusableBlurSampleCount",
+        },
+        "quality",
+    )
+    if any(not integer_in_range(value, 0, 10_000) for value in quality.values()):
+        raise ValueError("quality summary counts are invalid")
+    if (
+        capabilities.get("schemaVersion") != "capture-capabilities-v1"
+        or capabilities.get("runtime") not in {"physical-device", "simulator-fixture"}
+        or any(
+            not isinstance(capabilities.get(key), bool)
+            for key in (
+                "arWorldTracking",
+                "cameraIntrinsics",
+                "cameraPoses",
+                "rgbKeyframes",
+                "rgbVideo",
+                "roomPlan",
+                "sceneDepth",
+            )
+        )
+    ):
+        raise ValueError("capture capabilities are invalid")
+    arrays = {
+        name: envelope[name]
+        for name in (
+            "cameraSamples",
+            "coordinateSegments",
+            "depthSources",
+            "mediaSources",
+            "roomPlanSources",
+            "rooms",
+        )
+    }
+    if any(not isinstance(value, list) for value in arrays.values()):
+        raise ValueError("Capture Envelope collections are invalid")
+    media_by_id: dict[str, dict[str, Any]] = {}
+    for raw in cast("list[object]", arrays["mediaSources"]):
+        source = as_object(raw, "media source")
+        exact_keys(
+            source,
+            {"assetId", "byteSize", "kind", "mimeType", "sha256", "transfer"},
+            "media source",
+        )
+        source_id = str(source.get("assetId"))
+        kind = source.get("kind")
+        mime_type = source.get("mimeType")
+        is_video = mime_type in {"video/mp4", "video/quicktime"}
+        if (
+            UUID.fullmatch(source_id) is None
+            or source_id in media_by_id
+            or SHA256.fullmatch(str(source.get("sha256"))) is None
+            or kind not in {"rgb-keyframe", "rgb-video"}
+            or mime_type
+            not in {"image/heic", "image/jpeg", "image/png", "video/mp4", "video/quicktime"}
+            or is_video != (kind == "rgb-video")
+            or not integer_in_range(source.get("byteSize"), 1, MAX_DOWNLOAD_BYTES)
+        ):
+            raise ValueError("media source identity is invalid")
+        validate_transfer(source.get("transfer"))
+        media_by_id[source_id] = source
+    segment_ids: set[str] = set()
+    segment_scopes: dict[str, tuple[int, int]] = {}
+    for raw in cast("list[object]", arrays["coordinateSegments"]):
+        segment = as_object(raw, "coordinate segment")
+        exact_keys(
+            segment,
+            {
+                "coordinateSystem",
+                "endedAtMicroseconds",
+                "reason",
+                "segmentId",
+                "startedAtMicroseconds",
+                "translationUnit",
+                "worldOriginRelationship",
+            },
+            "coordinate segment",
+        )
+        segment_id = str(segment.get("segmentId"))
+        if (
+            UUID.fullmatch(segment_id) is None
+            or segment_id in segment_ids
+            or segment.get("coordinateSystem") != "arkit-right-handed-y-up"
+            or segment.get("translationUnit") != "micrometres"
+            or segment.get("worldOriginRelationship") != "independent-unless-later-registered"
+            or segment.get("reason")
+            not in {"initial", "room-transition", "interruption", "relaunch", "manual-restart"}
+            or not integer_in_range(segment.get("startedAtMicroseconds"), 0, 21_600_000_000)
+            or not integer_in_range(segment.get("endedAtMicroseconds"), 0, 21_600_000_000)
+            or cast("int", segment["endedAtMicroseconds"])
+            <= cast("int", segment["startedAtMicroseconds"])
+        ):
+            raise ValueError("coordinate segment is invalid")
+        segment_ids.add(segment_id)
+        segment_scopes[segment_id] = (
+            cast("int", segment["startedAtMicroseconds"]),
+            cast("int", segment["endedAtMicroseconds"]),
+        )
+    room_ids: set[str] = set()
+    rooms_by_segment: dict[str, set[str]] = {segment_id: set() for segment_id in segment_ids}
+    for raw in cast("list[object]", arrays["rooms"]):
+        room = as_object(raw, "room")
+        exact_keys(
+            room,
+            {
+                "coordinateSegmentIds",
+                "coverage",
+                "label",
+                "roomId",
+                "semanticDeclarations",
+                "sequence",
+                "story",
+            },
+            "room",
+        )
+        room_id = str(room.get("roomId"))
+        if UUID.fullmatch(room_id) is None or room_id in room_ids:
+            raise ValueError("room identity is invalid")
+        room_ids.add(room_id)
+        room_segments = room.get("coordinateSegmentIds")
+        coverage = room.get("coverage")
+        semantics = room.get("semanticDeclarations")
+        if (
+            not isinstance(room_segments, list)
+            or not isinstance(coverage, list)
+            or not isinstance(semantics, list)
+        ):
+            raise ValueError("room evidence collections are invalid")
+        for segment_id in room_segments:
+            if not isinstance(segment_id, str) or segment_id not in segment_ids:
+                raise ValueError("room references an unknown segment")
+            rooms_by_segment[segment_id].add(room_id)
+        coverage_keys: set[tuple[str, str]] = set()
+        for raw_cell in coverage:
+            cell = as_object(raw_cell, "coverage cell")
+            exact_keys(
+                cell,
+                {"horizontalSector", "status", "verticalBand"},
+                "coverage cell",
+            )
+            key = (str(cell.get("horizontalSector")), str(cell.get("verticalBand")))
+            if key in coverage_keys or cell.get("status") not in {
+                "observed",
+                "missing",
+                "occluded",
+                "unknown",
+            }:
+                raise ValueError("coverage cell is invalid or repeated")
+            coverage_keys.add(key)
+        semantic_layers: set[str] = set()
+        for raw_semantic in semantics:
+            semantic = as_object(raw_semantic, "semantic declaration")
+            exact_keys(
+                semantic,
+                {"layer", "provenance", "status"},
+                "semantic declaration",
+            )
+            layer = str(semantic.get("layer"))
+            if (
+                layer in semantic_layers
+                or semantic.get("provenance") != "user-asserted"
+                or semantic.get("status")
+                not in {"observed", "partially-observed", "occluded", "unknown"}
+            ):
+                raise ValueError("semantic declaration is invalid or repeated")
+            semantic_layers.add(layer)
+        if len(coverage_keys) != 24 or len(semantic_layers) != 5:
+            raise ValueError("room evidence denominators are incomplete")
+    if any(not rooms for rooms in rooms_by_segment.values()):
+        raise ValueError("every coordinate segment must belong to a room")
+    sample_ids: set[str] = set()
+    timestamps: set[tuple[str, int]] = set()
+    for raw in cast("list[object]", arrays["cameraSamples"]):
+        sample = as_object(raw, "camera sample")
+        required = {
+            "blurScoreMillionths",
+            "cameraIntrinsicsMicropixels",
+            "exposureScoreMillionths",
+            "intrinsicsModel",
+            "motionScoreMillionths",
+            "orientation",
+            "poseTransform",
+            "quaternionNanounits",
+            "quaternionOrder",
+            "roomId",
+            "sampleId",
+            "segmentId",
+            "sourceAssetId",
+            "sourceTimestampMicroseconds",
+            "timestampMicroseconds",
+            "trackingState",
+            "translationMicrometres",
+        }
+        if set(sample) not in {frozenset(required), frozenset(required | {"ambientIntensity"})}:
+            raise ValueError("camera sample fields do not match the frozen schema")
+        sample_id = str(sample.get("sampleId"))
+        segment_id = str(sample.get("segmentId"))
+        room_id = str(sample.get("roomId"))
+        source_id = str(sample.get("sourceAssetId"))
+        timestamp = sample.get("timestampMicroseconds")
+        if (
+            UUID.fullmatch(sample_id) is None
+            or sample_id in sample_ids
+            or segment_id not in segment_ids
+            or room_id not in rooms_by_segment.get(segment_id, set())
+            or source_id not in media_by_id
+            or isinstance(timestamp, bool)
+            or not isinstance(timestamp, int)
+            or (segment_id, timestamp) in timestamps
+            or not segment_scopes[segment_id][0] <= timestamp <= segment_scopes[segment_id][1]
+            or sample.get("intrinsicsModel") != "pinhole-native-camera-raster"
+            or sample.get("poseTransform") != "camera-to-world"
+            or sample.get("quaternionOrder") != "x-y-z-w"
+            or sample.get("orientation")
+            not in {"portrait", "portrait-upside-down", "landscape-left", "landscape-right"}
+        ):
+            raise ValueError("camera sample scope or convention is invalid")
+        intrinsics = as_object(sample.get("cameraIntrinsicsMicropixels"), "intrinsics")
+        translation = as_object(sample.get("translationMicrometres"), "translation")
+        exact_keys(
+            intrinsics,
+            {"cx", "cy", "fx", "fy", "imageHeightPixels", "imageWidthPixels"},
+            "intrinsics",
+        )
+        exact_keys(translation, {"x", "y", "z"}, "translation")
+        if (
+            any(
+                not integer_in_range(intrinsics.get(key), 1, 100_000_000_000)
+                for key in ("fx", "fy", "imageHeightPixels", "imageWidthPixels")
+            )
+            or any(
+                not integer_in_range(intrinsics.get(key), 0, 100_000_000_000)
+                for key in ("cx", "cy")
+            )
+            or any(
+                not integer_in_range(translation.get(key), -1_000_000_000, 1_000_000_000)
+                for key in ("x", "y", "z")
+            )
+            or any(
+                not integer_in_range(sample.get(key), 0, 1_000_000)
+                for key in (
+                    "blurScoreMillionths",
+                    "exposureScoreMillionths",
+                    "motionScoreMillionths",
+                )
+            )
+        ):
+            raise ValueError("camera sample calibration values are invalid")
+        quaternion = sample.get("quaternionNanounits")
+        if (
+            not isinstance(quaternion, list)
+            or len(quaternion) != 4
+            or any(isinstance(value, bool) or not isinstance(value, int) for value in quaternion)
+            or not 990_000_000 <= math.hypot(*quaternion) <= 1_010_000_000
+        ):
+            raise ValueError("camera quaternion is invalid")
+        sample_ids.add(sample_id)
+        timestamps.add((segment_id, timestamp))
+    depth_sample_ids: set[str] = set()
+    depth_artifact_ids: set[str] = set()
+    for raw in cast("list[object]", arrays["depthSources"]):
+        source = as_object(raw, "depth source")
+        exact_keys(
+            source,
+            {
+                "alignment",
+                "artifactId",
+                "byteSize",
+                "format",
+                "heightPixels",
+                "sampleIds",
+                "sha256",
+                "transfer",
+                "widthPixels",
+            },
+            "depth source",
+        )
+        artifact_id = str(source.get("artifactId"))
+        bound_samples = source.get("sampleIds")
+        if (
+            UUID.fullmatch(artifact_id) is None
+            or artifact_id in depth_artifact_ids
+            or SHA256.fullmatch(str(source.get("sha256"))) is None
+            or not isinstance(bound_samples, list)
+            or not bound_samples
+            or any(not isinstance(value, str) or value not in sample_ids for value in bound_samples)
+            or depth_sample_ids.intersection(cast("list[str]", bound_samples))
+        ):
+            raise ValueError("depth source binding is invalid")
+        depth_format = source.get("format")
+        width = source.get("widthPixels")
+        height = source.get("heightPixels")
+        byte_size = source.get("byteSize")
+        if (
+            depth_format not in {"float16-metres-little-endian", "float32-metres-little-endian"}
+            or source.get("alignment") != "arkit-scene-depth-image-plane"
+            or not integer_in_range(width, 1, 4_096)
+            or not integer_in_range(height, 1, 4_096)
+            or not integer_in_range(byte_size, 1, 536_870_912)
+        ):
+            raise ValueError("depth source dimensions or format are invalid")
+        bytes_per_pixel = 2 if depth_format == "float16-metres-little-endian" else 4
+        width_pixels = cast("int", width)
+        height_pixels = cast("int", height)
+        declared_byte_size = cast("int", byte_size)
+        if (
+            declared_byte_size
+            != width_pixels * height_pixels * len(bound_samples) * bytes_per_pixel
+        ):
+            raise ValueError("depth bytes are not exactly bound to their samples")
+        validate_transfer(source.get("transfer"))
+        depth_artifact_ids.add(artifact_id)
+        depth_sample_ids.update(cast("list[str]", bound_samples))
+    roomplan_references: set[tuple[str, str]] = set()
+    for raw in cast("list[object]", arrays["roomPlanSources"]):
+        source = as_object(raw, "RoomPlan source")
+        exact_keys(
+            source,
+            {"captureSessionId", "packageId", "packageManifestSha256"},
+            "RoomPlan source",
+        )
+        reference = (str(source.get("captureSessionId")), str(source.get("packageId")))
+        if (
+            any(UUID.fullmatch(value) is None for value in reference)
+            or reference in roomplan_references
+            or SHA256.fullmatch(str(source.get("packageManifestSha256"))) is None
+        ):
+            raise ValueError("RoomPlan source binding is invalid")
+        if reference[0] == envelope.get("captureSessionId"):
+            raise ValueError("RoomPlan must come from a separate capture session")
+        roomplan_references.add(reference)
+    source_counts: dict[str, int] = {}
+    for raw in cast("list[object]", arrays["cameraSamples"]):
+        sample = as_object(raw, "camera sample")
+        source_id = cast("str", sample["sourceAssetId"])
+        source_counts[source_id] = source_counts.get(source_id, 0) + 1
+    if any(
+        source.get("kind") == "rgb-keyframe" and source_counts.get(source_id) != 1
+        for source_id, source in media_by_id.items()
+    ):
+        raise ValueError("every RGB keyframe must bind exactly one camera sample")
+    if capabilities.get("rgbVideo") is not any(
+        source.get("kind") == "rgb-video" for source in media_by_id.values()
+    ) or capabilities.get("rgbKeyframes") is not any(
+        source.get("kind") == "rgb-keyframe" for source in media_by_id.values()
+    ):
+        raise ValueError("RGB capability declarations disagree with immutable sources")
+    if bool(depth_artifact_ids) and capabilities.get("sceneDepth") is not True:
+        raise ValueError("depth evidence requires declared scene depth")
+    if bool(roomplan_references) and capabilities.get("roomPlan") is not True:
+        raise ValueError("RoomPlan evidence requires declared support")
+    missing = sum(
+        1
+        for raw_room in cast("list[object]", arrays["rooms"])
+        for raw_cell in cast("list[object]", as_object(raw_room, "room")["coverage"])
+        if as_object(raw_cell, "coverage cell").get("status") == "missing"
+    )
+    occluded = sum(
+        1
+        for raw_room in cast("list[object]", arrays["rooms"])
+        for raw_cell in cast("list[object]", as_object(raw_room, "room")["coverage"])
+        if as_object(raw_cell, "coverage cell").get("status") == "occluded"
+    )
+    if (
+        quality.get("missingCoverageCellCount") != missing
+        or quality.get("occludedCoverageCellCount") != occluded
+        or quality.get("trackingLimitedSampleCount")
+        != sum(
+            as_object(raw, "camera sample").get("trackingState") != "normal"
+            for raw in cast("list[object]", arrays["cameraSamples"])
+        )
+    ):
+        raise ValueError("quality denominators disagree with immutable evidence")
+
+
 def verify_export(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     root = safe_root(root)
     manifest_path = root / "export-manifest.json"
     envelope_path = root / "envelope.json"
-    for path in (manifest_path, envelope_path):
-        if path.is_symlink() or not path.is_file():
+
+    def private_node(path: Path, *, directory: bool) -> None:
+        info = path.lstat()
+        if path.is_symlink() or bool(info.st_mode & (stat.S_IRWXG | stat.S_IRWXO)):
+            raise ValueError("export nodes must be private and link-free")
+        if directory:
+            if not stat.S_ISDIR(info.st_mode):
+                raise ValueError("export directory is invalid")
+        elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError("export file must be a private regular non-hard-linked file")
+
+    private_node(root, directory=True)
+    for authority_path in (manifest_path, envelope_path):
+        if not authority_path.exists():
             raise ValueError("export is missing a regular authority file")
-    manifest = as_object(json.loads(manifest_path.read_bytes()), "export manifest")
-    envelope = as_object(json.loads(envelope_path.read_bytes()), "envelope")
+        private_node(authority_path, directory=False)
+    manifest_bytes = manifest_path.read_bytes()
+    envelope_file_bytes = envelope_path.read_bytes()
+    manifest = as_object(json.loads(manifest_bytes), "export manifest")
+    envelope = as_object(json.loads(envelope_file_bytes), "envelope")
+    if contains_forbidden_key(manifest) or contains_forbidden_key(envelope):
+        raise ValueError("export contains a forbidden secret-bearing field")
+    exact_keys(
+        manifest,
+        {
+            "acceptedAt",
+            "acceptedByAlias",
+            "actorAlias",
+            "captureSessionAlias",
+            "envelopeAlias",
+            "envelopeSha256",
+            "exportedAt",
+            "files",
+            "generator",
+            "inputClass",
+            "projectAlias",
+            "rights",
+            "schemaVersion",
+            "sourceCommit",
+            "tenantAlias",
+        },
+        "export manifest",
+    )
+    if manifest_bytes != canonical_bytes(manifest) + b"\n":
+        raise ValueError("export manifest is not exact canonical JSON")
     if manifest.get("schemaVersion") != SCHEMA_EXPORT:
         raise ValueError("export manifest schema is unsupported")
+    if manifest.get("inputClass") not in {"accepted-physical-capture", "benchmark-fixture"}:
+        raise ValueError("export input class is invalid")
+    if COMMIT.fullmatch(str(manifest.get("sourceCommit"))) is None:
+        raise ValueError("export source commit is invalid")
+    validate_envelope_shape(envelope)
     envelope_bytes = canonical_bytes(envelope)
-    if envelope_path.read_bytes() != envelope_bytes:
+    if envelope_file_bytes != envelope_bytes:
         raise ValueError("envelope.json is not exact canonical JSON")
-    if manifest.get("envelopeSha256") != sha256_bytes(envelope_bytes):
+    envelope_sha = sha256_bytes(envelope_bytes)
+    if manifest.get("envelopeSha256") != envelope_sha:
         raise ValueError("canonical envelope hash mismatch")
+    if manifest.get("inputClass") == "accepted-physical-capture" and (
+        root.name != envelope_sha or manifest.get("acceptedAt") is None
+    ):
+        raise ValueError("physical export root or acceptance record is invalid")
     if manifest.get("rights") != envelope.get("rights"):
         raise ValueError("manifest rights do not match the accepted envelope")
-    forbidden_keys = {"authorization", "bearerToken", "objectKey", "signedUrl", "url"}
-    if forbidden_keys.intersection(manifest):
-        raise ValueError("export manifest contains a forbidden secret-bearing field")
     entries = manifest.get("files")
-    if not isinstance(entries, list) or len(entries) > 10_000:
+    if not isinstance(entries, list) or not 1 <= len(entries) <= 10_000:
         raise ValueError("export file list is invalid")
-    expected = {"envelope.json", "export-manifest.json"}
-    seen: set[str] = set()
+    expected_paths = {"envelope.json", "export-manifest.json"}
+    seen_paths: set[str] = set()
     by_source: dict[str, dict[str, Any]] = {}
     for raw in entries:
         entry = as_object(raw, "export file")
-        relative = safe_relative(cast("str", entry.get("path"))).as_posix()
-        if relative in seen:
-            raise ValueError("export contains duplicate file paths")
-        seen.add(relative)
-        expected.add(relative)
-        path = root.joinpath(*PurePosixPath(relative).parts)
-        if path.resolve().parent == root.parent or root not in path.resolve().parents:
-            raise ValueError("export file escapes its root")
-        if path.is_symlink() or not path.is_file():
-            raise ValueError("export entry is not a regular file")
-        if path.stat().st_mode & (stat.S_IRWXG | stat.S_IRWXO):
-            raise ValueError("export file is not private")
-        if path.stat().st_size != entry.get("byteSize") or sha256_file(path) != entry.get("sha256"):
-            raise ValueError("export file bytes do not match their manifest")
-        source_id = entry.get("sourceId")
-        if isinstance(source_id, str):
-            by_source[source_id] = entry
-    actual: set[str] = set()
-    for path in root.rglob("*"):
-        if path.is_symlink():
-            raise ValueError("links are forbidden anywhere in an export")
-        if path.is_file():
-            actual.add(path.relative_to(root).as_posix())
-    if actual != expected:
-        raise ValueError("export contains missing or unlisted files")
-    for raw in cast("list[object]", envelope.get("mediaSources", [])):
-        source = as_object(raw, "media source")
-        source_entry = by_source.get(cast("str", source.get("assetId")))
+        exact_keys(
+            entry,
+            {"byteSize", "contentType", "kind", "path", "sha256", "sourceId"},
+            "export file",
+        )
+        relative = safe_relative(str(entry.get("path"))).as_posix()
+        source_id = str(entry.get("sourceId"))
+        byte_size = entry.get("byteSize")
         if (
-            source_entry is None
-            or source_entry.get("sha256") != source.get("sha256")
-            or source_entry.get("byteSize") != source.get("byteSize")
+            relative in seen_paths
+            or source_id in by_source
+            or UUID.fullmatch(source_id) is None
+            or isinstance(byte_size, bool)
+            or not isinstance(byte_size, int)
+            or not 0 < byte_size <= MAX_DOWNLOAD_BYTES
+            or SHA256.fullmatch(str(entry.get("sha256"))) is None
+            or not isinstance(entry.get("contentType"), str)
+            or entry.get("kind")
+            not in {
+                "depth-original",
+                "rgb-original",
+                "roomplan-original",
+                "roomplan-package-metadata",
+            }
+        ):
+            raise ValueError("export file declaration is invalid")
+        seen_paths.add(relative)
+        expected_paths.add(relative)
+        file_path = root.joinpath(*PurePosixPath(relative).parts)
+        resolved = file_path.resolve(strict=True)
+        if root not in resolved.parents:
+            raise ValueError("export file escapes its root")
+        private_node(file_path, directory=False)
+        if file_path.stat().st_size != byte_size or sha256_file(file_path) != entry.get("sha256"):
+            raise ValueError("export file bytes do not match their manifest")
+        by_source[source_id] = entry
+    actual_paths: set[str] = set()
+    for node in root.rglob("*"):
+        if node.is_symlink():
+            raise ValueError("links are forbidden anywhere in an export")
+        if node.is_dir():
+            private_node(node, directory=True)
+        elif node.is_file():
+            private_node(node, directory=False)
+            actual_paths.add(node.relative_to(root).as_posix())
+        else:
+            raise ValueError("special files are forbidden anywhere in an export")
+    if actual_paths != expected_paths:
+        raise ValueError("export contains missing or unlisted files")
+    expected_sources: set[str] = set()
+    for raw in cast("list[object]", envelope["mediaSources"]):
+        source = as_object(raw, "media source")
+        source_id = str(source["assetId"])
+        media_entry = by_source.get(source_id)
+        if (
+            media_entry is None
+            or media_entry.get("kind") != "rgb-original"
+            or media_entry.get("contentType") != source.get("mimeType")
+            or media_entry.get("sha256") != source.get("sha256")
+            or media_entry.get("byteSize") != source.get("byteSize")
         ):
             raise ValueError("RGB source is not exactly represented in the export")
-    for raw in cast("list[object]", envelope.get("depthSources", [])):
+        expected_sources.add(source_id)
+    for raw in cast("list[object]", envelope["depthSources"]):
         source = as_object(raw, "depth source")
-        source_entry = by_source.get(cast("str", source.get("artifactId")))
+        source_id = str(source["artifactId"])
+        depth_entry = by_source.get(source_id)
         if (
-            source_entry is None
-            or source_entry.get("sha256") != source.get("sha256")
-            or source_entry.get("byteSize") != source.get("byteSize")
+            depth_entry is None
+            or depth_entry.get("kind") != "depth-original"
+            or depth_entry.get("contentType") != "application/octet-stream"
+            or depth_entry.get("sha256") != source.get("sha256")
+            or depth_entry.get("byteSize") != source.get("byteSize")
         ):
             raise ValueError("depth source is not exactly represented in the export")
+        expected_sources.add(source_id)
+    for raw in cast("list[object]", envelope["roomPlanSources"]):
+        reference = as_object(raw, "RoomPlan reference")
+        package_id = str(reference["packageId"])
+        package_entry = by_source.get(package_id)
+        if package_entry is None or package_entry.get("kind") != "roomplan-package-metadata":
+            raise ValueError("RoomPlan package metadata is missing")
+        package_path = root.joinpath(*safe_relative(str(package_entry["path"])).parts)
+        package_bytes = package_path.read_bytes()
+        package = as_object(json.loads(package_bytes), "RoomPlan package")
+        exact_keys(
+            package,
+            {"createdAt", "id", "manifest", "manifestSha256", "projectId", "schemaVersion"},
+            "RoomPlan package",
+        )
+        package_manifest = as_object(package.get("manifest"), "RoomPlan manifest")
+        if (
+            package_bytes != canonical_bytes(package)
+            or package.get("id") != package_id
+            or package.get("projectId") != envelope.get("projectId")
+            or package_manifest.get("captureSessionId") != reference.get("captureSessionId")
+            or package_manifest.get("projectId") != envelope.get("projectId")
+            or package.get("manifestSha256") != reference.get("packageManifestSha256")
+            or sha256_bytes(canonical_bytes(package_manifest)) != package.get("manifestSha256")
+        ):
+            raise ValueError("RoomPlan package is not exactly bound to the accepted envelope")
+        artifacts = package_manifest.get("artifacts")
+        if not isinstance(artifacts, list):
+            raise ValueError("RoomPlan package artifacts are invalid")
+        expected_sources.add(package_id)
+        for raw_artifact in artifacts:
+            artifact = as_object(raw_artifact, "RoomPlan artifact")
+            required_artifact = {"artifactId", "byteSize", "contentType", "kind", "sha256"}
+            if set(artifact) not in {
+                frozenset(required_artifact),
+                frozenset(required_artifact | {"roomId"}),
+            }:
+                raise ValueError("RoomPlan artifact fields do not match the frozen schema")
+            artifact_id = str(artifact.get("artifactId"))
+            artifact_entry = by_source.get(artifact_id)
+            if (
+                artifact_entry is None
+                or artifact_entry.get("kind") != "roomplan-original"
+                or artifact_entry.get("contentType") != artifact.get("contentType")
+                or artifact_entry.get("sha256") != artifact.get("sha256")
+                or artifact_entry.get("byteSize") != artifact.get("byteSize")
+            ):
+                raise ValueError("RoomPlan artifact is not exactly represented in the export")
+            expected_sources.add(artifact_id)
+    if set(by_source) != expected_sources:
+        raise ValueError("export contains an unbound source file")
     return manifest, envelope
 
 
-def write_selection(args: argparse.Namespace) -> None:
-    root = Path(args.export_root)
-    manifest, envelope = verify_export(root)
+def build_selection(manifest: dict[str, Any], envelope: dict[str, Any]) -> dict[str, object]:
     by_source = {
         cast("str", entry["sourceId"]): entry
         for raw in cast("list[object]", manifest["files"])
         for entry in [as_object(raw, "file")]
         if entry.get("kind") == "rgb-original"
     }
+    media_kind = {
+        cast("str", source["assetId"]): source["kind"]
+        for raw in cast("list[object]", envelope["mediaSources"])
+        for source in [as_object(raw, "media source")]
+    }
     segments = {
         cast("str", segment["segmentId"]): segment
-        for raw in cast("list[object]", envelope.get("coordinateSegments", []))
+        for raw in cast("list[object]", envelope["coordinateSegments"])
         for segment in [as_object(raw, "segment")]
     }
+    rooms = [as_object(raw, "room") for raw in cast("list[object]", envelope["rooms"])]
     samples = [
-        as_object(raw, "camera sample")
-        for raw in cast("list[object]", envelope.get("cameraSamples", []))
+        as_object(raw, "camera sample") for raw in cast("list[object]", envelope["cameraSamples"])
     ]
     samples.sort(
         key=lambda item: (
@@ -497,23 +1189,37 @@ def write_selection(args: argparse.Namespace) -> None:
         exclusions: list[dict[str, str]] = []
         for segment_id in sorted(segments):
             frames: list[dict[str, object]] = []
+            coverage = {"missing": 0, "observed": 0, "occluded": 0, "total": 0}
+            for room in rooms:
+                if segment_id not in cast("list[str]", room["coordinateSegmentIds"]):
+                    continue
+                for raw_cell in cast("list[object]", room["coverage"]):
+                    cell = as_object(raw_cell, "coverage cell")
+                    status = cast("str", cell["status"])
+                    coverage[status] += 1
+                    coverage["total"] += 1
             for sample in (item for item in samples if item["segmentId"] == segment_id):
                 source_id = cast("str", sample["sourceAssetId"])
                 source = by_source.get(source_id)
+                reason: str | None = None
                 if sample.get("trackingState") not in allowed:
                     tracking_reason = str(sample.get("trackingState")).upper().replace("-", "_")
+                    reason = f"TRACKING_{tracking_reason}"
+                elif media_kind.get(source_id) != "rgb-keyframe":
+                    reason = "RGB_KEYFRAME_REQUIRED"
+                elif source is None:
+                    reason = "RGB_SOURCE_ABSENT"
+                if reason is not None:
                     exclusions.append(
                         {
-                            "reason": f"TRACKING_{tracking_reason}",
+                            "reason": reason,
                             "sampleId": cast("str", sample["sampleId"]),
+                            "segmentId": segment_id,
                         }
                     )
                     continue
                 if source is None:
-                    exclusions.append(
-                        {"reason": "RGB_SOURCE_ABSENT", "sampleId": cast("str", sample["sampleId"])}
-                    )
-                    continue
+                    raise ValueError("selected RGB source binding is unavailable")
                 frames.append(
                     {
                         "blurScoreMillionths": sample["blurScoreMillionths"],
@@ -521,8 +1227,9 @@ def write_selection(args: argparse.Namespace) -> None:
                         "exposureScoreMillionths": sample["exposureScoreMillionths"],
                         "imagePath": source["path"],
                         "imageSha256": source["sha256"],
-                        "orientation": sample["orientation"],
                         "motionScoreMillionths": sample["motionScoreMillionths"],
+                        "orientation": sample["orientation"],
+                        "orientationTransform": "none-intrinsics-bind-native-raster",
                         "quaternionNanounits": sample["quaternionNanounits"],
                         "roomId": sample["roomId"],
                         "sampleId": sample["sampleId"],
@@ -532,17 +1239,25 @@ def write_selection(args: argparse.Namespace) -> None:
                         "translationMicrometres": sample["translationMicrometres"],
                     }
                 )
-            selected_segments.append({"frames": frames, "segmentId": segment_id})
+            selected_segments.append(
+                {"coverageDenominator": coverage, "frames": frames, "segmentId": segment_id}
+            )
         cohorts[cohort] = {"exclusions": exclusions, "segments": selected_segments}
-    selection = {
+    return {
         "cohorts": cohorts,
         "envelopeSha256": manifest["envelopeSha256"],
-        "exportManifestSha256": sha256_file(root / "export-manifest.json"),
+        "exportManifestSha256": sha256_bytes(canonical_bytes(manifest) + b"\n"),
         "inputClass": manifest["inputClass"],
         "ordering": ["segmentId", "timestampMicroseconds", "sampleId"],
         "productionAuthority": "none-proposal-only",
         "schemaVersion": SCHEMA_SELECTION,
     }
+
+
+def write_selection(args: argparse.Namespace) -> None:
+    root = Path(args.export_root)
+    manifest, envelope = verify_export(root)
+    selection = build_selection(manifest, envelope)
     output = Path(args.output)
     if (
         not output.is_absolute()
@@ -560,14 +1275,13 @@ def load_selection(
     manifest, envelope = verify_export(export_root)
     if selection_path.is_symlink() or not selection_path.is_file():
         raise ValueError("selection must be a regular file")
-    selection = as_object(json.loads(selection_path.read_bytes()), "selection")
-    if (
-        selection.get("schemaVersion") != SCHEMA_SELECTION
-        or selection.get("envelopeSha256") != manifest.get("envelopeSha256")
-        or selection.get("exportManifestSha256")
-        != sha256_file(export_root / "export-manifest.json")
-    ):
-        raise ValueError("selection is not bound to this verified export")
+    selection_bytes = selection_path.read_bytes()
+    selection = as_object(json.loads(selection_bytes), "selection")
+    if selection_bytes != canonical_bytes(selection) + b"\n":
+        raise ValueError("selection is not exact canonical JSON")
+    expected = build_selection(manifest, envelope)
+    if selection != expected:
+        raise ValueError("selection is not the deterministic selection for this verified export")
     return manifest, envelope, selection
 
 
@@ -647,7 +1361,17 @@ def rotation_from_quaternion(values: object) -> tuple[tuple[float, float, float]
 
 def world_to_camera(frame: dict[str, Any]) -> tuple[list[float], list[float]]:
     rotation_cw = rotation_from_quaternion(frame["quaternionNanounits"])
-    rotation_wc = tuple(tuple(rotation_cw[column][row] for column in range(3)) for row in range(3))
+    arkit_world_to_camera = tuple(
+        tuple(rotation_cw[column][row] for column in range(3)) for row in range(3)
+    )
+    # ARKit cameras are x-right, y-up and look down -z. COLMAP and Open3D
+    # consume OpenCV cameras (x-right, y-down, look down +z), so apply the
+    # fixed 180-degree camera-space rotation about x after inverting c2w.
+    camera_axis_flip = (1.0, -1.0, -1.0)
+    rotation_wc = tuple(
+        tuple(camera_axis_flip[row] * arkit_world_to_camera[row][column] for column in range(3))
+        for row in range(3)
+    )
     translation = as_object(frame["translationMicrometres"], "translation")
     centre = [cast("int", translation[axis]) / 1_000_000 for axis in ("x", "y", "z")]
     offset = [
@@ -672,12 +1396,12 @@ def world_to_camera(frame: dict[str, Any]) -> tuple[list[float], list[float]]:
         1.0,
     ]
     quaternion = cast("list[int]", frame["quaternionNanounits"])
-    colmap_q = [
-        quaternion[3] / 1e9,
-        -quaternion[0] / 1e9,
-        -quaternion[1] / 1e9,
-        -quaternion[2] / 1e9,
-    ]
+    x, y, z, w = (value / 1e9 for value in quaternion)
+    length = math.sqrt(x * x + y * y + z * z + w * w)
+    # q(OpenCV camera <- ARKit camera) * inverse(q(camera -> world)).
+    colmap_q = [x / length, w / length, z / length, -y / length]
+    if colmap_q[0] < 0:
+        colmap_q = [-value for value in colmap_q]
     return matrix, colmap_q + offset
 
 
@@ -774,18 +1498,30 @@ def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[
         code = as_object(candidate["code"], "code")
         weight = as_object(candidate["weight"], "weight")
         expected_hash = weight.get("sha256")
-        candidate_root = root / candidate_id
-        source = candidate_root / "source"
-        weight_path = candidate_root / cast("str", weight["file"])
         if expected_hash is None:
             failures[candidate_id] = "WEIGHT_HASH_UNAVAILABLE"
             continue
         try:
-            manifest_path = candidate_root / "candidate-manifest.json"
-            if manifest_path.is_symlink() or not manifest_path.is_file():
+            candidate_root = confined_path(root, candidate_id, directory=True)
+        except (OSError, ValueError):
+            failures[candidate_id] = "SOURCE_OR_WEIGHT_VERIFICATION_FAILED"
+            continue
+        try:
+            try:
+                manifest_path = confined_path(
+                    candidate_root, "candidate-manifest.json", directory=False
+                )
+            except (OSError, ValueError):
                 failures[candidate_id] = "DEPENDENCY_LOCK_AND_IMAGE_REQUIRED"
                 continue
-            manifest = as_object(json.loads(manifest_path.read_bytes()), "candidate manifest")
+            manifest_bytes = manifest_path.read_bytes()
+            manifest = as_object(json.loads(manifest_bytes), "candidate manifest")
+            source = confined_path(candidate_root, "source", directory=True)
+            weight_path = confined_path(
+                candidate_root, cast("str", weight["file"]), directory=False
+            )
+            if manifest_bytes != canonical_bytes(manifest) + b"\n":
+                raise ValueError
             if (
                 set(manifest)
                 != {
@@ -800,13 +1536,10 @@ def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[
                 raise ValueError
             if manifest.get("registrySha256") != registry_sha256:
                 raise ValueError
-            lock_relative = safe_relative(cast("str", manifest["dependencyLockPath"]))
-            lock_path = candidate_root.joinpath(*lock_relative.parts)
-            if (
-                lock_path.is_symlink()
-                or not lock_path.is_file()
-                or sha256_file(lock_path) != manifest.get("dependencyLockSha256")
-            ):
+            lock_path = confined_path(
+                candidate_root, cast("str", manifest["dependencyLockPath"]), directory=False
+            )
+            if sha256_file(lock_path) != manifest.get("dependencyLockSha256"):
                 raise ValueError
             image_sha256 = cast("str", manifest["imageSha256"])
             if IMAGE_DIGEST.fullmatch(image_sha256) is None:
@@ -821,12 +1554,7 @@ def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[
             )
             if len(inspected) != 1 or inspected[0].get("Id") != image_sha256:
                 raise ValueError
-            if (
-                source.is_symlink()
-                or not (source / ".git").exists()
-                or weight_path.is_symlink()
-                or not weight_path.is_file()
-            ):
+            if not (source / ".git").exists():
                 raise ValueError
             head = subprocess.run(
                 ["git", "rev-parse", "HEAD"], cwd=source, check=True, capture_output=True, text=True
@@ -837,7 +1565,15 @@ def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[
                 or weight_path.stat().st_size != weight.get("sizeBytes")
             ):
                 raise ValueError
-            subprocess.run(["git", "diff", "--quiet"], cwd=source, check=True)
+            source_status = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=source,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
+            if source_status:
+                raise ValueError
             if code.get("recursive") is True:
                 status = subprocess.run(
                     ["git", "submodule", "status", "--recursive"],
@@ -854,10 +1590,7 @@ def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[
                     if len(line) >= 43
                 }
                 expected_submodules = as_object(code.get("submodules"), "submodules")
-                if any(
-                    actual_submodules.get(path) != commit
-                    for path, commit in expected_submodules.items()
-                ):
+                if actual_submodules != expected_submodules:
                     raise ValueError
             verified.add(candidate_id)
         except (json.JSONDecodeError, OSError, ValueError, subprocess.CalledProcessError):
@@ -894,9 +1627,6 @@ def write_policy(args: argparse.Namespace) -> None:
         for sample_id in cast("list[object]", as_object(raw, "depth")["sampleIds"])
     }
     capabilities = as_object(envelope["capabilities"], "capabilities")
-    quality = as_object(envelope["quality"], "quality")
-    camera_count = len(cast("list[object]", envelope["cameraSamples"]))
-    majority_unusable = cast("int", quality["unusableBlurSampleCount"]) * 2 >= camera_count
     plans: list[dict[str, object]] = []
     for cohort_name, cohort_raw in as_object(selection["cohorts"], "cohorts").items():
         cohort = as_object(cohort_raw, "cohort")
@@ -909,38 +1639,35 @@ def write_policy(args: argparse.Namespace) -> None:
                 "cameraIntrinsicsMicropixels" in frame and "quaternionNanounits" in frame
                 for frame in frames
             )
-            has_depth = bool(frame_ids.intersection(depth_sample_ids))
+            depth_bound_frame_count = len(frame_ids.intersection(depth_sample_ids))
+            has_depth = depth_bound_frame_count > 0
             candidates: list[dict[str, object]] = []
-            quality_reasons = ["QUALITY_UNUSABLE_BLUR_MAJORITY"] if majority_unusable else []
             add_candidate(
                 candidates,
                 "colmap-unconstrained",
                 count >= 2,
-                quality_reasons + ([] if count >= 2 else ["INSUFFICIENT_RGB_FRAMES"]),
+                [] if count >= 2 else ["INSUFFICIENT_RGB_FRAMES"],
                 "geometry-proposal-baseline",
             )
             add_candidate(
                 candidates,
                 "colmap-arkit-prior",
                 count >= 2 and calibrated,
-                quality_reasons
-                + ([] if count >= 2 and calibrated else ["INSUFFICIENT_CALIBRATED_FRAMES"]),
+                [] if count >= 2 and calibrated else ["INSUFFICIENT_CALIBRATED_FRAMES"],
                 "pose-prior-diagnostic",
             )
             add_candidate(
                 candidates,
                 "open3d-known-pose-tsdf",
                 has_depth and calibrated,
-                quality_reasons
-                + ([] if has_depth and calibrated else ["EXACT_BOUND_DEPTH_ABSENT"]),
+                [] if has_depth and calibrated else ["EXACT_BOUND_DEPTH_ABSENT"],
                 "known-pose-depth-proposal",
             )
             add_candidate(
                 candidates,
                 "gsplat-direct",
                 count >= 3 and calibrated,
-                quality_reasons
-                + ([] if count >= 3 and calibrated else ["INSUFFICIENT_CALIBRATED_HOLDOUT_VIEWS"]),
+                [] if count >= 3 and calibrated else ["INSUFFICIENT_CALIBRATED_HOLDOUT_VIEWS"],
                 "appearance-only",
             )
             for candidate_id, minimum, role in (
@@ -948,7 +1675,7 @@ def write_policy(args: argparse.Namespace) -> None:
                 ("mast3r-vitlarge-512", 2, "proposal-only-matching-point-map"),
                 ("metric-video-depth-anything-small", 3, "proposal-only-temporal-metric-depth"),
             ):
-                reasons = list(quality_reasons)
+                reasons: list[str] = []
                 if count < minimum:
                     reasons.append("INSUFFICIENT_RGB_FRAMES")
                 if candidate_id not in verified:

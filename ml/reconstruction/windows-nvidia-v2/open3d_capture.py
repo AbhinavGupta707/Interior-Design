@@ -32,7 +32,7 @@ def main() -> None:
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     export_root = Path(args.export_root)
-    _, envelope, selection = load_selection(export_root, Path(args.selection))
+    export_manifest, envelope, selection = load_selection(export_root, Path(args.selection))
     output = Path(args.output)
     if output.is_symlink() or not output.is_dir() or any(output.iterdir()):
         raise ValueError("output must be a new empty mounted directory")
@@ -46,6 +46,12 @@ def main() -> None:
     depth_sources = [
         as_object(raw, "depth") for raw in cast("list[object]", envelope["depthSources"])
     ]
+    depth_paths = {
+        cast("str", entry["sourceId"]): cast("str", entry["path"])
+        for raw in cast("list[object]", export_manifest["files"])
+        for entry in [as_object(raw, "export file")]
+        if entry.get("kind") == "depth-original"
+    }
     if not o3d.core.cuda.is_available():
         raise RuntimeError("OPEN3D_CUDA_UNAVAILABLE")
     cuda_device = o3d.core.Device("CUDA:0")
@@ -57,6 +63,9 @@ def main() -> None:
         color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
     )
     used: list[dict[str, object]] = []
+    total_depth_value_count = 0
+    total_nonfinite_depth_count = 0
+    total_nonpositive_depth_count = 0
     started = time.perf_counter()
     for frame in frames:
         source = next(
@@ -69,7 +78,10 @@ def main() -> None:
         depth_height = cast("int", source["heightPixels"])
         dtype = np.dtype("<f2" if source["format"] == "float16-metres-little-endian" else "<f4")
         count = depth_width * depth_height
-        depth_path = export_root / "depth" / f"{source['artifactId']}.bin"
+        declared_path = depth_paths.get(cast("str", source["artifactId"]))
+        if declared_path is None:
+            raise ValueError("exact bound depth is absent from the verified export")
+        depth_path = export_root.joinpath(*Path(declared_path).parts)
         depth = (
             np.fromfile(
                 depth_path, dtype=dtype, count=count, offset=sample_index * count * dtype.itemsize
@@ -77,8 +89,14 @@ def main() -> None:
             .astype(np.float32)
             .reshape(depth_height, depth_width)
         )
-        nonfinite = int((~np.isfinite(depth)).sum())
-        depth[~np.isfinite(depth) | (depth <= 0)] = 0
+        finite = np.isfinite(depth)
+        nonfinite = int((~finite).sum())
+        nonpositive = int((finite & (depth <= 0)).sum())
+        positive = int((finite & (depth > 0)).sum())
+        total_depth_value_count += depth.size
+        total_nonfinite_depth_count += nonfinite
+        total_nonpositive_depth_count += nonpositive
+        depth[~finite | (depth <= 0)] = 0
         image_path = export_root.joinpath(*Path(cast("str", frame["imagePath"])).parts)
         color_array = np.asarray(o3d.io.read_image(str(image_path)))
         if color_array.ndim != 3 or color_array.shape[2] < 3:
@@ -115,7 +133,10 @@ def main() -> None:
             {
                 "depthArtifactId": source["artifactId"],
                 "depthSampleIndex": sample_index,
+                "depthValueCount": count,
+                "finitePositiveDepthCount": positive,
                 "nonfiniteDepthCount": nonfinite,
+                "nonpositiveDepthCount": nonpositive,
                 "sampleId": frame["sampleId"],
             }
         )
@@ -144,6 +165,19 @@ def main() -> None:
         "authority": "proposal-only",
         "cohort": args.cohort,
         "cudaTensorProbe": {"checksum": cuda_checksum, "device": str(cuda_device)},
+        "depthBindingDenominator": {
+            "eligibleFrameCount": len(frames),
+            "integratedFrameCount": len(used),
+            "missingExactDepthFrameCount": len(frames) - len(used),
+            "totalDepthValueCount": total_depth_value_count,
+            "totalFinitePositiveDepthCount": (
+                total_depth_value_count
+                - total_nonfinite_depth_count
+                - total_nonpositive_depth_count
+            ),
+            "totalNonfiniteDepthCount": total_nonfinite_depth_count,
+            "totalNonpositiveDepthCount": total_nonpositive_depth_count,
+        },
         "durationMilliseconds": round((time.perf_counter() - started) * 1000),
         "frameCount": len(used),
         "open3d": importlib.metadata.version("open3d"),
