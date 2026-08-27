@@ -1496,6 +1496,9 @@
   implementation, physical guidance, final verification and closeout; no subagent, worktree task or
   implementation lane was used. Disposable clean Git worktrees were used only by the official
   exporter to satisfy its exact-source check.
+- Integration vehicle: non-draft PR
+  [#13](https://github.com/AbhinavGupta707/Interior-Design/pull/13) targets `main` and must remain
+  unmerged. Its exact final head must pass every named GitHub check; earlier heads do not transfer.
 - Signing/privacy boundary: one iPhone 12 on iOS 26.6 was temporarily development-signed and
   installed with the user's Personal Team. Account, team, device, provisioning, credential,
   endpoint and machine-specific Xcode values remain outside Git. A disposable private CA, local
