@@ -1,116 +1,167 @@
-# C14.9 Capture Envelope benchmark software acceptance — 2026-08-27
+# C14.9 Capture Envelope benchmark software acceptance - 2026-08-27
 
-## Verdict
+## Independent-review verdict
 
-C14.9 is software-ready for a real accepted physical Capture Envelope after this PR merges. The
-secure API/export/verifier, deterministic per-segment selection, non-production routing evaluator,
-COLMAP/ARKit-prior/Open3D/gsplat adapters, common record builder and fail-closed experimental
-registry are implemented. This record claims fixture executability only.
+PR #12 was independently reviewed at exact original head
+`5c8b38626d263cec38068ba59dbd2686974caf00` against merged C14.8 base
+`9009e0444c8ea15ae2f7f2bb7abc82b338955165`. Material corrections are frozen in
+`8d7ad379ae6def20f6fd95d4455f74bce8623708`.
 
-Physical capture compatibility, device transfer, physical/representative accuracy and production
-promotion are **NOT RUN**. No homeowner media, public dataset, provider data or model output entered
-Git or canonical state. All fixture geometry is proposal-only and gsplat is non-dimensional.
+The corrected C14.9 software and synthetic RTX fixture are executable. This is not physical
+Capture Envelope acceptance and is not a production-routing, dimensional-accuracy, representative-
+accuracy, regulatory, structural, cost, or availability claim. Every reconstruction is an
+evaluation proposal; gsplat output is non-dimensional appearance evidence. Physical capture
+compatibility and representative accuracy remain `NOT RUN`; production promotion is prohibited.
+
+## Material review corrections
+
+The original head was not accepted unchanged. Independent review corrected:
+
+- current-rights enforcement for package reads and cross-session RoomPlan artifact access by
+  re-locking the actual source session, requiring `proposed` or `abstained`, and rechecking
+  tenant/project/session rights before signing;
+- HTTPS-only API and signed-artifact transfer with credentials/query-free origins, redirect
+  rejection, bounded streaming, canonical private output, salted envelope aliases, and no
+  credential, bearer, signed URL, or object-key persistence;
+- offline verification of exact schemas, canonical JSON, file/source hashes and sizes, declared
+  media/depth/RoomPlan bindings, modes, hard links, symlinks, special files, duplicates, unlisted
+  paths, and parent/path confinement;
+- deterministic keyframe-only selection recomputed by downstream adapters, independent
+  segment/cohort routing, typed exclusions, and explicit observed/missing/occluded denominators;
+- ARKit camera convention conversion from x-right/y-up/look-minus-Z camera-to-world evidence to
+  x-right/y-down/look-plus-Z OpenCV/COLMAP world-to-camera proposals, while keeping native rasters
+  and native-raster intrinsics bound without an implicit rotation;
+- exact depth-file and sample-index binding with eligible/integrated/missing and
+  finite/non-finite/non-positive denominators;
+- gsplat preparation from cameras, images, and points in one retained COLMAP text model, eliminating
+  the prior mixed-coordinate initialization path;
+- a strict 16-run collector with exact authority/image/config/deterministic-control linkage,
+  non-empty artifact hashes, frozen metric vocabulary, failures, missing runs, isolation/resource
+  ceilings, and fail-closed proposal-only verdicts;
+- exact-clean experimental source checks including untracked files, complete recursive submodule
+  equality, confined symlink-free roots, canonical manifests, fully hashed locks, exact image IDs,
+  weights, registry binding, and unchanged licence abstentions; and
+- a separate C14.9 fixed-geometry gsplat entrypoint that preserves C8's accepted trainer, disables
+  nondeterministic CUDA rasterizer backward, uses real gsplat forward renders, and fits only three
+  RGB gains through deterministic CPU float64 Adam. This is repeatability evidence only.
+
+## Reported lint finding
+
+The reported finding at
+`services/platform-api/src/modules/render-stills/authorities.ts:239` was investigated by running
+the exact platform lint command on both base and original head:
+
+```text
+corepack pnpm --filter @interior-design/platform-api lint
+```
+
+Both commands passed. The line is unchanged between base and head and predates C14.9, but there is
+no reproducible base or head lint failure to classify as inherited. No source correction was made
+there. Platform lint and typecheck also pass with the C14.9 corrections.
 
 ## Host and immutable runtime
 
-The redacted final inventory SHA-256 is
-`d836c8468a56964c38cfb2921c35a736edfa63bfb94b5e1f20a6ba75fcd36752`.
+The final redacted host inventory SHA-256 is
+`5e23cb2b9a841b463f152ad48922a2e7907f99030af19bfc59c9d9efd2d1acb6`.
 
-| Item           | Observed value                                                                                   |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| Windows / WSL  | Windows 11 Pro build 26200; WSL 2.6.3; Ubuntu 24.04.4; kernel `6.6.87.2-microsoft-standard-WSL2` |
-| Docker Desktop | client/engine 29.5.3                                                                             |
-| GPU            | NVIDIA GeForce RTX 5080; driver 595.79; compute capability 12.0; 16,303 MiB total VRAM           |
-| WSL ext4 disk  | 1,081,101,176,832 bytes total; 373,099,196,416 bytes free at final inventory                     |
-| COLMAP image   | `sha256:5a684f04346539c00d3596e6ce334d8dc16052169d05b723921e455c4a0b27ed`; 2,031,877,888 bytes   |
-| Open3D image   | `sha256:4001945254d60ea2bf54b4ac458f29284a88857d70e873c055d816de048f18b6`; 2,183,061,207 bytes   |
-| gsplat image   | `sha256:60936fef0057edc23301ff0785085d709a8088a5f6d16da6dc741eb6494e9877`; 6,430,040,229 bytes   |
+| Item         | Independently observed value                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| WSL / Docker | kernel `6.6.87.2-microsoft-standard-WSL2`; Docker client/engine 29.5.3                         |
+| GPU          | NVIDIA GeForce RTX 5080; driver 595.79; compute capability 12.0; 17,094,934,528 bytes          |
+| COLMAP image | `sha256:1c40cdfda95d53c8ea28e795060359ba0ed9e2288cd1d8fa48a9c554d7a97a14`; 2,031,877,888 bytes |
+| Open3D image | `sha256:264a375b0a0a2be25fdf62a314cd8f48bf4bae83c646eb7b99d8d8ba22539cdc`; 2,183,067,692 bytes |
+| gsplat image | `sha256:fa3da4146f2931ae380e578028e97fbde99bd8aea6d54c3a5381b56a88aa9f6a`; 6,430,053,747 bytes |
 
-All counted containers used one exact digest, GPU 0, 12 CPUs, 24 GiB RAM, 512 PIDs, non-root,
-network none, read-only root, dropped capabilities, no-new-privileges, private read-only input and
-fresh output. Open3D and gsplat were rerun after the final verifier layer changed; earlier image
-results are not counted.
+All accepted runs used the exact local image ID, GPU 0, 12 CPUs, 24 GiB RAM, 512 PIDs,
+`1000:1000`, network none, read-only root, all capabilities dropped, no-new-privileges, a
+2 GiB noexec/nosuid/nodev tmpfs, private read-only inputs, and fresh writable work/output roots.
+Every command retained argv, exit status, log hash, wall time, sampled GPU/container peaks, and
+scratch bytes. No accepted run exceeded 30 minutes, 14 GiB VRAM, 24 GiB RAM, or 12 GiB scratch.
 
-## Fixture authority
+## Fixture authority and hashes
 
-The creator-owned synthetic room is labelled `benchmark-fixture`, generated locally from the
-retained C8 scene logic, and contains ten 480x360 PNG views with exact synthetic depth and ARKit-
-style camera evidence. It contains no homeowner, phone, property, provider or public-dataset data.
+The input is a creator-owned synthetic ten-view, 480x360 room with exact synthetic depth and
+ARKit-style evidence. It is labelled `benchmark-fixture`, uses training permission `denied`, and
+contains no homeowner, phone, property, provider, or public-dataset data. Its zero source commit is
+a deliberate fixture marker and is not valid for the physical network exporter.
 
-- canonical envelope SHA-256:
-  `afba0e1a0f434958fbdf47e1f28c343116376a21d69040e26c23195445b11a1c`;
-- selection SHA-256:
-  `ec07ecdd813491e1615f9c478784d7e301a48173d86ce126c246e97b6b7ebe29`;
-- normal/inclusive selected views: 9/10; one segment; and
-- gsplat derived input SHA-256:
-  `6480709b730d6018bdf55c74308543a9d3bb6f78b02c89195fd459ad3b85f2f6`.
+- envelope: `f7c851e9a52f392a104386624c67c81ea2fe26806b6ed2d81b86009447ed0ea7`;
+- export manifest: `95ce2b91e58d418934f7b36db57a8d3932adb1358c674b34aa2c75dc2e89ebfe`;
+- selection: `2973570b705c1b97e2dd0d906bc018cb4f9bf0e50bb57f9eddcc18ca8d931b48`;
+- policy: `3725095a6aaad5967bcaa9e52b406fdac5b2bb41567f2dee17aab1eb20a7512c`;
+- host inventory: `5e23cb2b9a841b463f152ad48922a2e7907f99030af19bfc59c9d9efd2d1acb6`; and
+- strict common record:
+  `b35f5e9018271bd9fd46a1fee72c0f3655624ef5b7d4812f98b332fa87a42fd5`.
 
-The fixture generator marks its envelope runtime `physical-device` only because it exercises the
-strict envelope schema. Its export manifest remains authoritatively `benchmark-fixture`; the secure
-network exporter itself rejects anything except a platform-accepted physical envelope.
+The common record contains 8 selected candidate/cohort scopes, 16 expected and supplied fresh
+runs, 6 typed experimental abstentions, and zero missing, partial, failed, isolation-violating, or
+resource-ceiling runs. It records `evaluation-only-proposal-output`,
+`productionPromotion: prohibited`, `physicalCaptureCompatibility: not-run`, and
+`representativeAccuracy: not-run`.
 
-## RTX fixture results
+## Independent RTX fixture results
 
-| Path                                    | Result                                                                                                                                                                                               | Repeatability / hashes                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| COLMAP 4.1.1 unconstrained sparse+dense | Both fresh runs registered 10/10 images; 3,362 sparse points; mean track 6.057704; reprojection 0.369919 px; 39,756 dense vertices; 20 depth and 20 normal maps with 3,236,243 positive depth values | Sparse text points byte-identical: `dde74b12e78b4fd51ee34253b0fb02082ac3530c64db03c9b29861d74a4fcff7`; fused PLYs same 1,073,645-byte size/bounds, hashes `38af2908765ed940a44819dc00a77357ffed74588737bccb123d19b6956a9f54` and `ebd21dad4f74998442495d749b18719d2240f818aa137fe9a0bb01104a0e3c64`; numeric repeatability pass |
-| ARKit-prior COLMAP diagnostic           | 10 registered images; 3,460 triangulated points; 20,549 observations; mean track 5.939017; reprojection 0.386801 px                                                                                  | One diagnostic run only; points text `b4ea7a34d5385677e10f621aa38df293a1e773a8d3780a960945ee62733f5f1e`; repeatability partial/not run                                                                                                                                                                                          |
-| Open3D 0.19 exact-depth known-pose TSDF | Both final-image runs bound 10 depth frames with zero non-finite values; 154,178 points; 155,816 vertices; 308,836 triangles; CUDA tensor checksum 32                                                | Point PLY byte-identical `88c6ec0981adfabb3e50ad8fd665316eb3be3200219245bf745707f79797161b`; mesh byte-identical `86178bc3faf45e516fa4209c7c127e60147fcf8d049b6a1dc0a61b0deaa57b03`; pass                                                                                                                                       |
-| gsplat 1.5.3 direct appearance          | Both final-image 100-step runs passed on capability 12.0 with 3,460 Gaussian proposals and the same held-out view; PSNR 13.379990 and 13.374022 dB; peak GPU allocation 31,915,008 bytes             | PSNR delta 0.005968 dB is within frozen 0.01 dB; PLY hashes `3d046d83fab1ec940b79b1a853521a24b7914d1e1837c10782176d8ad733698a` and `89ee1bc59cc753008a1cf7e8ba751c1dcee651a983af8ac0d42c17f5a1dff52b`; numeric repeatability pass, byte inequality recorded                                                                     |
+| Candidate / cohort                         | Two fresh runs                                                                                                                                    | Repeatability evidence                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| COLMAP 4.1.1 unconstrained, normal         | 9/9 registered; 3,092 sparse points; mean track 5.739651; 0.363017 px; 24,186 / 24,191 dense vertices                                             | Sparse text is byte-identical; points hash `107e1e9ea253c63feebfc5d47e706bbedf1e78d00d24601f4123381b721b7af3`. Fused PLY hashes `4be5004f0fbb2024ade9ebe39ff292e5e5fe6176746f974f3b671d4d7d9ca219` / `ea753b4b78d71825a006475994133f92f02ba461e38da2ae7f2a9505c8b85f62`; numeric pass, byte inequality recorded. |
+| COLMAP 4.1.1 unconstrained, inclusive      | 10/10 registered; 3,362 sparse points; mean track 6.057704; 0.369919 px; 39,757 / 39,758 dense vertices                                           | Sparse points hash `dde74b12e78b4fd51ee34253b0fb02082ac3530c64db03c9b29861d74a4fcff7`. Fused PLY hashes `75adc966516d227a25dabec2748bbb16147a0eb1117a0f510c6030dcbe8c72b9` / `0d0d039914d3def58b6b8e87662e79f1a6d9db48dbaae6cc6614d7f5477371fb`; numeric pass.                                                   |
+| Corrected ARKit-prior COLMAP, normal       | 9/9; 3,431 points; mean track 5.379190; 0.360452 px                                                                                               | Both text models byte-identical; points hash `d9f57c6b9afbf0bfa4c03da9fad9e60117da022f83406d2021f1f4161616a01a`.                                                                                                                                                                                                 |
+| Corrected ARKit-prior COLMAP, inclusive    | 10/10; 3,460 points; mean track 5.939017; 0.386801 px                                                                                             | Both text models byte-identical; points hash `b4ea7a34d5385677e10f621aa38df293a1e773a8d3780a960945ee62733f5f1e`.                                                                                                                                                                                                 |
+| Open3D 0.19 exact-depth TSDF, normal       | 9/9 exact bindings; 1,553,040 finite-positive, 0 non-finite, 2,160 non-positive depth values; 150,305 points; 152,064 vertices; 301,317 triangles | Point hash `3ae2e081f038545cb39be00b31276f1fa6612c129f6ff5c850923e8109c0bf46`; mesh hash `8eddf81f103e53b035419d285efefee00f9c09973bb5fdc59b4037218de10aeb`; byte-identical pass.                                                                                                                                |
+| Open3D 0.19 exact-depth TSDF, inclusive    | 10/10 exact bindings; 1,723,320 finite-positive, 0 non-finite, 4,680 non-positive; 154,178 points; 155,816 vertices; 308,836 triangles            | Point hash `88c6ec0981adfabb3e50ad8fd665316eb3be3200219245bf745707f79797161b`; mesh hash `86178bc3faf45e516fa4209c7c127e60147fcf8d049b6a1dc0a61b0deaa57b03`; byte-identical pass.                                                                                                                                |
+| C14.9 gsplat fixed-geometry RGB, normal    | 3,431 initial proposals; held-out PSNR 5.571419496 / 5.571419496 dB                                                                               | Delta 0 dB <= 0.01 dB; PLY is byte-identical at `47de64ba8cf6367b4f94fe78edf72c23f5ca7779284e0a7997e02eb4d7ba9619`. Repeatability-only pass; no quality floor or accuracy verdict.                                                                                                                               |
+| C14.9 gsplat fixed-geometry RGB, inclusive | 3,460 initial proposals; held-out PSNR 5.603565881 / 5.603565881 dB                                                                               | Delta 0 dB <= 0.01 dB; PLY is byte-identical at `2a1e4ac384f62cbe4def8b62a9a744618749104ed049b599664cc8889c438151`. Repeatability-only pass; no quality floor or accuracy verdict.                                                                                                                               |
 
-The initial final-image rerun used an incorrectly interpolated UID and was denied write access
-before any accepted output. The explicit non-root UID 1000 rerun succeeded. Open3D warned that PLY
-colour values were clamped; geometry counts/hashes remained valid. Open3D TSDF is CPU; its separate
-CUDA tensor probe proves only the CUDA wheel/device path. The first pre-final gsplat image pair had
-a 0.01258 dB PSNR delta and failed the frozen 0.01 dB threshold; that failure was retained during
-review and no tolerance was changed. The final exact image pair above passed.
+Open3D TSDF remains the legacy CPU path; its CUDA tensor probe proves only that the CUDA wheel can
+address GPU 0. Supplied synthetic metres are not independent scale or physical-accuracy evidence.
 
-Final private raw outputs remain retained locally under `/tmp/c14-9-colmap-*`,
-`/tmp/c14-9-colmap-prior-*` and `/tmp/c14-9-final2-*`; cleanup state is `retained-for-review`.
-Additional exact final hashes are:
-
-- COLMAP run logs `91e798faedabab004d08584c9684e893ab7ab4c865abb9cbfdd0d9e0aa3ea38c` and
-  `99a63fdc05f592ee5986c1d414c18805a7fb38339f30e20cfcf274224d0f01cf`;
-- Open3D result JSON `c5afaf653cb17524ef46db02561b8fb9af1abde2d828fd1842c9fe9a67d67fc6`
-  and `ad08cd4fcc191e5dfb31618de50ae862e5cd580795749e8f528b3c9fea33f8d7`, with logs
-  `4496a54626abcc3cb3efa6b345c202534438867826fea4e15512a5ae56a65575` and
-  `bde090e139f2197b9a6475b883dc7b54e15a3bf0a02c265e865e49dedae49dfa`;
-- gsplat preparation `def9ddadfb8246e29a27486f17cfa4a6a0e529e2f9cccd0588c11f94152cd9b4`,
-  result JSON `cd1c1c19c6894336d33d9f9d0e763faf133d5d63040078b6becf771cd36e9905` and
-  `d0587d86e4cc770bafa319084b73c5df3941cc3caa10354a1df44a6bb3a14373`, and logs
-  `658c1e6d4137eede7cab560be6d9f80aaf9b27864f5ed6e603e4e40d9cb0f9c3` and
-  `5c4771784a299b5c66444e1c236e5008bfb7301638f76b1a0acb0363fcde9c72`.
+The author's earlier gradient-based gsplat pair failed at 0.01258 dB. Independent review reproduced
+inclusive failures at 0.013296, 0.018874 and 0.014199 dB while testing progressively stronger
+PyTorch/cuBLAS controls. Those superseded configurations are reported but are not selected in the
+final 16-run denominator; the 0.01 dB threshold was never relaxed. The final image preserves the
+C8 backward/Adam entrypoint for its frozen contract and uses
+`/opt/c8/direct_gsplat_capture.py` only for C14.9. Its held-out PSNR is materially lower because
+geometry is fixed. That is explicitly not a quality, accuracy, geometry, physical, or production
+claim; only execution and two-run repeatability passed.
 
 ## Experimental candidates
 
-| Candidate                  | Local result                                                                                                                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| VGGT                       | Registered at exact code/model revisions; abstained because explicit commercial agreement and independently visible exact weight hash are absent                                                 |
-| MASt3R                     | Exact code, dust3r submodule, model revision/hash/size and CC BY-NC-SA 4.0 evaluation-only restriction frozen; abstained because no reviewed fully hashed Blackwell dependency lock/image exists |
-| Video Depth Anything Small | Exact code, weight-bearing revision/hash/size and Apache-2.0 frozen; abstained because no reviewed fully hashed CUDA 13.2 lock/image exists and the `.pth` is isolated pickle                    |
+| Candidate                  | Fail-closed result                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| VGGT                       | Abstained: explicit commercial agreement and an independently visible exact weight hash are absent.       |
+| MASt3R                     | Abstained: CC BY-NC-SA 4.0 evaluation-only and no reviewed fully hashed Blackwell lock/exact image.       |
+| Video Depth Anything Small | Abstained: no reviewed fully hashed CUDA 13.2 lock/exact image; the exact `.pth` remains isolated pickle. |
 
-No candidate dependency was installed or downloaded, no candidate container was built/run, and no
-experimental output was promoted. The policy verifier now requires source, recursive submodule,
-weight, registry, dependency-lock and exact local-image evidence before selection.
+No experimental dependency was installed, no candidate image was built or run, and no experimental
+output was promoted.
 
 ## Software and security evidence
 
-- Strict C7 contract adds read-only package metadata and short-lived accepted-envelope artifact
-  access; `capture:artifact:export` is owner/editor-only. Persistence revalidates current rights,
-  source completion and direct depth or exact RoomPlan package binding and audits without URL or
-  object key.
-- The exporter takes credentials only from environment, uses no-follow exclusive private writes,
-  canonical hashes, bounded streaming and salted aliases. Offline verification rejects drift,
-  extras, missing files, links, traversal, non-private modes and secret-bearing manifest fields.
-- Focused Python evaluation/security: 7 passed. Focused TypeScript contracts/authz/platform tests
-  and typechecks passed during implementation. Final repository/security checks are recorded in
-  the checkpoint ledger and PR body.
+Focused correction gates passed: platform lint and typecheck; 9 focused capture route tests; 10
+benchmark/adversarial-verifier tests; Ruff; mypy; package-manifest coverage; focused formatting; and
+the isolated RTX matrix. Repository-wide `corepack pnpm verify` passed formatting, 24/24 lint,
+24/24 typecheck, 45/45 unit-test tasks, 24/24 builds, Ruff and mypy across 114 Python source files,
+and 157 passed / 2 skipped Python tests. The four exact-head GitHub CI checks are required on the
+final reviewed SHA before merge.
 
-## Remaining gates
+## Requirements for the first physical Capture Envelope
 
-A real run still needs: one accepted physical envelope; current processing rights and owner/editor
-export authorization; transfer/hash verification; both cohorts for every independent segment; two
-fresh runs for every eligible candidate including two ARKit-prior diagnostics; retained sampled
-RAM/VRAM/wall/log/output evidence; physical reviewer sign-off; and, separately, rights-cleared
-ground truth for any accuracy claim. Experimental execution additionally needs its missing
-licence/lock/image gates. Production routing or model promotion requires a new checkpoint.
+The first physical run still requires:
+
+1. an accepted `physical-device` envelope on the merged C14.9 server, with current tenant/project
+   membership, current service-processing rights, and owner/editor export authority;
+2. immutable rights-cleared RGB originals plus exact current rights on every separately referenced
+   RoomPlan source session/package; exact sample IDs, byte sizes, hashes, intrinsics, orientation,
+   coordinate segments, and depth bindings where present;
+3. a private WSL-ext4 export whose canonical envelope/manifest/file hashes are compared out of band,
+   with no bearer, credential, signed URL, object key, homeowner identifier, or raw evidence in Git,
+   CI, shared logs, or Windows-mounted storage;
+4. both cohorts, every independent segment, and two fresh runs for every selected candidate in the
+   reviewed exact images under the frozen isolation and resource ceilings;
+5. reviewer confirmation of real device, transfer, intrinsics/orientation, pose, segment, depth,
+   RoomPlan, failure, and resource evidence; and
+6. a separately predeclared, rights-cleared reference/ground-truth protocol before any physical or
+   representative accuracy claim.
+
+No physical run may promote production routing or canonical geometry. Experimental execution still
+requires every frozen source, licence, weight, lock, submodule, path, and image gate.

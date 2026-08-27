@@ -9,9 +9,10 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
 On 2026-08-27 C14.8 merged the device-neutral, camera-first mobile capture software foundation.
-C14.9 is now the single active software checkpoint for secure Capture Envelope export and isolated
-Windows/RTX benchmark preparation before physical-device acceptance. Starting from the C14.6
-cold-launch/onboarding baseline, an
+C14.9 secure Capture Envelope export and isolated Windows/RTX benchmark software has now been
+independently reviewed and corrected. The first accepted physical Capture Envelope, physical-device
+compatibility and representative accuracy remain `NOT RUN`; no later checkpoint is opened by this
+software closeout. Starting from the C14.6 cold-launch/onboarding baseline, an
 authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -480,6 +481,14 @@ are never retained; coordinate segments are never silently joined; one selection
 compatible candidates; every failure/abstention remains measurable; appearance and predicted depth
 remain non-dimensional proposals; the routing evaluator is non-production. Software and RTX
 fixtures cannot establish physical compatibility, representative accuracy or production promotion.
+
+**Reviewed software closeout:** PR #12 original head
+`5c8b38626d263cec38068ba59dbd2686974caf00` required material correction commit
+`8d7ad379ae6def20f6fd95d4455f74bce8623708`. Independently rebuilt COLMAP, Open3D and gsplat
+images and the strict 16/16-run common record are frozen in the C14.9 evidence and ledger. All
+outputs remain proposal/evaluation-only. Current rights on the envelope and separately referenced
+RoomPlan source sessions, private physical transfer, both cohorts per independent segment,
+physical review and rights-cleared ground truth remain gates for the first real envelope.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

@@ -88,17 +88,47 @@ container and RTX fixture gates. A fixture proves executability only. Evidence a
 leave real Capture Envelope, physical compatibility, representative accuracy and promotion
 `NOT RUN`. Commit, push and open one non-draft PR without merging.
 
-## Software closeout — 2026-08-27
+## Independent software closeout - 2026-08-27
 
-The additive API/export, offline verifier/selection/policy, COLMAP/ARKit-prior/Open3D/gsplat
-adapters, candidate registry and common record builder are implemented. Exact final-image RTX 5080
-fixture evidence is recorded in
-`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_SOFTWARE_ACCEPTANCE_2026-08-27.md` and the
-post-merge physical sequence is
-`docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
+Original implementation commits were `224ce5a` (contract), `19583c2` (implementation), and
+`5c8b38626d263cec38068ba59dbd2686974caf00` (submitted evidence head). Independent review
+against exact predecessor `9009e0444c8ea15ae2f7f2bb7abc82b338955165` did not accept that head
+unchanged. Material corrections are frozen in
+`8d7ad379ae6def20f6fd95d4455f74bce8623708`.
 
-Fixture COLMAP, Open3D and gsplat execution passed their final applicable numeric gates; the
-ARKit-prior diagnostic ran once and therefore remains repeatability-partial. Experimental
-candidates abstained at their frozen licence/dependency/image gates. Real Capture Envelope,
-physical-device compatibility, representative accuracy, production routing and promotion remain
-`NOT RUN` / prohibited.
+The corrected closeout adds source-session current-rights revalidation for RoomPlan package/artifact
+reads; HTTPS/no-redirect/no-disclosure export; strict private canonical tree verification;
+recomputed keyframe-only per-segment/cohort selection; explicit ARKit-to-OpenCV/COLMAP camera
+conversion; exact depth denominators; same-COLMAP-model gsplat initialization; complete strict
+two-run/failure/resource records; symlink-free exact-clean experimental gates; and a separate
+fixed-geometry C14.9 gsplat entrypoint that preserves C8's accepted backward/Adam trainer, uses
+real gsplat forward renders, disables nondeterministic CUDA backward, and deterministically fits
+only RGB gains without making a quality or byte-equality claim.
+
+Independently rebuilt final images are:
+
+- COLMAP:
+  `sha256:1c40cdfda95d53c8ea28e795060359ba0ed9e2288cd1d8fa48a9c554d7a97a14`;
+- Open3D:
+  `sha256:264a375b0a0a2be25fdf62a314cd8f48bf4bae83c646eb7b99d8d8ba22539cdc`; and
+- gsplat:
+  `sha256:fa3da4146f2931ae380e578028e97fbde99bd8aea6d54c3a5381b56a88aa9f6a`.
+
+The strict common record
+`b35f5e9018271bd9fd46a1fee72c0f3655624ef5b7d4812f98b332fa87a42fd5`
+contains all 16 expected runs across four baseline candidates, two cohorts, one segment and two
+fresh run indexes, with zero missing, partial, failed, isolation-violating or resource-ceiling
+runs. All eight repeatability scopes pass. Experimental candidates remain abstained at the frozen
+licence/dependency/image gates.
+
+The reported lint finding at
+`services/platform-api/src/modules/render-stills/authorities.ts:239` is not reproducible: the exact
+platform lint command passes on both base and original head, and the line is unchanged. No edit was
+made there.
+
+Exact evidence is in
+`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_SOFTWARE_ACCEPTANCE_2026-08-27.md`; the
+physical sequence is
+`docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`. Real Capture Envelope transfer,
+physical-device compatibility, representative accuracy, production routing, canonical mutation and
+promotion remain `NOT RUN` / prohibited.

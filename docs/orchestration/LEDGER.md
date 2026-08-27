@@ -1416,48 +1416,72 @@
   Envelope, physical Apple-device, representative-home, physical accuracy, production promotion or
   canonical mutation is accepted or claimed.
 
-### Software implementation and RTX fixture closeout — 2026-08-27
+### Independent review, correction and RTX closeout - 2026-08-27
 
-- Implementation commit: `19583c2` (`feat(c14.9): add secure capture benchmark`), following the
-  separately committed contract freeze `224ce5a`.
-- Platform boundary: additive strict C7 package metadata plus five-minute raw-artifact access;
-  `capture:artifact:export` is owner/editor-only. The PostgreSQL backend locks the accepted-envelope
-  session, revalidates current rights and completion, proves exact direct-depth or referenced
-  RoomPlan package/manifest binding, rechecks immutable package hashes and audits without URL or
-  object key. No migration, generated client or canonical/C8 production path changed.
-- Evaluation package: secure physical-only network exporter, offline adversarial verifier,
-  deterministic normal/inclusive per-segment selection, ARKit camera-to-world to COLMAP
-  world-to-camera prior conversion, Capture Envelope COLMAP input, exact-depth Open3D TSDF,
-  selection-bound gsplat preparation, redacted host inventory, strict two-run record builder and
-  non-production routing evaluator. Package-manifest v4 covers every retained input.
-- Experimental freeze: VGGT abstains on agreement and unavailable visible weight hash. MASt3R is
-  exact recursive source/model pinned but CC BY-NC-SA 4.0 non-commercial evaluation-only; Video
-  Depth Anything Small is exact source/model/hash pinned and Apache-2.0 but isolated pickle. Both
-  abstain until a reviewed fully hashed Blackwell lock and exact local image exist. Source/weight
-  alone cannot select a candidate; registry, lock, image and submodule verification is mandatory.
-- Final RTX runtime: Windows 11 Pro build 26200; WSL 2.6.3/Ubuntu 24.04.4; Docker Desktop 29.5.3;
-  RTX 5080 driver 595.79, capability 12.0, 16,303 MiB. Final images: COLMAP
-  `sha256:5a684f04346539c00d3596e6ce334d8dc16052169d05b723921e455c4a0b27ed`, Open3D
-  `sha256:4001945254d60ea2bf54b4ac458f29284a88857d70e873c055d816de048f18b6`, gsplat
-  `sha256:60936fef0057edc23301ff0785085d709a8088a5f6d16da6dc741eb6494e9877`.
-- Creator-owned ten-view fixture: COLMAP registered 10/10 twice with 3,362 sparse and 39,756 dense
-  points; sparse text was byte-identical and dense numeric repeatability passed. One ARKit-prior
-  diagnostic registered 10/10 with 3,460 points and remains repeatability-partial. Final-image
-  Open3D twice produced byte-identical 154,178-point/155,816-vertex/308,836-triangle proposals.
-  Final-image gsplat twice passed with held-out PSNR delta 0.005968 dB under the frozen 0.01 dB
-  limit. Earlier pre-final-image gsplat delta 0.01258 dB failed and was not hidden or used to change
-  the threshold.
-- Final gates: format, all 24-package typechecks, 45 unit/build tasks, all 24 builds, contracts
-  94/94, authz unit 561/561, identity security 933/933, focused capture platform 9/9, platform
-  contract/integration 265 passed with 53 unavailable-service skips, spatial 150 passed with 3
-  optional-runtime skips, and Python 157 passed with 2 optional-runtime skips. Focused benchmark
-  and adversarial verifier tests passed 7/7. `pnpm verify` is not wholly green because the freshly
-  executed platform lint exposes one unchanged merged-base error at
-  `services/platform-api/src/modules/render-stills/authorities.ts:239`; C14.9 did not edit that
-  out-of-scope path. Every changed TypeScript surface lints cleanly.
+- Review authority: user instruction to review PR #12 at exact original head
+  `5c8b38626d263cec38068ba59dbd2686974caf00` against merged C14.8
+  `9009e0444c8ea15ae2f7f2bb7abc82b338955165`, complete the correction, require all four named
+  exact-head checks, merge normally, synchronize main and remove only disposable PR resources.
+- Review runtime/ownership: one `gpt-5.6-sol` / `xhigh` primary session in the authoritative WSL
+  checkout; no worktree, subagent, separate task or parallel implementation lane.
+- Original commits: `224ce5a` contract, `19583c2` implementation and `5c8b386` evidence.
+  Independent material correction commit:
+  `8d7ad379ae6def20f6fd95d4455f74bce8623708`.
+- Corrected platform boundary: owner/editor-only `capture:artifact:export`; package reads and
+  artifact signing are tenant/project scoped and fail closed on current rights/state. Cross-session
+  RoomPlan access locks and revalidates the actual source session before proving exact accepted
+  envelope/package/manifest/artifact hashes. Audit metadata contains neither URL nor object key.
+  No migration, generated client, root lock, canonical mutation, C8 production or C9 change.
+- Corrected evaluation boundary: HTTPS/no-redirect/no-disclosure exporter; private canonical
+  hard-link/symlink/special-file/schema/hash/source-binding verifier; recomputed keyframe-only
+  per-segment/cohort selection; explicit ARKit camera-to-world to OpenCV/COLMAP world-to-camera
+  convention conversion; exact depth denominators; same-model COLMAP camera/image/point gsplat
+  input; strict 16-run/failure/resource collector; fail-closed exact-clean experimental gates; and
+  an isolated fixed-geometry C14.9 gsplat entrypoint that preserves the accepted C8 backward/Adam
+  trainer while removing CUDA backward from the C14.9 repeatability path.
+- Reported lint finding: exact
+  `corepack pnpm --filter @interior-design/platform-api lint` passes on both base and original
+  head. `services/platform-api/src/modules/render-stills/authorities.ts:239` is unchanged and
+  predates C14.9, but there is no reproducible failure to classify as inherited. It was not edited.
+- Independently rebuilt images: COLMAP
+  `sha256:1c40cdfda95d53c8ea28e795060359ba0ed9e2288cd1d8fa48a9c554d7a97a14`, Open3D
+  `sha256:264a375b0a0a2be25fdf62a314cd8f48bf4bae83c646eb7b99d8d8ba22539cdc`, gsplat
+  `sha256:fa3da4146f2931ae380e578028e97fbde99bd8aea6d54c3a5381b56a88aa9f6a`. Host:
+  RTX 5080, driver 595.79, compute 12.0, 17,094,934,528 bytes; Docker 29.5.3; WSL kernel
+  `6.6.87.2-microsoft-standard-WSL2`.
+- Corrected fixture authority: envelope
+  `f7c851e9a52f392a104386624c67c81ea2fe26806b6ed2d81b86009447ed0ea7`, selection
+  `2973570b705c1b97e2dd0d906bc018cb4f9bf0e50bb57f9eddcc18ca8d931b48`, policy
+  `3725095a6aaad5967bcaa9e52b406fdac5b2bb41567f2dee17aab1eb20a7512c`, host inventory
+  `5e23cb2b9a841b463f152ad48922a2e7907f99030af19bfc59c9d9efd2d1acb6`, strict common record
+  `b35f5e9018271bd9fd46a1fee72c0f3655624ef5b7d4812f98b332fa87a42fd5`.
+- Common-record result: 8 selected candidate/cohort scopes, 16/16 fresh runs, 6 typed experimental
+  abstentions, zero missing/partial/failed/isolation/resource violations and all 8 repeatability
+  scopes passed. Normal/inclusive COLMAP registered 9/9 and 10/10; corrected ARKit-prior ran twice
+  in both cohorts; Open3D exact depth bound 9/9 and 10/10 with zero non-finite values. The isolated
+  C14.9 gsplat adapter produced exact two-run PSNR and PLY equality in both cohorts: 5.571419496 dB /
+  `47de64ba8cf6367b4f94fe78edf72c23f5ca7779284e0a7997e02eb4d7ba9619` normal and
+  5.603565881 dB / `2a1e4ac384f62cbe4def8b62a9a744618749104ed049b599664cc8889c438151`
+  inclusive. Its lower fixed-geometry PSNR has no quality or accuracy verdict. The earlier 0.01258
+  dB author failure and independently reproduced 0.013296, 0.018874 and 0.014199 dB gradient-path
+  failures are reported outside the selected final denominator; none changed the 0.01 dB threshold.
+- Experimental freeze remains: VGGT agreement/visible-weight-hash blocked; MASt3R
+  CC BY-NC-SA 4.0 evaluation-only and lock/image blocked; Video Depth Anything Small Apache-2.0,
+  pickle-isolated and lock/image blocked. No candidate dependency/image/runtime/output was
+  installed, run or promoted.
+- Pre-push correction gates: platform lint/typecheck; 9 focused capture routes; 10 benchmark and
+  adversarial-verifier tests; Ruff/mypy; package-manifest coverage; focused formatting; and the
+  complete isolated RTX matrix above. Full `corepack pnpm verify` passed formatting, 24/24 lint,
+  24/24 typecheck, 45/45 unit-test tasks, 24/24 builds, Ruff and mypy across 114 Python source files,
+  and 157 passed / 2 skipped Python tests. All four named exact-head GitHub checks remain mandatory
+  before merge.
 - Durable evidence:
   `docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_SOFTWARE_ACCEPTANCE_2026-08-27.md`;
-  definitive post-merge handoff:
-  `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`. Real accepted Capture Envelope,
-  physical transfer/compatibility, both cohorts/segments, two-run ARKit prior, physical and
-  representative accuracy, experimental execution and production promotion remain `NOT RUN`.
+  physical handoff:
+  `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
+- Still `NOT RUN` / prohibited: a real accepted physical Capture Envelope and private transfer,
+  physical device/intrinsics/orientation/pose/depth/RoomPlan review, representative or physical
+  accuracy, production routing/promotion and canonical dimensional mutation. The first physical run
+  requires current tenant/project/actor rights on the envelope and every RoomPlan source, both
+  cohorts for every independent segment, two fresh runs for every selected candidate, retained
+  failure/resource evidence and separately rights-cleared ground truth for any accuracy claim.

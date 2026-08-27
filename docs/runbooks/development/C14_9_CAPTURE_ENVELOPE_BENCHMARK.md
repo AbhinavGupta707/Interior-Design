@@ -18,8 +18,9 @@ them in Git, Windows-mounted folders, issue attachments, CI artifacts, or shared
 Before handling a real envelope, require all of the following:
 
 - clean WSL checkout at the merged C14.9 commit and a server with migrations through `0015`;
-- accepted physical Capture Envelope; current membership and service-processing rights; an
-  owner/editor bearer credential with `capture:artifact:export`;
+- accepted physical Capture Envelope; current tenant/project membership, current
+  service-processing rights on the envelope session and every referenced RoomPlan source session,
+  and an owner/editor bearer credential with `capture:artifact:export`;
 - at least two retained JPEG/PNG RGB keyframes in one segment; exact ARKit pose/intrinsics for the
   prior; exactly sample-bound depth for Open3D; at least three calibrated frames for gsplat;
 - Docker Desktop with WSL integration, one visible RTX 5080, driver/CUDA compatibility, at least
@@ -92,11 +93,18 @@ python3 ml/reconstruction/windows-nvidia-v2/capture_benchmark.py export \
 unset C14_9_BEARER_TOKEN C14_9_ALIAS_SALT C14_9_TENANT_ID C14_9_ACTOR_ID
 ```
 
-The exporter re-fetches the accepted envelope, requires `runtime: physical-device`, downloads C2
-originals and only C7 artifacts/packages bound to that accepted envelope, and verifies bytes while
-streaming. Signed URLs, tokens and object keys are never persisted. Files are mode `0600` beneath
-mode `0700` directories; existing targets, links, traversal, oversized streams, hash/size drift,
-rights drift, unaccepted inputs and a dirty/wrong source commit fail closed.
+The exporter re-fetches the accepted envelope, requires `runtime: physical-device`, and downloads
+C2 originals plus only C7 depth/RoomPlan artifacts bound to that accepted envelope. Package reads
+and cross-session RoomPlan artifact access revalidate the actual source session's current rights
+and `proposed`/`abstained` state. API and signed-artifact authorities must be HTTPS,
+credential-free and query-free where applicable; redirects are rejected so bearer or signed
+authority cannot cross origins. Signed URLs, bearer tokens, credentials and object keys are never
+persisted.
+
+Files are mode `0600` beneath mode `0700` directories and verified while streaming. Existing
+targets, dirty or untracked source state, redirects, links, traversal, oversized streams, duplicate
+or undeclared paths, special files, hard links, schema drift, non-canonical JSON, mode drift,
+hash/size drift, rights drift, unaccepted inputs and a dirty/wrong source commit fail closed.
 
 Use the printed envelope hash as the directory name, then disconnect the evaluator from the API:
 
@@ -110,8 +118,9 @@ sha256sum "$EXPORT_ROOT/envelope.json" "$EXPORT_ROOT/export-manifest.json"
 
 Copy or back up the directory only as a complete private tree. At the receiving host, compare the
 directory name, canonical envelope SHA-256 and manifest SHA-256 out of band, then run `verify`
-again offline. Any extra file, missing file, link, non-private mode, or byte mismatch invalidates
-the transfer. Never repair an export in place; create a fresh export after reauthorization.
+again offline. Any extra or missing file, duplicate, hard link, symlink, special file,
+non-private mode, schema/hash/size/source-binding mismatch, or ancestor/path escape invalidates the
+transfer. Never repair an export in place; create a fresh export after reauthorization.
 
 ## 3. Freeze selection and non-production routing
 
@@ -126,10 +135,12 @@ python3 ml/reconstruction/windows-nvidia-v2/capture_benchmark.py policy \
 sha256sum "$AUTHORITY/selection.json" "$AUTHORITY/policy.json"
 ```
 
-The two cohorts are `normal` and `inclusive`; both are ordered by
-`(segmentId,timestampMicroseconds,sampleId)`. Record typed exclusions. Run every selected
+The two cohorts are `normal` and `inclusive`; keyframes are selected and ordered independently
+per segment by `(segmentId,timestampMicroseconds,sampleId)`. Video containers are not substituted
+for keyframes. Every downstream adapter recomputes the selection hash and segment/cohort scope.
+Record typed exclusions and observed/missing/occluded coverage denominators. Run every selected
 candidate twice from fresh output for every segment/cohort; retain every abstention and failure.
-Do not silently fall back across segments or cohorts.
+Do not silently fall back or join across segments or cohorts.
 
 ## 4. Baseline execution sequence
 
@@ -162,22 +173,32 @@ For each selected segment/cohort and run index `1`, then `2`, execute in this or
 3. For the ARKit-prior diagnostic, copy that run's feature database into a new writable work root;
    invoke `capture_benchmark.py colmap-prior --database <copied database>` into a separate new
    prior root; then run COLMAP `point_triangulator` using the exact images/database/prior and
-   `model_analyzer`. Never pass a read-only feature database to the triangulator. The converted
-   camera-to-world priors are world-to-camera proposals; their metre translation is not independent
-   accuracy proof.
+   `model_analyzer`. Never pass a read-only feature database to the triangulator. Convert ARKit
+   x-right/y-up/look-minus-Z camera-to-world evidence to x-right/y-down/look-plus-Z OpenCV/COLMAP
+   world-to-camera using the explicit Y/Z sign change. Keep the native raster and native-raster
+   intrinsics bound without an implicit orientation rotation. These remain proposals; supplied
+   metre translation is not independent scale or accuracy proof.
 4. If exact bound depth is selected, run the Open3D digest with entrypoint
    `python /opt/c8/open3d_capture.py --export-root /c14/export --selection /c14/selection.json
 --cohort <cohort> --segment-id <segment UUID> --output /c8/output`. Retain the exact sample/depth
    bindings, non-finite counts, point/mesh hashes and CUDA tensor probe. The TSDF itself is the
    Open3D legacy CPU path; supplied metres are not independently validated.
-5. Prepare gsplat only from the same selection and a retained baseline/prior `points3D.txt` by
-   overriding the appearance image entrypoint with
+5. Prepare gsplat only from the same selection and one retained COLMAP text model directory whose
+   `cameras.txt`, `images.txt` and `points3D.txt` all come from the same run. Override the
+   appearance image entrypoint with
    `python /opt/c8/prepare_gsplat_capture.py --export-root /c14/export
 --selection /c14/selection.json --cohort <cohort> --segment-id <segment UUID>
---points3d /c14/points3D.txt --output /c8/output --steps 100`. Mount the resulting input read-only
-   and run the normal entrypoint twice with `--input /c8/input/appearance-input.json --output
-/c8/output`. Freeze the last selected view as holdout. gsplat is appearance-only and
-   non-dimensional.
+--model /c14/model-text --output /c8/output --steps 100`. The preparer must reject missing or extra
+   selected images and records all three model hashes. Mount the resulting input read-only and
+   override the final image entrypoint with
+   `python /opt/c8/direct_gsplat_capture.py` once for the current outer run index; repeat through
+   run index 2 from a fresh output root. The default `direct_gsplat.py` remains the accepted C8
+   backward/Adam trainer and is not the C14.9 repeatability entrypoint. The capture adapter keeps
+   geometry fixed, uses real gsplat forward renders, disables CUDA rasterizer backward and fits
+   only three RGB gains with deterministic CPU float64 Adam. Freeze the last selected view as
+   holdout. Retain the deterministic-control record and numeric repeatability result; gsplat bytes
+   need not match and remain appearance-only, arbitrary-unit, non-dimensional proposals. A
+   repeatability pass is not a quality or accuracy verdict.
 
 Use the exact option tuples in `run_acceptance.py` as the COLMAP argument authority; the only
 capture substitution is the `colmap-input` image root and that run's generated `sparse/0` model.
@@ -201,8 +222,10 @@ must contain the exact source checkout, named weight and `candidate-manifest.jso
 }
 ```
 
-The verifier checks clean exact Git commit, recursive submodule pins, weight hash/size, lock hash,
-registry binding and the local image ID. Runtime then uses the experimental ceiling: network off,
+The verifier checks the exact clean Git commit including untracked state, exact recursive
+submodule-set equality, confined symlink-free candidate paths, canonical manifest, weight
+hash/size, fully hashed lock and lock hash, registry binding and exact local image ID. Runtime then
+uses the experimental ceiling: network off,
 non-root/read-only/capability-dropped/no-new-privileges, GPU 0, 12 CPUs, 512 PIDs, 32 GiB RAM,
 15 GiB VRAM, 16 GiB scratch and 45 minutes. Pickle is allowed only after hash verification inside
 that isolated container.
@@ -218,13 +241,21 @@ Do not install candidate dependencies on the host and do not let any candidate f
 
 ## 6. Review and verdict
 
-`capture_metrics.py` accepts the verified export manifest, selection, policy, host inventory and
-strict run fragments. It freezes count, camera, depth, coverage, appearance and resource metrics;
-unsupported metrics are `not-applicable`. Repeatability limits are the C14.9 contract values and
-must not be changed after seeing results. Preserve raw outputs and hashes even when a run fails.
+`capture_metrics.py` accepts only private, canonical, non-hard-linked authority files and strict
+run fragments linked to the verified export manifest, selection, policy and host inventory. Every
+selected `(candidateId,cohort,segmentId)` requires run indexes 1 and 2 with identical image,
+derived-input, config, seed and deterministic-control authority. Every fragment carries the full
+frozen metric vocabulary, non-empty raw-artifact hashes, exact isolation, resource measurements,
+status and typed failure code. The record counts selected scopes, abstentions, expected, supplied,
+missing, partial, failed, isolation/resource-violating runs and repeatability failures. Unsupported
+metrics are `not-applicable`; repeatability limits must not change after seeing results. Preserve
+raw outputs, logs, hashes and failures even when a run fails.
 
 For a real envelope, report `physicalCaptureCompatibility: requires-review` until a reviewer checks
-the actual capture/device/depth bindings and results. Representative accuracy stays `not-run`
-without a predeclared rights-cleared reference and ground truth. Production promotion is always
-`prohibited`. Remove private data only through an explicit, separately reviewed retention action;
-do not use Docker prune or broad recursive deletion as part of this runbook.
+the actual device/runtime, transfer, rights, RGB, intrinsics/orientation, camera convention,
+segment, depth/RoomPlan bindings, failures and resource evidence. Representative accuracy stays
+`not-run` without a predeclared rights-cleared reference and ground truth. No reconstruction,
+depth, render or appearance result becomes canonical or establishes physical dimensions.
+Production promotion is always `prohibited`. Remove private data only through an explicit,
+separately reviewed retention action; do not use Docker prune or broad recursive deletion as part
+of this runbook.
