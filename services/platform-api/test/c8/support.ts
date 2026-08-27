@@ -16,6 +16,7 @@ import type {
   CreateReconstructionJobCommand,
   EligibleReconstructionSource,
   FailReconstructionAttemptCommand,
+  HeartbeatReconstructionAttemptCommand,
   PublishReconstructionResultCommand,
   ReconstructionRepository,
   TransitionReconstructionJobCommand,
@@ -203,6 +204,11 @@ export class MemoryReconstructionRepository implements ReconstructionRepository 
   failAttempt(command: FailReconstructionAttemptCommand) {
     void command;
     return Promise.reject(new Error("Worker flow is exercised by the Postgres fixture."));
+  }
+
+  heartbeatAttempt(command: HeartbeatReconstructionAttemptCommand) {
+    void command;
+    return Promise.resolve("active" as const);
   }
 
   acknowledgeCancellation(command: AcknowledgeReconstructionCancellationCommand) {

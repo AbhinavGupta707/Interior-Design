@@ -220,6 +220,32 @@ describe("C14.8 authenticated capture envelope routes", () => {
     expect(foreign.statusCode).toBe(404);
   });
 
+  it("accepts Foundation-style uppercase UUIDs against canonical route scope", async () => {
+    const payload: unknown = JSON.parse(
+      JSON.stringify(envelope()).replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/giu,
+        (value) => value.toUpperCase(),
+      ),
+    );
+    if (typeof payload !== "object" || payload === null) {
+      throw new Error("Uppercase envelope fixture must remain an object.");
+    }
+    const response = await server.inject({
+      headers: mutationHeaders("fixture|owner-alpha", "c14-8-uppercase-envelope-01"),
+      method: "POST",
+      payload,
+      url: `/v1/projects/${c6Project.id}/capture-sessions/${c7CaptureSessionId}/envelope`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({
+      envelope: {
+        captureSessionId: c7CaptureSessionId,
+        projectId: c6Project.id,
+      },
+    });
+  });
+
   it("requires mutation authority and the exact accepted hash before creating C8 RGB-only work", async () => {
     const url = `/v1/projects/${c6Project.id}/capture-sessions/${c7CaptureSessionId}/envelope`;
     const accepted = await server.inject({

@@ -6,17 +6,94 @@ import XCTest
 
 @MainActor
 final class C14_8CaptureFoundationTests: XCTestCase {
-  func testSimulatorCapabilityCannotClaimPhysicalSensors() {
-    let capability = C14_8SystemCapabilityProvider().current()
+  func testWireTimelineContainsMicrosecondSegmentAfterMillisecondEncoding() throws {
+    let startedAt = Date(timeIntervalSinceReferenceDate: 810_000_000.123_789)
+    let requiredEndMicroseconds: Int64 = 2_724_244_146
+    let endedAt = startedAt.addingTimeInterval(2_724.244_161)
 
-    XCTAssertEqual(capability.runtime, .simulatorFixture)
-    XCTAssertEqual(capability.qualityTier, .simulatorFixture)
-    XCTAssertFalse(capability.arWorldTracking)
-    XCTAssertFalse(capability.cameraIntrinsics)
-    XCTAssertFalse(capability.cameraPoses)
-    XCTAssertFalse(capability.sceneDepth)
-    XCTAssertFalse(capability.roomPlan)
-    XCTAssertTrue(capability.rgbKeyframes)
+    let timeline = try C14_8GuidedCaptureModel.canonicalWireTimeline(
+      startedAt: startedAt,
+      endedAt: endedAt,
+      requiredEndMicroseconds: requiredEndMicroseconds
+    )
+    let encodedStart = try XCTUnwrap(C7ISO8601.date(from: timeline.startedAt))
+    let encodedEnd = try XCTUnwrap(C7ISO8601.date(from: timeline.endedAt))
+    let encodedDurationMicroseconds = Int64(
+      (encodedEnd.timeIntervalSince(encodedStart) * 1_000).rounded()
+    ) * 1_000
+
+    XCTAssertGreaterThanOrEqual(encodedDurationMicroseconds, requiredEndMicroseconds)
+    XCTAssertLessThan(encodedDurationMicroseconds - requiredEndMicroseconds, 1_000)
+  }
+
+  func testSubmissionRetryPreservesAlreadyClosedCaptureTimeline() throws {
+    let projectId = UUID()
+    let actorId = UUID()
+    let tenantId = UUID()
+    var closed = fixtureDraft(projectId: projectId, actorId: actorId, tenantId: tenantId)
+    let captureEnd = closed.createdAt.addingTimeInterval(120)
+    closed.segments[0].endedAtMicroseconds = 120_000_000
+    closed.endedAt = captureEnd
+    closed.updatedAt = captureEnd
+    try C14_8ContractValidator.validate(draft: closed)
+
+    let retried = C14_8GuidedCaptureModel.prepareSubmissionDraft(
+      closed,
+      at: captureEnd.addingTimeInterval(300)
+    )
+
+    XCTAssertEqual(retried.endedAt, captureEnd)
+    XCTAssertEqual(retried.segments, closed.segments)
+    XCTAssertGreaterThan(retried.updatedAt, closed.updatedAt)
+    try C14_8ContractValidator.validate(draft: retried)
+  }
+
+  func testSubmissionFailuresDistinguishServiceOutageFromContractFailure() {
+    XCTAssertEqual(
+      C14_8GuidedCaptureModel.submissionFailure(for: EvidenceServiceError.unavailable),
+      .failed(
+        message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+        retryable: true
+      )
+    )
+    XCTAssertEqual(
+      C14_8GuidedCaptureModel.submissionFailure(for: EvidenceServiceError.invalidResponse),
+      .failed(
+        message: "The capture service response did not match the accepted upload contract. No envelope was accepted.",
+        retryable: false
+      )
+    )
+    XCTAssertEqual(
+      C14_8GuidedCaptureModel.submissionFailure(for: C7CaptureServiceError.unavailable),
+      .failed(
+        message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+        retryable: true
+      )
+    )
+    XCTAssertEqual(
+      C14_8GuidedCaptureModel.submissionFailure(for: C14_8ContractError.invalidEvidence),
+      .failed(
+        message: "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
+        retryable: false
+      )
+    )
+  }
+
+  func testSimulatorCapabilityCannotClaimPhysicalSensors() throws {
+    #if targetEnvironment(simulator)
+      let capability = C14_8SystemCapabilityProvider().current()
+
+      XCTAssertEqual(capability.runtime, .simulatorFixture)
+      XCTAssertEqual(capability.qualityTier, .simulatorFixture)
+      XCTAssertFalse(capability.arWorldTracking)
+      XCTAssertFalse(capability.cameraIntrinsics)
+      XCTAssertFalse(capability.cameraPoses)
+      XCTAssertFalse(capability.sceneDepth)
+      XCTAssertFalse(capability.roomPlan)
+      XCTAssertTrue(capability.rgbKeyframes)
+    #else
+      throw XCTSkip("The system-provider branch is a Simulator-only assertion.")
+    #endif
   }
 
   func testEveryRoomStartsWithExplicitCoverageAndSeparatedEvidenceLayers() throws {
@@ -103,6 +180,92 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     }
     let restored = try await store.load(projectId: projectId)
     XCTAssertEqual(restored?.rooms[0].label, "Newest room")
+  }
+
+  func testCompletedMediaReceiptIsAtomicallyRecordedAndVerified() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c14-8-receipt-persistence-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let projectId = UUID()
+    let actorId = UUID()
+    let tenantId = UUID()
+    let segmentId = UUID()
+    let createdAt = Date()
+    let room = C14_8RoomEnvelope.empty(
+      label: "Synthetic room",
+      sequence: 1,
+      segmentId: segmentId
+    )
+    let mediaStore = C8ProtectedMediaStore(root: root.appendingPathComponent("media"))
+    let destination = try await mediaStore.allocateDestination()
+    let engine = C14_8FixtureGuidedCaptureEngine()
+    try engine.start(telemetry: { _ in }, events: { _ in })
+    let captured = try await engine.captureKeyframe(
+      to: destination.url,
+      localIdentifier: destination.id,
+      roomId: room.roomId,
+      segmentId: segmentId,
+      captureStartedAt: createdAt
+    )
+    let handle = try await mediaStore.finalize(
+      id: destination.id,
+      mimeType: .jpeg,
+      containsDepthData: false,
+      origin: .syntheticSimulatorFixture
+    )
+    let segmentEnd = max(1, captured.sample.timestampMicroseconds)
+    let endedAt = createdAt.addingTimeInterval(Double(segmentEnd + 1) / 1_000_000)
+    let store = C14_8ProtectedCaptureStore(root: root.appendingPathComponent("journal"))
+    let draft = C14_8GuidedCaptureDraft(
+      acceptance: nil,
+      actorUserId: actorId,
+      capabilities: C14_8SystemCapabilityProvider().current(),
+      captureSession: nil,
+      createdAt: createdAt,
+      depthHandles: [],
+      depthReceipts: [],
+      endedAt: endedAt,
+      interruptionCount: 0,
+      keyframes: [handle],
+      mediaReceipts: [],
+      projectId: projectId,
+      roomPlanSources: [],
+      rooms: [room],
+      samples: [captured.sample],
+      schemaVersion: C14_8CaptureContract.localJournalSchemaVersion,
+      segments: [
+        C14_8CoordinateSegment(
+          coordinateSystem: "arkit-right-handed-y-up",
+          endedAtMicroseconds: segmentEnd,
+          reason: .initial,
+          segmentId: segmentId,
+          startedAtMicroseconds: 0,
+          translationUnit: "micrometres",
+          worldOriginRelationship: "independent-unless-later-registered"
+        )
+      ],
+      tenantId: tenantId,
+      updatedAt: endedAt
+    )
+    try await store.save(draft)
+    let receipt = C14_8MediaReceipt(
+      localIdentifier: handle.localIdentifier,
+      receipt: C8ImmutableEvidenceReceipt(
+        assetId: UUID(),
+        byteSize: handle.byteSize,
+        declaredMimeType: handle.mimeType,
+        projectId: projectId,
+        sha256: handle.sha256,
+        status: .uploaded,
+        trainingUseConsent: .denied
+      ),
+      transferPartCount: 1
+    )
+
+    let recorded = try await store.recordMediaReceipt(projectId: projectId, receipt: receipt)
+    let restored = try await store.load(projectId: projectId)
+    XCTAssertEqual(recorded.mediaReceipts, [receipt])
+    XCTAssertEqual(restored?.mediaReceipts, [receipt])
   }
 
   func testDepthBytesAreOpaqueHashBoundAndCannotResolveAcrossProjects() async throws {
@@ -302,7 +465,7 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     return C14_8GuidedCaptureDraft(
       acceptance: nil,
       actorUserId: actorId,
-      capabilities: capability ?? C14_8SystemCapabilityProvider().current(),
+      capabilities: capability ?? C14_8TestCapabilityProvider().current(),
       captureSession: nil,
       createdAt: now,
       depthHandles: [],
@@ -351,7 +514,7 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     let capture = C7CaptureAPIClient(baseURL: baseURL, tokenProvider: token)
     let evidence = C2EvidenceAPIClient(baseURL: baseURL, tokenProvider: token)
     return C14_8GuidedCaptureModel(
-      capabilityProvider: C14_8SystemCapabilityProvider(),
+      capabilityProvider: C14_8TestCapabilityProvider(),
       permissionProvider: C14_8TestPermissionProvider(),
       engine: C14_8FixtureGuidedCaptureEngine(),
       captureService: capture,
@@ -364,6 +527,28 @@ final class C14_8CaptureFoundationTests: XCTestCase {
       depthUploader: C14_8DepthUploader(service: capture),
       journal: journal,
       mediaStore: C8ProtectedMediaStore(root: root.appendingPathComponent("media"))
+    )
+  }
+}
+
+@MainActor
+private struct C14_8TestCapabilityProvider: C14_8CapabilityProviding {
+  func current() -> C14_8CapabilityDeclaration {
+    C14_8CapabilityDeclaration(
+      appBuild: "test",
+      appVersion: "1.0.0",
+      arWorldTracking: false,
+      cameraIntrinsics: false,
+      cameraPoses: false,
+      deviceModelIdentifier: "Synthetic Simulator",
+      operatingSystemVersion: "test",
+      qualityTier: .simulatorFixture,
+      rgbKeyframes: true,
+      rgbVideo: false,
+      roomPlan: false,
+      runtime: .simulatorFixture,
+      sceneDepth: false,
+      schemaVersion: "capture-capabilities-v1"
     )
   }
 }
@@ -401,6 +586,19 @@ private actor C14_8DelayedCaptureStore: C14_8ProtectedCaptureStoring {
 
   func save(_ draft: C14_8GuidedCaptureDraft) {
     drafts[draft.projectId] = draft
+  }
+
+  func recordMediaReceipt(
+    projectId: UUID,
+    receipt: C14_8MediaReceipt
+  ) throws -> C14_8GuidedCaptureDraft {
+    guard var draft = drafts[projectId] else { throw C14_8ProtectedStoreError.missingFile }
+    if !draft.mediaReceipts.contains(where: { $0.localIdentifier == receipt.localIdentifier }) {
+      draft.mediaReceipts.append(receipt)
+      draft.updatedAt = max(Date(), draft.updatedAt.addingTimeInterval(0.001))
+      drafts[projectId] = draft
+    }
+    return draft
   }
 
   func clear(projectId: UUID) { drafts[projectId] = nil }

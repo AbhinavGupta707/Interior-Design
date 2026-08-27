@@ -93,6 +93,10 @@ export interface FailReconstructionAttemptCommand extends WorkerLeaseCommand {
   readonly safeCode: string;
 }
 
+export interface HeartbeatReconstructionAttemptCommand extends WorkerLeaseCommand {
+  readonly leaseSeconds: number;
+}
+
 export type AcknowledgeReconstructionCancellationCommand = WorkerLeaseCommand;
 
 export interface WithdrawReconstructionSourceCommand {
@@ -115,6 +119,9 @@ export interface ReconstructionRepository {
     command: CreateReconstructionJobCommand,
   ): Promise<{ readonly job: ReconstructionJob; readonly replayed: boolean }>;
   failAttempt(command: FailReconstructionAttemptCommand): Promise<ReconstructionJob>;
+  heartbeatAttempt(
+    command: HeartbeatReconstructionAttemptCommand,
+  ): Promise<"active" | "cancel-requested">;
   findJob(
     tenantId: string,
     projectId: string,

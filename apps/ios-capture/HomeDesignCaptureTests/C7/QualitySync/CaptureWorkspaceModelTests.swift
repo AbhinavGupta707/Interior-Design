@@ -367,6 +367,9 @@ private actor C7WorkspaceServiceStub: C7CaptureServing {
   ) throws -> C7SignedArtifactPart { throw C7CaptureServiceError.unavailable }
 
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String

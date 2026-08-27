@@ -129,7 +129,21 @@ describeWithPostgres("C8 live Postgres reconstruction workflow", () => {
     const firstLease = await repository.claimNext({ leaseSeconds: 30, workerId: "c8-live-worker" });
     expect(firstLease).toMatchObject({ attempt: 1, jobId: created.job.id, stage: "preparing" });
     if (!firstLease) throw new Error("The C8 live lease was not created.");
-    clock.advance(31_000);
+    clock.advance(20_000);
+    await expect(
+      repository.heartbeatAttempt({
+        attempt: firstLease.attempt,
+        jobId: firstLease.jobId,
+        leaseSeconds: 30,
+        leaseToken: firstLease.leaseToken,
+        workerId: "c8-live-worker",
+      }),
+    ).resolves.toBe("active");
+    clock.advance(11_000);
+    await expect(
+      repository.claimNext({ leaseSeconds: 60, workerId: "c8-too-early-reclaimer" }),
+    ).resolves.toBeUndefined();
+    clock.advance(20_000);
     const reclaimed = await repository.claimNext({ leaseSeconds: 60, workerId: "c8-reclaimer" });
     expect(reclaimed?.leaseToken).not.toBe(firstLease.leaseToken);
     if (!reclaimed) throw new Error("The expired C8 lease was not reclaimed.");

@@ -117,7 +117,7 @@ final class C14_6HomeownerReadinessUITests: XCTestCase {
     XCTAssertEqual(serviceConsent.value as? String, "0")
     app.swipeUp()
     XCTAssertTrue(serviceConsent.isHittable)
-    serviceConsent.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+    serviceConsent.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
     let serviceEnabled = expectation(
       for: NSPredicate(format: "value == %@", "1"),
       evaluatedWith: serviceConsent

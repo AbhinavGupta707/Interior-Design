@@ -1485,3 +1485,98 @@
   requires current tenant/project/actor rights on the envelope and every RoomPlan source, both
   cohorts for every independent segment, two fresh runs for every selected candidate, retained
   failure/resource evidence and separately rights-cleared ground truth for any accuracy claim.
+
+## C14.8 physical non-LiDAR acceptance follow-up — 2026-08-27
+
+- Authority: the user's physical-device instruction after C14.9 merged. The repository was
+  synchronized to clean `origin/main` at
+  `da017f6259cada36a59a6b906459c6514386c279`; branch
+  `codex/c14-8-physical-device-acceptance` preserves the user-owned root `AGENTS.md` modification
+  exactly and excludes it from every commit. One `gpt-5.6-sol` / `high` primary owns planning,
+  implementation, physical guidance, final verification and closeout; no subagent, worktree task or
+  implementation lane was used. Disposable clean Git worktrees were used only by the official
+  exporter to satisfy its exact-source check.
+- Independent PR review authority: a separate `gpt-5.6-sol` / `xhigh` primary froze exact original
+  PR head `0ef5955f01bcc49c372fce02314dc4602e832053` against exact base
+  `da017f6259cada36a59a6b906459c6514386c279`. One bounded same-checkout Terra/high reviewer worked
+  read-only; no separate task or worktree was created. Sol independently validated its finding,
+  made the sole source correction in `62a1fc26cd0581e7edd6d59824c3b7ee5d012d25`, and retained final
+  verification, merge and cleanup authority.
+- Integration vehicle: non-draft PR
+  [#13](https://github.com/AbhinavGupta707/Interior-Design/pull/13) targets `main`. It may merge
+  normally only after every named GitHub check passes on its exact final reviewed head; green checks
+  from `0ef5955f01bcc49c372fce02314dc4602e832053` do not transfer to the corrected head.
+- Signing/privacy boundary: one iPhone 12 on iOS 26.6 was temporarily development-signed and
+  installed with the user's Personal Team. Account, team, device, provisioning, credential,
+  endpoint and machine-specific Xcode values remain outside Git. A disposable private CA, local
+  API/database/object storage/worker and LAN TLS gateway were used. Raw room media, source UUIDs,
+  signed URLs, bearer credentials, alias salt and the private transfer path remain outside Git,
+  GitHub, committed evidence and screenshots.
+- Physical truth: one studio room, 26 retained RGB keyframes and 26 exact ARKit camera samples,
+  native-raster pinhole intrinsics, camera-to-world poses, two explicitly independent coordinate
+  segments and one safe interruption/recovery. Accepted coverage is 22 observed, one occluded and
+  one missing of 24 cells. Runtime is `physical-device`; quality tier is `guided-rgb`; all retained
+  tracking is normal. Scene depth and RoomPlan capability are false and there are zero depth and
+  RoomPlan sources. This is not LiDAR, depth or RoomPlan evidence.
+- Acceptance authority: canonical Capture Envelope SHA-256
+  `093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`; protected-journal SHA-256
+  `a7c64f6c37282026ea87587ded6a07bed8a56de7c626e5dd09687b914711e722`; installed corrected app
+  code SHA-256 `8858aa94d927deaede58b4d0a0e05913113d54a975a6d6f1c0e0ca5ac9183990`.
+  All 26 immutable C2 sources completed checksum-bound resumable transfer and exact server
+  acceptance under current owner rights, service processing granted and training denied.
+- Proposal-only truth: the explicit C8 action queued one authenticated reconstruction proposal.
+  After the worker lease heartbeat kept attempt 2 fenced throughout media preparation, it terminated
+  with immutable typed abstention `RECONSTRUCTION_PRIVACY_REVIEW_REQUIRED`. No geometry, appearance,
+  C4/C5 operation, canonical snapshot, dimension or production authority was published.
+- Same-checkpoint corrections: development Info override naming; frozen capture timeline retry;
+  microsecond wire canonicalisation; UUID casing at native/contract/route boundaries; protected
+  journal persistence; app-container re-homing; exact asset reconciliation; background upload races;
+  bounded fresh signed-part URLs; FFmpeg discovery timeout; reconstruction heartbeat/fencing; C14.9
+  optional room `story`; expiring export-access replay; and a brittle C14.6 Simulator switch hit
+  target. Source heads are `7e5c6b58c31922708bd8c3814cd4a095f2fdfde8`,
+  `5ff39f122d1329347173c3e95245715a154e380b` and package-integrity head
+  `b89d6e24df1270c44acecc830cfc6a278021d137`; no migration, production-signing, TLS,
+  authorization, consent-default, canonical or production-routing boundary was weakened.
+- Independent-review correction: background sessions requested system relaunch events but had no
+  application lifecycle completion bridge and retained task context only in memory. The correction
+  adds an app-owned C2/C7 coordinator, fixed session identities, protected and bounded non-secret
+  task/completion recovery, and safe relaunch reattachment. Only 2xx results with a bounded valid
+  ETag are recoverable; expired/403 authority is discarded. Tests use separate recovery-store
+  instances to represent process relaunch and prove that signed/fresh URLs and authorization data
+  are absent from durable state.
+- Physical-evidence decision: no recapture was required because the review correction does not
+  change captured bytes, request bytes/headers, multipart identity, server authorization or
+  validation, canonical envelope bytes, the accepted envelope hash or export-manifest hash. The
+  recorded app hash remains the binary actually used for the accepted physical journey. Background
+  process termination/relaunch is post-capture software evidence only and remains outside the
+  physical matrix.
+- Verification: complete `pnpm verify` passed formatting, 24/24 lint, 24/24 typecheck, 45/45 unit
+  tasks and 24/24 builds; contracts 95/95, platform 266 with 53 optional-service skips and spatial
+  worker 153 with 3 optional-runtime skips; Ruff/mypy passed and Python passed 157/2 skips. The
+  focused C14.9 evaluator suite passes 9/9. Native unit evidence remains 196 logical tests / 203
+  invocations; the final corrected native UI source passes 32/32 on the iPhone 17 Pro Max
+  Simulator, iOS 26.4, with zero failures or skips.
+- Post-review native verification: the complete unit target passes 209 tests (104 XCTest plus 105
+  Swift Testing) with zero failures; focused relaunch recovery passes after the final lifecycle and
+  protection adjustment; XcodeGen is byte-stable at
+  `48e49c6693020cd1518cec9d03ef1f0a0dae9111fd88266b34af34a557ae9f4c`; and the unsigned generic-iOS
+  Release build and Release analysis pass. Repository-wide exact-head truth remains delegated to
+  the four required GitHub checks before merge.
+- Private C14.9 handoff: the official exporter reauthorized and downloaded all 26 originals from an
+  exact clean source checkout, then passed offline verification. Export-manifest SHA-256 is
+  `e3aeaed3925640c25f35e252f84b358efdcbdc424ff39cef781a69416504db74`. The private transfer root is
+  intentionally reported only to the user. Windows/RTX 5080 candidate execution remains `NOT RUN`;
+  begin it only after this correction PR merges, Windows synchronizes to the exact merged head and
+  the runbook's disk/RAM/VRAM/image/right checks pass.
+- Private-package protection review: before repository review, the complete authoritative export
+  was copied to durable local non-cloud private storage without deleting the source. The official
+  head-matched offline verifier passed the durable copy at Capture Envelope SHA-256
+  `093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9` and the manifest hash above.
+  It contains exactly 28 protected regular files, no links and no special files; the authoritative
+  source was retained unchanged. Neither private location is recorded in Git or shared output, and
+  neither copy is a disposable PR resource.
+- Residual limits: one room/device only; one missing and one occluded coverage cell; independent
+  segments not registered; no survey scale, physical dimensions, ground truth, accuracy,
+  deny/grant/offline/process-termination/role-withdrawal/storage/thermal/accessibility matrix,
+  second journey or Windows resource/repeatability metrics. Structural, regulatory, cost,
+  availability and professional certainty remain unclaimed.

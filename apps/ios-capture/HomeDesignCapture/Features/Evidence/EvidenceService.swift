@@ -29,21 +29,30 @@ protocol EvidenceServing: Sendable {
     checksumSha256: String,
     idempotencyKey: String
   ) async throws -> SignedEvidencePart
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) async throws -> String
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) async throws -> String
 }
 
 protocol EvidenceHTTPTransport: Sendable {
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (Data, HTTPURLResponse)
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (Data, HTTPURLResponse)
 }
 
 struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
   private let foregroundSession: URLSession
-  private let backgroundSession: URLSession
+  private let backgroundUploader: BackgroundFileUploadSession
 
   init(
     foregroundSession: URLSession? = nil,
-    backgroundIdentifier: String = "com.homedesignstudio.capture.c2-parts"
+    backgroundIdentifier: String = BackgroundFileUploadCoordinator.evidenceIdentifier
   ) {
     if let foregroundSession {
       self.foregroundSession = foregroundSession
@@ -54,13 +63,9 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
       configuration.httpCookieStorage = nil
       self.foregroundSession = URLSession(configuration: configuration)
     }
-    let configuration = URLSessionConfiguration.background(withIdentifier: backgroundIdentifier)
-    configuration.isDiscretionary = false
-    configuration.sessionSendsLaunchEvents = true
-    configuration.waitsForConnectivity = true
-    configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-    configuration.urlCache = nil
-    backgroundSession = URLSession(configuration: configuration)
+    backgroundUploader = BackgroundFileUploadCoordinator.shared.uploader(
+      identifier: backgroundIdentifier
+    )
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -71,12 +76,12 @@ struct URLSessionEvidenceTransport: EvidenceHTTPTransport, @unchecked Sendable {
     return (data, response)
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (Data, HTTPURLResponse) {
-    let (data, response) = try await backgroundSession.upload(for: request, fromFile: fileURL)
-    guard let response = response as? HTTPURLResponse else {
-      throw EvidenceServiceError.invalidResponse
-    }
-    return (data, response)
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (Data, HTTPURLResponse) {
+    try await backgroundUploader.upload(for: request, fromFile: fileURL, context: context)
   }
 }
 
@@ -171,13 +176,35 @@ actor C2EvidenceAPIClient: EvidenceServing {
     )
   }
 
-  func uploadPart(fileURL: URL, signedPart: SignedEvidencePart) async throws -> String {
+  func uploadPart(
+    projectId: String,
+    sessionId: String,
+    fileURL: URL,
+    signedPart: SignedEvidencePart
+  ) async throws -> String {
+    guard let canonicalProjectId = UUID(uuidString: projectId),
+      let canonicalSessionId = UUID(uuidString: sessionId),
+      let checksum = signedPart.requiredHeaders.first(where: {
+        $0.key.lowercased().contains("checksum-sha256")
+      })?.value
+    else { throw EvidenceServiceError.checksumBindingMissing }
     var request = URLRequest(url: signedPart.url)
     request.httpMethod = "PUT"
     for (name, value) in signedPart.requiredHeaders {
       request.setValue(value, forHTTPHeaderField: name)
     }
-    let (_, response) = try await performUpload(request, fileURL: fileURL)
+    let (_, response) = try await performUpload(
+      request,
+      fileURL: fileURL,
+      context: BackgroundUploadContext(
+        captureSessionId: nil,
+        checksumSha256: checksum,
+        namespace: .immutableEvidence,
+        partNumber: signedPart.partNumber,
+        projectId: canonicalProjectId,
+        uploadSessionId: canonicalSessionId
+      )
+    )
     guard (200..<300).contains(response.statusCode) else {
       if response.statusCode == 403 { throw EvidenceServiceError.signedURLExpired }
       throw EvidenceServiceError.unavailable
@@ -308,9 +335,13 @@ actor C2EvidenceAPIClient: EvidenceServing {
     }
   }
 
-  private func performUpload(_ request: URLRequest, fileURL: URL) async throws -> (Data, HTTPURLResponse) {
+  private func performUpload(
+    _ request: URLRequest,
+    fileURL: URL,
+    context: BackgroundUploadContext
+  ) async throws -> (Data, HTTPURLResponse) {
     do {
-      return try await transport.upload(for: request, fromFile: fileURL)
+      return try await transport.upload(for: request, fromFile: fileURL, context: context)
     } catch let error as URLError where error.code == .notConnectedToInternet {
       throw EvidenceServiceError.offline
     } catch is CancellationError {
@@ -390,6 +421,11 @@ enum EvidenceFileSupport {
   }
 }
 
+enum EvidenceTransferPolicy {
+  /// Mirrors the frozen C2 multipart upper bound returned by the server contract.
+  static let maximumPartBytes = 134_217_728
+}
+
 /// C8 capture composes with the C2 immutable source boundary. Recovery contains
 /// only opaque identifiers, checksums and completed-part receipts; bearer tokens
 /// and signed URLs are never persisted.
@@ -457,57 +493,67 @@ actor C8ImmutableEvidenceUploader: C8ImmutableEvidenceUploading {
     let projectId = request.projectId.uuidString.lowercased()
     var recovery: EvidenceRecoveryRecord
     let savedRecovery = try await recoveryStore.load(projectId: projectId)
-    if let saved = savedRecovery,
-      saved.sha256 == request.handle.sha256,
-      saved.fileURL == request.fileURL
-    {
+    if var saved = savedRecovery, saved.sha256 == request.handle.sha256 {
       let session = try await service.session(projectId: projectId, sessionId: saved.sessionId)
       if session.state == .completed {
+        let completedReceipt = try receipt(from: session.asset, request: request)
         try await recoveryStore.clear(projectId: projectId)
-        return try receipt(from: session.asset, request: request)
+        return completedReceipt
       }
-      guard session.state == .initiated || session.state == .uploading else {
+      if session.state == .initiated || session.state == .uploading {
+        // iOS may re-home an app data container during a development update. The source bytes and
+        // protected handle were re-hashed above, so bind recovery to the current canonical URL.
+        saved.fileURL = request.fileURL
+        recovery = EvidenceResumeReconciler.reconcile(
+          saved,
+          recordedPartNumbers: session.recordedPartNumbers
+        )
+      } else {
         try await recoveryStore.clear(projectId: projectId)
-        throw EvidenceServiceError.unavailable
+        if let completedReceipt = try await existingReceipt(
+          projectId: projectId,
+          request: request
+        ) {
+          return completedReceipt
+        }
+        recovery = try await createRecovery(
+          projectId: projectId,
+          request: request,
+          rights: rights,
+          selection: selection,
+          idempotencyKey:
+            "c8-recreate-\(request.handle.localIdentifier.uuidString.lowercased())-\(request.handle.sha256.prefix(16))-\(saved.sessionId)"
+        )
       }
-      recovery = EvidenceResumeReconciler.reconcile(
-        saved,
-        recordedPartNumbers: session.recordedPartNumbers
-      )
     } else {
       if let saved = savedRecovery {
-        try await service.abort(
-          projectId: projectId,
-          sessionId: saved.sessionId,
-          idempotencyKey: "c8-replace-\(saved.sessionId)"
-        )
+        let session = try await service.session(projectId: projectId, sessionId: saved.sessionId)
+        if session.state == .initiated || session.state == .uploading {
+          try await service.abort(
+            projectId: projectId,
+            sessionId: saved.sessionId,
+            idempotencyKey: "c8-replace-\(saved.sessionId)"
+          )
+        }
         try await recoveryStore.clear(projectId: projectId)
       }
-      let createKey =
-        "c8-create-\(request.handle.localIdentifier.uuidString.lowercased())-\(request.handle.sha256.prefix(16))"
-      let session = try await service.createSession(
+      if let completedReceipt = try await existingReceipt(
         projectId: projectId,
-        selection: selection,
-        sha256: request.handle.sha256,
+        request: request
+      ) {
+        return completedReceipt
+      }
+      recovery = try await createRecovery(
+        projectId: projectId,
+        request: request,
         rights: rights,
-        idempotencyKey: createKey
-      )
-      recovery = EvidenceRecoveryRecord(
-        assetId: session.asset.id,
-        completedParts: [],
-        completionKey: "c8-complete-\(session.sessionId)",
-        fileName: selection.fileName,
-        fileURL: request.fileURL,
-        kind: selection.kind,
-        partSize: session.partSize,
-        projectId: projectId,
-        sessionId: session.sessionId,
-        sha256: request.handle.sha256,
-        updatedAt: Date()
+        selection: selection,
+        idempotencyKey:
+          "c8-create-\(request.handle.localIdentifier.uuidString.lowercased())-\(request.handle.sha256.prefix(16))"
       )
     }
     guard recovery.partSize > 0,
-      recovery.partSize <= 64 * 1_024 * 1_024
+      recovery.partSize <= EvidenceTransferPolicy.maximumPartBytes
     else {
       throw EvidenceServiceError.invalidResponse
     }
@@ -537,19 +583,32 @@ actor C8ImmutableEvidenceUploader: C8ImmutableEvidenceUploading {
         ofItemAtPath: partURL.path
       )
       let checksum = try EvidenceFileSupport.checksumBase64(fileURL: partURL)
-      let signed = try await service.signPart(
-        projectId: projectId,
-        sessionId: recovery.sessionId,
-        partNumber: partNumber,
-        byteSize: length,
-        checksumSha256: checksum,
-        idempotencyKey:
-          "c8-part-\(recovery.sessionId)-\(partNumber)-\(request.handle.sha256.prefix(12))"
-      )
-      guard signed.requiredHeaders.contains(where: {
-        $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
-      }) else { throw EvidenceServiceError.checksumBindingMissing }
-      let etag = try await service.uploadPart(fileURL: partURL, signedPart: signed)
+      var etag: String?
+      for signingGeneration in 0...2 where etag == nil {
+        let signed = try await service.signPart(
+          projectId: projectId,
+          sessionId: recovery.sessionId,
+          partNumber: partNumber,
+          byteSize: length,
+          checksumSha256: checksum,
+          idempotencyKey:
+            "c8-part-\(recovery.sessionId)-\(partNumber)-\(request.handle.sha256.prefix(12))-\(signingGeneration)"
+        )
+        guard signed.requiredHeaders.contains(where: {
+          $0.key.lowercased().contains("checksum-sha256") && $0.value == checksum
+        }) else { throw EvidenceServiceError.checksumBindingMissing }
+        do {
+          etag = try await service.uploadPart(
+            projectId: projectId,
+            sessionId: recovery.sessionId,
+            fileURL: partURL,
+            signedPart: signed
+          )
+        } catch EvidenceServiceError.signedURLExpired where signingGeneration < 2 {
+          continue
+        }
+      }
+      guard let etag else { throw EvidenceServiceError.signedURLExpired }
       recovery.completedParts.append(
         CompletedEvidencePart(checksumSha256: checksum, etag: etag, partNumber: partNumber)
       )
@@ -566,16 +625,74 @@ actor C8ImmutableEvidenceUploader: C8ImmutableEvidenceUploading {
       parts: recovery.completedParts,
       idempotencyKey: recovery.completionKey
     )
+    let completedReceipt = try receipt(from: asset, request: request)
     try await recoveryStore.clear(projectId: projectId)
-    return try receipt(from: asset, request: request)
+    return completedReceipt
+  }
+
+  private func existingReceipt(
+    projectId: String,
+    request: C8ImmutableEvidenceUpload
+  ) async throws -> C8ImmutableEvidenceReceipt? {
+    let assets = try await service.list(projectId: projectId)
+    return assets
+      .compactMap { asset in try? receipt(from: asset, request: request) }
+      .sorted { left, right in
+        guard left.status == right.status else {
+          return statusRank(left.status) < statusRank(right.status)
+        }
+        return left.assetId.uuidString < right.assetId.uuidString
+      }
+      .last
+  }
+
+  private func statusRank(_ status: EvidenceStatus) -> Int {
+    switch status {
+    case .uploaded: 0
+    case .processing: 1
+    case .ready: 2
+    case .pendingUpload, .uploading, .quarantined, .rejected, .aborted: -1
+    }
+  }
+
+  private func createRecovery(
+    projectId: String,
+    request: C8ImmutableEvidenceUpload,
+    rights: EvidenceRightsAssertion,
+    selection: EvidenceSelection,
+    idempotencyKey: String
+  ) async throws -> EvidenceRecoveryRecord {
+    let session = try await service.createSession(
+      projectId: projectId,
+      selection: selection,
+      sha256: request.handle.sha256,
+      rights: rights,
+      idempotencyKey: idempotencyKey
+    )
+    return EvidenceRecoveryRecord(
+      assetId: session.asset.id,
+      completedParts: [],
+      completionKey: "c8-complete-\(session.sessionId)",
+      fileName: selection.fileName,
+      fileURL: request.fileURL,
+      kind: selection.kind,
+      partSize: session.partSize,
+      projectId: projectId,
+      sessionId: session.sessionId,
+      sha256: request.handle.sha256,
+      updatedAt: Date()
+    )
   }
 
   private func receipt(
     from asset: EvidenceAsset,
     request: C8ImmutableEvidenceUpload
   ) throws -> C8ImmutableEvidenceReceipt {
+    let expectedFileName =
+      "capture-\(request.handle.localIdentifier.uuidString.lowercased()).\(extensionFor(request.handle.mimeType))"
     guard let assetId = UUID(uuidString: asset.id),
       asset.projectId.lowercased() == request.projectId.uuidString.lowercased(),
+      asset.fileName == expectedFileName,
       asset.declaredMimeType == request.handle.mimeType.rawValue,
       asset.kind == request.handle.mimeType.evidenceKind,
       asset.source.sha256 == request.handle.sha256,

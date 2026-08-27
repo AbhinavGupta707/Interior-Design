@@ -189,7 +189,7 @@ struct EvidenceRecoveryRecord: Codable, Equatable, Sendable {
   var completedParts: [CompletedEvidencePart]
   let completionKey: String
   let fileName: String
-  let fileURL: URL
+  var fileURL: URL
   let kind: EvidenceKind
   let partSize: Int
   let projectId: String

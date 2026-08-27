@@ -2,6 +2,9 @@ import SwiftUI
 
 @main
 struct HomeDesignCaptureApp: App {
+  @UIApplicationDelegateAdaptor(HomeDesignCaptureAppDelegate.self)
+  private var applicationDelegate
+
   private let bootstrap: ConfigurationBootstrap
 
   init() {

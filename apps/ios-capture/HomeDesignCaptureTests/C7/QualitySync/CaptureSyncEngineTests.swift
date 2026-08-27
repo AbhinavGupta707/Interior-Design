@@ -404,6 +404,9 @@ private actor C7SyncServiceStub: C7CaptureServing {
   }
 
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String

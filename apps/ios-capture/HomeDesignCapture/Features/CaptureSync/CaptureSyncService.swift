@@ -46,6 +46,9 @@ protocol C7CaptureServing: Sendable {
     idempotencyKey: String
   ) async throws -> C7SignedArtifactPart
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String
@@ -59,26 +62,27 @@ protocol C7CaptureServing: Sendable {
 
 protocol C7CaptureHTTPTransport: Sendable {
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (
     Data, HTTPURLResponse
   )
 }
 
 struct C7URLSessionCaptureTransport: C7CaptureHTTPTransport, @unchecked Sendable {
   private let foregroundSession: URLSession
-  private let backgroundSession: URLSession
+  private let backgroundUploader: BackgroundFileUploadSession
 
   init(
     foregroundSession: URLSession = .shared,
-    backgroundIdentifier: String = "com.homedesignstudio.capture.c7-artifact-parts"
+    backgroundIdentifier: String = BackgroundFileUploadCoordinator.captureIdentifier
   ) {
     self.foregroundSession = foregroundSession
-    let configuration = URLSessionConfiguration.background(withIdentifier: backgroundIdentifier)
-    configuration.isDiscretionary = false
-    configuration.sessionSendsLaunchEvents = true
-    configuration.waitsForConnectivity = true
-    configuration.httpMaximumConnectionsPerHost = 2
-    backgroundSession = URLSession(configuration: configuration)
+    backgroundUploader = BackgroundFileUploadCoordinator.shared.uploader(
+      identifier: backgroundIdentifier
+    )
   }
 
   func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -89,14 +93,14 @@ struct C7URLSessionCaptureTransport: C7CaptureHTTPTransport, @unchecked Sendable
     return (data, response)
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) async throws -> (
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) async throws -> (
     Data, HTTPURLResponse
   ) {
-    let (data, response) = try await backgroundSession.upload(for: request, fromFile: fileURL)
-    guard let response = response as? HTTPURLResponse else {
-      throw C7CaptureServiceError.invalidResponse
-    }
-    return (data, response)
+    try await backgroundUploader.upload(for: request, fromFile: fileURL, context: context)
   }
 }
 
@@ -215,6 +219,9 @@ actor C7CaptureAPIClient: C7CaptureServing {
   }
 
   func uploadArtifactPart(
+    projectId: UUID,
+    captureSessionId: UUID,
+    uploadSessionId: UUID,
     fileURL: URL,
     signedPart: C7SignedArtifactPart,
     expectedChecksum: String
@@ -239,7 +246,18 @@ actor C7CaptureAPIClient: C7CaptureServing {
       request.setValue(value, forHTTPHeaderField: name)
     }
     do {
-      let (_, response) = try await transport.upload(for: request, fromFile: fileURL)
+      let (_, response) = try await transport.upload(
+        for: request,
+        fromFile: fileURL,
+        context: BackgroundUploadContext(
+          captureSessionId: captureSessionId,
+          checksumSha256: expectedChecksum,
+          namespace: .captureArtifact,
+          partNumber: signedPart.partNumber,
+          projectId: projectId,
+          uploadSessionId: uploadSessionId
+        )
+      )
       switch response.statusCode {
       case 200..<300:
         guard let etag = response.value(forHTTPHeaderField: "ETag"), !etag.isEmpty,

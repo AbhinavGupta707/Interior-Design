@@ -383,7 +383,7 @@ enum C7StrictCaptureValidator {
     let label = request.captureLabel.trimmingCharacters(in: .whitespacesAndNewlines)
     guard
       (1...120).contains(label.count),
-      request.deviceCapability == "roomplan-lidar",
+      C7CaptureDeviceCapability(rawValue: request.deviceCapability) != nil,
       request.rights.serviceProcessingConsent,
       request.rights.trainingUseConsent == "denied",
       request.expectedRoomCount.map({ (1...C7CaptureContract.maximumRoomCount).contains($0) })

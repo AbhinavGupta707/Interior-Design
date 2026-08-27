@@ -124,6 +124,9 @@ struct CaptureSecurityServiceTests {
 
     await #expect(throws: C7CaptureServiceError.checksumBindingMissing) {
       try await client.uploadArtifactPart(
+        projectId: UUID(),
+        captureSessionId: UUID(),
+        uploadSessionId: UUID(),
         fileURL: file,
         signedPart: signed,
         expectedChecksum: "synthetic-checksum"
@@ -153,6 +156,9 @@ struct CaptureSecurityServiceTests {
 
     await #expect(throws: C7CaptureServiceError.checksumBindingMissing) {
       try await client.uploadArtifactPart(
+        projectId: UUID(),
+        captureSessionId: UUID(),
+        uploadSessionId: UUID(),
         fileURL: file,
         signedPart: signed,
         expectedChecksum: "synthetic-checksum"
@@ -213,7 +219,11 @@ private actor C7HTTPTransportStub: C7CaptureHTTPTransport {
     )
   }
 
-  func upload(for request: URLRequest, fromFile fileURL: URL) -> (Data, HTTPURLResponse) {
+  func upload(
+    for request: URLRequest,
+    fromFile fileURL: URL,
+    context: BackgroundUploadContext?
+  ) -> (Data, HTTPURLResponse) {
     uploadRequests.append(request)
     return (
       Data(),

@@ -9,6 +9,10 @@ enum C14_8SubmissionStage: String, Equatable, Sendable {
   case uploadingRGB = "Uploading immutable RGB"
 }
 
+private enum C14_8SubmissionError: Error {
+  case receiptPersistence
+}
+
 enum C14_8GuidedCaptureState: Equatable, Sendable {
   case accepted(sourcesReady: Bool)
   case cameraDenied
@@ -724,9 +728,10 @@ final class C14_8GuidedCaptureModel {
     scope: UUID
   ) async {
     do {
-      var next = initialDraft
-      closeCurrentSegment(in: &next)
-      next.endedAt = next.endedAt ?? Date()
+      var next = Self.prepareSubmissionDraft(initialDraft, at: Date())
+      try await journal.save(next)
+      try assertCurrent(scope: scope, projectId: projectId)
+      draft = next
       if next.captureSession == nil {
         state = .submitting(stage: .creatingSession, progress: 0)
         let session = try await captureService.createSession(
@@ -781,18 +786,23 @@ final class C14_8GuidedCaptureModel {
         guard [.uploaded, .processing, .ready].contains(receipt.status) else {
           throw C14_8ContractError.invalidEvidence
         }
-        next.mediaReceipts.append(
-          C14_8MediaReceipt(
-            localIdentifier: handle.localIdentifier,
-            receipt: receipt,
-            transferPartCount: max(
-              1,
-              Int(ceil(Double(handle.byteSize) / Double(C7CaptureContract.uploadPartSizeBytes)))
-            )
+        let mediaReceipt = C14_8MediaReceipt(
+          localIdentifier: handle.localIdentifier,
+          receipt: receipt,
+          transferPartCount: max(
+            1,
+            Int(ceil(Double(handle.byteSize) / Double(C7CaptureContract.uploadPartSizeBytes)))
           )
         )
-        next.updatedAt = Date()
-        try await journal.save(next)
+        do {
+          next = try await journal.recordMediaReceipt(
+            projectId: projectId,
+            receipt: mediaReceipt
+          )
+        } catch {
+          throw C14_8SubmissionError.receiptPersistence
+        }
+        try assertCurrent(scope: scope, projectId: projectId)
         draft = next
       }
       let uploadedDepthIds = Set(next.depthReceipts.map(\.sampleId))
@@ -840,13 +850,206 @@ final class C14_8GuidedCaptureModel {
         message: "Upload paused offline. Protected receipts will reconcile on retry.",
         retryable: true
       )
-    } catch {
+    } catch C14_8SubmissionError.receiptPersistence {
       guard scope == activationId else { return }
       state = .failed(
-        message: "Submission stopped without accepting an envelope. Immutable completed uploads remain resumable.",
+        message: "A completed RGB upload could not be committed to the protected capture journal. The server copy remains immutable and will be reconciled without re-uploading.",
         retryable: true
       )
+    } catch {
+      guard scope == activationId else { return }
+      state = Self.submissionFailure(for: error)
     }
+  }
+
+  static func submissionFailure(for error: any Error) -> C14_8GuidedCaptureState {
+    if error is C14_8ContractError || error is C14_8ProtectedStoreError {
+      return .failed(
+        message: "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
+        retryable: false
+      )
+    }
+
+    if let evidenceError = error as? EvidenceServiceError {
+      switch evidenceError {
+      case .offline:
+        return .failed(
+          message: "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
+          retryable: true
+        )
+      case .unavailable:
+        return .failed(
+          message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+          retryable: true
+        )
+      case .expired:
+        return .failed(
+          message: "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
+          retryable: true
+        )
+      case .forbidden:
+        return .failed(
+          message: "The current project role is not authorised to upload this capture. No envelope was accepted.",
+          retryable: false
+        )
+      case .signedURLExpired:
+        return .failed(
+          message: "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
+          retryable: true
+        )
+      case .checksumBindingMissing:
+        return .failed(
+          message: "The upload service did not bind a transfer to its expected checksum. Transfer stopped without accepting an envelope.",
+          retryable: false
+        )
+      case .invalidResponse:
+        return .failed(
+          message: "The capture service response did not match the accepted upload contract. No envelope was accepted.",
+          retryable: false
+        )
+      case .unsupported:
+        return .failed(
+          message: "A retained capture artifact does not meet the immutable upload contract. No envelope was accepted.",
+          retryable: false
+        )
+      }
+    }
+
+    if let captureError = error as? C7CaptureServiceError {
+      switch captureError {
+      case .offline:
+        return .failed(
+          message: "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
+          retryable: true
+        )
+      case .unavailable:
+        return .failed(
+          message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+          retryable: true
+        )
+      case .authenticationExpired:
+        return .failed(
+          message: "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
+          retryable: true
+        )
+      case .forbidden:
+        return .failed(
+          message: "The current project role is not authorised to submit this capture. No envelope was accepted.",
+          retryable: false
+        )
+      case .captureExpired:
+        return .failed(
+          message: "The server-issued capture brief expired. Protected local evidence remains available, but a fresh scoped capture session is required.",
+          retryable: false
+        )
+      case .signedURLExpired:
+        return .failed(
+          message: "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
+          retryable: true
+        )
+      case .conflict:
+        return .failed(
+          message: "The server and protected capture journal disagree. Refresh before retrying; no envelope was accepted.",
+          retryable: true
+        )
+      case .checksumBindingMissing, .checksumMismatch:
+        return .failed(
+          message: "Immutable upload checksum validation failed. Transfer stopped without accepting an envelope.",
+          retryable: false
+        )
+      case .rightsWithdrawn:
+        return .failed(
+          message: "Service-processing rights were withdrawn. Upload and envelope acceptance remain blocked.",
+          retryable: false
+        )
+      case .invalidResponse:
+        return .failed(
+          message: "The capture service response did not match the accepted capture contract. No envelope was accepted.",
+          retryable: false
+        )
+      case .cancelled:
+        return .review
+      }
+    }
+
+    return .failed(
+      message: "Submission stopped without accepting an envelope. Immutable completed uploads remain resumable.",
+      retryable: true
+    )
+  }
+
+  /// Submission can be retried after process termination or a service outage. Once `endedAt` is
+  /// present, the ARKit segment timeline is immutable: extending its last segment on a later retry
+  /// would place evidence after the already-declared capture end and invalidate the journal.
+  static func prepareSubmissionDraft(
+    _ initialDraft: C14_8GuidedCaptureDraft,
+    at now: Date
+  ) -> C14_8GuidedCaptureDraft {
+    var next = initialDraft
+    if next.endedAt == nil {
+      if let index = next.segments.indices.last {
+        let elapsed = min(
+          C14_8CaptureContract.maximumDurationMicroseconds - 1,
+          max(0, Int64(now.timeIntervalSince(next.createdAt) * 1_000_000))
+        )
+        next.segments[index].endedAtMicroseconds = min(
+          C14_8CaptureContract.maximumDurationMicroseconds,
+          max(next.segments[index].startedAtMicroseconds + 1, elapsed)
+        )
+      }
+      next.endedAt = now
+    }
+    next.updatedAt = max(now, next.updatedAt.addingTimeInterval(0.001))
+    return next
+  }
+
+  /// Capture samples and coordinate segments use integer microseconds, while the accepted JSON
+  /// timestamps use millisecond-precision ISO-8601. Canonicalise the outer interval so precision
+  /// loss can never place a retained segment just beyond the envelope's wire-visible end.
+  static func canonicalWireTimeline(
+    startedAt: Date,
+    endedAt: Date,
+    requiredEndMicroseconds: Int64
+  ) throws -> (startedAt: String, endedAt: String) {
+    guard requiredEndMicroseconds > 0,
+      requiredEndMicroseconds <= C14_8CaptureContract.maximumDurationMicroseconds
+    else { throw C14_8ContractError.invalidEvidence }
+
+    let wireStartedAt = C7ISO8601.string(from: startedAt)
+    guard let parsedStart = C7ISO8601.date(from: wireStartedAt) else {
+      throw C14_8ContractError.invalidEvidence
+    }
+    let startMilliseconds = Int64((parsedStart.timeIntervalSince1970 * 1_000).rounded())
+    let requiredDurationMilliseconds = (requiredEndMicroseconds + 999) / 1_000
+    let maximumDurationMilliseconds = C14_8CaptureContract.maximumDurationMicroseconds / 1_000
+    let actualEndMilliseconds = Int64(ceil(endedAt.timeIntervalSince1970 * 1_000))
+    var endMilliseconds = max(
+      actualEndMilliseconds,
+      startMilliseconds + requiredDurationMilliseconds
+    )
+    endMilliseconds = min(
+      endMilliseconds,
+      startMilliseconds + maximumDurationMilliseconds
+    )
+
+    for _ in 0...1 {
+      let wireEndedAt = C7ISO8601.string(
+        from: Date(timeIntervalSince1970: Double(endMilliseconds) / 1_000)
+      )
+      guard let parsedEnd = C7ISO8601.date(from: wireEndedAt) else {
+        throw C14_8ContractError.invalidEvidence
+      }
+      let encodedDurationMicroseconds = Int64(
+        (parsedEnd.timeIntervalSince(parsedStart) * 1_000).rounded()
+      ) * 1_000
+      if encodedDurationMicroseconds >= requiredEndMicroseconds,
+        encodedDurationMicroseconds <= C14_8CaptureContract.maximumDurationMicroseconds
+      {
+        return (startedAt: wireStartedAt, endedAt: wireEndedAt)
+      }
+      endMilliseconds += 1
+    }
+    throw C14_8ContractError.invalidEvidence
   }
 
   private func buildEnvelope(
@@ -857,6 +1060,14 @@ final class C14_8GuidedCaptureModel {
       let endedAt = draft.endedAt,
       draft.mediaReceipts.count == draft.keyframes.count
     else { throw C14_8ContractError.invalidEvidence }
+    guard let requiredEndMicroseconds = draft.segments.map(\.endedAtMicroseconds).max() else {
+      throw C14_8ContractError.invalidEvidence
+    }
+    let wireTimeline = try Self.canonicalWireTimeline(
+      startedAt: draft.createdAt,
+      endedAt: endedAt,
+      requiredEndMicroseconds: requiredEndMicroseconds
+    )
     let receiptByLocal = Dictionary(
       uniqueKeysWithValues: draft.mediaReceipts.map { ($0.localIdentifier, $0) }
     )
@@ -927,7 +1138,7 @@ final class C14_8GuidedCaptureModel {
           widthPixels: $0.widthPixels
         )
       },
-      endedAt: C7ISO8601.string(from: endedAt),
+      endedAt: wireTimeline.endedAt,
       generator: C14_8EnvelopeGenerator(name: "ios-guided-capture", version: capabilities.appVersion),
       intent: draft.rooms.count > 1 ? "small-apartment" : "room-by-room",
       mediaSources: mediaSources,
@@ -941,7 +1152,7 @@ final class C14_8GuidedCaptureModel {
       roomPlanSources: draft.roomPlanSources,
       rooms: draft.rooms,
       schemaVersion: C14_8CaptureContract.envelopeSchemaVersion,
-      startedAt: C7ISO8601.string(from: draft.createdAt),
+      startedAt: wireTimeline.startedAt,
       transferState: "complete"
     )
   }
