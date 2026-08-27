@@ -9,7 +9,7 @@ import { applyC3Migration } from "../../src/c3.js";
 import { applyC4Migration } from "../../src/c4.js";
 import { applyC5Migration } from "../../src/c5.js";
 import { applyC6Migration } from "../../src/c6.js";
-import { applyC14_8Migration, applyC7Migration } from "../../src/c7.js";
+import { applyC14_8MigrationLifecycle, applyC7Migration } from "../../src/c7.js";
 import { applyC8Migration } from "../../src/c8.js";
 import { PostgresCaptureBackend } from "../../src/modules/capture/postgres.js";
 import type {
@@ -239,7 +239,7 @@ describeWithPostgres("C14.8 live Postgres capture-envelope boundary", () => {
     await applyC6Migration(sql);
     await applyC7Migration(sql);
     await applyC8Migration(sql);
-    await applyC14_8Migration(sql);
+    await applyC14_8MigrationLifecycle(sql);
   });
 
   afterAll(async () => sql.end({ timeout: 5 }));

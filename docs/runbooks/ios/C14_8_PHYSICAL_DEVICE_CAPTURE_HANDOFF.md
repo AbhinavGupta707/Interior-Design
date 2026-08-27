@@ -29,6 +29,18 @@ Apple ID or provisioning identifiers in Git.
 
 ## Build and preflight
 
+Before installing the app, apply repository migrations through C8 and then run the ordered C14.8
+capture migration against the same non-production database:
+
+```sh
+C7_DATABASE_URL='<authorised-non-production-database>' \
+  pnpm --filter @interior-design/platform-api exec tsx src/c7.ts migrate-c14-8
+```
+
+Confirm `/health/ready` reports both `c7-database` and
+`c14-8-capture-envelope-database` as ready. The explicit command reapplies C7 idempotently before
+`0015`; it does not create or substitute the separately required C8 migration.
+
 ```sh
 git fetch origin
 git checkout <exact-c14-8-pr-head>

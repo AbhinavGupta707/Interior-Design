@@ -184,20 +184,18 @@ async function firstExistingPath(candidates: readonly string[]): Promise<string>
   throw new Error("The required C7 migration file could not be located.");
 }
 
-export async function applyC7Migration(sql: Sql, filePath?: string): Promise<void> {
-  const resolvedPath =
+async function resolveC7MigrationPath(filePath?: string): Promise<string> {
+  return (
     filePath ??
     (await firstExistingPath([
       path.resolve(process.cwd(), "services/platform-api/migrations/0007_native_capture.sql"),
       path.resolve(process.cwd(), "migrations/0007_native_capture.sql"),
-    ]));
-  await sql.begin(async (transaction) => {
-    await transaction.file(resolvedPath);
-  });
+    ]))
+  );
 }
 
-export async function applyC14_8Migration(sql: Sql, filePath?: string): Promise<void> {
-  const resolvedPath =
+async function resolveC14_8MigrationPath(filePath?: string): Promise<string> {
+  return (
     filePath ??
     (await firstExistingPath([
       path.resolve(
@@ -205,21 +203,68 @@ export async function applyC14_8Migration(sql: Sql, filePath?: string): Promise<
         "services/platform-api/migrations/0015_device_neutral_capture_envelopes.sql",
       ),
       path.resolve(process.cwd(), "migrations/0015_device_neutral_capture_envelopes.sql"),
-    ]));
+    ]))
+  );
+}
+
+export async function applyC7Migration(sql: Sql, filePath?: string): Promise<void> {
+  const resolvedPath = await resolveC7MigrationPath(filePath);
   await sql.begin(async (transaction) => {
     await transaction.file(resolvedPath);
   });
 }
 
-async function runAdminCommand(command: string | undefined): Promise<void> {
-  if (!["migrate", "migrate-c14-8", "expire", "migrate-and-expire"].includes(command ?? "")) {
-    throw new Error("Expected one of: migrate, migrate-c14-8, expire, migrate-and-expire.");
+export async function applyC14_8Migration(sql: Sql, filePath?: string): Promise<void> {
+  const resolvedPath = await resolveC14_8MigrationPath(filePath);
+  await sql.begin(async (transaction) => {
+    await transaction.file(resolvedPath);
+  });
+}
+
+export async function applyC14_8MigrationLifecycle(
+  sql: Sql,
+  paths: { readonly c7?: string; readonly c14_8?: string } = {},
+): Promise<void> {
+  const [c7Path, c14_8Path] = await Promise.all([
+    resolveC7MigrationPath(paths.c7),
+    resolveC14_8MigrationPath(paths.c14_8),
+  ]);
+  await sql.begin(async (transaction) => {
+    // Reapplying 0007 can temporarily restore its older trigger definitions. Keeping both files in
+    // one transaction prevents a failed C14.8 upgrade from exposing an old trigger behind a
+    // previously recorded 0015 marker.
+    await transaction.file(c7Path);
+    await transaction.file(c14_8Path);
+  });
+}
+
+export function c7AdminMigrationTargets(command: string | undefined): readonly ("c7" | "c14-8")[] {
+  switch (command) {
+    case "migrate":
+    case "migrate-and-expire":
+      return ["c7"];
+    case "migrate-c14-8":
+      // The additive envelope migration depends on the C7 tables as well as the separately
+      // applied C8 migration. Reapplying 0007 is idempotent and keeps this documented entrypoint
+      // safe when a composed environment has C8 but has not yet initialized C7.
+      return ["c7", "c14-8"];
+    case "expire":
+      return [];
+    default:
+      throw new Error("Expected one of: migrate, migrate-c14-8, expire, migrate-and-expire.");
   }
+}
+
+async function runAdminCommand(command: string | undefined): Promise<void> {
+  const migrationTargets = c7AdminMigrationTargets(command);
   const runtimeEnvironment = runtimeEnvironmentSchema.parse(process.env.NODE_ENV ?? "development");
   const sql = createC1Sql(databaseUrl(runtimeEnvironment, process.env, undefined));
   try {
-    if (command === "migrate" || command === "migrate-and-expire") await applyC7Migration(sql);
-    if (command === "migrate-c14-8") await applyC14_8Migration(sql);
+    if (migrationTargets.length === 2) {
+      await applyC14_8MigrationLifecycle(sql);
+    } else if (migrationTargets[0] === "c7") {
+      await applyC7Migration(sql);
+    }
     let expiredSessions = 0;
     if (command === "expire" || command === "migrate-and-expire") {
       const storage = new S3AssetObjectStorage(

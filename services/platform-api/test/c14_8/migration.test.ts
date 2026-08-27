@@ -2,8 +2,13 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { c7AdminMigrationTargets } from "../../src/c7.js";
+
 const migrationPath = fileURLToPath(
   new URL("../../migrations/0015_device_neutral_capture_envelopes.sql", import.meta.url),
+);
+const c7RunbookPath = fileURLToPath(
+  new URL("../../../../docs/runbooks/development/c7-native-capture.md", import.meta.url),
 );
 
 describe("C14.8 device-neutral capture migration", () => {
@@ -40,5 +45,18 @@ describe("C14.8 device-neutral capture migration", () => {
     expect(sql).toContain("envelope_sha256 ~ '^[0-9a-f]{64}$'");
     expect(sql).toContain("source_sha256 ~ '^[0-9a-f]{64}$'");
     expect(sql).not.toContain("training_use_consent text");
+  });
+
+  it("keeps the documented composed migration path ordered and readiness-aware", async () => {
+    expect(c7AdminMigrationTargets("migrate-c14-8")).toEqual(["c7", "c14-8"]);
+    expect(c7AdminMigrationTargets("migrate")).toEqual(["c7"]);
+    expect(c7AdminMigrationTargets("migrate-and-expire")).toEqual(["c7"]);
+    expect(c7AdminMigrationTargets("expire")).toEqual([]);
+    expect(() => c7AdminMigrationTargets("unknown")).toThrow(/Expected one of/u);
+
+    const runbook = await readFile(c7RunbookPath, "utf8");
+    expect(runbook).toContain("tsx src/c7.ts migrate-c14-8");
+    expect(runbook).toContain("c14-8-capture-envelope-database");
+    expect(runbook).toMatch(/do not\s+apply `0015`/u);
   });
 });
