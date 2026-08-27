@@ -42,6 +42,12 @@ only its verified private input handoff was prepared.
   `codex/c14-8-physical-device-acceptance`, exact synchronized base
   `da017f6259cada36a59a6b906459c6514386c279`, source correction head
   `b89d6e24df1270c44acecc830cfc6a278021d137`. No subagent or implementation lane was used.
+- Independent physical-PR review: a separate `gpt-5.6-sol` / `xhigh` primary froze PR #13 at
+  exact original head `0ef5955f01bcc49c372fce02314dc4602e832053` against exact base
+  `da017f6259cada36a59a6b906459c6514386c279`. One same-checkout, read-only Terra/high correctness
+  reviewer was admitted; no task or worktree was created. Sol independently validated the finding,
+  owned the correction in `62a1fc26cd0581e7edd6d59824c3b7ee5d012d25`, and retained all
+  verification, merge and cleanup authority.
 - The user-owned root `AGENTS.md` modification remained untouched and outside every checkpoint
   commit.
 
@@ -109,16 +115,33 @@ signed access responses. Each correction has a focused regression. Production si
 authorization, source immutability, consent separation and proposal-only authority were not
 weakened.
 
+Independent PR #13 review found one additional material lifecycle gap: the background URL sessions
+requested relaunch events, but the app had no `UIApplicationDelegate` completion bridge and the
+task-to-upload relationship existed only in process memory. Correction
+`62a1fc26cd0581e7edd6d59824c3b7ee5d012d25` adds an app-owned coordinator, fixed C2/C7 session
+identifiers, lifecycle reattachment, and a bounded protected recovery record containing only scope
+UUIDs, checksum, part number, status and ETag. Signed URLs, request headers, credentials, object
+keys, source paths and response bodies are never retained. Only a successful 2xx result with a
+bounded valid ETag can be recovered; expired/403 authority is discarded so retry must obtain a
+fresh signed part.
+
+No physical recapture was required. The correction does not change source bytes, upload request
+bytes or headers, multipart identity, server validation, canonical envelope bytes, the accepted
+Capture Envelope SHA-256, or the export manifest. It changes only protected bookkeeping and
+process-relaunch reattachment around the same uninterrupted upload path. The previously recorded
+installed-app hash remains the identity of the binary actually used for physical capture; the new
+correction is software/Simulator and Release-build evidence and is not relabelled as a physical
+process-termination run.
+
 ## Simulator evidence
 
 The complete native unit suite passed again during independent review: 196 logical tests / 203
 device invocations with zero failures or skips on the iPhone 17 Pro Max Simulator, iOS 26.4
-(23E244). The review result bundle is
-`/private/tmp/c14-8-pr11-native.o0k9oi/C14_8NativeTests.xcresult`.
+(23E244). The review result bundle was retained only as an ephemeral local artifact.
 Normal Simulator signing was retained for this runtime test so the pre-existing Keychain
 round-trip exercised its local entitlement; unsigned builds remain compile-only gates.
-The guided-journey UI suite remains 1/1 from the unchanged native tree at the frozen PR input from
-`/tmp/c14-8-final-ui-derived/Logs/Test/Test-HomeDesignCapture-2026.08.27_00-51-49-+0100.xcresult`.
+The guided-journey UI suite remains 1/1 from the unchanged native tree at the frozen PR input; its
+result bundle was retained only as an ephemeral local artifact.
 The UI fixture visibly reports synthetic capability, exercises the optional capture entry from the
 homeowner hub, room coverage and quality guidance, explicit incomplete acceptance and return to the
 ordinary homeowner product.
@@ -144,16 +167,16 @@ Retained visual evidence:
 | C14 source/control-plane gate               | Passed; optional composed control-plane case remained unconfigured and is separate from the live C14.8 gate   |
 | Generated contract drift                    | Passed: `node packages/api-contracts/scripts/generate.mjs --check`                                            |
 | Dependency and API seam gates               | Passed: 3 boundary tests and 21 API seam tests                                                                |
-| Complete native unit suite                  | Re-passed: 196 logical tests / 203 device invocations, zero failures/skips                                    |
+| Complete native unit suite                  | Post-review pass: 209 tests (104 XCTest + 105 Swift Testing), zero failures                                   |
 | Complete native UI suite                    | Passed on corrected source head: 32/32 on iPhone 17 Pro Max Simulator, iOS 26.4                               |
 | Guided C14.8 Simulator UI journey           | Passed on unchanged native tree: 1/1 on iPhone 17 Pro Max Simulator, iOS 26.4 (23E244)                        |
-| XcodeGen regeneration                       | Byte-stable: `6ef49f967fd7de51b5b35da57461b90ac9914031c0fc7352cfd4121cd927914a`                               |
-| Release builds and analysis                 | Release builds re-passed on unchanged native tree; prior Release analysis remains passed                      |
+| XcodeGen regeneration                       | Post-review byte-stable: `48e49c6693020cd1518cec9d03ef1f0a0dae9111fd88266b34af34a557ae9f4c`                   |
+| Release builds and analysis                 | Post-review unsigned generic-iOS Release build and Release analysis passed                                    |
 | C14.8 Release-fixture exclusion             | Passed on Simulator and generic iOS products; no scenario, fixture view/engine or fixture-journey text        |
 | Physical Apple-device matrix                | Passed one non-LiDAR baseline: iPhone 12/iOS 26.6, 26 RGB+ARKit samples, interruption/recovery and acceptance |
-| Private C14.9 export/verifier               | Passed: exact physical envelope and 26 originals; offline manifest verification; private storage only         |
+| Private C14.9 export/verifier               | Source retained; durable copy re-passed: 28 protected regular files; no links or special files                |
 | Windows / RTX 5080 reconstruction benchmark | `NOT RUN`: verified input handoff only; no candidate run or production integration                            |
-| Independent contract/privacy/state audit    | Three additional material replay/envelope findings corrected; prior migration correction retained             |
+| Independent contract/privacy/state audit    | Prior findings retained; PR #13 lifecycle reattachment gap corrected and regression-tested                    |
 
 Xcode 26.4's default batch-mode compilation hit a compiler macro diagnostic in the pre-existing C7
 Swift Testing declarations (`@const value should be initialized with a compile-time value`). The
@@ -220,7 +243,8 @@ Windows checkout to synchronize to the exact merged head under
 ## Residual limits
 
 - This is one room and one device baseline, not the full device/OS, deny-then-grant, offline,
-  expired-URL, role/rights withdrawal, storage-pressure, thermal or accessibility matrix.
+  process-termination, expired-URL, role/rights withdrawal, storage-pressure, thermal or
+  accessibility matrix. Relaunch completion is software-tested but not physically exercised.
 - The two coordinate segments remain independent; no cross-segment transform or common scale was
   inferred. One coverage cell is missing and one is user-declared occluded.
 - Windows results require the merged correction head and remain evaluation-only even after a run;

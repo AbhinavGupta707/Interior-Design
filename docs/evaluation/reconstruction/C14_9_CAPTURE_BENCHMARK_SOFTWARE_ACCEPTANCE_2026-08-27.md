@@ -165,3 +165,25 @@ The first physical run still requires:
 
 No physical run may promote production routing or canonical geometry. Experimental execution still
 requires every frozen source, licence, weight, lock, submodule, path, and image gate.
+
+## Post-record physical input handoff — 2026-08-28
+
+The later C14.8 non-LiDAR follow-up satisfied the private-input portions of requirements 1–3 for one
+accepted physical envelope. Its canonical Capture Envelope SHA-256 is
+`093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`, and its privacy-minimised
+export-manifest SHA-256 is
+`e3aeaed3925640c25f35e252f84b358efdcbdc424ff39cef781a69416504db74`. Before PR #13 review, the
+complete authoritative export was retained in both its source location and durable local non-cloud
+private storage. The official head-matched offline verifier re-passed the durable copy with exactly
+28 protected regular files, no links and no special files; the authoritative source remained
+unchanged and neither private path is recorded here.
+
+Independent review of PR #13 corrected only application lifecycle reattachment and protected
+non-secret bookkeeping for process-terminated background uploads. It did not change the accepted
+envelope, manifest, original media, multipart identity, server authority or any C14.9 selection,
+camera-convention, verifier or benchmark contract. Physical recapture was therefore not required,
+and the new lifecycle behavior is not claimed as physical-device evidence.
+
+Requirement 4 and the benchmark portions of requirements 5–6 remain `NOT RUN` for this physical
+input: no Windows/RTX candidate cohort, repeatability/resource matrix, ground truth, accuracy or
+production promotion was executed or inferred.
