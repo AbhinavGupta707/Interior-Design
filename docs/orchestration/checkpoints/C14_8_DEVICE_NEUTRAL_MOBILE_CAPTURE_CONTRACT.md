@@ -5,7 +5,11 @@
 - Checkpoint: C14.8
 - Immutable predecessor: merged `origin/main` at `f41123f75bad8f70770a499a78638f2f1fb06d84`
 - Integration branch: `codex/c14-8-device-neutral-mobile-capture`
-- Execution: one `gpt-5.6-sol` primary session at `xhigh`; Sol is the sole implementation writer and completion authority. No worktree or parallel implementation lane is authorised. At most one same-checkout, read-only Terra/high final audit may inspect the frozen final head.
+- Authoring execution: one `gpt-5.6-sol` primary session at `xhigh`; Sol is the sole implementation
+  writer and completion authority. No worktree or parallel implementation lane is authorised. At
+  most one same-checkout, read-only Terra/high audit was authorised for that authoring review. A
+  later user-authorised independent merge review is recorded below under its separate delegation
+  gate.
 - Outcome: the standalone homeowner iOS app offers a camera-first, room-by-room guided capture branch on ordinary ARKit-capable iPhones, including the non-LiDAR iPhone 12 class, while depth and RoomPlan remain optional additional evidence. The server accepts one immutable, versioned, device-neutral Capture Envelope and may start the existing C8 proposal workflow only from exact ready sources.
 
 This corrective checkpoint closes the software boundary and Simulator journey. It cannot close physical-camera, ARKit, LiDAR, RoomPlan, representative-home, production reconstruction, or Windows/CUDA acceptance without the named hardware evidence.
@@ -70,9 +74,9 @@ C14.8 therefore adds one boundary rather than replacing those checkpoints:
 
 ## Independent review and software PR
 
-- Frozen review input: `179336aa123e9285c770c212579c6f22902eceb2` against exact base
+- Authoring review input: `179336aa123e9285c770c212579c6f22902eceb2` against exact base
   `f41123f75bad8f70770a499a78638f2f1fb06d84`.
-- Review runtime: one permitted same-checkout, read-only Terra/high contract reviewer. It inspected
+- Authoring review runtime: one permitted same-checkout, read-only Terra/high contract reviewer. It inspected
   the committed capture-envelope, privacy/consent, authorization, immutable-source, optional
   depth/RoomPlan, state-isolation, Release-fixture and evidence-claim boundaries. It made no edits;
   Sol remained the sole writer and materiality/completion authority.
@@ -84,9 +88,25 @@ C14.8 therefore adds one boundary rather than replacing those checkpoints:
   versus composed readiness, and tests the command/runbook path. The reviewer reported no other
   material authority, privacy, evidence-binding, state-isolation, fixture or overclaiming defect.
 - Integration vehicle: non-draft PR
-  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11). This session must not merge it.
+  [#11](https://github.com/AbhinavGupta707/Interior-Design/pull/11).
+- Independent merge-review input: exact PR head
+  `91581c3d7e90850e0cc5a7d752359639b0ff0fc5` against the same exact base. A separate
+  `gpt-5.6-sol` / `xhigh` primary retained all materiality, correction, verification, merge and
+  cleanup authority. Its delegation gate admitted one context-minimal Terra/high read-only native
+  audit; that audit made no edit and ran no repository-wide suite.
+- Independent corrections: `dcf1b4f` binds the mandatory RGB-keyframe capability to the actual
+  accepted source set, revalidates current rights/source visibility before returning acceptance
+  replay, and rejects a changed C8 reconstruction request after an envelope-to-job link exists.
+- Live PostgreSQL closure: an empty applicable C1-C8 database plus `0015` passed 2/2 persisted
+  C14.8 cases; an exact-base `0001`-`0014` database upgraded through the composed lifecycle to all
+  `0001`-`0015` markers and passed an idempotent lifecycle rerun. Real route authorization proved
+  viewer mutation denial, owner attribution, same-tenant viewer read and foreign-tenant hiding.
 - The closeout head must pass all four named `ci.yml` jobs. Earlier green checks do not transfer.
 
 ## Terminal rule
 
-C14.8 may be called software-complete only when the final reviewed SHA passes every affected software gate and one non-draft PR is open. Physical Apple-device capture and Windows reconstruction benchmarking remain separately unaccepted until their exact evidence is recorded. The PR must not be merged by this session.
+C14.8 may be called software-complete only when the final reviewed SHA passes every affected
+software gate and all four named GitHub checks. The user's later independent-review instruction
+supersedes only the authoring session's leave-unmerged disposition: after those exact-SHA checks,
+PR #11 may be merged normally without squash or rebase. Physical Apple-device capture and Windows
+reconstruction benchmarking remain separately unaccepted until their exact evidence is recorded.

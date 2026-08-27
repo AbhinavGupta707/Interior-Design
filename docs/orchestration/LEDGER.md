@@ -1356,3 +1356,40 @@
   transfer. PR #11 must not be merged by this session.
 - The user-owned root `AGENTS.md` modification remains present, untouched and excluded from every
   checkpoint commit.
+
+### Independent merge review — 2026-08-27
+
+- Authority: the user's later instruction supersedes only the earlier leave-unmerged disposition.
+  Primary `gpt-5.6-sol` / `xhigh` owns materiality, corrections, final verification, merge and
+  cleanup. The exact frozen input was PR #11 head
+  `91581c3d7e90850e0cc5a7d752359639b0ff0fc5` against base
+  `f41123f75bad8f70770a499a78638f2f1fb06d84`. No worktree or separate task was used.
+- Delegation gate: one context-minimal Terra/high same-checkout read-only audit inspected only the
+  native C14.8 diff and relevant tests. It made no edit, ran only `git diff --check`, and reported no
+  confirmed material native defect. Sol independently inspected the highest-risk native, contract,
+  persistence, rights, replay, C8-proposal, migration and evidence paths.
+- Correction `dcf1b4f` closes three material defects: the mandatory RGB-keyframe capability must
+  match a retained keyframe source; acceptance replay must revalidate current rights and source
+  visibility; and an existing linked C8 job cannot silently replay a changed reconstruction
+  appearance request. No canonical, operation, fusion, scene, design or render authority changed.
+- Disposable PostgreSQL 16.14 under `/private/tmp/interior-design-pr11-pg.gO0yZE` closed the prior
+  live-database gap. A brand-new applicable C1-C8 plus `0015` database passed 2/2 C14.8 cases with
+  real accepted-envelope persistence, append-only enforcement, current-rights replay denial,
+  viewer-mutation denial, owner attribution, same-tenant viewer read, foreign-tenant hiding and zero
+  canonical snapshots for the tested projects. A second database applied exact-base migrations
+  `0001`-`0014`, upgraded via `migrate-c14-8` to all `0001`-`0015` markers and passed an idempotent
+  lifecycle rerun. Docker/Supabase's earlier `EOF` is historical, not a remaining gate.
+- Final local regression before evidence closeout: `pnpm verify` passed all 24 lint, typecheck and
+  build tasks, shared contracts 93/93, platform 264 plus the separate live 2/2, spatial 150/3
+  optional-runtime skips, Python 157/2 skips, authorization 921/921, C14, API 21/21 and dependency
+  boundary 3/3 gates. XcodeGen remained byte-stable at
+  `6ef49f967fd7de51b5b35da57461b90ac9914031c0fc7352cfd4121cd927914a`; the complete native unit
+  target re-passed 196 logical tests / 203 device invocations, and unsigned Release Simulator plus
+  generic-iOS products contained none of the C14.8 fixture scenario/view/engine/key/text.
+- Merge rule: the final evidence commit becomes the reviewed PR head. All four named GitHub
+  `ci.yml` checks must be successful on that exact SHA before normal merge. Earlier green checks do
+  not transfer. After merge, synchronize clean `main`, preserve the user-owned `AGENTS.md` change
+  and remove only disposable review infrastructure and merged branch refs.
+- Still outside review: no physical Apple-device camera, RGB delivery, ARKit pose/intrinsics,
+  interruption/background/relaunch, scene depth, RoomPlan, thermal, accessibility or
+  representative-home acceptance; no Windows/RTX 5080 candidate run or production promotion.
