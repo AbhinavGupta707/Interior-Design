@@ -1393,3 +1393,25 @@
 - Still outside review: no physical Apple-device camera, RGB delivery, ARKit pose/intrinsics,
   interruption/background/relaunch, scene depth, RoomPlan, thermal, accessibility or
   representative-home acceptance; no Windows/RTX 5080 candidate run or production promotion.
+
+## C14.9 — Capture Envelope export and software benchmark
+
+### Activation and contract freeze — 2026-08-27
+
+- Authority: user instruction dated 2026-08-27 after normal merge of corrected PR #11 at
+  `9009e0444c8ea15ae2f7f2bb7abc82b338955165`.
+- Frozen base: clean synchronized `origin/main` at that exact commit.
+- Integration branch: `codex/c14-9-capture-benchmark`.
+- Runtime/ownership: one primary `gpt-5.6-sol` / `xhigh` session; no subagent, implementation lane,
+  separate task or worktree. One non-draft PR will be opened and left unmerged.
+- Contract: `docs/orchestration/checkpoints/C14_9_CAPTURE_ENVELOPE_BENCHMARK_CONTRACT.md`.
+- Boundary: additive owner/editor-only C7 raw-artifact export access and package metadata read;
+  secure exporter/verifier; deterministic selection, baseline adapters, quarantined experimental
+  registry, common metrics/repeatability/resources and offline non-production routing evaluator.
+  No migration, root lock, generated client, native, canonical, production C8 or C9 change.
+- Candidate licence truth: VGGT is registered but blocked on agreement and a visible exact weight
+  hash; MASt3R is CC BY-NC-SA 4.0 evaluation-only; Video Depth Anything Small is Apache-2.0 and its
+  actual weight-bearing revision is `273d090f2ce17df50c2872d82c8322c45da5b4dd`.
+- Initial claim boundary: software and synthetic/public fixture executability only. No real Capture
+  Envelope, physical Apple-device, representative-home, physical accuracy, production promotion or
+  canonical mutation is accepted or claimed.
