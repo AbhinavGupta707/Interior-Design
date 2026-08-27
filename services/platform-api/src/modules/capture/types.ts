@@ -1,6 +1,7 @@
 import type {
   Actor,
   CaptureEnvelopeRecord,
+  CaptureArtifactAccessResponse,
   CaptureArtifactUploadSession,
   CaptureProposalResult,
   CaptureSession,
@@ -77,6 +78,14 @@ export interface FinalizeCapturePackageCommand extends CaptureSessionMutationCom
   readonly request: CreateCapturePackageRequest;
 }
 
+export interface AccessCaptureArtifactCommand {
+  readonly actor: Actor;
+  readonly artifactId: string;
+  readonly captureSessionId: string;
+  readonly correlation: CaptureCorrelation;
+  readonly projectId: string;
+}
+
 export interface AcceptCaptureEnvelopeCommand extends CaptureSessionMutationCommand {
   readonly request: CreateCaptureEnvelopeRequest;
 }
@@ -96,6 +105,7 @@ export interface MutationResult<T> {
 }
 
 export interface CaptureBackend {
+  accessArtifact(command: AccessCaptureArtifactCommand): Promise<CaptureArtifactAccessResponse>;
   acceptEnvelope(
     command: AcceptCaptureEnvelopeCommand,
   ): Promise<MutationResult<CaptureEnvelopeRecord>>;
@@ -125,6 +135,12 @@ export interface CaptureBackend {
     projectId: string,
     captureSessionId: string,
   ): Promise<string | undefined>;
+  findPackage(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+    packageId: string,
+  ): Promise<CapturePackage | undefined>;
   findProposal(
     tenantId: string,
     projectId: string,

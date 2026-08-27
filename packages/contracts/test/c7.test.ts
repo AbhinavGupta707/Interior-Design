@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   c7CapturePolicy,
   c7RouteContract,
+  captureArtifactAccessResponseSchema,
   captureProposalResultSchema,
   captureSessionSchema,
   createCaptureArtifactUploadRequestSchema,
@@ -120,6 +121,8 @@ describe("C7 native capture contracts", () => {
       uploadPartSizeBytes: 8_388_608,
     });
     expect(c7RouteContract).toEqual({
+      accessArtifact:
+        "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifacts/:artifactId/access",
       cancelSession: "/v1/projects/:projectId/capture-sessions/:captureSessionId/cancel",
       completeArtifactUpload:
         "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId/complete",
@@ -129,6 +132,7 @@ describe("C7 native capture contracts", () => {
       finalizePackage: "/v1/projects/:projectId/capture-sessions/:captureSessionId/packages",
       getArtifactUpload:
         "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId",
+      getPackage: "/v1/projects/:projectId/capture-sessions/:captureSessionId/packages/:packageId",
       getProposal: "/v1/projects/:projectId/capture-sessions/:captureSessionId/proposal",
       getSession: "/v1/projects/:projectId/capture-sessions/:captureSessionId",
       listSessions: "/v1/projects/:projectId/capture-sessions",
@@ -219,6 +223,24 @@ describe("C7 native capture contracts", () => {
         sha256,
       }).success,
     ).toBe(true);
+  });
+
+  it("strictly bounds short-lived raw artifact access responses", () => {
+    const access = {
+      artifactId: artifacts[0].artifactId,
+      byteSize: artifacts[0].byteSize,
+      contentType: artifacts[0].contentType,
+      expiresAt: later,
+      sha256: artifacts[0].sha256,
+      url: "https://storage.invalid/capture?signature=redacted",
+    } as const;
+    expect(captureArtifactAccessResponseSchema.parse(access)).toEqual(access);
+    expect(
+      captureArtifactAccessResponseSchema.safeParse({ ...access, objectKey: "source/internal" })
+        .success,
+    ).toBe(false);
+    expect(c7RouteContract.accessArtifact).toContain("/artifacts/:artifactId/access");
+    expect(c7RouteContract.getPackage).toContain("/packages/:packageId");
   });
 
   it("requires complete, unique, bounded structure package manifests", () => {

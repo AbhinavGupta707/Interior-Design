@@ -1415,3 +1415,47 @@
 - Initial claim boundary: software and synthetic/public fixture executability only. No real Capture
   Envelope, physical Apple-device, representative-home, physical accuracy, production promotion or
   canonical mutation is accepted or claimed.
+
+### Software implementation and RTX fixture closeout — 2026-08-27
+
+- Platform boundary: additive strict C7 package metadata plus five-minute raw-artifact access;
+  `capture:artifact:export` is owner/editor-only. The PostgreSQL backend locks the accepted-envelope
+  session, revalidates current rights and completion, proves exact direct-depth or referenced
+  RoomPlan package/manifest binding, rechecks immutable package hashes and audits without URL or
+  object key. No migration, generated client or canonical/C8 production path changed.
+- Evaluation package: secure physical-only network exporter, offline adversarial verifier,
+  deterministic normal/inclusive per-segment selection, ARKit camera-to-world to COLMAP
+  world-to-camera prior conversion, Capture Envelope COLMAP input, exact-depth Open3D TSDF,
+  selection-bound gsplat preparation, redacted host inventory, strict two-run record builder and
+  non-production routing evaluator. Package-manifest v4 covers every retained input.
+- Experimental freeze: VGGT abstains on agreement and unavailable visible weight hash. MASt3R is
+  exact recursive source/model pinned but CC BY-NC-SA 4.0 non-commercial evaluation-only; Video
+  Depth Anything Small is exact source/model/hash pinned and Apache-2.0 but isolated pickle. Both
+  abstain until a reviewed fully hashed Blackwell lock and exact local image exist. Source/weight
+  alone cannot select a candidate; registry, lock, image and submodule verification is mandatory.
+- Final RTX runtime: Windows 11 Pro build 26200; WSL 2.6.3/Ubuntu 24.04.4; Docker Desktop 29.5.3;
+  RTX 5080 driver 595.79, capability 12.0, 16,303 MiB. Final images: COLMAP
+  `sha256:5a684f04346539c00d3596e6ce334d8dc16052169d05b723921e455c4a0b27ed`, Open3D
+  `sha256:4001945254d60ea2bf54b4ac458f29284a88857d70e873c055d816de048f18b6`, gsplat
+  `sha256:60936fef0057edc23301ff0785085d709a8088a5f6d16da6dc741eb6494e9877`.
+- Creator-owned ten-view fixture: COLMAP registered 10/10 twice with 3,362 sparse and 39,756 dense
+  points; sparse text was byte-identical and dense numeric repeatability passed. One ARKit-prior
+  diagnostic registered 10/10 with 3,460 points and remains repeatability-partial. Final-image
+  Open3D twice produced byte-identical 154,178-point/155,816-vertex/308,836-triangle proposals.
+  Final-image gsplat twice passed with held-out PSNR delta 0.005968 dB under the frozen 0.01 dB
+  limit. Earlier pre-final-image gsplat delta 0.01258 dB failed and was not hidden or used to change
+  the threshold.
+- Final gates: format, all 24-package typechecks, 45 unit/build tasks, all 24 builds, contracts
+  94/94, authz unit 561/561, identity security 933/933, focused capture platform 9/9, platform
+  contract/integration 265 passed with 53 unavailable-service skips, spatial 150 passed with 3
+  optional-runtime skips, and Python 157 passed with 2 optional-runtime skips. Focused benchmark
+  and adversarial verifier tests passed 7/7. `pnpm verify` is not wholly green because the freshly
+  executed platform lint exposes one unchanged merged-base error at
+  `services/platform-api/src/modules/render-stills/authorities.ts:239`; C14.9 did not edit that
+  out-of-scope path. Every changed TypeScript surface lints cleanly.
+- Durable evidence:
+  `docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_SOFTWARE_ACCEPTANCE_2026-08-27.md`;
+  definitive post-merge handoff:
+  `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`. Real accepted Capture Envelope,
+  physical transfer/compatibility, both cohorts/segments, two-run ARKit prior, physical and
+  representative accuracy, experimental execution and production promotion remain `NOT RUN`.

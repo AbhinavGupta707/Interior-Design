@@ -1,8 +1,10 @@
 import {
   captureArtifactUploadSessionSchema,
+  captureArtifactAccessResponseSchema,
   captureEnvelopeRecordSchema,
   captureSessionSchema,
   type CaptureArtifactUploadSession,
+  type CaptureArtifactAccessResponse,
   type CaptureEnvelopeRecord,
   type CaptureProposalResult,
   type CaptureSession,
@@ -12,6 +14,7 @@ import { captureConflict } from "../../src/modules/capture/errors.js";
 import { captureSha256 } from "../../src/modules/capture/canonical.js";
 import type {
   AcceptCaptureEnvelopeCommand,
+  AccessCaptureArtifactCommand,
   CaptureBackend,
   CapturePackage,
   CaptureSessionMutationCommand,
@@ -99,6 +102,28 @@ export class MemoryCaptureBackend implements CaptureBackend {
       tenantId === c6Project.tenantId && projectId === c6Project.id
         ? this.sessions.get(captureSessionId)
         : undefined,
+    );
+  }
+
+  findPackage(): Promise<CapturePackage | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  accessArtifact(command: AccessCaptureArtifactCommand): Promise<CaptureArtifactAccessResponse> {
+    const envelope = this.envelopes.get(command.captureSessionId)?.envelope;
+    const source = envelope?.depthSources.find(
+      ({ artifactId }) => artifactId === command.artifactId,
+    );
+    if (source === undefined) return Promise.reject(new Error("Synthetic artifact absent."));
+    return Promise.resolve(
+      captureArtifactAccessResponseSchema.parse({
+        artifactId: source.artifactId,
+        byteSize: source.byteSize,
+        contentType: "application/octet-stream",
+        expiresAt: "2026-07-17T12:05:00.000Z",
+        sha256: source.sha256,
+        url: "https://storage.invalid/synthetic-capture-export",
+      }),
     );
   }
 

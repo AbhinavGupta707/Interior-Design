@@ -6,7 +6,12 @@ import { registerErrorHandling } from "../../src/errors.js";
 import { registerCaptureRoutes } from "../../src/modules/capture/routes.js";
 import { ReconstructionService } from "../../src/modules/reconstruction/service.js";
 import { FixtureProjectRepository, c6Project, fixtureIdentity, tokenFor } from "../c6/support.js";
-import { MemoryCaptureBackend, c14_8EnvelopeId, c7CaptureSessionId } from "../c7/support.js";
+import {
+  MemoryCaptureBackend,
+  c14_8EnvelopeId,
+  c7ArtifactId,
+  c7CaptureSessionId,
+} from "../c7/support.js";
 import { MemoryReconstructionRepository, imageAssetId, imageSha256 } from "../c8/support.js";
 
 const roomId = "14800000-0000-4000-8000-000000000003";
@@ -289,5 +294,75 @@ describe("C14.8 authenticated capture envelope routes", () => {
     expect(changed.statusCode).toBe(409);
     expect(changed.json()).toMatchObject({ code: "CAPTURE_RECONSTRUCTION_CHANGED" });
     expect(reconstruction.jobs.size).toBe(1);
+  });
+
+  it("allows only owner/editor access to exact depth bytes bound to the accepted envelope", async () => {
+    const payload = {
+      ...envelope(),
+      capabilities: {
+        ...envelope().capabilities,
+        qualityTier: "guided-rgb-depth",
+        sceneDepth: true,
+      },
+      depthSources: [
+        {
+          alignment: "arkit-scene-depth-image-plane",
+          artifactId: c7ArtifactId,
+          byteSize: 16,
+          format: "float32-metres-little-endian",
+          heightPixels: 2,
+          sampleIds: [sampleId],
+          sha256: "d".repeat(64),
+          transfer: {
+            partCount: 1,
+            reconciledAt: "2026-08-26T10:00:03.000Z",
+            resumable: true,
+            state: "complete",
+          },
+          widthPixels: 2,
+        },
+      ],
+    } as const;
+    const envelopeUrl = `/v1/projects/${c6Project.id}/capture-sessions/${c7CaptureSessionId}/envelope`;
+    expect(
+      (
+        await server.inject({
+          headers: mutationHeaders("fixture|owner-alpha", "c14-9-envelope-depth-0001"),
+          method: "POST",
+          payload,
+          url: envelopeUrl,
+        })
+      ).statusCode,
+    ).toBe(201);
+    const accessUrl = `/v1/projects/${c6Project.id}/capture-sessions/${c7CaptureSessionId}/artifacts/${c7ArtifactId}/access`;
+    const denied = await server.inject({
+      headers: authorization("fixture|viewer-alpha"),
+      method: "POST",
+      payload: {},
+      url: accessUrl,
+    });
+    expect(denied.statusCode).toBe(403);
+    const allowed = await server.inject({
+      headers: authorization("fixture|editor-alpha"),
+      method: "POST",
+      payload: {},
+      url: accessUrl,
+    });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json()).toEqual({
+      artifactId: c7ArtifactId,
+      byteSize: 16,
+      contentType: "application/octet-stream",
+      expiresAt: "2026-07-17T12:05:00.000Z",
+      sha256: "d".repeat(64),
+      url: "https://storage.invalid/synthetic-capture-export",
+    });
+    const foreign = await server.inject({
+      headers: authorization("fixture|owner-beta"),
+      method: "POST",
+      payload: {},
+      url: accessUrl,
+    });
+    expect(foreign.statusCode).toBe(404);
   });
 });

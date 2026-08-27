@@ -278,6 +278,18 @@ export const captureArtifactManifestSchema = createCaptureArtifactUploadRequestS
 });
 export type CaptureArtifactManifest = z.infer<typeof captureArtifactManifestSchema>;
 
+export const captureArtifactAccessResponseSchema = z
+  .object({
+    artifactId: captureArtifactIdSchema,
+    byteSize: z.int().positive().max(c7CapturePolicy.maximumArtifactBytes),
+    contentType: captureArtifactContentTypeSchema,
+    expiresAt: z.iso.datetime({ offset: true }),
+    sha256: sha256HexSchema,
+    url: z.url(),
+  })
+  .strict();
+export type CaptureArtifactAccessResponse = z.infer<typeof captureArtifactAccessResponseSchema>;
+
 export const captureDeviceManifestSchema = z
   .object({
     appBuild: safeIdentifierSchema,
@@ -696,6 +708,8 @@ export const captureProposalResultSchema = z.discriminatedUnion("status", [
 export type CaptureProposalResult = z.infer<typeof captureProposalResultSchema>;
 
 export const c7RouteContract = Object.freeze({
+  accessArtifact:
+    "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifacts/:artifactId/access",
   cancelSession: "/v1/projects/:projectId/capture-sessions/:captureSessionId/cancel",
   completeArtifactUpload:
     "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId/complete",
@@ -706,6 +720,7 @@ export const c7RouteContract = Object.freeze({
   getArtifactUpload:
     "/v1/projects/:projectId/capture-sessions/:captureSessionId/artifact-upload-sessions/:uploadSessionId",
   getProposal: "/v1/projects/:projectId/capture-sessions/:captureSessionId/proposal",
+  getPackage: "/v1/projects/:projectId/capture-sessions/:captureSessionId/packages/:packageId",
   getSession: "/v1/projects/:projectId/capture-sessions/:captureSessionId",
   listSessions: "/v1/projects/:projectId/capture-sessions",
   retrySession: "/v1/projects/:projectId/capture-sessions/:captureSessionId/retry",

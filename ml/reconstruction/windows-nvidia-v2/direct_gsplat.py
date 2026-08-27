@@ -26,7 +26,7 @@ IMAGE_ROOT = INPUT_ROOT / "images"
 MAXIMUM_MANIFEST_BYTES = 4 * 1024 * 1024
 MAXIMUM_IMAGE_BYTES = 64 * 1024 * 1024
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
-SAFE_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}\.png$")
+SAFE_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}\.(?:png|jpe?g)$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,8 +167,7 @@ def _parse_gaussian(value: object) -> Gaussian:
     scale = _number(raw["scale"], "scale")
     opacity = _number(raw["opacity"], "opacity")
     if (
-        xyz[2] <= 0
-        or any(value < 0 or value > 1 for value in rgb)
+        any(value < 0 or value > 1 for value in rgb)
         or not 0.001 <= scale <= 1
         or not 0.01 <= opacity <= 0.99
     ):

@@ -44,14 +44,14 @@ separately hashed with exact provenance.
 
 ## Candidate freeze
 
-| Candidate | Exact authority | Verdict |
-| --- | --- | --- |
-| COLMAP / ARKit prior | C8-v2 COLMAP 4.1.1 `a0d785fba74b2664f31edc4a29026a8b27c00f67` | enabled baseline/diagnostic; prior scale is not accuracy proof |
-| Open3D | C8-v2 Open3D 0.19.0 lock | enabled only for exactly bound metric depth |
-| gsplat | C8-v2 gsplat 1.5.3 lock | enabled appearance-only with proposal initialization |
-| VGGT | `facebookresearch/vggt@a288dd0f14786c93483e45524328726ab7b1b4ce`; `facebook/VGGT-1B-Commercial@ebb29a532abe92960eeb6903a5530f16990ef4ab` | blocked until agreement acceptance and visible exact weight hash |
-| MASt3R | recursive `naver/mast3r@f5209afc300cec36239a7ac992263f36847bbba0`; model `06e7259f34c3060f322df5cb0c7b9094f57e41fc`, SHA-256 `0a615eb05fa9db654050aa655945ee5696e7c6c1b7f93f1ee8c37249010f6feb` | quarantined CC BY-NC-SA 4.0 evaluation only |
-| Video Depth Anything Small | code `4f5ae23172ba60fd7bc11ef671cca678842c7072`; model `273d090f2ce17df50c2872d82c8322c45da5b4dd`, SHA-256 `3c28432b4e1f0d7bb31cad5151b6313b49457db5aa58d82e85bfb0f8b1311b33` | quarantined Apache-2.0 evaluation |
+| Candidate                  | Exact authority                                                                                                                                                                                 | Verdict                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| COLMAP / ARKit prior       | C8-v2 COLMAP 4.1.1 `a0d785fba74b2664f31edc4a29026a8b27c00f67`                                                                                                                                   | enabled baseline/diagnostic; prior scale is not accuracy proof   |
+| Open3D                     | C8-v2 Open3D 0.19.0 lock                                                                                                                                                                        | enabled only for exactly bound metric depth                      |
+| gsplat                     | C8-v2 gsplat 1.5.3 lock                                                                                                                                                                         | enabled appearance-only with proposal initialization             |
+| VGGT                       | `facebookresearch/vggt@a288dd0f14786c93483e45524328726ab7b1b4ce`; `facebook/VGGT-1B-Commercial@ebb29a532abe92960eeb6903a5530f16990ef4ab`                                                        | blocked until agreement acceptance and visible exact weight hash |
+| MASt3R                     | recursive `naver/mast3r@f5209afc300cec36239a7ac992263f36847bbba0`; model `06e7259f34c3060f322df5cb0c7b9094f57e41fc`, SHA-256 `0a615eb05fa9db654050aa655945ee5696e7c6c1b7f93f1ee8c37249010f6feb` | quarantined CC BY-NC-SA 4.0 evaluation only                      |
+| Video Depth Anything Small | code `4f5ae23172ba60fd7bc11ef671cca678842c7072`; model `273d090f2ce17df50c2872d82c8322c45da5b4dd`, SHA-256 `3c28432b4e1f0d7bb31cad5151b6313b49457db5aa58d82e85bfb0f8b1311b33`                   | quarantined Apache-2.0 evaluation                                |
 
 Public/synthetic data is labelled `benchmark-fixture`, isolated from C2/C7 identifiers and never
 homeowner evidence, accuracy evidence or a production dependency. Pickle weights run only after
@@ -87,3 +87,18 @@ two-run records; pinned container/candidate provenance; and proportionate reposi
 container and RTX fixture gates. A fixture proves executability only. Evidence and handoff must
 leave real Capture Envelope, physical compatibility, representative accuracy and promotion
 `NOT RUN`. Commit, push and open one non-draft PR without merging.
+
+## Software closeout — 2026-08-27
+
+The additive API/export, offline verifier/selection/policy, COLMAP/ARKit-prior/Open3D/gsplat
+adapters, candidate registry and common record builder are implemented. Exact final-image RTX 5080
+fixture evidence is recorded in
+`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_SOFTWARE_ACCEPTANCE_2026-08-27.md` and the
+post-merge physical sequence is
+`docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
+
+Fixture COLMAP, Open3D and gsplat execution passed their final applicable numeric gates; the
+ARKit-prior diagnostic ran once and therefore remains repeatability-partial. Experimental
+candidates abstained at their frozen licence/dependency/image gates. Real Capture Envelope,
+physical-device compatibility, representative accuracy, production routing and promotion remain
+`NOT RUN` / prohibited.

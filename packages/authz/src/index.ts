@@ -13,6 +13,7 @@ export const projectActions = Object.freeze([
   "capture:session:read",
   "capture:session:cancel",
   "capture:artifact:upload",
+  "capture:artifact:export",
   "capture:package:finalize",
   "capture:proposal:read",
   "capture:proposal:retry",
@@ -94,6 +95,7 @@ type RoleActionMatrix = Readonly<Record<MemberRole, Readonly<Record<ProjectActio
 
 const permissions: RoleActionMatrix = Object.freeze({
   editor: Object.freeze({
+    "capture:artifact:export": true,
     "capture:artifact:upload": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
@@ -171,6 +173,7 @@ const permissions: RoleActionMatrix = Object.freeze({
     "reconstruction:result:read": true,
   }),
   owner: Object.freeze({
+    "capture:artifact:export": true,
     "capture:artifact:upload": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
@@ -248,6 +251,7 @@ const permissions: RoleActionMatrix = Object.freeze({
     "reconstruction:result:read": true,
   }),
   viewer: Object.freeze({
+    "capture:artifact:export": false,
     "capture:artifact:upload": false,
     "capture:package:finalize": false,
     "capture:proposal:read": true,

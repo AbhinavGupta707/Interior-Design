@@ -190,3 +190,21 @@ cleanup state.
 creator-owned PPM/known-pose fixture. Generated source bytes are disposable; the
 generator, exact generator hash, manifest and per-file hashes make regeneration and
 comparison reproducible without customer, provider or phone data.
+
+## C14.9 Capture Envelope evaluation
+
+C14.9 adds a secure, offline-verifiable path from one accepted physical
+`capture-envelope-v1` to the same quarantined package. `capture_benchmark.py` exports exact C2/C7
+bytes through freshly authorized access, verifies a private immutable tree, freezes normal and
+inclusive per-segment selections, prepares COLMAP inputs/ARKit priors and emits a non-production
+routing plan. `open3d_capture.py` consumes only exact sample-bound depth;
+`prepare_gsplat_capture.py` produces a hash-bound direct-gsplat input; and `capture_metrics.py`
+builds the common two-run record. `generate_capture_benchmark_fixture.py` is synthetic executable
+evidence only.
+
+Experimental pins live in `experimental-candidates.json`. VGGT is licence/hash blocked; MASt3R and
+Video Depth Anything are quarantined but remain dependency-lock/image blocked. The verifier
+requires exact source/submodule/weight/registry/fully-hashed-lock/local-image evidence before the
+offline policy can select either. Nothing here changes production C8 routing or dimensional truth.
+Use the exact sequence and non-claims in
+`docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
