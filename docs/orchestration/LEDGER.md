@@ -1418,6 +1418,8 @@
 
 ### Software implementation and RTX fixture closeout — 2026-08-27
 
+- Implementation commit: `19583c2` (`feat(c14.9): add secure capture benchmark`), following the
+  separately committed contract freeze `224ce5a`.
 - Platform boundary: additive strict C7 package metadata plus five-minute raw-artifact access;
   `capture:artifact:export` is owner/editor-only. The PostgreSQL backend locks the accepted-envelope
   session, revalidates current rights and completion, proves exact direct-depth or referenced
