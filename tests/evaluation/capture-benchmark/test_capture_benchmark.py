@@ -5,6 +5,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from types import ModuleType
 
@@ -72,6 +73,18 @@ def test_room_story_remains_optional_in_frozen_envelope_schema(tmp_path: Path) -
     envelope["rooms"][0]["unexpected"] = True
     with pytest.raises(ValueError, match="room fields"):
         module.validate_envelope_shape(envelope)
+
+
+def test_export_access_idempotency_is_scoped_to_one_attempt() -> None:
+    module = load_module()
+    first_attempt = uuid.UUID("10000000-0000-4000-8000-000000000001")
+    second_attempt = uuid.UUID("10000000-0000-4000-8000-000000000002")
+    envelope_sha = "a" * 64
+    source_id = "20000000-0000-4000-8000-000000000001"
+
+    first = module.export_access_idempotency_key(first_attempt, envelope_sha, source_id)
+    assert first == module.export_access_idempotency_key(first_attempt, envelope_sha, source_id)
+    assert first != module.export_access_idempotency_key(second_attempt, envelope_sha, source_id)
 
 
 def test_selection_policy_and_segment_safe_prior(tmp_path: Path) -> None:

@@ -289,6 +289,18 @@ def file_entry(
     }
 
 
+def export_access_idempotency_key(
+    attempt_namespace: uuid.UUID, envelope_sha: str, source_id: str
+) -> str:
+    """Keep access creation idempotent only within one export attempt.
+
+    Signed URLs expire, so a later exporter process must not replay an earlier attempt's cached
+    access response. The attempt namespace remains in memory and is never persisted.
+    """
+
+    return str(uuid.uuid5(attempt_namespace, f"c14.9:{envelope_sha}:asset:{source_id}"))
+
+
 def export_capture(args: argparse.Namespace) -> None:
     token = os.environ.get("C14_9_BEARER_TOKEN", "")
     salt_text = os.environ.get("C14_9_ALIAS_SALT", "")
@@ -349,6 +361,7 @@ def export_capture(args: argparse.Namespace) -> None:
         (output_root / name).mkdir(mode=0o700)
     private_write(output_root / "envelope.json", envelope_bytes)
     files: list[dict[str, object]] = []
+    access_attempt_namespace = uuid.uuid4()
     for source_value in cast("list[object]", envelope.get("mediaSources", [])):
         source = as_object(source_value, "media source")
         asset_id = cast("str", source.get("assetId"))
@@ -358,8 +371,8 @@ def export_capture(args: argparse.Namespace) -> None:
             f"/v1/projects/{project_id}/assets/{asset_id}/access",
             token,
             body={"representation": "original"},
-            idempotency_key=str(
-                uuid.uuid5(uuid.NAMESPACE_URL, f"c14.9:{envelope_sha}:asset:{asset_id}")
+            idempotency_key=export_access_idempotency_key(
+                access_attempt_namespace, envelope_sha, asset_id
             ),
         )
         destination = output_root / "rgb" / f"{asset_id}.{extension(content_type)}"
