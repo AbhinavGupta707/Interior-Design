@@ -35,6 +35,7 @@ const actors: Readonly<Record<MemberRole, Actor>> = {
 const expectedSameTenantAccess = {
   editor: {
     "capture:artifact:upload": true,
+    "capture:artifact:export": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
     "capture:proposal:retry": true,
@@ -112,6 +113,7 @@ const expectedSameTenantAccess = {
   },
   owner: {
     "capture:artifact:upload": true,
+    "capture:artifact:export": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
     "capture:proposal:retry": true,
@@ -189,6 +191,7 @@ const expectedSameTenantAccess = {
   },
   viewer: {
     "capture:artifact:upload": false,
+    "capture:artifact:export": false,
     "capture:package:finalize": false,
     "capture:proposal:read": true,
     "capture:proposal:retry": false,
@@ -288,6 +291,7 @@ describe("authoriseProjectAction", () => {
       "capture:session:read",
       "capture:session:cancel",
       "capture:artifact:upload",
+      "capture:artifact:export",
       "capture:package:finalize",
       "capture:proposal:read",
       "capture:proposal:retry",

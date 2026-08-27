@@ -47,6 +47,7 @@ const expectedSameTenantAccess: Readonly<
 > = {
   editor: {
     "capture:artifact:upload": true,
+    "capture:artifact:export": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
     "capture:proposal:retry": true,
@@ -124,6 +125,7 @@ const expectedSameTenantAccess: Readonly<
   },
   owner: {
     "capture:artifact:upload": true,
+    "capture:artifact:export": true,
     "capture:package:finalize": true,
     "capture:proposal:read": true,
     "capture:proposal:retry": true,
@@ -201,6 +203,7 @@ const expectedSameTenantAccess: Readonly<
   },
   viewer: {
     "capture:artifact:upload": false,
+    "capture:artifact:export": false,
     "capture:package:finalize": false,
     "capture:proposal:read": true,
     "capture:proposal:retry": false,

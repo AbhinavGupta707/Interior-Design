@@ -8,9 +8,11 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 > I have given the system the details and evidence for my home. It now behaves like my personal interior-design agency: it understands and reconstructs the home, forms a structured brief, proposes and explains alternatives, lets me experience and amend them in 2D/3D/images/video, helps me decide, and produces an actionable implementation handoff.
 
-On 2026-08-26 C14.7 completed the confirmed-twin native software-integration path. C14.8 is now the
-single active corrective checkpoint for a device-neutral, camera-first mobile capture foundation
-before physical-device acceptance. Starting from the C14.6 cold-launch/onboarding baseline, an
+On 2026-08-27 C14.8 merged the device-neutral, camera-first mobile capture software foundation.
+C14.9 secure Capture Envelope export and isolated Windows/RTX benchmark software has now been
+independently reviewed and corrected. The first accepted physical Capture Envelope, physical-device
+compatibility and representative accuracy remain `NOT RUN`; no later checkpoint is opened by this
+software closeout. Starting from the C14.6 cold-launch/onboarding baseline, an
 authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -457,6 +459,36 @@ raw sources and the envelope are immutable/hash-pinned; missing/occluded geometr
 project/role/rights/relaunch/offline/stale-result paths fail closed; C8 remains proposal-only and
 C4/C5/C9/C10 authority is unchanged. Simulator cannot prove camera/ARKit/depth/RoomPlan behavior,
 and the Windows candidate benchmark cannot be inferred from Mac or fixture evidence.
+
+### C14.9 — Capture Envelope export and software benchmark — single primary session
+
+**Outcome:** an authorised operator can securely export and independently verify one immutable
+accepted physical Capture Envelope, then apply one deterministic segment-safe selection to the
+existing COLMAP, ARKit-prior, Open3D and gsplat baselines and licence-permitted quarantined
+VGGT/MASt3R/video-depth candidates.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Contract and secure export | additive C7 package/artifact read boundary, exporter/verifier and focused authorization/security tests | current-rights revalidation, streaming hashes, salted aliases, no credential/URL/object-key retention |
+| Benchmark and routing evaluator | `ml/reconstruction/windows-nvidia-v2/**`, deterministic fixture and evaluation tests | common selection, segment isolation, proposal-only adapters, frozen metrics/repeatability/resources and typed abstentions |
+| Integrated evidence and handoff | C14.9 contract/evidence/runbook/ledger | exact pins, image/output hashes, RTX fixture truth and precise physical-capture non-claims |
+
+**Execution:** one exact `gpt-5.6-sol` / `xhigh` primary session is the sole writer and completion
+authority. No worktree, subagent, separate task or parallel implementation lane is authorised.
+
+**Gate:** originals and raw outputs remain immutable and hash-pinned; signed URLs and credentials
+are never retained; coordinate segments are never silently joined; one selection drives all
+compatible candidates; every failure/abstention remains measurable; appearance and predicted depth
+remain non-dimensional proposals; the routing evaluator is non-production. Software and RTX
+fixtures cannot establish physical compatibility, representative accuracy or production promotion.
+
+**Reviewed software closeout:** PR #12 original head
+`5c8b38626d263cec38068ba59dbd2686974caf00` required material correction commit
+`8d7ad379ae6def20f6fd95d4455f74bce8623708`. Independently rebuilt COLMAP, Open3D and gsplat
+images and the strict 16/16-run common record are frozen in the C14.9 evidence and ledger. All
+outputs remain proposal/evaluation-only. Current rights on the envelope and separately referenced
+RoomPlan source sessions, private physical transfer, both cohorts per independent segment,
+physical review and rights-cleared ground truth remain gates for the first real envelope.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

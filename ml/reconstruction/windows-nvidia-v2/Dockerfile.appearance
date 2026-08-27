@@ -56,7 +56,10 @@ RUN apt-get update \
 COPY --from=builder /opt/c8 /opt/c8
 COPY --from=builder /opt/c8-sm120-probe /usr/local/bin/c8-sm120-probe
 COPY ml/reconstruction/windows-nvidia-v2/direct_gsplat.py /opt/c8/direct_gsplat.py
+COPY ml/reconstruction/windows-nvidia-v2/direct_gsplat_capture.py /opt/c8/direct_gsplat_capture.py
 COPY ml/reconstruction/windows-nvidia-v2/generate_gsplat_fixture.py /opt/c8/generate_gsplat_fixture.py
+COPY ml/reconstruction/windows-nvidia-v2/capture_benchmark.py /opt/c8/capture_benchmark.py
+COPY ml/reconstruction/windows-nvidia-v2/prepare_gsplat_capture.py /opt/c8/prepare_gsplat_capture.py
 USER 65532:65532
 WORKDIR /c8/work
 ENTRYPOINT ["python", "/opt/c8/direct_gsplat.py"]

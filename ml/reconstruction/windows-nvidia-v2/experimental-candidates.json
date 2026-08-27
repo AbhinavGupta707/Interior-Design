@@ -1,0 +1,76 @@
+{
+  "candidates": [
+    {
+      "candidateId": "vggt-1b-commercial",
+      "code": {
+        "commit": "a288dd0f14786c93483e45524328726ab7b1b4ce",
+        "repository": "https://github.com/facebookresearch/vggt.git"
+      },
+      "executionState": "blocked",
+      "licence": {
+        "id": "VGGT-License-v1",
+        "localEvaluation": "requires-explicit-agreement",
+        "production": "not-reviewed"
+      },
+      "role": "proposal-only-cameras-depth-point-map",
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "facebook/VGGT-1B-Commercial",
+        "revision": "ebb29a532abe92960eeb6903a5530f16990ef4ab",
+        "sha256": null
+      },
+      "blockedReasons": ["LICENCE_ACCEPTANCE_REQUIRED", "WEIGHT_HASH_NOT_PUBLICLY_VISIBLE"]
+    },
+    {
+      "candidateId": "mast3r-vitlarge-512",
+      "code": {
+        "commit": "f5209afc300cec36239a7ac992263f36847bbba0",
+        "repository": "https://github.com/naver/mast3r.git",
+        "recursive": true,
+        "submodules": {
+          "dust3r": "3cc8c88c413bb9e34c41db0e0eef99c2ee010b12"
+        }
+      },
+      "dependencyGate": "fully-hashed-local-lock-and-image-digest-required",
+      "executionState": "quarantined-evaluation",
+      "licence": {
+        "id": "CC-BY-NC-SA-4.0",
+        "localEvaluation": "permitted-non-commercial-only",
+        "production": "prohibited"
+      },
+      "role": "proposal-only-matching-point-map",
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "naver/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric",
+        "revision": "06e7259f34c3060f322df5cb0c7b9094f57e41fc",
+        "sha256": "0a615eb05fa9db654050aa655945ee5696e7c6c1b7f93f1ee8c37249010f6feb",
+        "sizeBytes": 2754661648
+      }
+    },
+    {
+      "candidateId": "metric-video-depth-anything-small",
+      "code": {
+        "commit": "4f5ae23172ba60fd7bc11ef671cca678842c7072",
+        "repository": "https://github.com/DepthAnything/Video-Depth-Anything.git"
+      },
+      "dependencyGate": "fully-hashed-local-lock-and-image-digest-required",
+      "executionState": "quarantined-evaluation",
+      "licence": {
+        "id": "Apache-2.0",
+        "localEvaluation": "permitted",
+        "production": "not-reviewed"
+      },
+      "role": "proposal-only-temporal-metric-depth",
+      "weight": {
+        "file": "metric_video_depth_anything_vits.pth",
+        "repository": "depth-anything/Metric-Video-Depth-Anything-Small",
+        "revision": "273d090f2ce17df50c2872d82c8322c45da5b4dd",
+        "sha256": "3c28432b4e1f0d7bb31cad5151b6313b49457db5aa58d82e85bfb0f8b1311b33",
+        "sizeBytes": 116444063,
+        "serialization": "pytorch-pickle-isolated-container-only"
+      }
+    }
+  ],
+  "productionPromotion": "prohibited",
+  "schemaVersion": "c14-9-experimental-candidate-registry-v1"
+}

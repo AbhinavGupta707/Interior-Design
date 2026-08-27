@@ -45,6 +45,8 @@ RUN apt-get update \
 COPY --from=builder /opt/c8 /opt/c8
 COPY --from=builder /opt/c8-sm120-probe /usr/local/bin/c8-sm120-probe
 COPY ml/reconstruction/windows-nvidia-v2/open3d_probe.py /opt/c8/open3d_probe.py
+COPY ml/reconstruction/windows-nvidia-v2/capture_benchmark.py /opt/c8/capture_benchmark.py
+COPY ml/reconstruction/windows-nvidia-v2/open3d_capture.py /opt/c8/open3d_capture.py
 USER 65532:65532
 WORKDIR /c8/work
 ENTRYPOINT ["python", "/opt/c8/open3d_probe.py"]

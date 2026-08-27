@@ -1,6 +1,7 @@
 import {
   c7CapturePolicy,
   captureArtifactUploadSessionSchema,
+  captureArtifactAccessResponseSchema,
   captureBriefSchema,
   captureEnvelopeRecordSchema,
   capturePackageSchema,
@@ -10,6 +11,7 @@ import {
   createCapturePackageRequestSchema,
   signedCaptureArtifactPartSchema,
   type CaptureArtifactUploadSession,
+  type CaptureArtifactAccessResponse,
   type CaptureBrief,
   type CaptureEnvelopeRecord,
   type CaptureProposalResult,
@@ -46,11 +48,13 @@ import type {
   MutationResult,
   SignArtifactPartCommand,
   SignedCaptureArtifactPart,
+  AccessCaptureArtifactCommand,
   WithdrawCaptureRightsCommand,
 } from "./types.js";
 
 const CAPTURE_BRIEF_TTL_MILLISECONDS = 24 * 60 * 60 * 1_000;
 const SIGNED_PART_TTL_MILLISECONDS = 15 * 60 * 1_000;
+const SIGNED_ACCESS_TTL_MILLISECONDS = 5 * 60 * 1_000;
 const INSTRUCTIONS_VERSION = "c7-roomplan-instructions-1.0.0";
 const MAXIMUM_ATTEMPTS = 3;
 
@@ -104,6 +108,21 @@ interface ArtifactRow {
   readonly source_sha256: string;
   readonly state: string;
   readonly upload_state: string;
+}
+
+interface ArtifactAccessRow extends ArtifactRow {
+  readonly capture_session_id: string;
+  readonly source_object_key: string;
+}
+
+interface PackageRow {
+  readonly created_at: Date | string;
+  readonly id: string;
+  readonly manifest_payload: unknown;
+  readonly manifest_sha256: string;
+  readonly project_id: string;
+  readonly rights_permitted?: boolean;
+  readonly session_state?: string;
 }
 
 interface EnvelopeRow {
@@ -488,6 +507,182 @@ export class PostgresCaptureBackend implements CaptureBackend {
       LIMIT 1
     `;
     return rows[0] === undefined ? undefined : publicSession(rows[0]);
+  }
+
+  async findPackage(
+    tenantId: string,
+    projectId: string,
+    captureSessionId: string,
+    packageId: string,
+  ): Promise<CapturePackage | undefined> {
+    const rows = await this.#sql<PackageRow[]>`
+      SELECT p.id, p.project_id, p.manifest_sha256, p.manifest_payload, p.created_at,
+        s.state AS session_state,
+        NOT EXISTS (
+          SELECT 1 FROM capture_rights_events denied
+          WHERE denied.tenant_id = p.tenant_id
+            AND denied.project_id = p.project_id
+            AND denied.capture_session_id = p.capture_session_id
+            AND NOT denied.permitted
+        ) AS rights_permitted
+      FROM capture_packages p
+      JOIN capture_sessions s
+        ON s.tenant_id = p.tenant_id
+       AND s.project_id = p.project_id
+       AND s.id = p.capture_session_id
+      WHERE p.tenant_id = ${tenantId}::uuid
+        AND p.project_id = ${projectId}::uuid
+        AND p.capture_session_id = ${captureSessionId}::uuid
+        AND p.id = ${packageId}::uuid
+      LIMIT 1
+    `;
+    const row = rows[0];
+    if (
+      row === undefined ||
+      row.rights_permitted !== true ||
+      !["proposed", "abstained"].includes(row.session_state ?? "")
+    ) {
+      return undefined;
+    }
+    const manifest = createCapturePackageRequestSchema.parse(row.manifest_payload);
+    if (captureSha256(manifest) !== row.manifest_sha256) {
+      throw captureConflict(
+        "CAPTURE_PACKAGE_INTEGRITY_FAILURE",
+        "The immutable capture package failed its stored integrity check.",
+      );
+    }
+    return capturePackageSchema.parse({
+      createdAt: iso(row.created_at),
+      id: row.id,
+      manifest,
+      manifestSha256: row.manifest_sha256,
+      projectId: row.project_id,
+      schemaVersion: "c7-capture-package-v1",
+    });
+  }
+
+  async accessArtifact(
+    command: AccessCaptureArtifactCommand,
+  ): Promise<CaptureArtifactAccessResponse> {
+    return this.#sql.begin(async (transaction) => {
+      const session = await this.#lockedSession(
+        transaction,
+        command.actor.tenantId,
+        command.projectId,
+        command.captureSessionId,
+      );
+      if (session === undefined) throw notFound();
+      assertCurrentRights(session);
+      const envelopeRows = await transaction<EnvelopeRow[]>`
+        SELECT id AS envelope_id, project_id, capture_session_id, envelope_sha256,
+          envelope_payload, accepted_by, accepted_at
+        FROM capture_envelopes
+        WHERE tenant_id = ${command.actor.tenantId}::uuid
+          AND project_id = ${command.projectId}::uuid
+          AND capture_session_id = ${command.captureSessionId}::uuid
+        LIMIT 1
+      `;
+      const envelopeRow = envelopeRows[0];
+      if (envelopeRow === undefined) throw notFound();
+      const envelope = publicEnvelope(envelopeRow).envelope;
+      const artifacts = await transaction<ArtifactAccessRow[]>`
+        SELECT a.id, a.capture_session_id, a.kind, a.content_type, a.room_id,
+          a.source_byte_size, a.source_sha256, a.source_object_key, a.state,
+          u.state AS upload_state
+        FROM capture_artifacts a
+        JOIN capture_artifact_upload_sessions u
+          ON u.tenant_id = a.tenant_id AND u.project_id = a.project_id
+         AND u.capture_session_id = a.capture_session_id AND u.artifact_id = a.id
+        WHERE a.tenant_id = ${command.actor.tenantId}::uuid
+          AND a.project_id = ${command.projectId}::uuid
+          AND a.id = ${command.artifactId}::uuid
+        LIMIT 1 FOR UPDATE OF a, u
+      `;
+      const artifact = artifacts[0];
+      if (
+        artifact === undefined ||
+        artifact.state !== "uploaded" ||
+        artifact.upload_state !== "completed"
+      ) {
+        throw notFound();
+      }
+      const directDepth = envelope.depthSources.some(
+        ({ artifactId, byteSize, sha256 }) =>
+          artifactId === artifact.id &&
+          byteSize === Number(artifact.source_byte_size) &&
+          sha256 === artifact.source_sha256,
+      );
+      let packageBound = false;
+      if (!directDepth) {
+        const sourceSession = await this.#lockedSession(
+          transaction,
+          command.actor.tenantId,
+          command.projectId,
+          artifact.capture_session_id,
+        );
+        if (
+          sourceSession === undefined ||
+          !["proposed", "abstained"].includes(sourceSession.state)
+        ) {
+          throw notFound();
+        }
+        assertCurrentRights(sourceSession);
+        const packageRows = await transaction<PackageRow[]>`
+          SELECT p.id, p.project_id, p.manifest_sha256, p.manifest_payload, p.created_at
+          FROM capture_packages p
+          WHERE p.tenant_id = ${command.actor.tenantId}::uuid
+            AND p.project_id = ${command.projectId}::uuid
+            AND p.capture_session_id = ${artifact.capture_session_id}::uuid
+        `;
+        packageBound = packageRows.some((row) => {
+          const reference = envelope.roomPlanSources.find(
+            ({ captureSessionId, packageId, packageManifestSha256 }) =>
+              captureSessionId === artifact.capture_session_id &&
+              packageId === row.id &&
+              packageManifestSha256 === row.manifest_sha256,
+          );
+          if (reference === undefined) return false;
+          const manifest = createCapturePackageRequestSchema.parse(row.manifest_payload);
+          return (
+            captureSha256(manifest) === row.manifest_sha256 &&
+            manifest.artifacts.some(
+              ({ artifactId, byteSize, sha256 }) =>
+                artifactId === artifact.id &&
+                byteSize === Number(artifact.source_byte_size) &&
+                sha256 === artifact.source_sha256,
+            )
+          );
+        });
+      }
+      if (!directDepth && !packageBound) throw notFound();
+      const expiresAt = new Date(this.#clock.now().getTime() + SIGNED_ACCESS_TTL_MILLISECONDS);
+      const signed = await this.#storage.signObjectAccess({
+        bucket: "source",
+        contentDisposition: "attachment",
+        contentType: artifact.content_type,
+        expiresAt,
+        key: artifact.source_object_key,
+      });
+      const result = captureArtifactAccessResponseSchema.parse({
+        artifactId: artifact.id,
+        byteSize: Number(artifact.source_byte_size),
+        contentType: artifact.content_type,
+        expiresAt: signed.expiresAt,
+        sha256: artifact.source_sha256,
+        url: signed.url,
+      });
+      await appendUserEvent(transaction, {
+        action: "capture.artifact.export_access",
+        actorUserId: command.actor.userId,
+        captureSessionId: command.captureSessionId,
+        metadata: { artifactId: artifact.id, envelopeSha256: envelopeRow.envelope_sha256 },
+        projectId: command.projectId,
+        requestId: command.correlation.requestId,
+        tenantId: command.actor.tenantId,
+        traceId: command.correlation.traceId,
+      });
+      return result;
+    });
   }
 
   async createArtifactUpload(

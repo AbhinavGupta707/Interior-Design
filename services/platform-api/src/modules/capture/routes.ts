@@ -1,6 +1,7 @@
 import { authoriseProjectAction, type ProjectAction } from "@interior-design/authz";
 import {
   c7RouteContract,
+  captureArtifactAccessResponseSchema,
   captureArtifactUploadSessionSchema,
   captureEnvelopeReconstructionSchema,
   captureEnvelopeRecordSchema,
@@ -37,6 +38,8 @@ const sessionParamsSchema = z
   .object({ captureSessionId: captureSessionIdSchema, projectId: projectIdSchema })
   .strict();
 const uploadParamsSchema = sessionParamsSchema.extend({ uploadSessionId: z.uuid() }).strict();
+const artifactParamsSchema = sessionParamsSchema.extend({ artifactId: z.uuid() }).strict();
+const packageParamsSchema = sessionParamsSchema.extend({ packageId: z.uuid() }).strict();
 const emptyMutationSchema = z.union([z.undefined(), z.object({}).strict()]);
 
 async function authorisedProject(
@@ -253,6 +256,48 @@ export function registerCaptureRoutes(
     });
     replayHeader(reply, result.replayed);
     return reply.status(201).send(capturePackageSchema.parse(result.value));
+  });
+
+  server.get(c7RouteContract.getPackage, async (request, reply) => {
+    const params = parseRequest(packageParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "capture:session:read",
+      identity,
+      projects,
+    );
+    const capturePackage = await backend.findPackage(
+      actor.tenantId,
+      params.projectId,
+      params.captureSessionId,
+      params.packageId,
+    );
+    if (capturePackage === undefined) throw notFound();
+    return reply.send(capturePackageSchema.parse(capturePackage));
+  });
+
+  server.post(c7RouteContract.accessArtifact, async (request, reply) => {
+    const params = parseRequest(artifactParamsSchema, request.params);
+    const actor = await authorisedProject(
+      request,
+      params.projectId,
+      "capture:artifact:export",
+      identity,
+      projects,
+    );
+    parseRequest(emptyMutationSchema, request.body);
+    return reply.send(
+      captureArtifactAccessResponseSchema.parse(
+        await backend.accessArtifact({
+          actor,
+          artifactId: params.artifactId,
+          captureSessionId: params.captureSessionId,
+          correlation: getRequestCorrelation(request),
+          projectId: params.projectId,
+        }),
+      ),
+    );
   });
 
   server.post(captureEnvelopeRouteContract.accept, async (request, reply) => {
