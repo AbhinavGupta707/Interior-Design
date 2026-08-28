@@ -168,3 +168,4 @@ and pass accountable private visual review. It does not justify production or ca
   and explicitly skips the optional DA3 module rather than importing unfrozen runtime packages.
 - No migration, OpenAPI/client, root dependency, production worker, route, canonical schema,
   homeowner authority or provider setting changed.
+- GitHub PR #15 was opened non-draft against `main` and left unmerged for normal review and checks.

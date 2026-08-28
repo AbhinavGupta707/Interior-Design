@@ -160,3 +160,5 @@ accepted C8/C14.9 baseline adapters are out of scope.
 - Contract/migration impact is none. Production routing, canonical geometry, C5/homeowner
   authority, accepted baseline adapters, schemas, root manifests/locks and generated clients are
   unchanged. Dimensional and representative accuracy remain `NOT RUN`.
+- Delivery is GitHub PR #15 targeting `main`. It was opened non-draft and remains open/unmerged;
+  normal repository review and required checks retain merge authority.

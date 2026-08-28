@@ -1717,3 +1717,5 @@
   `docs/evaluation/reconstruction/C14_10_LEARNED_RECONSTRUCTION_AUDIT_2026-08-28.md`. Contract and
   migration impact is none; production/canonical/homeowner authority remains unchanged;
   dimensional and representative accuracy are `NOT RUN`.
+- Delivery: GitHub PR #15 targets `main`, is non-draft and remains open/unmerged. The verified
+  audit result does not bypass normal review or required repository checks.
