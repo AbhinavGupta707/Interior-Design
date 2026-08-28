@@ -66,6 +66,14 @@ enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Has
     }
   }
 
+  func homeownerInstruction(hasRetainedView: Bool) -> String {
+    if self == .featurePoor, hasRetainedView {
+      return
+        "Turn back until part of the last retained wall or corner is visible, then sidestep slowly."
+    }
+    return homeownerInstruction
+  }
+
   var homeownerLabel: String {
     switch self {
     case .accepted: "retained"
@@ -84,11 +92,101 @@ enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Has
   }
 }
 
+struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
+  let blurScoreMillionths: Int
+  let completedAt: Date
+  let featurePointCount: Int
+  let motionScoreMillionths: Int
+  let overlapScoreMillionths: Int
+  let parallaxScoreMillionths: Int
+  let reason: C14_10KeyframeDecisionReason
+  let telemetryTimestampMicroseconds: Int64
+  let trackingState: C14_8TrackingState
+  let translationFromPreviousMicrometres: Int64
+
+  init(
+    reason: C14_10KeyframeDecisionReason,
+    telemetry: C14_8LiveTelemetry,
+    completedAt: Date
+  ) {
+    blurScoreMillionths = telemetry.blurScoreMillionths
+    self.completedAt = completedAt
+    featurePointCount = telemetry.spatialEvidence.featurePointCount
+    motionScoreMillionths = telemetry.motionScoreMillionths
+    overlapScoreMillionths = telemetry.spatialEvidence.overlapScoreMillionths
+    parallaxScoreMillionths = telemetry.spatialEvidence.parallaxScoreMillionths
+    self.reason = reason
+    telemetryTimestampMicroseconds = telemetry.spatialEvidence.telemetryTimestampMicroseconds
+    trackingState = telemetry.trackingState
+    translationFromPreviousMicrometres =
+      telemetry.spatialEvidence.translationFromPreviousMicrometres
+  }
+
+  var isValid: Bool {
+    blurScoreMillionths >= 0 && blurScoreMillionths <= 1_000_000
+      && featurePointCount >= 0 && featurePointCount <= 1_000_000
+      && motionScoreMillionths >= 0 && motionScoreMillionths <= 1_000_000
+      && overlapScoreMillionths >= 0 && overlapScoreMillionths <= 1_000_000
+      && parallaxScoreMillionths >= 0 && parallaxScoreMillionths <= 1_000_000
+      && telemetryTimestampMicroseconds >= 0
+      && translationFromPreviousMicrometres >= 0
+  }
+}
+
+struct C14_10RejectedDiagnosticThumbnail: Equatable, Sendable {
+  let capturedAt: Date
+  let jpegData: Data
+  let pixelHeight: Int
+  let pixelWidth: Int
+  let telemetryTimestampMicroseconds: Int64
+}
+
+struct C14_10RejectedFrameDiagnosticRecord: Codable, Equatable, Sendable {
+  let capturedAt: Date
+  let diagnosticId: UUID
+  let imageByteCount: Int
+  let imageFilename: String
+  let imageSHA256: String
+  let outcome: C14_10RecentSelectionOutcome
+  let pixelHeight: Int
+  let pixelWidth: Int
+
+  var isValid: Bool {
+    capturedAt == outcome.completedAt
+      && imageByteCount > 0
+      && imageByteCount <= C14_10RejectedFrameDiagnosticPolicy.maximumImageBytes
+      && imageFilename == "\(diagnosticId.uuidString.lowercased()).jpg"
+      && imageSHA256.count == 64
+      && imageSHA256.allSatisfy { $0.isHexDigit && !$0.isUppercase }
+      && outcome.isValid
+      && outcome.reason != .accepted
+      && pixelHeight > 0
+      && pixelHeight <= C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension
+      && pixelWidth > 0
+      && pixelWidth <= C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension
+  }
+}
+
+struct C14_10RejectedFrameDiagnosticSnapshot: Equatable, Sendable {
+  let jpegData: Data
+  let record: C14_10RejectedFrameDiagnosticRecord
+  let retainedCount: Int
+}
+
+enum C14_10RejectedFrameDiagnosticPolicy {
+  static let maximumImageBytes = 512_000
+  static let maximumPixelDimension = 640
+  static let maximumRetainedCount = 12
+  static let schemaVersion = "c14-10-rejected-frame-diagnostics-v1"
+}
+
 struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
   static let schemaVersion = "c14-10-selection-diagnostics-v1"
   static let maximumCandidateCount = 20_000
+  static let maximumRecentOutcomeCount = 20
 
   var outcomeCounts: [String: Int]
+  var recentOutcomes: [C14_10RecentSelectionOutcome]?
   let schemaVersion: String
   var totalAutomaticCandidateCount: Int
   var updatedAt: Date
@@ -96,6 +194,7 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
   static func empty(at date: Date = Date()) -> Self {
     Self(
       outcomeCounts: [:],
+      recentOutcomes: [],
       schemaVersion: schemaVersion,
       totalAutomaticCandidateCount: 0,
       updatedAt: date
@@ -124,10 +223,24 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
     outcomeCounts[reason.rawValue] ?? 0
   }
 
-  mutating func record(_ reason: C14_10KeyframeDecisionReason, at date: Date = Date()) {
+  mutating func record(
+    _ reason: C14_10KeyframeDecisionReason,
+    telemetry: C14_8LiveTelemetry? = nil,
+    at date: Date = Date()
+  ) {
     guard totalAutomaticCandidateCount < Self.maximumCandidateCount else { return }
     totalAutomaticCandidateCount += 1
     outcomeCounts[reason.rawValue, default: 0] += 1
+    if let telemetry {
+      var recent = recentOutcomes ?? []
+      recent.append(
+        C14_10RecentSelectionOutcome(reason: reason, telemetry: telemetry, completedAt: date)
+      )
+      if recent.count > Self.maximumRecentOutcomeCount {
+        recent.removeFirst(recent.count - Self.maximumRecentOutcomeCount)
+      }
+      recentOutcomes = recent
+    }
     updatedAt = max(updatedAt, date)
   }
 
@@ -140,6 +253,8 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
       }
       && outcomeCounts.values.allSatisfy { $0 >= 0 }
       && outcomeCounts.values.reduce(0, +) == totalAutomaticCandidateCount
+      && (recentOutcomes?.count ?? 0) <= Self.maximumRecentOutcomeCount
+      && (recentOutcomes ?? []).allSatisfy(\.isValid)
   }
 }
 

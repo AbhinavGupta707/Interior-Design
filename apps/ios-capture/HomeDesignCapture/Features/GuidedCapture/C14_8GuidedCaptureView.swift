@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct C14_8GuidedCaptureView: View {
   @Bindable var model: C14_8GuidedCaptureModel
@@ -268,6 +269,57 @@ struct C14_8GuidedCaptureView: View {
         )
         .font(.footnote)
         .foregroundStyle(.secondary)
+        #if DEBUG
+          Toggle(
+            "Save private rejected-frame diagnostics",
+            isOn: Binding(
+              get: { model.rejectedFrameDiagnosticsEnabled },
+              set: { model.setRejectedFrameDiagnosticsEnabled($0) }
+            )
+          )
+          .accessibilityIdentifier("c14_10.rejected-frame-diagnostics")
+          Text(
+            "Physical diagnostics only. When enabled, the app keeps at most 12 protected 640 px snapshots on this device. They stay outside the Capture Envelope, never upload and are off again after relaunch."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          if let record = model.latestRejectedFrameDiagnostic,
+            let data = model.latestRejectedFrameThumbnailData,
+            let image = UIImage(data: data)
+          {
+            Image(uiImage: image)
+              .resizable()
+              .scaledToFit()
+              .frame(maxHeight: 220)
+              .clipShape(RoundedRectangle(cornerRadius: 12))
+              .accessibilityLabel("Latest private rejected-frame diagnostic")
+            LabeledContent(
+              "Latest rejected snapshot",
+              value: record.outcome.reason.homeownerLabel.capitalized
+            )
+            Text(
+              "Tracking \(record.outcome.trackingState.rawValue) · features \(record.outcome.featurePointCount) · overlap \(record.outcome.overlapScoreMillionths / 10_000)% · translation \(record.outcome.translationFromPreviousMicrometres / 1_000) mm · parallax \(record.outcome.parallaxScoreMillionths / 10_000)% · \(record.imageByteCount / 1_024) KiB · SHA-256 \(record.imageSHA256.prefix(12))…"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          }
+          if model.rejectedFrameDiagnosticCount > 0 {
+            LabeledContent(
+              "Private diagnostic snapshots",
+              value: "\(model.rejectedFrameDiagnosticCount) of 12"
+            )
+            Button("Delete private diagnostic snapshots", role: .destructive) {
+              model.clearRejectedFrameDiagnostics()
+            }
+          }
+          if model.rejectedFrameDiagnosticsPersistenceFailed {
+            Label(
+              "A rejected-frame snapshot could not be protected. Do not treat this diagnostic run as complete.",
+              systemImage: "exclamationmark.shield"
+            )
+            .foregroundStyle(.orange)
+          }
+        #endif
         ForEach(model.guidance, id: \.self) {
           Label($0, systemImage: "viewfinder.circle")
         }
@@ -281,6 +333,17 @@ struct C14_8GuidedCaptureView: View {
             value:
               "\(model.selectionDiagnostics.retainedCandidateCount) / \(model.selectionDiagnostics.skippedCandidateCount)"
           )
+          if let latest = model.selectionDiagnostics.recentOutcomes?.last {
+            LabeledContent(
+              "Last completed window",
+              value: latest.reason.homeownerLabel.capitalized
+            )
+            Text(
+              "Tracking \(latest.trackingState.rawValue) · features \(latest.featurePointCount) · overlap \(latest.overlapScoreMillionths / 10_000)% · translation \(latest.translationFromPreviousMicrometres / 1_000) mm · parallax \(latest.parallaxScoreMillionths / 10_000)%"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          }
           ForEach(model.selectionDiagnostics.rankedSkippedOutcomes.prefix(4), id: \.reason) {
             outcome in
             LabeledContent(outcome.reason.homeownerLabel.capitalized, value: String(outcome.count))

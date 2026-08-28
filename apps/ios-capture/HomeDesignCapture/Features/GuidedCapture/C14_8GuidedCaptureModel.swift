@@ -17,6 +17,7 @@ private struct C14_10AutomaticCandidateWindow {
   let startedAtMicroseconds: Int64
   var outcome: C14_10KeyframeDecisionReason
   var retentionStarted: Bool
+  var telemetry: C14_8LiveTelemetry
 }
 
 enum C14_8GuidedCaptureState: Equatable, Sendable {
@@ -61,6 +62,11 @@ final class C14_8GuidedCaptureModel {
   private(set) var selectionInstruction: String?
   private(set) var selectionDiagnostics = C14_10SelectionDiagnostics.empty()
   private(set) var selectionDiagnosticsPersistenceFailed = false
+  private(set) var latestRejectedFrameDiagnostic: C14_10RejectedFrameDiagnosticRecord?
+  private(set) var latestRejectedFrameThumbnailData: Data?
+  private(set) var rejectedFrameDiagnosticCount = 0
+  private(set) var rejectedFrameDiagnosticsEnabled = false
+  private(set) var rejectedFrameDiagnosticsPersistenceFailed = false
 
   var automaticCaptureEnabled = true
   var includeAppearance = false
@@ -84,6 +90,9 @@ final class C14_8GuidedCaptureModel {
   @ObservationIgnored private let mediaStore: any C8ProtectedMediaStoring
   @ObservationIgnored private let mediaUploader: any C8ImmutableEvidenceUploading
   @ObservationIgnored private let permissionProvider: any C8CameraPermissionProviding
+  @ObservationIgnored private let rejectedFrameDiagnosticStore:
+    any C14_10RejectedFrameDiagnosticStoring
+  @ObservationIgnored private var rejectedFrameDiagnosticPersistenceTask: Task<Void, Never>?
   @ObservationIgnored private var selectionDiagnosticsPersistenceTask: Task<Void, Never>?
   @ObservationIgnored private var pendingSegmentReason: C14_8SegmentReason?
   @ObservationIgnored private var lastAutomaticTimestampMicroseconds: Int64?
@@ -101,7 +110,9 @@ final class C14_8GuidedCaptureModel {
     depthUploader: any C14_8DepthUploading,
     faultInjector: any C14_10FaultInjecting = C14_10NoFaultInjector(),
     journal: any C14_8ProtectedCaptureStoring = C14_8ProtectedCaptureStore(),
-    mediaStore: any C8ProtectedMediaStoring = C8ProtectedMediaStore()
+    mediaStore: any C8ProtectedMediaStoring = C8ProtectedMediaStore(),
+    rejectedFrameDiagnosticStore: any C14_10RejectedFrameDiagnosticStoring =
+      C14_10RejectedFrameDiagnosticStore()
   ) {
     self.capabilityProvider = capabilityProvider
     self.permissionProvider = permissionProvider
@@ -114,6 +125,7 @@ final class C14_8GuidedCaptureModel {
     self.faultInjector = faultInjector
     self.journal = journal
     self.mediaStore = mediaStore
+    self.rejectedFrameDiagnosticStore = rejectedFrameDiagnosticStore
     capabilities = capabilityProvider.current()
   }
 
@@ -189,7 +201,10 @@ final class C14_8GuidedCaptureModel {
       lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
       mode: .automatic
     )
-    result.append(selectionInstruction ?? decision.reason.homeownerInstruction)
+    result.append(
+      selectionInstruction
+        ?? decision.reason.homeownerInstruction(hasRetainedView: currentSegmentKeyframeCount > 0)
+    )
     if currentRoom?.coverage.first(where: { $0.id == telemetry.coverageCellId })?.status
       == .observed
     {
@@ -334,7 +349,8 @@ final class C14_8GuidedCaptureModel {
       mode: mode
     )
     guard decision.shouldRetain else {
-      selectionInstruction = decision.reason.homeownerInstruction
+      selectionInstruction = decision.reason.homeownerInstruction(
+        hasRetainedView: currentSegmentKeyframeCount > 0)
       return
     }
     selectionInstruction = nil
@@ -403,7 +419,8 @@ final class C14_8GuidedCaptureModel {
       } catch let error as C14_8GuidedCaptureEngineError {
         guard scope == self.activationId else { return }
         if case .candidateRejected(let reason) = error {
-          self.selectionInstruction = reason.homeownerInstruction
+          self.selectionInstruction = reason.homeownerInstruction(
+            hasRetainedView: self.currentSegmentKeyframeCount > 0)
           self.updateAutomaticCandidateOutcome(
             reason,
             startedAtMicroseconds: automaticCandidateStartedAt
@@ -765,6 +782,52 @@ final class C14_8GuidedCaptureModel {
     state = .checking
   }
 
+  #if DEBUG
+    func setRejectedFrameDiagnosticsEnabled(_ enabled: Bool) {
+      rejectedFrameDiagnosticsEnabled = enabled
+      engine.setRejectedDiagnosticCaptureEnabled(enabled)
+      rejectedFrameDiagnosticsPersistenceFailed = false
+      guard enabled, let projectId else { return }
+      let scope = activationId
+      let pendingPersistence = rejectedFrameDiagnosticPersistenceTask
+      let store = rejectedFrameDiagnosticStore
+      rejectedFrameDiagnosticPersistenceTask = Task { [weak self] in
+        await pendingPersistence?.value
+        do {
+          let latest = try await store.loadLatest(projectId: projectId)
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.latestRejectedFrameDiagnostic = latest?.record
+          self.latestRejectedFrameThumbnailData = latest?.jpegData
+          self.rejectedFrameDiagnosticCount = latest?.retainedCount ?? 0
+        } catch {
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.rejectedFrameDiagnosticsPersistenceFailed = true
+        }
+      }
+    }
+
+    func clearRejectedFrameDiagnostics() {
+      guard let projectId else { return }
+      let scope = activationId
+      let pendingPersistence = rejectedFrameDiagnosticPersistenceTask
+      let store = rejectedFrameDiagnosticStore
+      rejectedFrameDiagnosticPersistenceTask = Task { [weak self] in
+        await pendingPersistence?.value
+        do {
+          try await store.clear(projectId: projectId)
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.latestRejectedFrameDiagnostic = nil
+          self.latestRejectedFrameThumbnailData = nil
+          self.rejectedFrameDiagnosticCount = 0
+          self.rejectedFrameDiagnosticsPersistenceFailed = false
+        } catch {
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.rejectedFrameDiagnosticsPersistenceFailed = true
+        }
+      }
+    }
+  #endif
+
   @ObservationIgnored private var pendingActorScope: (actorUserId: UUID, tenantId: UUID)?
   private var draftScope: (actorUserId: UUID, tenantId: UUID)? {
     draft.map { ($0.actorUserId, $0.tenantId) }
@@ -935,18 +998,18 @@ final class C14_8GuidedCaptureModel {
     guard state == .ready, automaticCaptureEnabled, resourcePolicy.automaticSelectionEnabled else {
       return
     }
-    prepareAutomaticCandidateWindow(
-      telemetryTimestampMicroseconds: telemetry.spatialEvidence.telemetryTimestampMicroseconds
-    )
+    prepareAutomaticCandidateWindow(telemetry: telemetry)
     let decision = C14_10KeyframeSelector.decision(
       telemetry: telemetry,
       retainedCount: currentSegmentKeyframeCount,
       lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
       mode: .automatic
     )
-    selectionInstruction = decision.reason.homeownerInstruction
+    selectionInstruction = decision.reason.homeownerInstruction(
+      hasRetainedView: currentSegmentKeyframeCount > 0)
     if automaticCandidateWindow?.retentionStarted == false {
       automaticCandidateWindow?.outcome = decision.reason
+      automaticCandidateWindow?.telemetry = telemetry
     }
     if decision.shouldRetain, automaticCandidateWindow?.retentionStarted == false {
       automaticCandidateWindow?.retentionStarted = true
@@ -957,7 +1020,9 @@ final class C14_8GuidedCaptureModel {
     }
   }
 
-  private func prepareAutomaticCandidateWindow(telemetryTimestampMicroseconds: Int64) {
+  private func prepareAutomaticCandidateWindow(telemetry: C14_8LiveTelemetry) {
+    let telemetryTimestampMicroseconds =
+      telemetry.spatialEvidence.telemetryTimestampMicroseconds
     if let window = automaticCandidateWindow,
       telemetryTimestampMicroseconds - window.startedAtMicroseconds
         >= C14_10SpatialCapturePolicy.automaticIntervalMicroseconds
@@ -968,7 +1033,8 @@ final class C14_8GuidedCaptureModel {
       automaticCandidateWindow = C14_10AutomaticCandidateWindow(
         startedAtMicroseconds: telemetryTimestampMicroseconds,
         outcome: .tracking,
-        retentionStarted: false
+        retentionStarted: false,
+        telemetry: telemetry
       )
     }
   }
@@ -985,10 +1051,63 @@ final class C14_8GuidedCaptureModel {
 
   private func finalizeAutomaticCandidateWindow() {
     guard let window = automaticCandidateWindow else { return }
-    selectionDiagnostics.record(window.outcome)
+    let completedAt = Date()
+    selectionDiagnostics.record(window.outcome, telemetry: window.telemetry, at: completedAt)
+    #if DEBUG
+      captureRejectedFrameDiagnosticIfEnabled(window: window, completedAt: completedAt)
+    #endif
     automaticCandidateWindow = nil
     persistSelectionDiagnostics()
   }
+
+  #if DEBUG
+    private func captureRejectedFrameDiagnosticIfEnabled(
+      window: C14_10AutomaticCandidateWindow,
+      completedAt: Date
+    ) {
+      guard rejectedFrameDiagnosticsEnabled, window.outcome != .accepted, let projectId else {
+        return
+      }
+      let thumbnail: C14_10RejectedDiagnosticThumbnail
+      do {
+        thumbnail = try engine.captureRejectedDiagnosticThumbnail(
+          capturedAt: completedAt,
+          maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
+          telemetryTimestampMicroseconds:
+            window.telemetry.spatialEvidence.telemetryTimestampMicroseconds
+        )
+      } catch {
+        rejectedFrameDiagnosticsPersistenceFailed = true
+        return
+      }
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: window.outcome,
+        telemetry: window.telemetry,
+        completedAt: completedAt
+      )
+      let scope = activationId
+      let pendingPersistence = rejectedFrameDiagnosticPersistenceTask
+      let store = rejectedFrameDiagnosticStore
+      rejectedFrameDiagnosticPersistenceTask = Task { [weak self] in
+        await pendingPersistence?.value
+        do {
+          let latest = try await store.save(
+            projectId: projectId,
+            thumbnail: thumbnail,
+            outcome: outcome
+          )
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.latestRejectedFrameDiagnostic = latest.record
+          self.latestRejectedFrameThumbnailData = latest.jpegData
+          self.rejectedFrameDiagnosticCount = latest.retainedCount
+          self.rejectedFrameDiagnosticsPersistenceFailed = false
+        } catch {
+          guard let self, scope == self.activationId, self.projectId == projectId else { return }
+          self.rejectedFrameDiagnosticsPersistenceFailed = true
+        }
+      }
+    }
+  #endif
 
   private func persistSelectionDiagnostics() {
     guard let projectId else { return }
@@ -1675,6 +1794,14 @@ final class C14_8GuidedCaptureModel {
     selectionDiagnostics = .empty()
     selectionDiagnosticsPersistenceFailed = false
     selectionDiagnosticsPersistenceTask = nil
+    rejectedFrameDiagnosticPersistenceTask?.cancel()
+    rejectedFrameDiagnosticPersistenceTask = nil
+    latestRejectedFrameDiagnostic = nil
+    latestRejectedFrameThumbnailData = nil
+    rejectedFrameDiagnosticCount = 0
+    rejectedFrameDiagnosticsEnabled = false
+    engine.setRejectedDiagnosticCaptureEnabled(false)
+    rejectedFrameDiagnosticsPersistenceFailed = false
     scopeMismatch = false
   }
 }

@@ -110,11 +110,32 @@ protocol C14_8GuidedCaptureServing: AnyObject {
     retentionMode: C14_10KeyframeRetentionMode,
     zoneId: UUID
   ) async throws -> C14_8CapturedKeyframe
+  func captureRejectedDiagnosticThumbnail(
+    capturedAt: Date,
+    maximumDimension: Int,
+    telemetryTimestampMicroseconds: Int64
+  ) throws -> C14_10RejectedDiagnosticThumbnail
+  func setRejectedDiagnosticCaptureEnabled(_ enabled: Bool)
   func start(
     telemetry: @escaping @MainActor (C14_8LiveTelemetry) -> Void,
     events: @escaping @MainActor (C14_8GuidedCaptureEvent) -> Void
   ) throws
   func stop()
+}
+
+extension C14_8GuidedCaptureServing {
+  func captureRejectedDiagnosticThumbnail(
+    capturedAt: Date,
+    maximumDimension: Int,
+    telemetryTimestampMicroseconds: Int64
+  ) throws -> C14_10RejectedDiagnosticThumbnail {
+    _ = (capturedAt, maximumDimension, telemetryTimestampMicroseconds)
+    throw C14_8GuidedCaptureEngineError.frameUnavailable
+  }
+
+  func setRejectedDiagnosticCaptureEnabled(_ enabled: Bool) {
+    _ = enabled
+  }
 }
 
 @MainActor
@@ -130,6 +151,11 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
   private var eventHandler: (@MainActor (C14_8GuidedCaptureEvent) -> Void)?
   private var frameCounter = 0
   private var latestMotionScoreMillionths = 0
+  private var latestRejectedDiagnosticFrame:
+    (
+      pixelBuffer: CVPixelBuffer,
+      telemetryTimestampMicroseconds: Int64
+    )?
   private var latestSpatialEvidence = C14_10LiveSpatialEvidence(
     connectedToPrevious: false,
     featurePointCount: 0,
@@ -142,11 +168,17 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     translationFromPreviousMicrometres: 0
   )
   private var previousPosition: SIMD3<Float>?
+  private var previousRejectedDiagnosticFrame:
+    (
+      pixelBuffer: CVPixelBuffer,
+      telemetryTimestampMicroseconds: Int64
+    )?
   private var previousRotation: simd_quatf?
   private var previousTimestamp: TimeInterval?
   private var resourceNotificationTokens: [NSObjectProtocol] = []
   private var retainedObservations: [C14_10RetainedObservation] = []
   private var resourcePolicy = C14_10ResourcePolicy.policy(for: .nominal)
+  private var rejectedDiagnosticCaptureEnabled = false
   private var running = false
   private var telemetryHandler: (@MainActor (C14_8LiveTelemetry) -> Void)?
 
@@ -169,6 +201,8 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     previousPosition = nil
     previousRotation = nil
     previousTimestamp = nil
+    latestRejectedDiagnosticFrame = nil
+    previousRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
     frameCounter = 0
@@ -186,6 +220,8 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     previousPosition = nil
     previousRotation = nil
     previousTimestamp = nil
+    latestRejectedDiagnosticFrame = nil
+    previousRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
     frameCounter = 0
@@ -200,6 +236,14 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     resourcePolicy = policy
     if running, depthPolicyChanged {
       previewSession?.run(makeConfiguration())
+    }
+  }
+
+  func setRejectedDiagnosticCaptureEnabled(_ enabled: Bool) {
+    rejectedDiagnosticCaptureEnabled = enabled
+    if !enabled {
+      latestRejectedDiagnosticFrame = nil
+      previousRejectedDiagnosticFrame = nil
     }
   }
 
@@ -323,6 +367,56 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     )
   }
 
+  func captureRejectedDiagnosticThumbnail(
+    capturedAt: Date,
+    maximumDimension: Int,
+    telemetryTimestampMicroseconds: Int64
+  ) throws -> C14_10RejectedDiagnosticThumbnail {
+    guard 1...C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension ~= maximumDimension
+    else { throw C14_8GuidedCaptureEngineError.frameUnavailable }
+    let pixelBuffer: CVPixelBuffer
+    if latestRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
+      == telemetryTimestampMicroseconds,
+      let latestRejectedDiagnosticFrame
+    {
+      pixelBuffer = latestRejectedDiagnosticFrame.pixelBuffer
+    } else if previousRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
+      == telemetryTimestampMicroseconds,
+      let previousRejectedDiagnosticFrame
+    {
+      pixelBuffer = previousRejectedDiagnosticFrame.pixelBuffer
+    } else {
+      throw C14_8GuidedCaptureEngineError.frameUnavailable
+    }
+    let source = CIImage(cvPixelBuffer: pixelBuffer)
+      .oriented(Self.diagnosticImageOrientation())
+    let sourceExtent = source.extent.integral
+    let longestEdge = max(sourceExtent.width, sourceExtent.height)
+    guard longestEdge > 0 else { throw C14_8GuidedCaptureEngineError.encodingFailed }
+    let scale = min(1, CGFloat(maximumDimension) / longestEdge)
+    let scaled = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+    let scaledExtent = scaled.extent.integral
+    let normalized = scaled.transformed(
+      by: CGAffineTransform(translationX: -scaledExtent.minX, y: -scaledExtent.minY)
+    )
+    guard let colourSpace = CGColorSpace(name: CGColorSpace.sRGB),
+      let jpeg = ciContext.jpegRepresentation(
+        of: normalized,
+        colorSpace: colourSpace,
+        options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.55]
+      ),
+      !jpeg.isEmpty,
+      jpeg.count <= C14_10RejectedFrameDiagnosticPolicy.maximumImageBytes
+    else { throw C14_8GuidedCaptureEngineError.encodingFailed }
+    return C14_10RejectedDiagnosticThumbnail(
+      capturedAt: capturedAt,
+      jpegData: jpeg,
+      pixelHeight: Int(scaledExtent.height),
+      pixelWidth: Int(scaledExtent.width),
+      telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
+    )
+  }
+
   func session(_ session: ARSession, didUpdate frame: ARFrame) {
     frameCounter += 1
     let transform = frame.camera.transform
@@ -343,6 +437,13 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     guard frameCounter % resourcePolicy.analysisStride == 0 else { return }
     let quality = Self.quality(frame.capturedImage, evaluator: qualityEvaluator)
     let spatialEvidence = spatialEvidence(for: frame)
+    if rejectedDiagnosticCaptureEnabled {
+      previousRejectedDiagnosticFrame = latestRejectedDiagnosticFrame
+      latestRejectedDiagnosticFrame = (
+        pixelBuffer: frame.capturedImage,
+        telemetryTimestampMicroseconds: spatialEvidence.telemetryTimestampMicroseconds
+      )
+    }
     latestSpatialEvidence = spatialEvidence
     let forward = -SIMD3(transform.columns.2.x, transform.columns.2.y, transform.columns.2.z)
     telemetryHandler?(
@@ -590,6 +691,19 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
   private static func nano(_ value: Float) -> Int64 {
     Int64((Double(value) * 1_000_000_000).rounded())
   }
+
+  private static func diagnosticImageOrientation() -> CGImagePropertyOrientation {
+    let orientation =
+      UIApplication.shared.connectedScenes
+      .compactMap { ($0 as? UIWindowScene)?.interfaceOrientation }
+      .first ?? .portrait
+    switch orientation {
+    case .landscapeLeft: return .up
+    case .landscapeRight: return .down
+    case .portraitUpsideDown: return .left
+    default: return .right
+    }
+  }
 }
 
 #if DEBUG
@@ -719,6 +833,46 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
           retentionMode: retentionMode,
           zoneId: zoneId
         )
+      )
+    }
+
+    func captureRejectedDiagnosticThumbnail(
+      capturedAt: Date,
+      maximumDimension: Int,
+      telemetryTimestampMicroseconds: Int64
+    ) throws -> C14_10RejectedDiagnosticThumbnail {
+      _ = telemetryTimestampMicroseconds
+      guard 1...C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension ~= maximumDimension else {
+        throw C14_8GuidedCaptureEngineError.encodingFailed
+      }
+      let width = maximumDimension
+      let height = maximumDimension * 3 / 4
+      let format = UIGraphicsImageRendererFormat()
+      format.scale = 1
+      let renderer = UIGraphicsImageRenderer(
+        size: CGSize(width: width, height: height),
+        format: format
+      )
+      let image = renderer.image { context in
+        UIColor.systemOrange.setFill()
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        "REJECTED DIAGNOSTIC FIXTURE".draw(
+          at: CGPoint(x: 32, y: height / 2 - 14),
+          withAttributes: [
+            .font: UIFont.monospacedSystemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: UIColor.black,
+          ]
+        )
+      }
+      guard let data = image.jpegData(compressionQuality: 0.55) else {
+        throw C14_8GuidedCaptureEngineError.encodingFailed
+      }
+      return C14_10RejectedDiagnosticThumbnail(
+        capturedAt: capturedAt,
+        jpegData: data,
+        pixelHeight: height,
+        pixelWidth: width,
+        telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
       )
     }
   }

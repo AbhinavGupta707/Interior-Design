@@ -16,7 +16,11 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     var diagnostics = C14_10SelectionDiagnostics.empty(at: Date(timeIntervalSince1970: 1))
 
     diagnostics.record(.accepted, at: Date(timeIntervalSince1970: 2))
-    diagnostics.record(.featurePoor, at: Date(timeIntervalSince1970: 3))
+    diagnostics.record(
+      .featurePoor,
+      telemetry: telemetry(connected: true, overlap: 220_000, translation: 180_000),
+      at: Date(timeIntervalSince1970: 3)
+    )
     diagnostics.record(.insufficientOverlap, at: Date(timeIntervalSince1970: 4))
     try await store.saveSelectionDiagnostics(projectId: projectId, diagnostics: diagnostics)
 
@@ -27,7 +31,111 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertEqual(restored.skippedCandidateCount, 2)
     XCTAssertEqual(restored.count(for: .featurePoor), 1)
     XCTAssertEqual(restored.count(for: .insufficientOverlap), 1)
+    let recent = try XCTUnwrap(restored.recentOutcomes)
+    XCTAssertEqual(recent.count, 1)
+    XCTAssertEqual(recent[0].reason, .featurePoor)
+    XCTAssertEqual(recent[0].featurePointCount, 180)
+    XCTAssertEqual(recent[0].overlapScoreMillionths, 220_000)
+    XCTAssertEqual(recent[0].telemetryTimestampMicroseconds, 3_000_000)
+    XCTAssertEqual(recent[0].translationFromPreviousMicrometres, 180_000)
     XCTAssertTrue(restored.isValid)
+  }
+
+  func testFeatureGuidanceReconnectsToLastRetainedView() {
+    XCTAssertEqual(
+      C14_10KeyframeDecisionReason.featurePoor.homeownerInstruction(hasRetainedView: false),
+      "Aim across a corner, opening or textured object."
+    )
+    XCTAssertTrue(
+      C14_10KeyframeDecisionReason.featurePoor
+        .homeownerInstruction(hasRetainedView: true)
+        .contains("last retained wall or corner")
+    )
+  }
+
+  func testLegacyAggregateDiagnosticsDecodeWithoutRecentOutcomes() throws {
+    let data = Data(
+      """
+      {
+        "outcomeCounts":{"tracking":1},
+        "schemaVersion":"c14-10-selection-diagnostics-v1",
+        "totalAutomaticCandidateCount":1,
+        "updatedAt":0
+      }
+      """.utf8
+    )
+
+    let diagnostics = try JSONDecoder().decode(C14_10SelectionDiagnostics.self, from: data)
+
+    XCTAssertNil(diagnostics.recentOutcomes)
+    XCTAssertEqual(diagnostics.count(for: .tracking), 1)
+    XCTAssertTrue(diagnostics.isValid)
+  }
+
+  @MainActor
+  func testRejectedFrameDiagnosticsStayProtectedBoundedAndReasonBound() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent(
+        "c14-10-rejected-frame-diagnostics-\(UUID().uuidString)",
+        isDirectory: true
+      )
+    let store = C14_10RejectedFrameDiagnosticStore(root: root)
+    let engine = C14_8FixtureGuidedCaptureEngine()
+    let projectId = UUID()
+
+    for index in 0..<14 {
+      let capturedAt = Date(timeIntervalSince1970: Double(index + 1))
+      let reason: C14_10KeyframeDecisionReason =
+        index == 13 ? .insufficientOverlap : .featurePoor
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: reason,
+        telemetry: telemetry(
+          connected: true,
+          overlap: index == 13 ? 120_000 : 220_000,
+          parallax: 90_000,
+          translation: 180_000
+        ),
+        completedAt: capturedAt
+      )
+      let thumbnail = try engine.captureRejectedDiagnosticThumbnail(
+        capturedAt: capturedAt,
+        maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
+        telemetryTimestampMicroseconds: 3_000_000
+      )
+
+      _ = try await store.save(
+        projectId: projectId,
+        thumbnail: thumbnail,
+        outcome: outcome
+      )
+    }
+
+    let loadedLatest = try await store.loadLatest(projectId: projectId)
+    let latest = try XCTUnwrap(loadedLatest)
+    XCTAssertEqual(latest.retainedCount, 12)
+    XCTAssertEqual(latest.record.outcome.reason, .insufficientOverlap)
+    XCTAssertEqual(latest.record.outcome.overlapScoreMillionths, 120_000)
+    XCTAssertEqual(latest.record.outcome.telemetryTimestampMicroseconds, 3_000_000)
+    XCTAssertEqual(latest.record.outcome.translationFromPreviousMicrometres, 180_000)
+    XCTAssertEqual(latest.jpegData.count, latest.record.imageByteCount)
+    XCTAssertTrue(latest.record.isValid)
+    let projectDirectory = root.appendingPathComponent(
+      projectId.uuidString.lowercased(),
+      isDirectory: true
+    )
+    let storedFiles = try FileManager.default.contentsOfDirectory(
+      at: projectDirectory,
+      includingPropertiesForKeys: nil
+    )
+    XCTAssertEqual(storedFiles.filter { $0.pathExtension == "jpg" }.count, 12)
+    XCTAssertEqual(storedFiles.filter { $0.lastPathComponent == "manifest.json" }.count, 1)
+
+    try await store.clear(projectId: projectId)
+    let clearedLatest = try await store.loadLatest(projectId: projectId)
+    XCTAssertNil(clearedLatest)
+    if FileManager.default.fileExists(atPath: root.path) {
+      try? FileManager.default.removeItem(at: root)
+    }
   }
 
   func testDirectionHeightGridCannotCompleteRotateInPlaceCapture() {
