@@ -43,6 +43,16 @@ final class C14_10CaptureEnvelopeGoldenTests: XCTestCase {
             identifier
           )
         }
+        if let caseHash = fixture["expectedCanonicalSha256"] as? String {
+          let caseBytes = try C14_10CaptureEnvelopeCodec.canonicalBytes(input)
+          XCTAssertEqual(
+            caseBytes.count,
+            try XCTUnwrap(fixture["expectedCanonicalByteLength"] as? Int),
+            identifier
+          )
+          XCTAssertEqual(
+            try C14_10CaptureEnvelopeCodec.canonicalSha256(input), caseHash, identifier)
+        }
       } else {
         XCTAssertThrowsError(try C14_10CaptureEnvelopeCodec.decodeStrict(input), identifier)
       }

@@ -18,6 +18,7 @@ struct C14_8LiveTelemetry: Equatable, Sendable {
 enum C14_8GuidedCaptureEvent: Equatable, Sendable {
   case interruptionEnded
   case interrupted
+  case resourcePressure(C14_10ResourcePressure)
   case runtimeFailure
 }
 
@@ -143,8 +144,10 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
   private var previousPosition: SIMD3<Float>?
   private var previousRotation: simd_quatf?
   private var previousTimestamp: TimeInterval?
+  private var resourceNotificationTokens: [NSObjectProtocol] = []
   private var retainedObservations: [C14_10RetainedObservation] = []
   private var resourcePolicy = C14_10ResourcePolicy.policy(for: .nominal)
+  private var running = false
   private var telemetryHandler: (@MainActor (C14_8LiveTelemetry) -> Void)?
 
   init(capability: C14_8CapabilityDeclaration) {
@@ -169,16 +172,16 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     latestMotionScoreMillionths = 0
     retainedObservations = []
     frameCounter = 0
-    let configuration = ARWorldTrackingConfiguration()
-    configuration.worldAlignment = .gravity
-    configuration.environmentTexturing = .none
-    if capability.sceneDepth {
-      configuration.frameSemantics.insert(.sceneDepth)
-    }
+    observeResourcePressure()
+    eventHandler?(
+      .resourcePressure(Self.resourcePressure(for: ProcessInfo.processInfo.thermalState)))
+    let configuration = makeConfiguration()
     previewSession.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+    running = true
   }
 
   func stop() {
+    running = false
     previewSession?.pause()
     previousPosition = nil
     previousRotation = nil
@@ -186,10 +189,18 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     latestMotionScoreMillionths = 0
     retainedObservations = []
     frameCounter = 0
+    telemetryHandler = nil
+    eventHandler = nil
+    for token in resourceNotificationTokens { NotificationCenter.default.removeObserver(token) }
+    resourceNotificationTokens.removeAll()
   }
 
   func applyResourcePolicy(_ policy: C14_10ResourcePolicy) {
+    let depthPolicyChanged = resourcePolicy.optionalDepthEnabled != policy.optionalDepthEnabled
     resourcePolicy = policy
+    if running, depthPolicyChanged {
+      previewSession?.run(makeConfiguration())
+    }
   }
 
   func captureKeyframe(
@@ -209,21 +220,29 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       throw C14_8GuidedCaptureEngineError.trackingUnavailable
     }
     let quality = Self.quality(frame.capturedImage, evaluator: qualityEvaluator)
-    let spatialEvidence = spatialEvidence(for: frame)
+    let globalMicroseconds = min(
+      C14_8CaptureContract.maximumDurationMicroseconds,
+      max(0, Int64(Date().timeIntervalSince(captureStartedAt) * 1_000_000))
+    )
+    let spatialEvidence = spatialEvidence(
+      for: frame, telemetryTimestampMicroseconds: globalMicroseconds)
     let transform = frame.camera.transform
     let forward = -SIMD3(transform.columns.2.x, transform.columns.2.y, transform.columns.2.z)
+    let coverageCellId = Self.coverageCell(forward: forward)
     let decision = C14_10KeyframeSelector.decision(
       telemetry: C14_8LiveTelemetry(
         ambientIntensity: frame.lightEstimate.map { Int($0.ambientIntensity.rounded()) },
         blurScoreMillionths: quality.blurScoreMillionths,
-        coverageCellId: Self.coverageCell(forward: forward),
+        coverageCellId: coverageCellId,
         exposureScoreMillionths: quality.exposureScoreMillionths,
         motionScoreMillionths: latestMotionScoreMillionths,
         spatialEvidence: spatialEvidence,
         trackingState: tracking
       ),
       retainedCount: retainedObservations.count,
-      lastAutomaticTimestampMicroseconds: nil,
+      lastAutomaticTimestampMicroseconds: retainedObservations.last(where: {
+        $0.retentionMode == .automatic
+      })?.timestampMicroseconds,
       mode: retentionMode
     )
     guard decision.shouldRetain else {
@@ -244,10 +263,6 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let quaternion = simd_quatf(transform)
     let intrinsics = frame.camera.intrinsics
     let resolution = frame.camera.imageResolution
-    let globalMicroseconds = min(
-      C14_8CaptureContract.maximumDurationMicroseconds,
-      max(0, Int64(Date().timeIntervalSince(captureStartedAt) * 1_000_000))
-    )
     let sample = C14_8LocalCameraSample(
       ambientIntensity: frame.lightEstimate.map { Int($0.ambientIntensity.rounded()) },
       blurScoreMillionths: quality.blurScoreMillionths,
@@ -292,9 +307,15 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       retentionMode: retentionMode,
       zoneId: zoneId
     )
-    retain(frame: frame, spatialEvidence: spatialEvidence)
+    retain(
+      frame: frame,
+      retentionMode: retentionMode,
+      spatialEvidence: spatialEvidence,
+      timestampMicroseconds: globalMicroseconds
+    )
     let depth = resourcePolicy.optionalDepthEnabled ? frame.sceneDepth.map(Self.depthBytes) : nil
     return C14_8CapturedKeyframe(
+      coverageCellId: coverageCellId,
       depthData: depth?.data,
       depthHeight: depth?.height,
       depthWidth: depth?.width,
@@ -359,7 +380,10 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     }
   }
 
-  private func spatialEvidence(for frame: ARFrame) -> C14_10LiveSpatialEvidence {
+  private func spatialEvidence(
+    for frame: ARFrame,
+    telemetryTimestampMicroseconds: Int64? = nil
+  ) -> C14_10LiveSpatialEvidence {
     let transform = frame.camera.transform
     let position = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
     let featureIds = Set(frame.rawFeaturePoints?.identifiers ?? [])
@@ -370,7 +394,8 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         loopClosureCandidate: false,
         overlapScoreMillionths: 0,
         parallaxScoreMillionths: 0,
-        telemetryTimestampMicroseconds: max(0, Int64((frame.timestamp * 1_000_000).rounded())),
+        telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
+          ?? max(0, Int64((frame.timestamp * 1_000_000).rounded())),
         trajectorySpanMicrometres: 0,
         trajectoryTravelMicrometres: 0,
         translationFromPreviousMicrometres: 0
@@ -404,19 +429,27 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       loopClosureCandidate: loopClosure,
       overlapScoreMillionths: overlap,
       parallaxScoreMillionths: max(0, parallax),
-      telemetryTimestampMicroseconds: max(0, Int64((frame.timestamp * 1_000_000).rounded())),
+      telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
+        ?? max(0, Int64((frame.timestamp * 1_000_000).rounded())),
       trajectorySpanMicrometres: span,
       trajectoryTravelMicrometres: travel,
       translationFromPreviousMicrometres: translation
     )
   }
 
-  private func retain(frame: ARFrame, spatialEvidence: C14_10LiveSpatialEvidence) {
+  private func retain(
+    frame: ARFrame,
+    retentionMode: C14_10KeyframeRetentionMode,
+    spatialEvidence: C14_10LiveSpatialEvidence,
+    timestampMicroseconds: Int64
+  ) {
     let transform = frame.camera.transform
     retainedObservations.append(
       C14_10RetainedObservation(
         featureIds: Set(frame.rawFeaturePoints?.identifiers ?? []),
         position: SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z),
+        retentionMode: retentionMode,
+        timestampMicroseconds: timestampMicroseconds,
         trajectorySpanMicrometres: spatialEvidence.trajectorySpanMicrometres,
         trajectoryTravelMicrometres: spatialEvidence.trajectoryTravelMicrometres
       )
@@ -427,6 +460,49 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let denominator = min(left.count, right.count)
     guard denominator > 0 else { return 0 }
     return min(1_000_000, left.intersection(right).count * 1_000_000 / denominator)
+  }
+
+  static func resourcePressure(for thermalState: ProcessInfo.ThermalState) -> C14_10ResourcePressure
+  {
+    switch thermalState {
+    case .nominal: .nominal
+    case .fair, .serious: .constrained
+    case .critical: .critical
+    @unknown default: .constrained
+    }
+  }
+
+  private func observeResourcePressure() {
+    for token in resourceNotificationTokens { NotificationCenter.default.removeObserver(token) }
+    resourceNotificationTokens.removeAll()
+    let centre = NotificationCenter.default
+    resourceNotificationTokens.append(
+      centre.addObserver(
+        forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.eventHandler?(
+            .resourcePressure(Self.resourcePressure(for: ProcessInfo.processInfo.thermalState)))
+        }
+      }
+    )
+    resourceNotificationTokens.append(
+      centre.addObserver(
+        forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in self?.eventHandler?(.resourcePressure(.constrained)) }
+      }
+    )
+  }
+
+  private func makeConfiguration() -> ARWorldTrackingConfiguration {
+    let configuration = ARWorldTrackingConfiguration()
+    configuration.worldAlignment = .gravity
+    configuration.environmentTexturing = .none
+    if capability.sceneDepth && resourcePolicy.optionalDepthEnabled {
+      configuration.frameSemantics.insert(.sceneDepth)
+    }
+    return configuration
   }
 
   private static func coverageCell(forward: SIMD3<Float>) -> String {
@@ -597,6 +673,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       )
       retainedCount += 1
       return C14_8CapturedKeyframe(
+        coverageCellId: "north:middle",
         depthData: nil,
         depthHeight: nil,
         depthWidth: nil,
@@ -650,6 +727,8 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
 private struct C14_10RetainedObservation {
   let featureIds: Set<UInt64>
   let position: SIMD3<Float>
+  let retentionMode: C14_10KeyframeRetentionMode
+  let timestampMicroseconds: Int64
   let trajectorySpanMicrometres: Int64
   let trajectoryTravelMicrometres: Int64
 }

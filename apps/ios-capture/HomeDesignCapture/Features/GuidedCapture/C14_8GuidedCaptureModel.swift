@@ -144,6 +144,16 @@ final class C14_8GuidedCaptureModel {
     guard let room = currentRoom, let samples = draft?.samples else { return nil }
     return C14_10SpatialReadinessEvaluator.evaluate(room: room, samples: samples)
   }
+  var unresolvedRoomCount: Int {
+    guard let draft else { return 0 }
+    return draft.rooms.filter {
+      !C14_10SpatialReadinessEvaluator.evaluate(room: $0, samples: draft.samples).isReady
+    }.count
+  }
+  var envelopeSpatiallyReady: Bool {
+    guard draft?.rooms.isEmpty == false else { return false }
+    return unresolvedRoomCount == 0
+  }
   var resourcePolicy: C14_10ResourcePolicy {
     C14_10ResourcePolicy.policy(for: resourcePressure)
   }
@@ -346,7 +356,7 @@ final class C14_8GuidedCaptureModel {
             next.depthHandles.append(depth)
             try self.assertCurrent(scope: scope, projectId: projectId)
           }
-          self.markObserved(telemetry: self.liveTelemetry, in: &next)
+          self.markObserved(coverageCellId: captured.coverageCellId, in: &next)
           self.markZoneObservedIfEnough(zoneId: zoneId, in: &next)
           self.closeCurrentSegment(in: &next)
           next.updatedAt = Date()
@@ -363,6 +373,18 @@ final class C14_8GuidedCaptureModel {
           try? FileManager.default.removeItem(at: destination.url)
           throw error
         }
+      } catch let error as C14_8GuidedCaptureEngineError {
+        guard scope == self.activationId else { return }
+        if case .candidateRejected(let reason) = error {
+          self.selectionInstruction = reason.homeownerInstruction
+          self.state = .ready
+          return
+        }
+        self.state = .failed(
+          message:
+            "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
+          retryable: true
+        )
       } catch {
         guard scope == self.activationId else { return }
         self.state = .failed(
@@ -383,7 +405,7 @@ final class C14_8GuidedCaptureModel {
     next.updatedAt = Date()
     engine.stop()
     draft = next
-    state = engine.syntheticFixture ? .fixtureReview : .review
+    state = isSyntheticFixture ? .fixtureReview : .review
     activeTask = Task { try? await journal.save(next) }
   }
 
@@ -593,7 +615,7 @@ final class C14_8GuidedCaptureModel {
     guard canMutate, serviceProcessingConsent, let projectId, let draft,
       !draft.keyframes.isEmpty, draft.acceptance == nil
     else { return }
-    guard capabilities.runtime == .physicalDevice else {
+    guard !isSyntheticFixture, capabilities.runtime == .physicalDevice else {
       state = .fixtureReview
       return
     }
@@ -881,6 +903,8 @@ final class C14_8GuidedCaptureModel {
       handleBackgrounding()
     case .interruptionEnded:
       state = .interrupted
+    case .resourcePressure(let pressure):
+      applyResourcePressure(pressure)
     case .runtimeFailure:
       handleBackgrounding()
       state = .failed(
@@ -1442,11 +1466,13 @@ final class C14_8GuidedCaptureModel {
     )
   }
 
-  private func markObserved(telemetry: C14_8LiveTelemetry?, in draft: inout C14_8GuidedCaptureDraft)
-  {
-    guard let telemetry, let roomIndex = draft.rooms.indices.last,
+  private func markObserved(
+    coverageCellId: String,
+    in draft: inout C14_8GuidedCaptureDraft
+  ) {
+    guard let roomIndex = draft.rooms.indices.last,
       let cellIndex = draft.rooms[roomIndex].coverage.firstIndex(where: {
-        $0.id == telemetry.coverageCellId
+        $0.id == coverageCellId
       })
     else { return }
     draft.rooms[roomIndex].coverage[cellIndex].status = .observed

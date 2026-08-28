@@ -21,8 +21,9 @@ final class C14_8GuidedCaptureJourneyUITests: XCTestCase {
     XCTAssertTrue(review.waitForExistence(timeout: 10))
     review.tap()
 
-    for _ in 0..<4 { app.swipeDown() }
-    XCTAssertTrue(app.staticTexts["Fixture journey complete"].waitForExistence(timeout: 10))
+    let fixtureComplete = app.staticTexts["Fixture journey complete"]
+    for _ in 0..<6 where !fixtureComplete.exists { app.swipeDown() }
+    XCTAssertTrue(fixtureComplete.waitForExistence(timeout: 10))
     for _ in 0..<6 { app.swipeUp() }
     XCTAssertFalse(app.buttons["c14_8.accept-envelope"].exists)
   }

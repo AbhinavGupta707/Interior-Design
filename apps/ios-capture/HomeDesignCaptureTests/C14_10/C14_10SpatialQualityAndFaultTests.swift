@@ -1,3 +1,4 @@
+@preconcurrency import ARKit
 import XCTest
 
 @testable import HomeDesignCapture
@@ -267,6 +268,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertTrue(exactInterval.shouldRetain)
   }
 
+  @MainActor
   func testResourcePressureDegradesDepthAndAnalysisBeforeStoppingAutomaticSelection() {
     XCTAssertEqual(
       C14_10ResourcePolicy.policy(for: .nominal),
@@ -282,6 +284,55 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       C14_10ResourcePolicy.policy(for: .critical),
       C14_10ResourcePolicy(
         analysisStride: 6, automaticSelectionEnabled: false, optionalDepthEnabled: false)
+    )
+    XCTAssertEqual(C14_8ARKitGuidedCaptureEngine.resourcePressure(for: .nominal), .nominal)
+    XCTAssertEqual(C14_8ARKitGuidedCaptureEngine.resourcePressure(for: .fair), .constrained)
+    XCTAssertEqual(C14_8ARKitGuidedCaptureEngine.resourcePressure(for: .serious), .constrained)
+    XCTAssertEqual(C14_8ARKitGuidedCaptureEngine.resourcePressure(for: .critical), .critical)
+  }
+
+  @MainActor
+  func testFinalFrameRevalidationSkipsCandidateWithoutStoppingCapture() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c14-10-revalidation-skip-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let model = faultModel(
+      root: root,
+      injector: C14_10ScriptedFaultInjector(script: [:]),
+      engine: C14_10RejectingCaptureEngine()
+    )
+
+    await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    await waitUntil {
+      model.state == .ready
+        && model.selectionInstruction?.localizedCaseInsensitiveContains("new position") == true
+    }
+
+    XCTAssertEqual(model.draft?.keyframes.count, 0)
+    XCTAssertEqual(model.draft?.samples.count, 0)
+  }
+
+  @MainActor
+  func testRetainedFrameMarksItsOwnCoverageCellInsteadOfStaleTelemetry() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c14-10-retained-coverage-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let model = faultModel(
+      root: root,
+      injector: C14_10ScriptedFaultInjector(script: [:]),
+      engine: C14_10CoverageCaptureEngine()
+    )
+
+    await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
+
+    XCTAssertEqual(
+      model.currentRoom?.coverage.first(where: { $0.id == "south:middle" })?.status,
+      .observed
+    )
+    XCTAssertEqual(
+      model.currentRoom?.coverage.first(where: { $0.id == "north:middle" })?.status,
+      .missing
     )
   }
 
@@ -322,6 +373,22 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       guard case .failed(_, let retryable) = C14_8GuidedCaptureModel.submissionFailure(for: fault)
       else { return XCTFail("Recoverable software fault must retain recovery") }
       XCTAssertTrue(retryable)
+    }
+  }
+
+  func testEveryLifecycleFaultCheckpointIsDeterministicallyScriptable() async throws {
+    for checkpoint in C14_10FaultCheckpoint.allCases {
+      let injector = C14_10ScriptedFaultInjector(
+        script: [checkpoint: [.serviceUnavailable]]
+      )
+      do {
+        try await injector.checkpoint(checkpoint)
+        XCTFail("Expected a deterministic fault at \(checkpoint.rawValue)")
+      } catch {
+        XCTAssertEqual(error as? C14_10InjectedFault, .serviceUnavailable)
+      }
+      let visited = await injector.visited
+      XCTAssertEqual(visited, [checkpoint])
     }
   }
 
@@ -402,7 +469,11 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       .appendingPathComponent("c14-10-offline-fault-\(UUID().uuidString)", isDirectory: true)
     defer { try? FileManager.default.removeItem(at: root) }
     let injector = C14_10ScriptedFaultInjector(script: [.beforeSubmission: [.offline]])
-    let model = faultModel(root: root, injector: injector)
+    let model = faultModel(
+      root: root,
+      injector: injector,
+      engine: C14_10PhysicalPolicyCaptureEngine()
+    )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
@@ -424,6 +495,28 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertTrue(message.localizedCaseInsensitiveContains("offline"))
     let visited = await injector.visited
     XCTAssertEqual(visited, [.beforeKeyframeRetention, .beforeSubmission])
+  }
+
+  @MainActor
+  func testSyntheticFixtureCannotReachSubmissionWithInflatedCapabilities() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("c14-10-fixture-boundary-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let injector = C14_10ScriptedFaultInjector(script: [.beforeSubmission: [.offline]])
+    let model = faultModel(root: root, injector: injector)
+
+    await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
+    model.automaticCaptureEnabled = false
+    model.finishRoomReview()
+    XCTAssertEqual(model.state, .fixtureReview)
+    model.serviceProcessingConsent = true
+    model.submit()
+
+    XCTAssertEqual(model.state, .fixtureReview)
+    XCTAssertNil(model.draft?.acceptance)
+    let visited = await injector.visited
+    XCTAssertEqual(visited, [.beforeKeyframeRetention])
   }
 
   private func telemetry(
@@ -456,7 +549,8 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
   @MainActor
   private func faultModel(
     root: URL,
-    injector: C14_10ScriptedFaultInjector
+    injector: C14_10ScriptedFaultInjector,
+    engine: any C14_8GuidedCaptureServing = C14_8FixtureGuidedCaptureEngine()
   ) -> C14_8GuidedCaptureModel {
     let token = C14_10TestTokenProvider()
     let baseURL = URL(string: "http://127.0.0.1:4100")!
@@ -465,7 +559,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     return C14_8GuidedCaptureModel(
       capabilityProvider: C14_10PhysicalTestCapabilityProvider(),
       permissionProvider: C14_10AuthorisedPermissionProvider(),
-      engine: C14_8FixtureGuidedCaptureEngine(),
+      engine: engine,
       captureService: capture,
       envelopeService: C14_8CaptureEnvelopeAPIClient(baseURL: baseURL, tokenProvider: token),
       evidenceService: evidence,
@@ -581,6 +675,128 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       translationFromPreviousMicrometres: sample.translationFromPreviousMicrometres,
       translationMicrometres: sample.translationMicrometres,
       retentionMode: sample.retentionMode,
+      zoneId: zoneId
+    )
+  }
+}
+
+@MainActor
+private final class C14_10RejectingCaptureEngine: C14_8GuidedCaptureServing {
+  private let fixture = C14_8FixtureGuidedCaptureEngine()
+  var previewSession: ARSession? { nil }
+  let syntheticFixture = true
+
+  func applyResourcePolicy(_ policy: C14_10ResourcePolicy) {
+    fixture.applyResourcePolicy(policy)
+  }
+
+  func start(
+    telemetry: @escaping @MainActor (C14_8LiveTelemetry) -> Void,
+    events: @escaping @MainActor (C14_8GuidedCaptureEvent) -> Void
+  ) throws {
+    try fixture.start(telemetry: telemetry, events: events)
+  }
+
+  func stop() { fixture.stop() }
+
+  func captureKeyframe(
+    to destination: URL,
+    localIdentifier: UUID,
+    roomId: UUID,
+    segmentId: UUID,
+    captureStartedAt: Date,
+    retentionMode: C14_10KeyframeRetentionMode,
+    zoneId: UUID
+  ) async throws -> C14_8CapturedKeyframe {
+    _ = (destination, localIdentifier, roomId, segmentId, captureStartedAt, retentionMode, zoneId)
+    throw C14_8GuidedCaptureEngineError.candidateRejected(.nearDuplicate)
+  }
+}
+
+@MainActor
+private final class C14_10CoverageCaptureEngine: C14_8GuidedCaptureServing {
+  private let fixture = C14_8FixtureGuidedCaptureEngine()
+  var previewSession: ARSession? { nil }
+  let syntheticFixture = true
+
+  func applyResourcePolicy(_ policy: C14_10ResourcePolicy) {
+    fixture.applyResourcePolicy(policy)
+  }
+
+  func start(
+    telemetry: @escaping @MainActor (C14_8LiveTelemetry) -> Void,
+    events: @escaping @MainActor (C14_8GuidedCaptureEvent) -> Void
+  ) throws {
+    try fixture.start(telemetry: telemetry, events: events)
+  }
+
+  func stop() { fixture.stop() }
+
+  func captureKeyframe(
+    to destination: URL,
+    localIdentifier: UUID,
+    roomId: UUID,
+    segmentId: UUID,
+    captureStartedAt: Date,
+    retentionMode: C14_10KeyframeRetentionMode,
+    zoneId: UUID
+  ) async throws -> C14_8CapturedKeyframe {
+    let captured = try await fixture.captureKeyframe(
+      to: destination,
+      localIdentifier: localIdentifier,
+      roomId: roomId,
+      segmentId: segmentId,
+      captureStartedAt: captureStartedAt,
+      retentionMode: retentionMode,
+      zoneId: zoneId
+    )
+    return C14_8CapturedKeyframe(
+      coverageCellId: "south:middle",
+      depthData: captured.depthData,
+      depthHeight: captured.depthHeight,
+      depthWidth: captured.depthWidth,
+      sample: captured.sample
+    )
+  }
+}
+
+/// Test-only physical policy double. The injected fault fires before any upload or acceptance, so
+/// its synthetic bytes never leave the protected test directory and establish no device evidence.
+@MainActor
+private final class C14_10PhysicalPolicyCaptureEngine: C14_8GuidedCaptureServing {
+  private let fixture = C14_8FixtureGuidedCaptureEngine()
+  var previewSession: ARSession? { nil }
+  let syntheticFixture = false
+
+  func applyResourcePolicy(_ policy: C14_10ResourcePolicy) {
+    fixture.applyResourcePolicy(policy)
+  }
+
+  func start(
+    telemetry: @escaping @MainActor (C14_8LiveTelemetry) -> Void,
+    events: @escaping @MainActor (C14_8GuidedCaptureEvent) -> Void
+  ) throws {
+    try fixture.start(telemetry: telemetry, events: events)
+  }
+
+  func stop() { fixture.stop() }
+
+  func captureKeyframe(
+    to destination: URL,
+    localIdentifier: UUID,
+    roomId: UUID,
+    segmentId: UUID,
+    captureStartedAt: Date,
+    retentionMode: C14_10KeyframeRetentionMode,
+    zoneId: UUID
+  ) async throws -> C14_8CapturedKeyframe {
+    try await fixture.captureKeyframe(
+      to: destination,
+      localIdentifier: localIdentifier,
+      roomId: roomId,
+      segmentId: segmentId,
+      captureStartedAt: captureStartedAt,
+      retentionMode: retentionMode,
       zoneId: zoneId
     )
   }

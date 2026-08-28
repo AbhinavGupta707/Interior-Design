@@ -1,6 +1,6 @@
 import Foundation
 
-enum C14_10FaultCheckpoint: String, Codable, Equatable, Sendable {
+enum C14_10FaultCheckpoint: String, CaseIterable, Codable, Equatable, Sendable {
   case beforeEnvelopeAcceptance
   case beforeKeyframeRetention
   case beforeSubmission

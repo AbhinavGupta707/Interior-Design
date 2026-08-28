@@ -21,7 +21,7 @@ enum C14_10CaptureEnvelopeCodec {
   static func canonicalBytes(_ data: Data) throws -> Data {
     _ = try decodeStrict(data)
     let raw = try JSONSerialization.jsonObject(with: data)
-    let normalized = normalizeUUIDs(raw)
+    let normalized = normalize(raw)
     guard JSONSerialization.isValidJSONObject(normalized) else {
       throw C14_10CaptureEnvelopeCodecError.canonicalization
     }
@@ -172,6 +172,27 @@ enum C14_10CaptureEnvelopeCodec {
   }
 
   private static func validate(_ envelope: C14_8CaptureEnvelopeRequest) throws {
+    let capability = envelope.capabilities
+    let physicalCapabilityValid =
+      capability.runtime == .physicalDevice
+      && capability.qualityTier != .simulatorFixture
+      && capability.arWorldTracking
+      && capability.cameraIntrinsics
+      && capability.cameraPoses
+      && capability.rgbKeyframes
+      && ((capability.qualityTier == .guidedRGB && !capability.sceneDepth && !capability.roomPlan)
+        || (capability.qualityTier == .guidedRGBDepth
+          && capability.sceneDepth && !capability.roomPlan)
+        || (capability.qualityTier == .guidedRGBDepthRoomPlan
+          && capability.sceneDepth && capability.roomPlan))
+    let fixtureCapabilityValid =
+      capability.runtime == .simulatorFixture
+      && capability.qualityTier == .simulatorFixture
+      && !capability.arWorldTracking
+      && !capability.cameraIntrinsics
+      && !capability.cameraPoses
+      && !capability.sceneDepth
+      && !capability.roomPlan
     guard envelope.schemaVersion == C14_8CaptureContract.envelopeSchemaVersion,
       envelope.transferState == "complete",
       envelope.rights.serviceProcessingConsent,
@@ -190,7 +211,8 @@ enum C14_10CaptureEnvelopeCodec {
       Set(envelope.rooms.map(\.roomId)).count == envelope.rooms.count,
       Set(envelope.coordinateSegments.map(\.segmentId)).count == envelope.coordinateSegments.count,
       Set(envelope.cameraSamples.map(\.sampleId)).count == envelope.cameraSamples.count,
-      Set(envelope.mediaSources.map(\.assetId)).count == envelope.mediaSources.count
+      Set(envelope.mediaSources.map(\.assetId)).count == envelope.mediaSources.count,
+      physicalCapabilityValid || fixtureCapabilityValid
     else { throw error() }
 
     let segments = Dictionary(
@@ -204,7 +226,15 @@ enum C14_10CaptureEnvelopeCodec {
         Set(room.semanticDeclarations.map(\.layer)).count == 5,
         Set(room.coordinateSegmentIds).count == room.coordinateSegmentIds.count,
         room.coordinateSegmentIds.allSatisfy({ segments[$0] != nil }),
-        room.zones.map({ !$0.isEmpty && Set($0.map(\.zoneId)).count == $0.count }) ?? true
+        !room.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        room.label.trimmingCharacters(in: .whitespacesAndNewlines).count <= 120,
+        room.zones.map({
+          !$0.isEmpty && Set($0.map(\.zoneId)).count == $0.count
+            && $0.allSatisfy {
+              let label = $0.label.trimmingCharacters(in: .whitespacesAndNewlines)
+              return !label.isEmpty && label.count <= 120
+            }
+        }) ?? true
       else { throw error() }
       let ordered = room.coordinateSegmentIds.compactMap { segments[$0] }
         .sorted { $0.startedAtMicroseconds < $1.startedAtMicroseconds }
@@ -252,13 +282,39 @@ enum C14_10CaptureEnvelopeCodec {
     return (0...23).contains(hour) && (0...59).contains(minute)
   }
 
-  private static func normalizeUUIDs(_ value: Any) -> Any {
-    if let string = value as? String, string.count == 36, UUID(uuidString: string) != nil {
-      return string.lowercased()
+  private static let uuidKeys: Set<String> = [
+    "artifactId", "assetId", "captureSessionId", "packageId", "projectId", "roomId", "sampleId",
+    "segmentId", "sourceAssetId", "zoneId",
+  ]
+  private static let uuidArrayKeys: Set<String> = ["coordinateSegmentIds", "sampleIds"]
+  private static let trimmedKeys: Set<String> = [
+    "appVersion", "label", "operatingSystemVersion", "version",
+  ]
+
+  private static func normalize(_ value: Any, key: String? = nil) -> Any {
+    if let string = value as? String {
+      if let key, uuidKeys.contains(key), UUID(uuidString: string) != nil {
+        return string.lowercased()
+      }
+      if let key, trimmedKeys.contains(key) {
+        return string.trimmingCharacters(in: .whitespacesAndNewlines)
+      }
+      return string
     }
-    if let array = value as? [Any] { return array.map(normalizeUUIDs) }
+    if let array = value as? [Any] {
+      if let key, uuidArrayKeys.contains(key) {
+        return array.map { child in
+          guard let string = child as? String, UUID(uuidString: string) != nil else { return child }
+          return string.lowercased()
+        }
+      }
+      return array.map { normalize($0) }
+    }
     if let object = value as? [String: Any] {
-      return object.mapValues(normalizeUUIDs)
+      return Dictionary(
+        uniqueKeysWithValues: object.map { childKey, child in
+          (childKey, normalize(child, key: childKey))
+        })
     }
     return value
   }

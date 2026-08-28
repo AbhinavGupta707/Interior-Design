@@ -12,6 +12,51 @@
       "mutations": [{ "operation": "uppercase-uuids" }]
     },
     {
+      "id": "trimmed-bounded-strings",
+      "expected": "valid",
+      "sameCanonicalAsBase": true,
+      "mutations": [
+        { "operation": "set", "path": "/capabilities/appVersion", "value": "  1.0.0  " },
+        {
+          "operation": "set",
+          "path": "/capabilities/operatingSystemVersion",
+          "value": "  26.0  "
+        },
+        { "operation": "set", "path": "/generator/version", "value": "  1.0.0  " },
+        { "operation": "set", "path": "/rooms/0/label", "value": "  Living room  " },
+        { "operation": "set", "path": "/rooms/0/zones/0/label", "value": "  Main area  " }
+      ]
+    },
+    {
+      "id": "uuid-shaped-user-label-preserves-case",
+      "expected": "valid",
+      "expectedCanonicalByteLength": 5408,
+      "expectedCanonicalSha256": "8c175ea522e3992f71fe07ac95a2d9933222cfaf472151d03a1f24caab15f54a",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/rooms/0/label",
+          "value": "14800000-0000-4000-8000-ABCDEFABCDEF"
+        }
+      ]
+    },
+    {
+      "id": "simulator-physical-capability-inflation",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/capabilities/runtime",
+          "value": "simulator-fixture"
+        },
+        {
+          "operation": "set",
+          "path": "/capabilities/qualityTier",
+          "value": "simulator-fixture"
+        }
+      ]
+    },
+    {
       "id": "legacy-optional-fields-absent",
       "expected": "valid",
       "mutations": [

@@ -254,6 +254,7 @@ struct C14_8DepthHandle: Codable, Equatable, Identifiable, Sendable {
 }
 
 struct C14_8CapturedKeyframe: Equatable, Sendable {
+  let coverageCellId: String
   let depthData: Data?
   let depthHeight: Int?
   let depthWidth: Int?

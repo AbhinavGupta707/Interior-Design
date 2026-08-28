@@ -14,6 +14,8 @@ type Mutation = {
 };
 type GoldenCase = {
   readonly expected: "invalid" | "valid";
+  readonly expectedCanonicalByteLength?: number;
+  readonly expectedCanonicalSha256?: string;
   readonly id: string;
   readonly mutations: readonly Mutation[];
   readonly sameCanonicalAsBase?: boolean;
@@ -131,6 +133,13 @@ describe("capture-envelope-v1 cross-language goldens", () => {
         const bytes = Buffer.from(canonicalJson(result.data), "utf8");
         expect(bytes.equals(baseBytes), fixture.id).toBe(true);
         expect(createHash("sha256").update(bytes).digest("hex"), fixture.id).toBe(baseHash);
+      }
+      if (result.success && fixture.expectedCanonicalSha256 !== undefined) {
+        const bytes = Buffer.from(canonicalJson(result.data), "utf8");
+        expect(bytes.byteLength, fixture.id).toBe(fixture.expectedCanonicalByteLength);
+        expect(createHash("sha256").update(bytes).digest("hex"), fixture.id).toBe(
+          fixture.expectedCanonicalSha256,
+        );
       }
     }
   });

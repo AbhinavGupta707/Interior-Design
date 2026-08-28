@@ -314,12 +314,17 @@ struct C14_8GuidedCaptureView: View {
         )
         if let readiness = model.captureReadiness {
           Label(
-            readiness.isReady
-              ? "Connected spatial evidence is ready for proposal review."
-              : "This capture remains incomplete; unresolved spatial evidence will stay explicit.",
-            systemImage: readiness.isReady
+            model.envelopeSpatiallyReady
+              ? "Every room has connected spatial evidence ready for proposal review."
+              : "This envelope has \(model.unresolvedRoomCount) unresolved room(s); incomplete spatial evidence will stay explicit.",
+            systemImage: model.envelopeSpatiallyReady
               ? "point.3.connected.trianglepath.dotted" : "exclamationmark.triangle"
           )
+          if readiness.isReady && !model.envelopeSpatiallyReady {
+            Text("The current room is ready, but an earlier room still needs connected evidence.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
           ForEach(readiness.reasons, id: \.self) {
             Text($0).font(.footnote).foregroundStyle(.secondary)
           }
