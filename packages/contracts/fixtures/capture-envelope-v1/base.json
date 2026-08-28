@@ -1,0 +1,167 @@
+{
+  "cameraSamples": [
+    {
+      "ambientIntensity": 850,
+      "blurScoreMillionths": 900000,
+      "cameraIntrinsicsMicropixels": {
+        "cx": 1512000000,
+        "cy": 2016000000,
+        "fx": 2100000000,
+        "fy": 2100000000,
+        "imageHeightPixels": 4032,
+        "imageWidthPixels": 3024
+      },
+      "connectedToPrevious": false,
+      "exposureScoreMillionths": 800000,
+      "featurePointCount": 180,
+      "intrinsicsModel": "pinhole-native-camera-raster",
+      "loopClosureCandidate": false,
+      "motionScoreMillionths": 90000,
+      "orientation": "portrait",
+      "overlapScoreMillionths": 0,
+      "parallaxScoreMillionths": 0,
+      "poseTransform": "camera-to-world",
+      "quaternionNanounits": [0, 0, 0, 1000000000],
+      "quaternionOrder": "x-y-z-w",
+      "retentionMode": "automatic",
+      "roomId": "14800000-0000-4000-8000-000000000003",
+      "sampleId": "14800000-0000-4000-8000-000000000006",
+      "segmentId": "14800000-0000-4000-8000-000000000004",
+      "sourceAssetId": "14800000-0000-4000-8000-000000000005",
+      "sourceTimestampMicroseconds": 1000000,
+      "timestampMicroseconds": 1000000,
+      "trackingState": "normal",
+      "trajectorySpanMicrometres": 0,
+      "trajectoryTravelMicrometres": 0,
+      "translationFromPreviousMicrometres": 0,
+      "translationMicrometres": { "x": 0, "y": 1500000, "z": 0 },
+      "zoneId": "14800000-0000-4000-8000-000000000007"
+    }
+  ],
+  "capabilities": {
+    "appBuild": "148",
+    "appVersion": "1.0.0",
+    "arWorldTracking": true,
+    "cameraIntrinsics": true,
+    "cameraPoses": true,
+    "deviceModelIdentifier": "iPhone13,2",
+    "operatingSystemVersion": "26.0",
+    "qualityTier": "guided-rgb",
+    "rgbKeyframes": true,
+    "rgbVideo": false,
+    "roomPlan": false,
+    "runtime": "physical-device",
+    "sceneDepth": false,
+    "schemaVersion": "capture-capabilities-v1"
+  },
+  "captureSessionId": "14800000-0000-4000-8000-000000000002",
+  "coordinateSegments": [
+    {
+      "coordinateSystem": "arkit-right-handed-y-up",
+      "endedAtMicroseconds": 5000000,
+      "reason": "initial",
+      "segmentId": "14800000-0000-4000-8000-000000000004",
+      "startedAtMicroseconds": 0,
+      "translationUnit": "micrometres",
+      "worldOriginRelationship": "independent-unless-later-registered"
+    }
+  ],
+  "depthSources": [],
+  "endedAt": "2026-08-26T10:05:00.000Z",
+  "generator": { "name": "ios-guided-capture", "version": "1.0.0" },
+  "intent": "room-by-room",
+  "mediaSources": [
+    {
+      "assetId": "14800000-0000-4000-8000-000000000005",
+      "byteSize": 8192,
+      "kind": "rgb-keyframe",
+      "mimeType": "image/jpeg",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "transfer": {
+        "partCount": 1,
+        "reconciledAt": "2026-08-26T10:06:00.000Z",
+        "resumable": true,
+        "state": "complete"
+      }
+    }
+  ],
+  "projectId": "14800000-0000-4000-8000-000000000001",
+  "quality": {
+    "interruptionCount": 0,
+    "lowLightSampleCount": 0,
+    "missingCoverageCellCount": 23,
+    "motionWarningSampleCount": 0,
+    "occludedCoverageCellCount": 0,
+    "spatialEvidence": {
+      "automaticallySelectedSampleCount": 1,
+      "connectedSampleCount": 0,
+      "loopClosureSampleCount": 0,
+      "unresolvedRoomCount": 1,
+      "unresolvedZoneCount": 1
+    },
+    "trackingLimitedSampleCount": 0,
+    "unusableBlurSampleCount": 0
+  },
+  "rights": {
+    "basis": "owned-by-user",
+    "serviceProcessingConsent": true,
+    "trainingUseConsent": "denied"
+  },
+  "roomPlanSources": [],
+  "rooms": [
+    {
+      "coordinateSegmentIds": ["14800000-0000-4000-8000-000000000004"],
+      "coverage": [
+        { "horizontalSector": "north", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "north", "status": "observed", "verticalBand": "middle" },
+        { "horizontalSector": "north", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "north-east", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "north-east", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "north-east", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "east", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "east", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "east", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "south-east", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "south-east", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "south-east", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "south", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "south", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "south", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "south-west", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "south-west", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "south-west", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "west", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "west", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "west", "status": "missing", "verticalBand": "upper" },
+        { "horizontalSector": "north-west", "status": "missing", "verticalBand": "lower" },
+        { "horizontalSector": "north-west", "status": "missing", "verticalBand": "middle" },
+        { "horizontalSector": "north-west", "status": "missing", "verticalBand": "upper" }
+      ],
+      "label": "Living room",
+      "roomId": "14800000-0000-4000-8000-000000000003",
+      "semanticDeclarations": [
+        {
+          "layer": "structural-evidence",
+          "provenance": "user-asserted",
+          "status": "partially-observed"
+        },
+        { "layer": "fixed-fittings", "provenance": "user-asserted", "status": "unknown" },
+        { "layer": "movable-furniture", "provenance": "user-asserted", "status": "unknown" },
+        { "layer": "appearance", "provenance": "user-asserted", "status": "unknown" },
+        { "layer": "temporary-clutter", "provenance": "user-asserted", "status": "unknown" }
+      ],
+      "sequence": 1,
+      "story": 0,
+      "zones": [
+        {
+          "label": "Main area",
+          "status": "missing",
+          "zoneId": "14800000-0000-4000-8000-000000000007"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": "capture-envelope-v1",
+  "startedAt": "2026-08-26T10:00:00.000Z",
+  "transferState": "complete"
+}

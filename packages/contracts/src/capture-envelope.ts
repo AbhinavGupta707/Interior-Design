@@ -8,10 +8,12 @@ export const captureEnvelopeReconstructionSchemaVersion =
   "capture-envelope-reconstruction-v1" as const;
 
 export const captureEnvelopePolicy = Object.freeze({
+  automaticKeyframeIntervalMicroseconds: 2_000_000,
   maximumCameraSamples: 10_000,
   maximumCoordinateSegments: 256,
   maximumDepthSources: 256,
   maximumMediaSources: 512,
+  maximumRoomKeyframes: 256,
   maximumRoomCount: 64,
   maximumRoomPlanSources: 64,
   maximumScanDurationMilliseconds: 21_600_000,
@@ -33,6 +35,7 @@ const assetRightsBasisSchema = z.enum([
 const boundedVersionSchema = z.string().trim().min(1).max(100);
 const safeIdentifierSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._,-]{0,119}$/u);
 const scoreSchema = z.int().min(0).max(1_000_000);
+const captureEnvelopeTimestampSchema = z.iso.datetime({ offset: true, precision: 3 });
 const timestampMicrosecondsSchema = z.int().nonnegative().max(21_600_000_000);
 const quaternionNanounitSchema = z.int().min(-1_000_000_000).max(1_000_000_000);
 const translationMicrometreSchema = z.int().min(-1_000_000_000).max(1_000_000_000);
@@ -150,6 +153,14 @@ export const captureCoverageCellSchema = z
   })
   .strict();
 
+export const captureZoneSchema = z
+  .object({
+    label: z.string().trim().min(1).max(120),
+    status: z.enum(["observed", "missing", "occluded", "unknown"]),
+    zoneId: uuidSchema,
+  })
+  .strict();
+
 export const captureSemanticLayerSchema = z.enum([
   "structural-evidence",
   "fixed-fittings",
@@ -181,6 +192,7 @@ export const captureRoomEnvelopeSchema = z
     semanticDeclarations: z.array(captureSemanticDeclarationSchema).length(5),
     sequence: z.int().min(1).max(captureEnvelopePolicy.maximumRoomCount),
     story: z.int().min(-20).max(200).optional(),
+    zones: z.array(captureZoneSchema).min(1).max(32).optional(),
   })
   .strict()
   .superRefine((room, context) => {
@@ -203,6 +215,12 @@ export const captureRoomEnvelopeSchema = z
     if (new Set(room.coordinateSegmentIds).size !== room.coordinateSegmentIds.length) {
       context.addIssue({ code: "custom", message: "Room coordinate segments must be unique." });
     }
+    if (
+      room.zones !== undefined &&
+      new Set(room.zones.map(({ zoneId }) => zoneId)).size !== room.zones.length
+    ) {
+      context.addIssue({ code: "custom", message: "Room capture zones must be unique." });
+    }
   });
 
 export const captureCoordinateSegmentSchema = z
@@ -224,7 +242,7 @@ export const captureCoordinateSegmentSchema = z
 export const captureTransferReceiptSchema = z
   .object({
     partCount: z.int().positive().max(10_000),
-    reconciledAt: z.iso.datetime({ offset: true }),
+    reconciledAt: captureEnvelopeTimestampSchema,
     resumable: z.literal(true),
     state: z.literal("complete"),
   })
@@ -301,10 +319,15 @@ export const captureCameraSampleSchema = z
         imageWidthPixels: z.int().positive().max(100_000),
       })
       .strict(),
+    connectedToPrevious: z.boolean().optional(),
     exposureScoreMillionths: scoreSchema,
+    featurePointCount: z.int().nonnegative().max(1_000_000).optional(),
     intrinsicsModel: z.literal("pinhole-native-camera-raster"),
+    loopClosureCandidate: z.boolean().optional(),
     motionScoreMillionths: scoreSchema,
     orientation: z.enum(["portrait", "portrait-upside-down", "landscape-left", "landscape-right"]),
+    overlapScoreMillionths: scoreSchema.optional(),
+    parallaxScoreMillionths: scoreSchema.optional(),
     poseTransform: z.literal("camera-to-world"),
     quaternionOrder: z.literal("x-y-z-w"),
     quaternionNanounits: z.array(quaternionNanounitSchema).length(4),
@@ -321,6 +344,9 @@ export const captureCameraSampleSchema = z
       "limited-features",
       "unavailable",
     ]),
+    trajectoryTravelMicrometres: z.int().nonnegative().max(10_000_000_000).optional(),
+    trajectorySpanMicrometres: z.int().nonnegative().max(2_000_000_000).optional(),
+    translationFromPreviousMicrometres: z.int().nonnegative().max(2_000_000_000).optional(),
     translationMicrometres: z
       .object({
         x: translationMicrometreSchema,
@@ -328,6 +354,8 @@ export const captureCameraSampleSchema = z
         z: translationMicrometreSchema,
       })
       .strict(),
+    retentionMode: z.enum(["automatic", "manual"]).optional(),
+    zoneId: uuidSchema.optional(),
   })
   .strict()
   .superRefine((sample, context) => {
@@ -356,6 +384,22 @@ export const captureQualitySummarySchema = z
       .nonnegative()
       .max(captureEnvelopePolicy.maximumCameraSamples),
     unusableBlurSampleCount: z.int().nonnegative().max(captureEnvelopePolicy.maximumCameraSamples),
+    spatialEvidence: z
+      .object({
+        automaticallySelectedSampleCount: z
+          .int()
+          .nonnegative()
+          .max(captureEnvelopePolicy.maximumCameraSamples),
+        connectedSampleCount: z.int().nonnegative().max(captureEnvelopePolicy.maximumCameraSamples),
+        loopClosureSampleCount: z
+          .int()
+          .nonnegative()
+          .max(captureEnvelopePolicy.maximumCameraSamples),
+        unresolvedRoomCount: z.int().nonnegative().max(captureEnvelopePolicy.maximumRoomCount),
+        unresolvedZoneCount: z.int().nonnegative().max(2_048),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -372,7 +416,7 @@ export const createCaptureEnvelopeRequestSchema = z
       .min(1)
       .max(captureEnvelopePolicy.maximumCoordinateSegments),
     depthSources: z.array(captureDepthSourceSchema).max(captureEnvelopePolicy.maximumDepthSources),
-    endedAt: z.iso.datetime({ offset: true }),
+    endedAt: captureEnvelopeTimestampSchema,
     generator: z
       .object({ name: z.literal("ios-guided-capture"), version: boundedVersionSchema })
       .strict(),
@@ -389,7 +433,7 @@ export const createCaptureEnvelopeRequestSchema = z
       .max(captureEnvelopePolicy.maximumRoomPlanSources),
     rooms: z.array(captureRoomEnvelopeSchema).min(1).max(captureEnvelopePolicy.maximumRoomCount),
     schemaVersion: z.literal(captureEnvelopeSchemaVersion),
-    startedAt: z.iso.datetime({ offset: true }),
+    startedAt: captureEnvelopeTimestampSchema,
     transferState: z.literal("complete"),
   })
   .strict()
@@ -474,6 +518,33 @@ export const createCaptureEnvelopeRequestSchema = z
       if (room.coordinateSegmentIds.some((segmentId) => !segmentIds.has(segmentId))) {
         context.addIssue({ code: "custom", message: "A room references an unknown segment." });
       }
+      if (
+        envelope.cameraSamples.filter(({ roomId }) => roomId === room.roomId).length >
+        captureEnvelopePolicy.maximumRoomKeyframes
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "A room exceeds the bounded retained-keyframe budget.",
+        });
+      }
+      const roomSegments = room.coordinateSegmentIds
+        .map((segmentId) => segmentsById.get(segmentId))
+        .filter((segment): segment is NonNullable<typeof segment> => segment !== undefined)
+        .sort((left, right) => left.startedAtMicroseconds - right.startedAtMicroseconds);
+      for (let index = 1; index < roomSegments.length; index += 1) {
+        const previous = roomSegments[index - 1];
+        const current = roomSegments[index];
+        if (
+          previous !== undefined &&
+          current !== undefined &&
+          previous.endedAtMicroseconds > current.startedAtMicroseconds
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "Independent coordinate segments cannot overlap in one room timeline.",
+          });
+        }
+      }
     }
     for (const sample of envelope.cameraSamples) {
       const segment = segmentsById.get(sample.segmentId);
@@ -490,6 +561,64 @@ export const createCaptureEnvelopeRequestSchema = z
         context.addIssue({
           code: "custom",
           message: "A camera sample has an invalid source, room, segment, or timestamp scope.",
+        });
+      }
+      const declaredZones = room?.zones;
+      if (
+        sample.zoneId !== undefined &&
+        (declaredZones === undefined ||
+          !declaredZones.some(({ zoneId }) => zoneId === sample.zoneId))
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "A camera sample references an unknown room zone.",
+        });
+      }
+      const spatialValues = [
+        sample.connectedToPrevious,
+        sample.featurePointCount,
+        sample.loopClosureCandidate,
+        sample.overlapScoreMillionths,
+        sample.parallaxScoreMillionths,
+        sample.retentionMode,
+        sample.trajectorySpanMicrometres,
+        sample.trajectoryTravelMicrometres,
+        sample.translationFromPreviousMicrometres,
+        sample.zoneId,
+      ];
+      if (
+        spatialValues.some((value) => value !== undefined) &&
+        spatialValues.some((value) => value === undefined)
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "C14.10 spatial sample evidence must be complete when present.",
+        });
+      }
+    }
+    const automaticSamplesBySegment = new Map<string, (typeof envelope.cameraSamples)[number][]>();
+    for (const sample of envelope.cameraSamples) {
+      if (sample.retentionMode !== "automatic") continue;
+      const segmentSamples = automaticSamplesBySegment.get(sample.segmentId) ?? [];
+      segmentSamples.push(sample);
+      automaticSamplesBySegment.set(sample.segmentId, segmentSamples);
+    }
+    for (const samples of automaticSamplesBySegment.values()) {
+      const ordered = [...samples].sort(
+        (left, right) => left.timestampMicroseconds - right.timestampMicroseconds,
+      );
+      if (
+        ordered
+          .slice(1)
+          .some(
+            (sample, index) =>
+              sample.timestampMicroseconds - (ordered[index]?.timestampMicroseconds ?? 0) <
+              captureEnvelopePolicy.automaticKeyframeIntervalMicroseconds,
+          )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Automatic retained keyframes must respect the bounded selection interval.",
         });
       }
     }
@@ -572,6 +701,99 @@ export const createCaptureEnvelopeRequestSchema = z
       context.addIssue({
         code: "custom",
         message: "The quality summary must match declared coverage, interruptions, and tracking.",
+      });
+    }
+    const spatialSummary = envelope.quality.spatialEvidence;
+    const spatialSamples = envelope.cameraSamples.filter(
+      ({ retentionMode }) => retentionMode !== undefined,
+    );
+    if (spatialSummary !== undefined) {
+      const roomReadiness = envelope.rooms.map((room) => {
+        const roomSamples = spatialSamples.filter(({ roomId }) => roomId === room.roomId);
+        const samplesBySegment = new Map<string, typeof roomSamples>();
+        for (const sample of roomSamples) {
+          const segmentSamples = samplesBySegment.get(sample.segmentId) ?? [];
+          segmentSamples.push(sample);
+          samplesBySegment.set(sample.segmentId, segmentSamples);
+        }
+        const segmentReadiness = [...samplesBySegment.values()].map((unorderedSamples) => {
+          const segmentSamples = [...unorderedSamples].sort(
+            (left, right) => left.timestampMicroseconds - right.timestampMicroseconds,
+          );
+          const edges = segmentSamples.slice(1);
+          const connectedEdges = edges.filter(
+            ({ connectedToPrevious }) => connectedToPrevious,
+          ).length;
+          const connectedRatio =
+            edges.length === 0 ? 0 : Math.floor((connectedEdges * 1_000_000) / edges.length);
+          return (
+            segmentSamples.length >= 8 &&
+            connectedRatio >= 750_000 &&
+            segmentSamples[0]?.connectedToPrevious === false &&
+            segmentSamples.every(({ featurePointCount }) => (featurePointCount ?? 0) >= 60) &&
+            edges.every(
+              ({ connectedToPrevious, loopClosureCandidate, overlapScoreMillionths }) =>
+                connectedToPrevious === true &&
+                (overlapScoreMillionths ?? 0) >= 180_000 &&
+                (loopClosureCandidate === true || (overlapScoreMillionths ?? 0) < 940_000),
+            ) &&
+            Math.max(
+              0,
+              ...segmentSamples.map(
+                ({ trajectorySpanMicrometres }) => trajectorySpanMicrometres ?? 0,
+              ),
+            ) >= 1_200_000 &&
+            Math.max(
+              0,
+              ...segmentSamples.map(
+                ({ trajectoryTravelMicrometres }) => trajectoryTravelMicrometres ?? 0,
+              ),
+            ) >= 2_400_000 &&
+            segmentSamples.filter(
+              ({ translationFromPreviousMicrometres }) =>
+                (translationFromPreviousMicrometres ?? 0) >= 120_000,
+            ).length >= 3 &&
+            segmentSamples.filter(
+              ({ parallaxScoreMillionths }) => (parallaxScoreMillionths ?? 0) >= 80_000,
+            ).length >= 3 &&
+            segmentSamples.some(({ loopClosureCandidate }) => loopClosureCandidate)
+          );
+        });
+        const unresolvedZones = (room.zones ?? []).filter((zone) => {
+          if (zone.status === "occluded") return false;
+          return roomSamples.filter(({ zoneId }) => zoneId === zone.zoneId).length < 2;
+        }).length;
+        const ready =
+          segmentReadiness.length > 0 && segmentReadiness.every(Boolean) && unresolvedZones === 0;
+        return { ready, unresolvedZones };
+      });
+      const unresolvedRooms = roomReadiness.filter(({ ready }) => !ready).length;
+      const unresolvedZones = roomReadiness.reduce(
+        (total, room) => total + room.unresolvedZones,
+        0,
+      );
+      if (
+        spatialSummary.automaticallySelectedSampleCount !==
+          spatialSamples.filter(({ retentionMode }) => retentionMode === "automatic").length ||
+        spatialSummary.connectedSampleCount !==
+          spatialSamples.filter(({ connectedToPrevious }) => connectedToPrevious).length ||
+        spatialSummary.loopClosureSampleCount !==
+          spatialSamples.filter(({ loopClosureCandidate }) => loopClosureCandidate).length ||
+        spatialSummary.unresolvedRoomCount !== unresolvedRooms ||
+        spatialSummary.unresolvedZoneCount !== unresolvedZones
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "The spatial quality summary must match complete sample and zone evidence.",
+        });
+      }
+    } else if (
+      spatialSamples.length > 0 ||
+      envelope.rooms.some(({ zones }) => zones !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Spatial sample or zone evidence requires its quality summary.",
       });
     }
   });

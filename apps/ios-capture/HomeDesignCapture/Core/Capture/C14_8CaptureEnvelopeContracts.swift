@@ -5,6 +5,8 @@ enum C14_8CaptureContract {
   static let localJournalSchemaVersion = "c14-8-guided-capture-journal-v1"
   static let maximumCameraSamples = 10_000
   static let maximumRooms = 64
+  static let maximumKeyframesPerEnvelope = 512
+  static let maximumKeyframesPerRoom = 256
   static let maximumDurationMicroseconds: Int64 = 21_600_000_000
 }
 
@@ -86,6 +88,14 @@ struct C14_8CoverageCell: Codable, Equatable, Hashable, Identifiable, Sendable {
   var id: String { "\(horizontalSector.rawValue):\(verticalBand.rawValue)" }
 }
 
+struct C14_10CaptureZone: Codable, Equatable, Identifiable, Sendable {
+  var label: String
+  var status: C14_8CoverageStatus
+  let zoneId: UUID
+
+  var id: UUID { zoneId }
+}
+
 enum C14_8SemanticLayer: String, CaseIterable, Codable, Identifiable, Sendable {
   case appearance
   case fixedFittings = "fixed-fittings"
@@ -130,6 +140,7 @@ struct C14_8RoomEnvelope: Codable, Equatable, Identifiable, Sendable {
   var semanticDeclarations: [C14_8SemanticDeclaration]
   let sequence: Int
   var story: Int?
+  var zones: [C14_10CaptureZone]?
 
   var id: UUID { roomId }
 
@@ -147,7 +158,10 @@ struct C14_8RoomEnvelope: Codable, Equatable, Identifiable, Sendable {
         C14_8SemanticDeclaration(layer: $0, provenance: "user-asserted", status: .unknown)
       },
       sequence: sequence,
-      story: nil
+      story: nil,
+      zones: [
+        C14_10CaptureZone(label: "Main area", status: .missing, zoneId: UUID())
+      ]
     )
   }
 }
@@ -199,10 +213,15 @@ struct C14_8LocalCameraSample: Codable, Equatable, Identifiable, Sendable {
   let ambientIntensity: Int?
   let blurScoreMillionths: Int
   let cameraIntrinsicsMicropixels: C14_8CameraIntrinsics
+  let connectedToPrevious: Bool?
   let exposureScoreMillionths: Int
+  let featurePointCount: Int?
   let intrinsicsModel: String
+  let loopClosureCandidate: Bool?
   let motionScoreMillionths: Int
   let orientation: String
+  let overlapScoreMillionths: Int?
+  let parallaxScoreMillionths: Int?
   let poseTransform: String
   let quaternionOrder: String
   let quaternionNanounits: [Int64]
@@ -213,7 +232,12 @@ struct C14_8LocalCameraSample: Codable, Equatable, Identifiable, Sendable {
   let sourceTimestampMicroseconds: Int64
   let timestampMicroseconds: Int64
   let trackingState: C14_8TrackingState
+  let trajectorySpanMicrometres: Int64?
+  let trajectoryTravelMicrometres: Int64?
+  let translationFromPreviousMicrometres: Int64?
   let translationMicrometres: C14_8Translation
+  let retentionMode: C14_10KeyframeRetentionMode?
+  let zoneId: UUID?
 
   var id: UUID { sampleId }
 }
@@ -296,10 +320,15 @@ struct C14_8CameraSample: Codable, Equatable, Sendable {
   let ambientIntensity: Int?
   let blurScoreMillionths: Int
   let cameraIntrinsicsMicropixels: C14_8CameraIntrinsics
+  let connectedToPrevious: Bool?
   let exposureScoreMillionths: Int
+  let featurePointCount: Int?
   let intrinsicsModel: String
+  let loopClosureCandidate: Bool?
   let motionScoreMillionths: Int
   let orientation: String
+  let overlapScoreMillionths: Int?
+  let parallaxScoreMillionths: Int?
   let poseTransform: String
   let quaternionOrder: String
   let quaternionNanounits: [Int64]
@@ -310,7 +339,20 @@ struct C14_8CameraSample: Codable, Equatable, Sendable {
   let sourceTimestampMicroseconds: Int64
   let timestampMicroseconds: Int64
   let trackingState: C14_8TrackingState
+  let trajectorySpanMicrometres: Int64?
+  let trajectoryTravelMicrometres: Int64?
+  let translationFromPreviousMicrometres: Int64?
   let translationMicrometres: C14_8Translation
+  let retentionMode: C14_10KeyframeRetentionMode?
+  let zoneId: UUID?
+}
+
+struct C14_10SpatialQualitySummary: Codable, Equatable, Sendable {
+  let automaticallySelectedSampleCount: Int
+  let connectedSampleCount: Int
+  let loopClosureSampleCount: Int
+  let unresolvedRoomCount: Int
+  let unresolvedZoneCount: Int
 }
 
 struct C14_8QualitySummary: Codable, Equatable, Sendable {
@@ -321,6 +363,7 @@ struct C14_8QualitySummary: Codable, Equatable, Sendable {
   let occludedCoverageCellCount: Int
   let trackingLimitedSampleCount: Int
   let unusableBlurSampleCount: Int
+  let spatialEvidence: C14_10SpatialQualitySummary?
 }
 
 struct C14_8CaptureRights: Codable, Equatable, Sendable {
@@ -419,7 +462,8 @@ enum C14_8ContractValidator {
     let elapsedMicroseconds = max(
       1,
       Int64(
-        ((draft.endedAt ?? draft.updatedAt).timeIntervalSince(draft.createdAt) * 1_000_000).rounded()
+        ((draft.endedAt ?? draft.updatedAt).timeIntervalSince(draft.createdAt) * 1_000_000)
+          .rounded()
       )
     )
     guard draft.schemaVersion == C14_8CaptureContract.localJournalSchemaVersion,
@@ -427,6 +471,7 @@ enum C14_8ContractValidator {
       draft.rooms.count <= C14_8CaptureContract.maximumRooms,
       !draft.segments.isEmpty,
       draft.samples.count <= C14_8CaptureContract.maximumCameraSamples,
+      draft.keyframes.count <= C14_8CaptureContract.maximumKeyframesPerEnvelope,
       draft.samples.count == draft.keyframes.count,
       keyframeIds.count == draft.keyframes.count,
       sampleIds.count == draft.samples.count,
@@ -435,24 +480,36 @@ enum C14_8ContractValidator {
       roomIds.count == draft.rooms.count,
       roomPlanSourceIds.count == draft.roomPlanSources.count,
       draft.roomPlanSources.count <= C14_8CaptureContract.maximumRooms,
-      (draft.roomPlanSources.isEmpty || draft.capabilities.roomPlan),
+      draft.roomPlanSources.isEmpty || draft.capabilities.roomPlan,
       draft.updatedAt >= draft.createdAt,
       draft.endedAt.map({ $0 >= draft.createdAt }) ?? true,
       draft.endedAt.map({ $0.timeIntervalSince(draft.createdAt) <= 21_600 }) ?? true
     else { throw C14_8ContractError.overBudget }
-    guard draft.rooms.allSatisfy({ room in
-      room.coverage.count == 24
-        && Set(room.coverage.map(\.id)).count == 24
-        && room.semanticDeclarations.count == C14_8SemanticLayer.allCases.count
-        && Set(room.semanticDeclarations.map(\.layer)).count
-          == C14_8SemanticLayer.allCases.count
-        && !room.coordinateSegmentIds.isEmpty
-        && Set(room.coordinateSegmentIds).count == room.coordinateSegmentIds.count
-        && room.coordinateSegmentIds.allSatisfy(segmentIds.contains)
-    }) else { throw C14_8ContractError.incompleteCoverageDeclaration }
-    guard segmentIds.allSatisfy({ segmentId in
-      draft.rooms.contains(where: { $0.coordinateSegmentIds.contains(segmentId) })
-    }),
+    guard
+      draft.rooms.allSatisfy({ room in
+        room.coverage.count == 24
+          && Set(room.coverage.map(\.id)).count == 24
+          && room.semanticDeclarations.count == C14_8SemanticLayer.allCases.count
+          && Set(room.semanticDeclarations.map(\.layer)).count
+            == C14_8SemanticLayer.allCases.count
+          && !room.coordinateSegmentIds.isEmpty
+          && Set(room.coordinateSegmentIds).count == room.coordinateSegmentIds.count
+          && room.coordinateSegmentIds.allSatisfy(segmentIds.contains)
+          && (room.zones == nil || room.zones?.isEmpty == false)
+          && (room.zones?.count ?? 0) <= 32
+          && (room.zones == nil || Set(room.zones?.map(\.zoneId) ?? []).count == room.zones?.count)
+          && (room.zones?.allSatisfy({ zone in
+            let label = zone.label.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !label.isEmpty && label.count <= 120
+          }) ?? true)
+          && draft.samples.filter({ $0.roomId == room.roomId }).count
+            <= C14_8CaptureContract.maximumKeyframesPerRoom
+      })
+    else { throw C14_8ContractError.incompleteCoverageDeclaration }
+    guard
+      segmentIds.allSatisfy({ segmentId in
+        draft.rooms.contains(where: { $0.coordinateSegmentIds.contains(segmentId) })
+      }),
       draft.segments.allSatisfy({ segment in
         segment.coordinateSystem == "arkit-right-handed-y-up"
           && segment.translationUnit == "micrometres"
@@ -462,6 +519,14 @@ enum C14_8ContractValidator {
           && segment.endedAtMicroseconds <= C14_8CaptureContract.maximumDurationMicroseconds
           && segment.worldOriginRelationship == "independent-unless-later-registered"
       }),
+      draft.rooms.allSatisfy({ room in
+        let ordered = draft.segments
+          .filter { room.coordinateSegmentIds.contains($0.segmentId) }
+          .sorted { $0.startedAtMicroseconds < $1.startedAtMicroseconds }
+        return zip(ordered, ordered.dropFirst()).allSatisfy { previous, current in
+          previous.endedAtMicroseconds <= current.startedAtMicroseconds
+        }
+      }),
       draft.samples.allSatisfy({ sample in
         let room = draft.rooms.first(where: { $0.roomId == sample.roomId })
         let segment = draft.segments.first(where: { $0.segmentId == sample.segmentId })
@@ -470,6 +535,13 @@ enum C14_8ContractValidator {
             result + Double(value) * Double(value)
           }
         )
+        let spatialValues: [Any?] = [
+          sample.connectedToPrevious, sample.featurePointCount, sample.loopClosureCandidate,
+          sample.overlapScoreMillionths, sample.parallaxScoreMillionths, sample.retentionMode,
+          sample.trajectorySpanMicrometres, sample.trajectoryTravelMicrometres,
+          sample.translationFromPreviousMicrometres, sample.zoneId,
+        ]
+        let populatedSpatialValues = spatialValues.filter { $0 != nil }.count
         return roomIds.contains(sample.roomId)
           && segmentIds.contains(sample.segmentId)
           && room?.coordinateSegmentIds.contains(sample.segmentId) == true
@@ -496,6 +568,16 @@ enum C14_8ContractValidator {
             < Int64(sample.cameraIntrinsicsMicropixels.imageHeightPixels) * 1_000_000
           && sample.cameraIntrinsicsMicropixels.fx > 0
           && sample.cameraIntrinsicsMicropixels.fy > 0
+          && (sample.zoneId.map { zoneId in
+            room?.zones?.contains(where: { $0.zoneId == zoneId }) == true
+          } ?? true)
+          && (populatedSpatialValues == 0 || populatedSpatialValues == spatialValues.count)
+          && (sample.featurePointCount.map { $0 >= 0 && $0 <= 1_000_000 } ?? true)
+          && (sample.overlapScoreMillionths.map { (0...1_000_000).contains($0) } ?? true)
+          && (sample.parallaxScoreMillionths.map { (0...1_000_000).contains($0) } ?? true)
+          && (sample.translationFromPreviousMicrometres.map { $0 >= 0 } ?? true)
+          && (sample.trajectorySpanMicrometres.map { $0 >= 0 } ?? true)
+          && (sample.trajectoryTravelMicrometres.map { $0 >= 0 } ?? true)
       }),
       Set(draft.samples.map(\.sourceLocalIdentifier)) == keyframeIds,
       Set(draft.depthHandles.map(\.localIdentifier)).count == draft.depthHandles.count,
@@ -533,21 +615,66 @@ enum C14_8ContractValidator {
             != nil
       })
     else { throw C14_8ContractError.invalidEvidence }
+    let spatialSamples = draft.samples.filter { $0.retentionMode != nil }
+    let spatialSegments = Dictionary(grouping: spatialSamples, by: \.segmentId).values.map {
+      $0.sorted { $0.timestampMicroseconds < $1.timestampMicroseconds }
+    }
+    guard
+      spatialSamples.allSatisfy({ sample in
+        sample.trackingState == .normal
+          && sample.motionScoreMillionths <= 400_000
+          && sample.blurScoreMillionths >= C8CaptureQualityEvaluator.minimumAcceptedBlur
+          && sample.exposureScoreMillionths >= C8CaptureQualityEvaluator.minimumAcceptedExposure
+          && (sample.ambientIntensity ?? 1_000) >= 300
+          && (sample.featurePointCount ?? 0)
+            >= C14_10SpatialCapturePolicy.minimumFeaturePointCount
+      }),
+      spatialSegments.allSatisfy({ segmentSamples in
+        guard segmentSamples.first?.connectedToPrevious == false else { return false }
+        let edgesValid = segmentSamples.dropFirst().allSatisfy { sample in
+          guard sample.connectedToPrevious == true,
+            (sample.overlapScoreMillionths ?? 0)
+              >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+          else { return false }
+          if sample.loopClosureCandidate == true { return true }
+          return (sample.translationFromPreviousMicrometres ?? 0)
+            >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
+            && (sample.parallaxScoreMillionths ?? 0)
+              >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
+            && (sample.overlapScoreMillionths ?? 0)
+              < C14_10SpatialCapturePolicy.maximumNearDuplicateOverlapScoreMillionths
+        }
+        let cumulativeEvidenceIsMonotonic = zip(segmentSamples, segmentSamples.dropFirst())
+          .allSatisfy { previous, current in
+            (previous.trajectorySpanMicrometres ?? 0)
+              <= (current.trajectorySpanMicrometres ?? 0)
+              && (previous.trajectoryTravelMicrometres ?? 0)
+                <= (current.trajectoryTravelMicrometres ?? 0)
+          }
+        let automaticSamples = segmentSamples.filter { $0.retentionMode == .automatic }
+        let automaticIntervalIsBounded = zip(automaticSamples, automaticSamples.dropFirst())
+          .allSatisfy { previous, current in
+            current.timestampMicroseconds - previous.timestampMicroseconds
+              >= C14_10SpatialCapturePolicy.automaticIntervalMicroseconds
+          }
+        return edgesValid && cumulativeEvidenceIsMonotonic && automaticIntervalIsBounded
+      })
+    else { throw C14_8ContractError.invalidEvidence }
     let capability = draft.capabilities
-    let physicalCapabilityValid = capability.runtime == .physicalDevice
+    let physicalCapabilityValid =
+      capability.runtime == .physicalDevice
       && capability.arWorldTracking
       && capability.cameraIntrinsics
       && capability.cameraPoses
       && capability.rgbKeyframes
       && capability.qualityTier != .simulatorFixture
-      && (
-        (capability.qualityTier == .guidedRGB && !capability.sceneDepth)
-          || (capability.qualityTier == .guidedRGBDepth
-            && capability.sceneDepth && !capability.roomPlan)
-          || (capability.qualityTier == .guidedRGBDepthRoomPlan
-            && capability.sceneDepth && capability.roomPlan)
-      )
-    let fixtureCapabilityValid = capability.runtime == .simulatorFixture
+      && ((capability.qualityTier == .guidedRGB && !capability.sceneDepth)
+        || (capability.qualityTier == .guidedRGBDepth
+          && capability.sceneDepth && !capability.roomPlan)
+        || (capability.qualityTier == .guidedRGBDepthRoomPlan
+          && capability.sceneDepth && capability.roomPlan))
+    let fixtureCapabilityValid =
+      capability.runtime == .simulatorFixture
       && capability.qualityTier == .simulatorFixture
       && !capability.arWorldTracking
       && !capability.cameraIntrinsics

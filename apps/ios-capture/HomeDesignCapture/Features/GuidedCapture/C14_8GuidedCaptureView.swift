@@ -17,7 +17,7 @@ struct C14_8GuidedCaptureView: View {
           .font(.title2.bold())
         Text(project.name).font(.headline)
         Text(
-          "Capture one room at a time with retained RGB keyframes, ARKit poses and camera intrinsics. LiDAR is optional; unknown or occluded areas remain explicit."
+          "Walk slowly around each room while the app retains useful connected RGB views. Keep a wall or corner visible, step sideways, visit every connected zone and finish near where you started. LiDAR is optional."
         )
         .foregroundStyle(.secondary)
       }
@@ -28,9 +28,11 @@ struct C14_8GuidedCaptureView: View {
       Section("Other homeowner branches") {
         if model.capabilities.roomPlan {
           Button("Add a separate LiDAR / RoomPlan scan") { onOpenRoomPlan() }
-          Text("RoomPlan is additional evidence. It never replaces the camera-first journey or confirms canonical geometry by itself.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+          Text(
+            "RoomPlan is additional evidence. It never replaces the camera-first journey or confirms canonical geometry by itself."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
         }
         Button("Use existing evidence") { onOpenEvidence() }
         Button("Back to homeowner hub") { onDone() }
@@ -54,17 +56,23 @@ struct C14_8GuidedCaptureView: View {
       )
       .font(.headline)
       LabeledContent("RGB keyframes", value: "Required")
-      LabeledContent("ARKit poses + intrinsics", value: model.capabilities.arWorldTracking ? "Available" : "Fixture only")
-      LabeledContent("Scene depth", value: model.capabilities.sceneDepth ? "Additional" : "Not available")
-      LabeledContent("RoomPlan", value: model.capabilities.roomPlan ? "Optional branch" : "Not available")
+      LabeledContent(
+        "ARKit poses + intrinsics",
+        value: model.capabilities.arWorldTracking ? "Available" : "Fixture only")
+      LabeledContent(
+        "Scene depth", value: model.capabilities.sceneDepth ? "Additional" : "Not available")
+      LabeledContent(
+        "RoomPlan", value: model.capabilities.roomPlan ? "Optional branch" : "Not available")
       Label("Model training: denied", systemImage: "hand.raised.fill")
         .foregroundStyle(.secondary)
       #if DEBUG
         if model.isSyntheticFixture {
-          Text("SYNTHETIC SIMULATOR FIXTURE · NOT PHYSICAL CAMERA, ARKIT TRACKING, DEPTH OR ROOMPLAN EVIDENCE")
-            .font(.caption.monospaced().bold())
-            .foregroundStyle(.indigo)
-            .accessibilityIdentifier("c14_8.synthetic-disclosure")
+          Text(
+            "SYNTHETIC SIMULATOR FIXTURE · NOT PHYSICAL CAMERA, ARKIT TRACKING, DEPTH OR ROOMPLAN EVIDENCE"
+          )
+          .font(.caption.monospaced().bold())
+          .foregroundStyle(.indigo)
+          .accessibilityIdentifier("c14_8.synthetic-disclosure")
         }
       #endif
     }
@@ -74,40 +82,71 @@ struct C14_8GuidedCaptureView: View {
   private var stateContent: some View {
     switch model.state {
     case .checking:
-      status("Checking protected recovery", "Capability discovery occurs before permission and is scoped to this project and actor.", "shield.lefthalf.filled") {
+      status(
+        "Checking protected recovery",
+        "Capability discovery occurs before permission and is scoped to this project and actor.",
+        "shield.lefthalf.filled"
+      ) {
         ProgressView()
       }
     case .permissionRequired:
-      status("Camera permission is optional", "Allow camera access for guided capture, or continue with existing evidence.", "camera.badge.ellipsis") {
+      status(
+        "Camera permission is optional",
+        "Allow camera access for guided capture, or continue with existing evidence.",
+        "camera.badge.ellipsis"
+      ) {
         Button("Continue to camera permission") { model.requestPermission() }
           .buttonStyle(.borderedProminent)
         Button("Use existing evidence") { onOpenEvidence() }
       }
     case .cameraDenied:
-      status("Camera access denied", "Enable access in Settings or use the evidence workspace. No sensor session was created.", "camera.fill.badge.xmark") {
+      status(
+        "Camera access denied",
+        "Enable access in Settings or use the evidence workspace. No sensor session was created.",
+        "camera.fill.badge.xmark"
+      ) {
         Button("Check camera permission") { model.requestPermission() }
         Button("Use existing evidence") { onOpenEvidence() }
       }
     case .cameraRestricted:
-      status("Camera access restricted", "Device policy prevents guided capture. Existing evidence remains available.", "lock.slash") {
+      status(
+        "Camera access restricted",
+        "Device policy prevents guided capture. Existing evidence remains available.", "lock.slash"
+      ) {
         Button("Use existing evidence") { onOpenEvidence() }
       }
     case .unavailable:
-      status("ARKit world tracking unavailable", "This runtime cannot provide the pose and intrinsics evidence required by guided capture.", "viewfinder.circle") {
+      status(
+        "ARKit world tracking unavailable",
+        "This runtime cannot provide the pose and intrinsics evidence required by guided capture.",
+        "viewfinder.circle"
+      ) {
         Button("Use existing evidence") { onOpenEvidence() }
       }
     case .readOnly:
-      status("Capture is read-only", "The protected draft belongs to another authenticated actor, or this role cannot mutate capture evidence.", "person.badge.shield.checkmark") {
+      status(
+        "Capture is read-only",
+        "The protected draft belongs to another authenticated actor, or this role cannot mutate capture evidence.",
+        "person.badge.shield.checkmark"
+      ) {
         Button("Use existing evidence") { onOpenEvidence() }
       }
     case .ready:
       liveCapture
     case .capturing:
-      status("Retaining synchronized keyframe", "The RGB bytes, pose, intrinsics, tracking state and optional depth share one sample identity.", "camera.shutter.button") {
+      status(
+        "Retaining synchronized keyframe",
+        "The RGB bytes, pose, intrinsics, tracking state and optional depth share one sample identity.",
+        "camera.shutter.button"
+      ) {
         ProgressView()
       }
     case .interrupted:
-      status("Capture interrupted safely", "Completed keyframes remain protected. Continue only by creating a fresh independent coordinate segment.", "pause.circle") {
+      status(
+        "Capture interrupted safely",
+        "Completed keyframes remain protected. Continue only by creating a fresh independent coordinate segment.",
+        "pause.circle"
+      ) {
         Button("Start a fresh segment") { model.recoverAfterInterruption() }
           .buttonStyle(.borderedProminent)
       }
@@ -117,23 +156,38 @@ struct C14_8GuidedCaptureView: View {
       #if DEBUG
         review(fixture: true)
       #else
-        status("Capture state unavailable", "A fixture-only state was rejected by this production build.", "exclamationmark.shield") {
+        status(
+          "Capture state unavailable",
+          "A fixture-only state was rejected by this production build.", "exclamationmark.shield"
+        ) {
           Button("Use existing evidence") { onOpenEvidence() }
         }
       #endif
     case .submitting(let stage, let progress):
-      status(stage.rawValue, "Uploads are checksum-bound and resumable. Project or role changes discard stale results.", "arrow.up.circle") {
+      status(
+        stage.rawValue,
+        "Uploads are checksum-bound and resumable. Project or role changes discard stale results.",
+        "arrow.up.circle"
+      ) {
         ProgressView(value: progress)
         Button("Pause safely") { model.cancelSubmission() }
       }
     case .accepted(let sourcesReady):
       accepted(sourcesReady: sourcesReady)
     case .startingReconstruction:
-      status("Starting proposal-only reconstruction", "C8 is rechecking every ready RGB source and the exact accepted envelope hash.", "cube.transparent") {
+      status(
+        "Starting proposal-only reconstruction",
+        "C8 is rechecking every ready RGB source and the exact accepted envelope hash.",
+        "cube.transparent"
+      ) {
         ProgressView()
       }
     case .reconstructed(let jobId):
-      status("Reconstruction proposal queued", "Job \(jobId.uuidString.lowercased()). Geometry remains a C8 proposal until the existing C9/C5 review and confirmation journey.", "checkmark.shield") {
+      status(
+        "Reconstruction proposal queued",
+        "Job \(jobId.uuidString.lowercased()). Geometry remains a C8 proposal until the existing C9/C5 review and confirmation journey.",
+        "checkmark.shield"
+      ) {
         Button("Return to homeowner hub") { onDone() }
           .buttonStyle(.borderedProminent)
       }
@@ -185,20 +239,48 @@ struct C14_8GuidedCaptureView: View {
       Section("Live guidance") {
         LabeledContent("Room", value: model.currentRoom?.label ?? "Unknown")
         LabeledContent("Retained keyframes", value: String(model.capturedKeyframeCount))
-        LabeledContent("Observed areas", value: "\(model.observedCellCount) of 24")
+        if let readiness = model.captureReadiness {
+          LabeledContent(
+            "Spatial evidence", value: readiness.isReady ? "Ready to review" : "Keep capturing")
+          LabeledContent(
+            "Connected views", value: "\(readiness.connectedRatioMillionths / 10_000)%")
+          LabeledContent(
+            "Route travelled",
+            value: String(
+              format: "%.1f m", Double(readiness.trajectoryTravelMicrometres) / 1_000_000))
+          LabeledContent("Loop closures", value: String(readiness.loopClosureCount))
+          LabeledContent("Unresolved zones", value: String(readiness.unresolvedZoneCount))
+        }
+        LabeledContent("Direction / height guide", value: "\(model.observedCellCount) of 24")
         if let telemetry = model.liveTelemetry {
-          LabeledContent("Current area", value: telemetry.coverageCellId)
+          LabeledContent(
+            "Feature observations", value: String(telemetry.spatialEvidence.featurePointCount))
+          LabeledContent(
+            "View overlap", value: "\(telemetry.spatialEvidence.overlapScoreMillionths / 10_000)%")
+          LabeledContent(
+            "Parallax signal",
+            value: "\(telemetry.spatialEvidence.parallaxScoreMillionths / 10_000)%")
           LabeledContent("Tracking", value: telemetry.trackingState.rawValue)
         }
+        Toggle("Select useful keyframes automatically", isOn: $model.automaticCaptureEnabled)
+        Text(
+          "Automatic selection is bounded to one candidate every two seconds and skips blurry, poorly exposed, disconnected or near-duplicate views."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
         ForEach(model.guidance, id: \.self) {
           Label($0, systemImage: "viewfinder.circle")
         }
-        Button("Retain RGB keyframe") { model.captureKeyframe() }
-          .buttonStyle(.borderedProminent)
+        Button("Retain this useful view manually") { model.captureKeyframe() }
+          .buttonStyle(.bordered)
           .accessibilityIdentifier("c14_8.capture-keyframe")
-          .disabled(model.liveTelemetry?.trackingState == .unavailable)
+          .disabled(model.currentSelectionDecision?.shouldRetain != true)
         if model.capturedKeyframeCount > 0 {
-          Button("Review room and missing areas") { model.finishRoomReview() }
+          Button(
+            model.captureReadiness?.isReady == true
+              ? "Review connected room capture"
+              : "Review unresolved capture"
+          ) { model.finishRoomReview() }
         }
       }
 
@@ -213,22 +295,40 @@ struct C14_8GuidedCaptureView: View {
           Section {
             Label("Fixture journey complete", systemImage: "testtube.2")
               .font(.headline)
-            Text("This proves UI, recovery, coverage and state isolation only. The server will not accept it as physical capture evidence.")
-              .foregroundStyle(.secondary)
+            Text(
+              "This proves UI, recovery, coverage and state isolation only. The server will not accept it as physical capture evidence."
+            )
+            .foregroundStyle(.secondary)
           }
         }
       #endif
       Section("Capture review") {
         LabeledContent("Rooms", value: String(model.totalRoomCount))
         LabeledContent("RGB keyframes", value: String(model.capturedKeyframeCount))
-        LabeledContent("Optional depth samples", value: String(model.draft?.depthHandles.count ?? 0))
+        LabeledContent(
+          "Optional depth samples", value: String(model.draft?.depthHandles.count ?? 0))
         LabeledContent(
           "Missing areas",
-          value: String(model.draft?.rooms.flatMap(\.coverage).filter { $0.status == .missing }.count ?? 0)
+          value: String(
+            model.draft?.rooms.flatMap(\.coverage).filter { $0.status == .missing }.count ?? 0)
         )
-        Text("Missing, occluded and unknown areas remain explicit. They are not inferred as walls, openings or dimensions.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+        if let readiness = model.captureReadiness {
+          Label(
+            readiness.isReady
+              ? "Connected spatial evidence is ready for proposal review."
+              : "This capture remains incomplete; unresolved spatial evidence will stay explicit.",
+            systemImage: readiness.isReady
+              ? "point.3.connected.trianglepath.dotted" : "exclamationmark.triangle"
+          )
+          ForEach(readiness.reasons, id: \.self) {
+            Text($0).font(.footnote).foregroundStyle(.secondary)
+          }
+        }
+        Text(
+          "Missing, occluded and unknown areas remain explicit. They are not inferred as walls, openings or dimensions."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
         Button("Capture more in this room") { model.captureMore() }
         Button("Add another room with a fresh origin") { model.addRoom() }
           .disabled(model.totalRoomCount >= C14_8CaptureContract.maximumRooms)
@@ -240,9 +340,11 @@ struct C14_8GuidedCaptureView: View {
 
       if model.capabilities.roomPlan {
         Section("Optional RoomPlan evidence") {
-          Text("Attach only a separately processed, rights-compatible C7 package. Its geometry remains proposal evidence and does not replace RGB.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+          Text(
+            "Attach only a separately processed, rights-compatible C7 package. Its geometry remains proposal evidence and does not replace RGB."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
           Button("Find processed RoomPlan packages") { model.refreshRoomPlanSources() }
             .disabled(model.roomPlanDiscoveryInProgress)
           if model.roomPlanDiscoveryInProgress { ProgressView() }
@@ -300,14 +402,40 @@ struct C14_8GuidedCaptureView: View {
           set: { model.renameCurrentRoom($0) }
         )
       )
-      Text("Each interruption and room transition starts an independent coordinate segment unless a later reviewed registration explicitly relates them.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
+      if let zones = model.currentRoom?.zones {
+        Picker(
+          "Connected room zone",
+          selection: Binding(
+            get: { model.activeZoneId ?? zones[0].zoneId },
+            set: { model.selectZone($0) }
+          )
+        ) {
+          ForEach(zones) { zone in
+            Text("\(zone.label) · \(zone.status.rawValue)").tag(zone.zoneId)
+          }
+        }
+      }
+      Button("Add another connected zone") { model.addZone() }
+        .disabled((model.currentRoom?.zones?.count ?? 0) >= 32)
+      Text(
+        "Use zones for L-shaped rooms, connected alcoves or open-plan areas. Walk through each zone while keeping shared walls, corners or openings visible."
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+      Text(
+        "Each interruption and room transition starts an independent coordinate segment unless a later reviewed registration explicitly relates them."
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
     }
   }
 
   private var coverageGrid: some View {
-    Section("Coverage · tap non-observed cells to mark occluded or unknown") {
+    Section("Secondary direction / height guide · tap unresolved cells to mark occluded or unknown")
+    {
+      Text("This grid helps point the camera but cannot make the room spatially ready by itself.")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 8) {
         ForEach(model.currentRoom?.coverage ?? []) { cell in
           Button {
@@ -320,11 +448,14 @@ struct C14_8GuidedCaptureView: View {
             }
             .font(.caption2)
             .frame(maxWidth: .infinity, minHeight: 64)
-            .background(coverageColour(cell.status).opacity(0.16), in: RoundedRectangle(cornerRadius: 8))
+            .background(
+              coverageColour(cell.status).opacity(0.16), in: RoundedRectangle(cornerRadius: 8))
           }
           .buttonStyle(.plain)
           .disabled(cell.status == .observed)
-          .accessibilityLabel("\(cell.horizontalSector.rawValue) \(cell.verticalBand.rawValue), \(cell.status.rawValue)")
+          .accessibilityLabel(
+            "\(cell.horizontalSector.rawValue) \(cell.verticalBand.rawValue), \(cell.status.rawValue)"
+          )
         }
       }
     }
@@ -346,9 +477,11 @@ struct C14_8GuidedCaptureView: View {
           ForEach(C14_8SemanticStatus.allCases) { Text($0.title).tag($0) }
         }
       }
-      Text("These homeowner declarations keep structure, fixed fittings, movable furniture, appearance and temporary clutter separate. They do not establish canonical geometry.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
+      Text(
+        "These homeowner declarations keep structure, fixed fittings, movable furniture, appearance and temporary clutter separate. They do not establish canonical geometry."
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
     }
   }
 
@@ -357,8 +490,10 @@ struct C14_8GuidedCaptureView: View {
       Section {
         Label("Capture envelope accepted", systemImage: "checkmark.shield")
           .font(.headline)
-        Text("The envelope and exact C2/C7 fingerprints are immutable. Acceptance does not confirm geometry or create C4/C5 operations.")
-          .foregroundStyle(.secondary)
+        Text(
+          "The envelope and exact C2/C7 fingerprints are immutable. Acceptance does not confirm geometry or create C4/C5 operations."
+        )
+        .foregroundStyle(.secondary)
         if let acceptance = model.draft?.acceptance {
           LabeledContent("Envelope", value: acceptance.envelopeId.uuidString.lowercased())
           LabeledContent("SHA-256", value: "\(acceptance.envelopeSha256.prefix(16))…")
@@ -374,9 +509,11 @@ struct C14_8GuidedCaptureView: View {
             .disabled(!model.canMutate)
         } else {
           Label("Waiting for immutable RGB validation", systemImage: "clock.badge.checkmark")
-          Text("Depth and RoomPlan remain retained evidence, but this checkpoint starts production C8 only from ready RGB sources.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+          Text(
+            "Depth and RoomPlan remain retained evidence, but this checkpoint starts production C8 only from ready RGB sources."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
           Button("Recheck source readiness") { Task { await model.checkSourceReadiness() } }
         }
       }
