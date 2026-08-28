@@ -89,6 +89,7 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
     second_held = second.get("heldOutAppearance")
     psnr_delta: float | None = None
     coverage_delta: float | None = None
+    held_out_quality_status = "NOT RUN"
     held_out_pass = first_held is None and second_held is None
     if isinstance(first_held, dict) and isinstance(second_held, dict):
         psnr_delta = abs(
@@ -100,6 +101,12 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
             - finite_number(second_held.get("coverageFraction"), "second coverage")
         )
         held_out_pass = psnr_delta <= 0.01 and coverage_delta <= 1e-6
+        held_out_quality_status = (
+            "FAILED_ZERO_COVERAGE"
+            if finite_number(first_held.get("coverageFraction"), "first coverage") == 0
+            and finite_number(second_held.get("coverageFraction"), "second coverage") == 0
+            else "OBSERVED_PROPOSAL_RENDER"
+        )
     passed = artifact_match and point_delta == 0 and held_out_pass
     source_view_count = int(first["sourceViewCount"])
     connectivity = (
@@ -125,6 +132,7 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
         "dimensionalAccuracy": "NOT RUN",
         "heldOutCoverageAbsoluteDelta": coverage_delta,
         "heldOutPsnrAbsoluteDeltaDb": psnr_delta,
+        "heldOutQualityStatus": held_out_quality_status,
         "maxPeakHostRssBytes": max(
             int(first["peakHostMaxRssBytes"]), int(second["peakHostMaxRssBytes"])
         ),

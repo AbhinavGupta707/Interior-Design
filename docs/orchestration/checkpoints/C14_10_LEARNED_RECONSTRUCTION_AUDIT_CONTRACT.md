@@ -130,3 +130,33 @@ accepted C8/C14.9 baseline adapters are out of scope.
 - Durable evidence states whether any learned method materially improved this one envelope while
   keeping dimensional and representative accuracy `NOT RUN`.
 - The exact branch is committed, pushed and opened as one non-draft, unmerged PR.
+
+## Closeout freeze - 2026-08-28
+
+- The counted matrix completed 16/16 candidate/cohort/segment/run scopes with zero runtime,
+  isolation or resource failures. All eight two-run comparison scopes reproduced exact artifacts
+  and zero metric deltas.
+- DA3-SMALL and DA3-LARGE-1.1 each produced 25/25 finite proposal cameras and substantially more
+  point samples than the retained sparse baselines, but both had zero independently aligned
+  held-out pixel coverage. Their black-frame 5.548452293042459 dB score is typed failed quality,
+  not appearance evidence. Neither candidate materially improves C14.9.
+- Both learned one-view proposals remain independent. They have one finite camera and 69,149
+  confidence-filtered points each; connectivity and held-out appearance are `NOT RUN`, and neither
+  is a reconstruction of the interrupted segment.
+- Seven deterministic three-view inspection sets and exact hashes remain on restrictive private
+  WSL ext4. Automated occupancy proxies establish only denser projected support. Direct human/model
+  visual inspection is `NOT RUN`: the desktop viewer could not read the protected path, and moving
+  private pixels through the tool channel would breach this contract.
+- The counted image remains frozen at its exact image ID. Its embedded adapter SHA-256 is
+  `7253285f65517bf2064d501f479dae29001a83f764c6017f02cf757c3c7241b5`; the submitted adapter differs
+  only by repository-standard `mypy` annotations and has SHA-256
+  `6d5ca1478b5f027174374204012a904edcaa7fd1cd879d77bcc35b3023a2f3ce`. Post-run metrics add an
+  explicit `FAILED_ZERO_COVERAGE` classification without rewriting counted raw results.
+- Complete `pnpm verify` passed formatting, all 24 lint tasks, all 24 typecheck tasks, all 45 unit
+  tasks, all 24 builds, Ruff, mypy across 120 source files and 157 Python tests with two expected
+  skips. The locked optional evaluation environment passed the focused 15-test C14.9/C14.10 suite;
+  the dependency-minimal repository environment passes 10 baseline tests and explicitly skips the
+  optional DA3 module.
+- Contract/migration impact is none. Production routing, canonical geometry, C5/homeowner
+  authority, accepted baseline adapters, schemas, root manifests/locks and generated clients are
+  unchanged. Dimensional and representative accuracy remain `NOT RUN`.

@@ -8,9 +8,13 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-import numpy as np
 import pytest
-from PIL import Image
+
+pytest.importorskip("numpy", reason="DA3 evaluation runtime is optional")
+pytest.importorskip("PIL", reason="DA3 evaluation runtime is optional")
+
+import numpy as np  # type: ignore[import-not-found]  # noqa: E402
+from PIL import Image  # type: ignore[import-not-found]
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / "ml/reconstruction/windows-nvidia-v2"
@@ -111,3 +115,51 @@ def test_binary_ply_is_private_and_not_replaced(tmp_path: Path) -> None:
             np.asarray([[1.0, 2.0, 3.0]], dtype=np.float32),
             np.asarray([[4, 5, 6]], dtype=np.uint8),
         )
+
+
+def test_private_renderer_reads_adapter_binary_ply(tmp_path: Path) -> None:
+    capture = load("da3_capture")
+    renderer = load("render_ply_views")
+    path = tmp_path / "points.ply"
+    capture.write_binary_ply(
+        path,
+        np.asarray([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32),
+        np.asarray([[7, 8, 9], [10, 11, 12]], dtype=np.uint8),
+    )
+    points, colours, source_count = renderer.load_ply(path, max_points=10)
+    assert source_count == 2
+    np.testing.assert_allclose(points, [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    assert colours.tolist() == [[7, 8, 9], [10, 11, 12]]
+
+
+def test_repeatable_zero_coverage_is_failed_quality() -> None:
+    metrics = load("da3_metrics")
+    base = {
+        "artifacts": {
+            "held-out-render.png": "a" * 64,
+            "proposal-cameras.json": "b" * 64,
+            "proposal-points.ply": "c" * 64,
+        },
+        "candidateId": "da3-small",
+        "cohort": "normal",
+        "configSha256": "d" * 64,
+        "geometry": {"retainedPointCount": 42},
+        "heldOutAppearance": {"coverageFraction": 0.0, "fullFramePsnrDb": 5.5},
+        "inputManifestSha256": "e" * 64,
+        "peakHostMaxRssBytes": 100,
+        "peakTaskVramBytes": 200,
+        "registeredViewCount": 4,
+        "segmentId": "private-segment",
+        "selectionSha256": "f" * 64,
+        "sourceCommit": "1" * 40,
+        "sourceViewCount": 4,
+        "wallSeconds": 1.0,
+        "weightSha256": "2" * 64,
+    }
+    first = dict(base, runIndex=1)
+    second = dict(base, runIndex=2)
+    comparison = metrics.compare(first, second)
+    assert comparison["passed"] is True
+    assert comparison["artifactHashesExact"] is True
+    assert comparison["heldOutQualityStatus"] == "FAILED_ZERO_COVERAGE"
+    assert comparison["connectivity"]["componentCount"] == 1

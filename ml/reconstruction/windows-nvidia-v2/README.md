@@ -229,3 +229,29 @@ registry, fully hashed lock, a symlink-free confined candidate root, and the exa
 before policy selection. Nothing here changes production C8 routing, establishes physical or
 representative accuracy, or creates dimensional truth. Use the exact sequence and non-claims in
 `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`.
+
+## C14.10 learned reconstruction audit
+
+C14.10 is a separate proposal-only audit over the retained C14.9 selection. Its frozen registry is
+`c14-10-learned-candidates.json`. VGGT commercial, VGGT-Omega, MASt3R and DUSt3R abstain at
+access or licence gates; only Apache-2.0 DA3-LARGE-1.1 and DA3-SMALL execute. Blocked candidates
+must not be silently accepted, substituted or scored.
+
+`Dockerfile.da3` consumes the exact official DA3 source through a named local build context,
+applies `da3-offline-inference.patch` with zero fuzz, installs the fully hashed base and additive
+locks, compiles the project SM120 probe and embeds no model weight or capture media. Model
+snapshots and every runtime input/output stay on restrictive WSL ext4 and are mounted read-only
+where applicable.
+
+`prepare_da3_capture.py` copies one frozen cohort/segment without changing RGB bytes.
+`da3_capture.py` validates exact image/model hashes, runs one joint multiview proposal, exports
+data-only camera/PLY artifacts, and uses the final view only for an independently aligned held-out
+point projection when four or more views exist. `run_da3_matrix.py` enforces exact image identity,
+network none, non-root/read-only isolation, ceilings, two fresh runs and typed retained failures.
+`da3_metrics.py` separates repeatability from quality and marks a repeatable zero-coverage render
+as `FAILED_ZERO_COVERAGE`. `render_ply_views.py` produces deterministic local-only inspection
+views and hashes; it never establishes dimensions or recognisability.
+
+No C14.10 file enables production dispatch. Camera/depth/point/render outputs remain proposals,
+coordinate segments remain independent, and dimensional and representative accuracy remain
+`NOT RUN`.

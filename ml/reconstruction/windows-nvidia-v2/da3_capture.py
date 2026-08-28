@@ -14,8 +14,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-from PIL import Image
+import numpy as np  # type: ignore[import-not-found]
+from PIL import Image  # type: ignore[import-not-found]
 
 SCHEMA_INPUT = "c14-10-da3-input-v1"
 SCHEMA_RESULT = "c14-10-da3-result-v1"
@@ -336,7 +336,7 @@ def render_held_out(
 
 
 def run(args: argparse.Namespace) -> None:
-    import torch
+    import torch  # type: ignore[import-not-found]
 
     started = time.monotonic()
     candidate_model_name = CANDIDATES.get(args.candidate_id)
@@ -371,7 +371,7 @@ def run(args: argparse.Namespace) -> None:
     torch.cuda.empty_cache()
     torch.cuda.reset_peak_memory_stats(0)
 
-    from depth_anything_3.api import DepthAnything3
+    from depth_anything_3.api import DepthAnything3  # type: ignore[import-not-found]
 
     model = DepthAnything3.from_pretrained(str(model_root))
     model = model.to(device=torch.device("cuda:0")).eval()

@@ -18,10 +18,7 @@
         "revision": "ebb29a532abe92960eeb6903a5530f16990ef4ab",
         "sha256": null
       },
-      "blockedReasons": [
-        "GATED_WEIGHT_ACCESS",
-        "LICENCE_AGREEMENT_NOT_ACCEPTED_BY_CHECKPOINT"
-      ]
+      "blockedReasons": ["GATED_WEIGHT_ACCESS", "LICENCE_AGREEMENT_NOT_ACCEPTED_BY_CHECKPOINT"]
     },
     {
       "candidateId": "vggt-omega-1.4b",
@@ -41,10 +38,7 @@
         "revision": null,
         "sha256": null
       },
-      "blockedReasons": [
-        "NONCOMMERCIAL_LICENCE",
-        "GATED_WEIGHT_ACCESS"
-      ]
+      "blockedReasons": ["NONCOMMERCIAL_LICENCE", "GATED_WEIGHT_ACCESS"]
     },
     {
       "candidateId": "mast3r-vitlarge-512",
@@ -78,10 +72,7 @@
         "id": "CC-BY-NC-SA-4.0"
       },
       "role": "proposal-only-pairwise-3d-reconstruction",
-      "blockedReasons": [
-        "NONCOMMERCIAL_LICENCE",
-        "NO_JUSTIFIED_ADVANTAGE_AFTER_MAST3R_GATE"
-      ]
+      "blockedReasons": ["NONCOMMERCIAL_LICENCE", "NO_JUSTIFIED_ADVANTAGE_AFTER_MAST3R_GATE"]
     },
     {
       "candidateId": "da3-large-1.1",
