@@ -53,6 +53,29 @@ The final executable set must remain small and justified. Exact pins and enablem
 frozen in the candidate registry before counted physical execution. Candidate source trees,
 weights, caches, images and raw outputs stay outside Git.
 
+### Counted candidate freeze - 2026-08-28
+
+- 'VGGT-1B-Commercial' abstains before execution because current weights are gated and the custom
+  licence requires an application and explicit agreement this checkpoint is not authorised to
+  accept. 'VGGT-Omega-1.4B', MASt3R and DUSt3R abstain because their current licences are
+  non-commercial; their quality is not scored.
+- 'DA3-LARGE-1.1' and 'DA3-SMALL' are the only executable candidates. Official source commit
+  '3d835ec1a5802d64a8b8b15f817a1ab54809bfe4', Hugging Face weight revisions, byte sizes,
+  SHA-256 values, model-card/config hashes, Apache-2.0 licence hash and blocked-candidate evidence
+  are frozen in 'ml/reconstruction/windows-nvidia-v2/c14-10-learned-candidates.json'.
+- The base and additive dependency locks have SHA-256
+  'd09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b' and
+  'ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8'.
+  Counted image ID is
+  'sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3'.
+- A native 'sm_120' kernel executed on the RTX 5080; PyTorch '2.13.0+cu132' reported compute
+  capability 12.0; both exact local model snapshots completed offline nine-view generated-fixture
+  inference including the held-out path.
+- Counted runs fix process resolution 392, seed zero, a 500,000-point cap, two fresh runs, 12 CPUs,
+  32 GiB RAM, 512 PIDs, a 2 GiB no-exec tmpfs, GPU 0 and a 45-minute timeout. The immutable
+  selection SHA-256 is retained privately. Neither segment identifiers nor physical artifacts are
+  committed.
+
 ## Common evaluation contract
 
 Every viable candidate uses the same immutable selected RGB inputs for each compatible independent

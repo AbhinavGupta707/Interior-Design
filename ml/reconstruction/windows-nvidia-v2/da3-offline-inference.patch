@@ -1,0 +1,42 @@
+diff --git a/src/depth_anything_3/api.py b/src/depth_anything_3/api.py
+index db25f3d..3811cd1 100644
+--- a/src/depth_anything_3/api.py
++++ b/src/depth_anything_3/api.py
+@@ -21,7 +21,6 @@ from PIL import Image
+ from depth_anything_3.cfg import create_object, load_config
+ from depth_anything_3.registry import MODEL_REGISTRY
+ from depth_anything_3.specs import Prediction
+-from depth_anything_3.utils.export import export
+ from depth_anything_3.utils.geometry import affine_inverse
+ from depth_anything_3.utils.io.input_processor import InputProcessor
+ from depth_anything_3.utils.io.output_processor import OutputProcessor
+@@ -415,6 +414,8 @@ class DepthAnything3(nn.Module, PyTorchModelHubMixin):
+         self, prediction: Prediction, export_format: str, export_dir: str, **kwargs
+     ) -> None:
+         """Export results to specified format and directory."""
++        from depth_anything_3.utils.export import export
++
+         start_time = time.time()
+         export(prediction, export_format, export_dir, **kwargs)
+         end_time = time.time()
+diff --git a/src/depth_anything_3/utils/pose_align.py b/src/depth_anything_3/utils/pose_align.py
+index c74e909..641fb49 100644
+--- a/src/depth_anything_3/utils/pose_align.py
++++ b/src/depth_anything_3/utils/pose_align.py
+@@ -14,7 +14,6 @@
+ from typing import List
+ import numpy as np
+ import torch
+-from evo.core.trajectory import PosePath3D
+ 
+ from depth_anything_3.utils.geometry import affine_inverse, affine_inverse_np
+ 
+@@ -67,6 +66,8 @@ def _poses_from_ext(ext_ref, ext_est):
+ 
+ 
+ def _umeyama_sim3_from_paths(pose_ref, pose_est):
++    from evo.core.trajectory import PosePath3D
++
+     path_ref = PosePath3D(poses_se3=pose_ref.copy())
+     path_est = PosePath3D(poses_se3=pose_est.copy())
+     r, t, s = path_est.align(path_ref, correct_scale=True)

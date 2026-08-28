@@ -1667,3 +1667,23 @@
   production routing, canonical geometry, C5/homeowner authority, migrations and generated clients
   are unchanged. With no independent measurements, dimensional and representative accuracy are
   `NOT RUN` and production promotion is prohibited.
+
+### Candidate and execution freeze - 2026-08-28
+
+- Upstream gate: VGGT commercial abstained at gated-weight/custom-licence acceptance; VGGT-Omega,
+  MASt3R and DUSt3R abstained at non-commercial licence gates. No blocked candidate was executed or
+  treated as a negative quality observation.
+- Executable set: Apache-2.0 DA3-LARGE-1.1 and DA3-SMALL at official source
+  '3d835ec1a5802d64a8b8b15f817a1ab54809bfe4', exact weight revisions and locally verified
+  safetensor hashes. The frozen registry owns the complete source/licence/weight record.
+- Reproducibility/runtime: fully hashed base lock
+  'd09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b', additive API-import lock
+  'ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8', and counted image
+  'sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3'.
+  Native 'sm_120', PyTorch compute 12.0 and offline generated-fixture inference passed for both
+  exact local model snapshots.
+- Counted boundary: process resolution 392, seed zero, two fresh runs, 500,000 retained-point cap,
+  GPU 0, network none, read-only root, non-root UID/GID, all capabilities dropped,
+  no-new-privileges, 12 CPUs, 32 GiB RAM, 512 PIDs, 2 GiB no-exec tmpfs and 45-minute timeout.
+  The private frozen selection reproduces 25-view and one-view independent segments for both
+  cohorts; identifiers and raw artifacts remain outside Git.
