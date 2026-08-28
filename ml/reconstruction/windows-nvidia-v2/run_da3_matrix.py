@@ -224,7 +224,7 @@ def execute(args: argparse.Namespace) -> None:
             for segment in selection_value["cohorts"][cohort]["segments"]:
                 segment_id = segment["segmentId"]
                 segment_key = hashlib.sha256(segment_id.encode()).hexdigest()[:12]
-                input_root = output_root / "inputs" / cohort / segment_key
+                input_root = output_root / "inputs" / candidate_id / cohort / segment_key
                 input_root.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
                 prepare_input(
                     cohort=cohort,

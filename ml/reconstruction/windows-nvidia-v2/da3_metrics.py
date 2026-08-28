@@ -101,10 +101,27 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
         )
         held_out_pass = psnr_delta <= 0.01 and coverage_delta <= 1e-6
     passed = artifact_match and point_delta == 0 and held_out_pass
+    source_view_count = int(first["sourceViewCount"])
+    connectivity = (
+        {
+            "basis": "single-joint-multiview-inference",
+            "componentCount": 1,
+            "connectedViewCount": int(first["registeredViewCount"]),
+            "status": "observed-proposal-connectivity",
+        }
+        if source_view_count >= 2
+        else {
+            "basis": "single-view-cannot-establish-connectivity",
+            "componentCount": None,
+            "connectedViewCount": 1,
+            "status": "NOT RUN",
+        }
+    )
     return {
         "artifactHashesExact": artifact_match,
         "candidateId": first["candidateId"],
         "cohort": first["cohort"],
+        "connectivity": connectivity,
         "dimensionalAccuracy": "NOT RUN",
         "heldOutCoverageAbsoluteDelta": coverage_delta,
         "heldOutPsnrAbsoluteDeltaDb": psnr_delta,
@@ -123,7 +140,7 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
         "representativeAccuracy": "NOT RUN",
         "retainedPointCountAbsoluteDelta": point_delta,
         "segmentKey": hashlib.sha256(str(first["segmentId"]).encode()).hexdigest()[:12],
-        "sourceViewCount": first["sourceViewCount"],
+        "sourceViewCount": source_view_count,
     }
 
 
