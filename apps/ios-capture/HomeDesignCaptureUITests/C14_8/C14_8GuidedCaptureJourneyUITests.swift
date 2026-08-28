@@ -11,6 +11,9 @@ final class C14_8GuidedCaptureJourneyUITests: XCTestCase {
       app.staticTexts[
         "SYNTHETIC SIMULATOR FIXTURE · NOT PHYSICAL CAMERA, ARKIT TRACKING, DEPTH OR ROOMPLAN EVIDENCE"
       ].waitForExistence(timeout: 10))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["c14_10.capture-guidance-overlay"]
+        .waitForExistence(timeout: 10))
     let capture = app.buttons["c14_8.capture-keyframe"]
     for _ in 0..<3 where !capture.exists { app.swipeUp() }
     XCTAssertTrue(capture.waitForExistence(timeout: 10))

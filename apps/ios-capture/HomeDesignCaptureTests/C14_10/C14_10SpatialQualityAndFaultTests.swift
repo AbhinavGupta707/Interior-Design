@@ -4,6 +4,32 @@ import XCTest
 @testable import HomeDesignCapture
 
 final class C14_10SpatialQualityAndFaultTests: XCTestCase {
+  func testSelectionDiagnosticsPersistBoundedAutomaticOutcomes() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent(
+        "c14-10-selection-diagnostics-\(UUID().uuidString)",
+        isDirectory: true
+      )
+    defer { try? FileManager.default.removeItem(at: root) }
+    let store = C14_8ProtectedCaptureStore(root: root)
+    let projectId = UUID()
+    var diagnostics = C14_10SelectionDiagnostics.empty(at: Date(timeIntervalSince1970: 1))
+
+    diagnostics.record(.accepted, at: Date(timeIntervalSince1970: 2))
+    diagnostics.record(.featurePoor, at: Date(timeIntervalSince1970: 3))
+    diagnostics.record(.insufficientOverlap, at: Date(timeIntervalSince1970: 4))
+    try await store.saveSelectionDiagnostics(projectId: projectId, diagnostics: diagnostics)
+
+    let loaded = try await store.loadSelectionDiagnostics(projectId: projectId)
+    let restored = try XCTUnwrap(loaded)
+    XCTAssertEqual(restored.totalAutomaticCandidateCount, 3)
+    XCTAssertEqual(restored.retainedCandidateCount, 1)
+    XCTAssertEqual(restored.skippedCandidateCount, 2)
+    XCTAssertEqual(restored.count(for: .featurePoor), 1)
+    XCTAssertEqual(restored.count(for: .insufficientOverlap), 1)
+    XCTAssertTrue(restored.isValid)
+  }
+
   func testDirectionHeightGridCannotCompleteRotateInPlaceCapture() {
     let segmentId = UUID()
     var room = C14_8RoomEnvelope.empty(label: "Rectangular room", sequence: 1, segmentId: segmentId)
@@ -583,13 +609,16 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
 
   @MainActor
   private func waitUntil(
-    attempts: Int = 1_000,
+    attempts: Int = 500,
+    file: StaticString = #filePath,
+    line: UInt = #line,
     _ condition: @escaping @MainActor () -> Bool
   ) async {
     for _ in 0..<attempts {
       if condition() { return }
-      await Task.yield()
+      try? await Task.sleep(nanoseconds: 10_000_000)
     }
+    XCTFail("Timed out waiting for asynchronous capture state to settle.", file: file, line: line)
   }
 
   private func sample(

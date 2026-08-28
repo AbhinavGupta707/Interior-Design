@@ -13,6 +13,12 @@ private enum C14_8SubmissionError: Error {
   case receiptPersistence
 }
 
+private struct C14_10AutomaticCandidateWindow {
+  let startedAtMicroseconds: Int64
+  var outcome: C14_10KeyframeDecisionReason
+  var retentionStarted: Bool
+}
+
 enum C14_8GuidedCaptureState: Equatable, Sendable {
   case accepted(sourcesReady: Bool)
   case cameraDenied
@@ -53,6 +59,8 @@ final class C14_8GuidedCaptureModel {
   private(set) var activeZoneId: UUID?
   private(set) var resourcePressure: C14_10ResourcePressure = .nominal
   private(set) var selectionInstruction: String?
+  private(set) var selectionDiagnostics = C14_10SelectionDiagnostics.empty()
+  private(set) var selectionDiagnosticsPersistenceFailed = false
 
   var automaticCaptureEnabled = true
   var includeAppearance = false
@@ -61,6 +69,7 @@ final class C14_8GuidedCaptureModel {
 
   @ObservationIgnored private var activationId = UUID()
   @ObservationIgnored private var activeTask: Task<Void, Never>?
+  @ObservationIgnored private var automaticCandidateWindow: C14_10AutomaticCandidateWindow?
   @ObservationIgnored private var authenticatedActorUserId: UUID?
   @ObservationIgnored private var authenticatedTenantId: UUID?
   @ObservationIgnored private var currentRole = "viewer"
@@ -75,6 +84,7 @@ final class C14_8GuidedCaptureModel {
   @ObservationIgnored private let mediaStore: any C8ProtectedMediaStoring
   @ObservationIgnored private let mediaUploader: any C8ImmutableEvidenceUploading
   @ObservationIgnored private let permissionProvider: any C8CameraPermissionProviding
+  @ObservationIgnored private var selectionDiagnosticsPersistenceTask: Task<Void, Never>?
   @ObservationIgnored private var pendingSegmentReason: C14_8SegmentReason?
   @ObservationIgnored private var lastAutomaticTimestampMicroseconds: Int64?
   @ObservationIgnored private var projectId: UUID?
@@ -194,7 +204,9 @@ final class C14_8GuidedCaptureModel {
   }
 
   func activate(projectId rawProjectId: String, actor: C14_6Actor) async {
+    let pendingDiagnosticsPersistence = selectionDiagnosticsPersistenceTask
     resetMemory()
+    await pendingDiagnosticsPersistence?.value
     capabilities = capabilityProvider.current()
     guard let projectId = UUID(uuidString: rawProjectId),
       let actorUserId = UUID(uuidString: actor.userId),
@@ -207,6 +219,14 @@ final class C14_8GuidedCaptureModel {
     authenticatedActorUserId = actorUserId
     authenticatedTenantId = tenantId
     currentRole = actor.role
+    do {
+      selectionDiagnostics =
+        try await journal.loadSelectionDiagnostics(projectId: projectId)
+        ?? C14_10SelectionDiagnostics.empty()
+    } catch {
+      selectionDiagnostics = .empty()
+      selectionDiagnosticsPersistenceFailed = true
+    }
     let scope = activationId
     do {
       if var restored = try await journal.load(projectId: projectId) {
@@ -296,7 +316,10 @@ final class C14_8GuidedCaptureModel {
     captureKeyframe(mode: .manual)
   }
 
-  private func captureKeyframe(mode: C14_10KeyframeRetentionMode) {
+  private func captureKeyframe(
+    mode: C14_10KeyframeRetentionMode,
+    automaticCandidateStartedAt: Int64? = nil
+  ) {
     guard canMutate, state == .ready, let projectId, let draft, let room = draft.rooms.last,
       let segment = draft.segments.last,
       let zoneId = activeZoneId ?? room.zones?.first?.zoneId,
@@ -367,6 +390,10 @@ final class C14_8GuidedCaptureModel {
           if mode == .automatic {
             self.lastAutomaticTimestampMicroseconds =
               telemetry.spatialEvidence.telemetryTimestampMicroseconds
+            self.updateAutomaticCandidateOutcome(
+              .accepted,
+              startedAtMicroseconds: automaticCandidateStartedAt
+            )
           }
           self.state = .ready
         } catch {
@@ -377,9 +404,17 @@ final class C14_8GuidedCaptureModel {
         guard scope == self.activationId else { return }
         if case .candidateRejected(let reason) = error {
           self.selectionInstruction = reason.homeownerInstruction
+          self.updateAutomaticCandidateOutcome(
+            reason,
+            startedAtMicroseconds: automaticCandidateStartedAt
+          )
           self.state = .ready
           return
         }
+        self.updateAutomaticCandidateOutcome(
+          .captureFailure,
+          startedAtMicroseconds: automaticCandidateStartedAt
+        )
         self.state = .failed(
           message:
             "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
@@ -387,6 +422,10 @@ final class C14_8GuidedCaptureModel {
         )
       } catch {
         guard scope == self.activationId else { return }
+        self.updateAutomaticCandidateOutcome(
+          .captureFailure,
+          startedAtMicroseconds: automaticCandidateStartedAt
+        )
         self.state = .failed(
           message:
             "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
@@ -400,6 +439,7 @@ final class C14_8GuidedCaptureModel {
     guard canMutate, var next = draft, !next.keyframes.isEmpty, next.acceptance == nil else {
       return
     }
+    finalizeAutomaticCandidateWindow()
     closeCurrentSegment(in: &next)
     next.endedAt = Date()
     next.updatedAt = Date()
@@ -694,6 +734,13 @@ final class C14_8GuidedCaptureModel {
   func handleBackgrounding() {
     guard state == .ready || state == .capturing else { return }
     activeTask?.cancel()
+    if state == .capturing {
+      updateAutomaticCandidateOutcome(
+        .captureFailure,
+        startedAtMicroseconds: automaticCandidateWindow?.startedAtMicroseconds
+      )
+    }
+    finalizeAutomaticCandidateWindow()
     engine.stop()
     guard var next = draft else { return }
     closeCurrentSegment(in: &next)
@@ -831,6 +878,7 @@ final class C14_8GuidedCaptureModel {
 
   private func startEngine() {
     let scope = activationId
+    automaticCandidateWindow = nil
     do {
       engine.applyResourcePolicy(resourcePolicy)
       state = .ready
@@ -887,6 +935,9 @@ final class C14_8GuidedCaptureModel {
     guard state == .ready, automaticCaptureEnabled, resourcePolicy.automaticSelectionEnabled else {
       return
     }
+    prepareAutomaticCandidateWindow(
+      telemetryTimestampMicroseconds: telemetry.spatialEvidence.telemetryTimestampMicroseconds
+    )
     let decision = C14_10KeyframeSelector.decision(
       telemetry: telemetry,
       retainedCount: currentSegmentKeyframeCount,
@@ -894,7 +945,67 @@ final class C14_8GuidedCaptureModel {
       mode: .automatic
     )
     selectionInstruction = decision.reason.homeownerInstruction
-    if decision.shouldRetain { captureKeyframe(mode: .automatic) }
+    if automaticCandidateWindow?.retentionStarted == false {
+      automaticCandidateWindow?.outcome = decision.reason
+    }
+    if decision.shouldRetain, automaticCandidateWindow?.retentionStarted == false {
+      automaticCandidateWindow?.retentionStarted = true
+      captureKeyframe(
+        mode: .automatic,
+        automaticCandidateStartedAt: automaticCandidateWindow?.startedAtMicroseconds
+      )
+    }
+  }
+
+  private func prepareAutomaticCandidateWindow(telemetryTimestampMicroseconds: Int64) {
+    if let window = automaticCandidateWindow,
+      telemetryTimestampMicroseconds - window.startedAtMicroseconds
+        >= C14_10SpatialCapturePolicy.automaticIntervalMicroseconds
+    {
+      finalizeAutomaticCandidateWindow()
+    }
+    if automaticCandidateWindow == nil {
+      automaticCandidateWindow = C14_10AutomaticCandidateWindow(
+        startedAtMicroseconds: telemetryTimestampMicroseconds,
+        outcome: .tracking,
+        retentionStarted: false
+      )
+    }
+  }
+
+  private func updateAutomaticCandidateOutcome(
+    _ outcome: C14_10KeyframeDecisionReason,
+    startedAtMicroseconds: Int64?
+  ) {
+    guard let startedAtMicroseconds,
+      automaticCandidateWindow?.startedAtMicroseconds == startedAtMicroseconds
+    else { return }
+    automaticCandidateWindow?.outcome = outcome
+  }
+
+  private func finalizeAutomaticCandidateWindow() {
+    guard let window = automaticCandidateWindow else { return }
+    selectionDiagnostics.record(window.outcome)
+    automaticCandidateWindow = nil
+    persistSelectionDiagnostics()
+  }
+
+  private func persistSelectionDiagnostics() {
+    guard let projectId else { return }
+    let pendingPersistence = selectionDiagnosticsPersistenceTask
+    let diagnostics = selectionDiagnostics
+    let journal = journal
+    selectionDiagnosticsPersistenceTask = Task { [weak self] in
+      await pendingPersistence?.value
+      do {
+        try await journal.saveSelectionDiagnostics(
+          projectId: projectId,
+          diagnostics: diagnostics
+        )
+      } catch {
+        self?.selectionDiagnosticsPersistenceFailed = true
+      }
+    }
   }
 
   private func handle(_ event: C14_8GuidedCaptureEvent) {
@@ -1540,6 +1651,7 @@ final class C14_8GuidedCaptureModel {
     activationId = UUID()
     activeTask?.cancel()
     activeTask = nil
+    automaticCandidateWindow = nil
     engine.stop()
     draft = nil
     liveTelemetry = nil
@@ -1560,6 +1672,9 @@ final class C14_8GuidedCaptureModel {
     roomPlanDiscoveryMessage = nil
     resourcePressure = .nominal
     selectionInstruction = nil
+    selectionDiagnostics = .empty()
+    selectionDiagnosticsPersistenceFailed = false
+    selectionDiagnosticsPersistenceTask = nil
     scopeMismatch = false
   }
 }

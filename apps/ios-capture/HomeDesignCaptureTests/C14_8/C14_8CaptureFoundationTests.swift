@@ -472,14 +472,16 @@ final class C14_8CaptureFoundationTests: XCTestCase {
 
   @MainActor
   private func waitUntil(
-    attempts: Int = 1_000,
+    attempts: Int = 500,
+    file: StaticString = #filePath,
+    line: UInt = #line,
     _ condition: @escaping @MainActor () -> Bool
   ) async {
     for _ in 0..<attempts {
       if condition() { return }
-      await Task.yield()
+      try? await Task.sleep(nanoseconds: 10_000_000)
     }
-    XCTFail("Timed out waiting for the deterministic capture state.")
+    XCTFail("Timed out waiting for the deterministic capture state.", file: file, line: line)
   }
 
   private func fixtureDraft(
@@ -593,6 +595,7 @@ private final class C14_8TestPermissionProvider: C8CameraPermissionProviding, @u
 
 private actor C14_8DelayedCaptureStore: C14_8ProtectedCaptureStoring {
   private let delayedProjectId: UUID
+  private var diagnostics: [UUID: C14_10SelectionDiagnostics] = [:]
   private var drafts: [UUID: C14_8GuidedCaptureDraft]
   private var loadContinuation: CheckedContinuation<Void, Never>?
   private var loadStarted = false
@@ -614,6 +617,17 @@ private actor C14_8DelayedCaptureStore: C14_8ProtectedCaptureStoring {
 
   func save(_ draft: C14_8GuidedCaptureDraft) {
     drafts[draft.projectId] = draft
+  }
+
+  func loadSelectionDiagnostics(projectId: UUID) -> C14_10SelectionDiagnostics? {
+    diagnostics[projectId]
+  }
+
+  func saveSelectionDiagnostics(
+    projectId: UUID,
+    diagnostics: C14_10SelectionDiagnostics
+  ) {
+    self.diagnostics[projectId] = diagnostics
   }
 
   func recordMediaReceipt(

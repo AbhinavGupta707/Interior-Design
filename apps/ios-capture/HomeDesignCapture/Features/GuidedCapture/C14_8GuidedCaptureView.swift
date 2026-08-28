@@ -210,30 +210,30 @@ struct C14_8GuidedCaptureView: View {
   private var liveCapture: some View {
     Group {
       Section("Live camera") {
-        if let session = model.previewSession {
-          C14_8ARPreview(session: session)
-            .frame(minHeight: 320)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .accessibilityLabel("Live ARKit camera preview")
-        } else {
-          #if DEBUG
-            ZStack {
+        ZStack(alignment: .bottom) {
+          if let session = model.previewSession {
+            C14_8ARPreview(session: session)
+              .accessibilityLabel("Live ARKit camera preview")
+          } else {
+            #if DEBUG
               RoundedRectangle(cornerRadius: 18).fill(Color.indigo.gradient)
               VStack(spacing: 10) {
                 Image(systemName: "testtube.2").font(.largeTitle)
                 Text("SYNTHETIC JOURNEY FIXTURE").font(.headline.monospaced())
                 Text("NOT SENSOR EVIDENCE").font(.caption.monospaced())
               }.foregroundStyle(.white)
-            }
-            .frame(minHeight: 260)
-          #else
-            ContentUnavailableView(
-              "Camera preview unavailable",
-              systemImage: "camera.fill.badge.xmark",
-              description: Text("Capture stopped before any sensor evidence was retained.")
-            )
-          #endif
+            #else
+              ContentUnavailableView(
+                "Camera preview unavailable",
+                systemImage: "camera.fill.badge.xmark",
+                description: Text("Capture stopped before any sensor evidence was retained.")
+              )
+            #endif
+          }
+          captureGuidanceOverlay
         }
+        .frame(minHeight: 320)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
       }
 
       Section("Live guidance") {
@@ -271,6 +271,28 @@ struct C14_8GuidedCaptureView: View {
         ForEach(model.guidance, id: \.self) {
           Label($0, systemImage: "viewfinder.circle")
         }
+        if model.selectionDiagnostics.totalAutomaticCandidateCount > 0 {
+          LabeledContent(
+            "Automatic candidate windows",
+            value: String(model.selectionDiagnostics.totalAutomaticCandidateCount)
+          )
+          LabeledContent(
+            "Retained / skipped",
+            value:
+              "\(model.selectionDiagnostics.retainedCandidateCount) / \(model.selectionDiagnostics.skippedCandidateCount)"
+          )
+          ForEach(model.selectionDiagnostics.rankedSkippedOutcomes.prefix(4), id: \.reason) {
+            outcome in
+            LabeledContent(outcome.reason.homeownerLabel.capitalized, value: String(outcome.count))
+          }
+        }
+        if model.selectionDiagnosticsPersistenceFailed {
+          Label(
+            "Private selection diagnostics could not be protected; this run cannot close physical acceptance.",
+            systemImage: "exclamationmark.shield"
+          )
+          .foregroundStyle(.orange)
+        }
         Button("Retain this useful view manually") { model.captureKeyframe() }
           .buttonStyle(.bordered)
           .accessibilityIdentifier("c14_8.capture-keyframe")
@@ -286,6 +308,42 @@ struct C14_8GuidedCaptureView: View {
 
       coverageGrid
     }
+  }
+
+  private var captureGuidanceOverlay: some View {
+    let readiness = model.captureReadiness
+    let telemetry = model.liveTelemetry
+    let instruction =
+      model.selectionInstruction
+      ?? model.guidance.first
+      ?? "Lift the phone toward a well-lit corner and wait for normal tracking."
+    return VStack(alignment: .leading, spacing: 5) {
+      Label(
+        instruction,
+        systemImage: readiness?.isReady == true
+          ? "checkmark.circle.fill" : "figure.walk.motion"
+      )
+      .font(.callout.bold())
+      .lineLimit(2)
+
+      Text(
+        "\(model.capturedKeyframeCount) retained · \((readiness?.connectedRatioMillionths ?? 0) / 10_000)% connected · \(String(format: "%.1f m", Double(readiness?.trajectoryTravelMicrometres ?? 0) / 1_000_000)) · \(readiness?.loopClosureCount ?? 0) loop · \(readiness?.unresolvedZoneCount ?? 1) unresolved"
+      )
+      .font(.caption.monospacedDigit())
+      .lineLimit(2)
+
+      Text(
+        "Tracking \((telemetry?.trackingState.rawValue ?? "acquiring").replacingOccurrences(of: "-", with: " ")) · features \(telemetry?.spatialEvidence.featurePointCount ?? 0) · overlap \((telemetry?.spatialEvidence.overlapScoreMillionths ?? 0) / 10_000)% · parallax \((telemetry?.spatialEvidence.parallaxScoreMillionths ?? 0) / 10_000)%"
+      )
+      .font(.caption2.monospacedDigit())
+      .lineLimit(2)
+    }
+    .foregroundStyle(.white)
+    .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color.black.opacity(0.78))
+    .accessibilityElement(children: .combine)
+    .accessibilityIdentifier("c14_10.capture-guidance-overlay")
   }
 
   private func review(fixture: Bool) -> some View {

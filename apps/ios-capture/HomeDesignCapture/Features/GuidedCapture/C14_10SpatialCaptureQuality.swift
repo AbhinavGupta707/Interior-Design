@@ -35,9 +35,10 @@ struct C14_10LiveSpatialEvidence: Codable, Equatable, Sendable {
   let translationFromPreviousMicrometres: Int64
 }
 
-enum C14_10KeyframeDecisionReason: String, Equatable, Sendable {
+enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
   case accepted
   case blurred
+  case captureFailure
   case cooldown
   case exposure
   case featurePoor
@@ -52,6 +53,7 @@ enum C14_10KeyframeDecisionReason: String, Equatable, Sendable {
     switch self {
     case .accepted: "Keep walking slowly; the app will retain useful connected views."
     case .blurred: "Pause briefly so the view is sharp."
+    case .captureFailure: "Hold position while protected capture recovers."
     case .cooldown: "Keep moving slowly along the room edge."
     case .exposure: "Move away from glare or add even room light."
     case .featurePoor: "Aim across a corner, opening or textured object."
@@ -62,6 +64,82 @@ enum C14_10KeyframeDecisionReason: String, Equatable, Sendable {
     case .nearDuplicate: "Move to a new position before another view is needed."
     case .tracking: "Move slowly toward a textured surface until tracking recovers."
     }
+  }
+
+  var homeownerLabel: String {
+    switch self {
+    case .accepted: "retained"
+    case .blurred: "blur"
+    case .captureFailure: "capture failure"
+    case .cooldown: "two-second spacing"
+    case .exposure: "exposure"
+    case .featurePoor: "limited features"
+    case .insufficientOverlap: "weak overlap"
+    case .insufficientParallax: "low parallax"
+    case .insufficientTranslation: "low translation"
+    case .motion: "fast motion"
+    case .nearDuplicate: "near duplicate"
+    case .tracking: "limited tracking"
+    }
+  }
+}
+
+struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
+  static let schemaVersion = "c14-10-selection-diagnostics-v1"
+  static let maximumCandidateCount = 20_000
+
+  var outcomeCounts: [String: Int]
+  let schemaVersion: String
+  var totalAutomaticCandidateCount: Int
+  var updatedAt: Date
+
+  static func empty(at date: Date = Date()) -> Self {
+    Self(
+      outcomeCounts: [:],
+      schemaVersion: schemaVersion,
+      totalAutomaticCandidateCount: 0,
+      updatedAt: date
+    )
+  }
+
+  var retainedCandidateCount: Int { count(for: .accepted) }
+  var skippedCandidateCount: Int {
+    max(0, totalAutomaticCandidateCount - retainedCandidateCount)
+  }
+
+  var rankedSkippedOutcomes: [(reason: C14_10KeyframeDecisionReason, count: Int)] {
+    C14_10KeyframeDecisionReason.allCases
+      .filter { $0 != .accepted }
+      .compactMap { reason in
+        let count = count(for: reason)
+        return count > 0 ? (reason, count) : nil
+      }
+      .sorted {
+        $0.count == $1.count
+          ? $0.reason.rawValue < $1.reason.rawValue : $0.count > $1.count
+      }
+  }
+
+  func count(for reason: C14_10KeyframeDecisionReason) -> Int {
+    outcomeCounts[reason.rawValue] ?? 0
+  }
+
+  mutating func record(_ reason: C14_10KeyframeDecisionReason, at date: Date = Date()) {
+    guard totalAutomaticCandidateCount < Self.maximumCandidateCount else { return }
+    totalAutomaticCandidateCount += 1
+    outcomeCounts[reason.rawValue, default: 0] += 1
+    updatedAt = max(updatedAt, date)
+  }
+
+  var isValid: Bool {
+    schemaVersion == Self.schemaVersion
+      && totalAutomaticCandidateCount >= 0
+      && totalAutomaticCandidateCount <= Self.maximumCandidateCount
+      && outcomeCounts.keys.allSatisfy {
+        C14_10KeyframeDecisionReason(rawValue: $0) != nil
+      }
+      && outcomeCounts.values.allSatisfy { $0 >= 0 }
+      && outcomeCounts.values.reduce(0, +) == totalAutomaticCandidateCount
   }
 }
 

@@ -4,12 +4,17 @@ import Foundation
 protocol C14_8ProtectedCaptureStoring: Sendable {
   func clear(projectId: UUID) async throws
   func load(projectId: UUID) async throws -> C14_8GuidedCaptureDraft?
+  func loadSelectionDiagnostics(projectId: UUID) async throws -> C14_10SelectionDiagnostics?
   func recordMediaReceipt(
     projectId: UUID,
     receipt: C14_8MediaReceipt
   ) async throws -> C14_8GuidedCaptureDraft
   func resolveDepth(projectId: UUID, handle: C14_8DepthHandle) async throws -> URL
   func save(_ draft: C14_8GuidedCaptureDraft) async throws
+  func saveSelectionDiagnostics(
+    projectId: UUID,
+    diagnostics: C14_10SelectionDiagnostics
+  ) async throws
   func storeDepth(
     projectId: UUID,
     sampleId: UUID,
@@ -53,6 +58,17 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
     return draft
   }
 
+  func loadSelectionDiagnostics(projectId: UUID) throws -> C14_10SelectionDiagnostics? {
+    let url = selectionDiagnosticsURL(projectId)
+    guard fileManager.fileExists(atPath: url.path) else { return nil }
+    let diagnostics = try decoder.decode(
+      C14_10SelectionDiagnostics.self,
+      from: Data(contentsOf: url)
+    )
+    guard diagnostics.isValid else { throw C14_8ProtectedStoreError.corrupt }
+    return diagnostics
+  }
+
   func save(_ draft: C14_8GuidedCaptureDraft) throws {
     try C14_8ContractValidator.validate(draft: draft)
     try prepare(projectId: draft.projectId)
@@ -73,6 +89,29 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
     )
   }
 
+  func saveSelectionDiagnostics(
+    projectId: UUID,
+    diagnostics: C14_10SelectionDiagnostics
+  ) throws {
+    guard diagnostics.isValid else { throw C14_8ProtectedStoreError.corrupt }
+    try prepare(projectId: projectId)
+    let url = selectionDiagnosticsURL(projectId)
+    if fileManager.fileExists(atPath: url.path) {
+      let current = try decoder.decode(
+        C14_10SelectionDiagnostics.self,
+        from: Data(contentsOf: url)
+      )
+      guard current.isValid,
+        diagnostics.updatedAt >= current.updatedAt,
+        diagnostics.totalAutomaticCandidateCount >= current.totalAutomaticCandidateCount
+      else { throw C14_8ProtectedStoreError.staleWrite }
+    }
+    try encoder.encode(diagnostics).write(
+      to: url,
+      options: [.atomic, .completeFileProtection]
+    )
+  }
+
   func recordMediaReceipt(
     projectId: UUID,
     receipt: C14_8MediaReceipt
@@ -86,11 +125,13 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
       guard existing == receipt else { throw C14_8ProtectedStoreError.corrupt }
       return current
     }
-    guard current.keyframes.contains(where: {
-      $0.localIdentifier == receipt.localIdentifier
-        && $0.byteSize == receipt.receipt.byteSize
-        && $0.sha256 == receipt.receipt.sha256
-    }) else { throw C14_8ProtectedStoreError.corrupt }
+    guard
+      current.keyframes.contains(where: {
+        $0.localIdentifier == receipt.localIdentifier
+          && $0.byteSize == receipt.receipt.byteSize
+          && $0.sha256 == receipt.receipt.sha256
+      })
+    else { throw C14_8ProtectedStoreError.corrupt }
     current.mediaReceipts.append(receipt)
     current.updatedAt = max(Date(), current.updatedAt.addingTimeInterval(0.001))
     try C14_8ContractValidator.validate(draft: current)
@@ -134,8 +175,9 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
 
   func resolveDepth(projectId: UUID, handle: C14_8DepthHandle) throws -> URL {
     let url = depthURL(projectId, handle.localIdentifier)
-    guard url.deletingLastPathComponent().standardizedFileURL
-      == depthDirectory(projectId).standardizedFileURL,
+    guard
+      url.deletingLastPathComponent().standardizedFileURL
+        == depthDirectory(projectId).standardizedFileURL,
       fileManager.fileExists(atPath: url.path),
       Int64((try url.resourceValues(forKeys: [.fileSizeKey])).fileSize ?? 0) == handle.byteSize
     else { throw C14_8ProtectedStoreError.missingFile }
@@ -177,6 +219,13 @@ actor C14_8ProtectedCaptureStore: C14_8ProtectedCaptureStoring {
 
   private func journalURL(_ projectId: UUID) -> URL {
     projectDirectory(projectId).appendingPathComponent("journal.json", isDirectory: false)
+  }
+
+  private func selectionDiagnosticsURL(_ projectId: UUID) -> URL {
+    projectDirectory(projectId).appendingPathComponent(
+      "selection-diagnostics.json",
+      isDirectory: false
+    )
   }
 
   private func depthURL(_ projectId: UUID, _ identifier: UUID) -> URL {
