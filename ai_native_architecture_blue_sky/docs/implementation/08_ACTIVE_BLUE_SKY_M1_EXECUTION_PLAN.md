@@ -14,7 +14,12 @@ independently reviewed and corrected. One accepted physical Capture Envelope sub
 the eligible isolated Windows/RTX runtime and repeatability matrix, which independent review accepts
 only for that envelope/host. Dimensional and representative accuracy remain `NOT RUN`, and the
 sparse, fragmented result is incomplete and unsuitable for consumer digital-twin presentation or
-routing. No later checkpoint is opened by this non-accuracy follow-up. Starting from the C14.6
+routing. C14.10 is software-complete locally: native completion now depends on connected spatial
+evidence, Swift and TypeScript consume the same Capture Envelope goldens, and deterministic
+software resilience gaps are covered without promoting reconstruction or claiming new physical
+acceptance. PR #16 has been independently reviewed and materially corrected on its exact clean-main
+base; normal merge is authorised only after all four named checks pass on the exact final head. The
+recorded physical handoff remains `NOT RUN`. Starting from the C14.6
 cold-launch/onboarding baseline, an authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -499,7 +504,55 @@ and repeatability for that envelope/host. Independent private-output review foun
 fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing;
 dimensional/representative accuracy and production promotion remain closed.
 
-### C14.10 - Proposal-only learned reconstruction audit - single primary session
+### C14.10 — Native capture quality and resilience — single primary session
+
+**Status (2026-08-28):** original implementation `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`
+was independently reviewed from exact PR #16 head
+`28316d49316b07731e5101cfe37c9681add69d4d` against clean-main base
+`97352b7027476aa48461aea3788d1e02d3268b56` and corrected at
+`733b137d532c1f39d78350f290e0730316da4760`. Physical rows remain `NOT RUN`. The later user
+instruction supersedes only the old leave-unmerged disposition; normal merge requires all four
+named GitHub checks on the exact final head.
+
+**Outcome:** ordinary camera-first capture continuously selects a bounded connected set of useful
+RGB keyframes and explains remaining translation, overlap, parallax, feature/trajectory, loop-
+closure, blur/exposure and unresolved-area needs. The direction/height grid remains secondary.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Native capture observability | exact `apps/ios-capture/**` guided-capture engine, model, view and tests | deterministic evidence graph/readiness, bounded automatic selection, homeowner guidance and fail-safe degradation |
+| Shared contract goldens | `packages/contracts/**` capture-envelope fixtures/schema/tests plus native test-resource consumption | common canonical bytes/hashes and adversarial UUID/timestamp/optional/segment/unknown-field verdicts |
+| Resilience and closeout | deterministic native fault seams/tests plus C14.10 contract/evidence/runbook/ledger | relaunch/offline/authority/project/role/rights/resource cases, full gates, Release exclusion and physical handoff |
+
+**Execution:** one exact `gpt-5.6-sol` / `xhigh` primary session is the sole writer and completion
+authority. No worktree, subagent, separate task or parallel lane is authorised. The integration
+vehicle is one non-draft PR; after independent review, normal merge is authorised only on an exact
+final head with all four named checks successful.
+
+**Gate:** spatial-evidence readiness cannot be satisfied by the coverage grid; immutable evidence,
+consent separation, independent segments, proposal-only reconstruction and existing backend
+authority remain unchanged. Simulator proves only deterministic software/UI policy. Physical fault,
+thermal, storage-exhaustion, camera/ARKit, LiDAR, RoomPlan, dimensional, representative-home and
+reconstruction-quality acceptance remain open until their named handoff is physically executed.
+
+**Local evidence:** 228 logical native unit tests / 237 device invocations and the 1/1 guided UI
+journey passed on iPhone Air Simulator, iOS 26.4 (23E244). Nineteen focused cases cover exact spatial
+thresholds, automatic selection and final revalidation, actual-cell accounting, secondary-grid and
+independent-segment behavior, resources, shared goldens and every typed lifecycle checkpoint.
+Shared contracts passed 17 files /
+96 tests; full repository verification passed 24 lint, 24 typecheck, 45 unit-test and 24 build tasks,
+Ruff, mypy and 157 Python tests with two expected skips. XcodeGen was byte-stable; Debug/Release
+Simulator builds, unsigned generic-iOS Release compilation, Release analysis and Release fixture
+exclusion passed. These are software/compile results only. See
+`docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`
+and `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
+
+### C14.10-LR — Proposal-only learned reconstruction audit — concurrent R&D record
+
+**Concurrent-number reconciliation:** PR #15 opened this audit as C14.10 from the same
+predecessor before the distinct native C14.10 product checkpoint in PR #16 merged. Native capture
+retains the authoritative C14.10 product number. This audit is recorded as C14.10-LR in shared
+governance while its frozen filenames, schemas and original contract identity remain unchanged.
 
 **Outcome:** evaluate a small, licence-permitted and exactly reproducible set of modern learned
 reconstruction candidates against the retained C14.9 physical Capture Envelope baselines, without
@@ -535,7 +588,7 @@ publishing private pixels, paths or identifiers. Small does not materially impro
 The one-view segment still cannot establish reconstruction connectivity. Dimensional and
 representative accuracy remain `NOT RUN`; production/canonical promotion remains prohibited.
 
-### C15 - Walkthrough and design video - 4 lanes
+### C15 — Walkthrough and design video — 4 lanes
 
 **Outcome:** users can generate collision-checked deterministic camera-path videos and separately labelled AI-enhanced cinematic versions with captions/narration.
 

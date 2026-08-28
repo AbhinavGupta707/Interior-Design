@@ -3,14 +3,15 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/c14-10-learned-reconstruction-audit`
+- Integration branch: `codex/c14-10-native-capture-quality-resilience`
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design` in the primary Mac checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1-C14.9 are complete. C14.10 is open as
-  a proposal-only learned-reconstruction audit. Production C8/C9 routing, canonical promotion,
-  dimensional/representative accuracy, live provider/deployment and C15/C16 remain closed.
+- Autonomous execution boundary: C0-C14 and corrective C14.1-C14.9 are complete. C14.10 is the
+  single active checkpoint. Production reconstruction promotion, dimensional acceptance, live
+  provider/deployment, new physical-device/hardware acceptance and C15/C16 remain closed; C8 v2
+  remains acceptance-only.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -1646,7 +1647,130 @@
   `git diff --check` passed. Normal merge remains gated on all four named GitHub checks on the final
   reviewed SHA.
 
-## C14.10 - Proposal-only learned reconstruction audit
+## C14.10 — Native capture quality and resilience
+
+### Activation and contract freeze — 2026-08-28
+
+- Authority: user instruction to synchronize the Mac checkout to clean `origin/main`, preserve the
+  existing user-owned root `AGENTS.md` change untouched, use one `gpt-5.6-sol` / `xhigh` session and
+  open one cohesive native capture-quality/resilience checkpoint without subagents or worktrees.
+- Synchronization: fetched `origin/main` and fast-forwarded local `main` to exact
+  `97352b7027476aa48461aea3788d1e02d3268b56`. The root `AGENTS.md` SHA-256 remained byte-identical
+  at `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533` and stays excluded from every
+  checkpoint commit.
+- Integration branch: `codex/c14-10-native-capture-quality-resilience`.
+- Runtime/ownership: one primary `gpt-5.6-sol` / `xhigh` session owns contract freeze, native/shared
+  implementation, fault injection, verification, evidence and PR closeout. No subagent, worktree,
+  separate task or parallel lane is authorised.
+- Frozen contract:
+  `docs/orchestration/checkpoints/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_CONTRACT.md`.
+- Material basis: C14.8 physically accepted 26 RGB/ARKit keyframes and 22/24 observed grid cells,
+  but C14.9 registered only 20/25 unconstrained views and found the retained reconstruction sparse,
+  fragmented and unsuitable for consumer presentation. Direction/height coverage is therefore
+  demoted to secondary guidance; connected spatial evidence drives readiness.
+- Contract/migration boundary: additive backward-compatible `capture-envelope-v1` quality fields and
+  shared language-neutral fixtures only. No migration, OpenAPI/generated client, root manifest or
+  lockfile, platform authority, canonical, C8 production, C9 or reconstruction-promotion change.
+- Initial claim boundary: software/Simulator policy and state evidence only. Physical process faults,
+  thermal/storage behavior, camera/ARKit, depth, LiDAR, RoomPlan, dimensions, representative-home
+  accuracy and reconstruction visual quality remain `NOT RUN` until the recorded physical handoff.
+
+### Local implementation and acceptance — 2026-08-28
+
+- Frozen implementation: `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2` after contract freeze
+  `e805c6e`, against exact synchronized base `97352b7027476aa48461aea3788d1e02d3268b56`.
+- Native outcome: continuous guided capture retains no more than one automatic keyframe per two
+  seconds, 256 per room and 512 per envelope. Actual retained frames must pass tracking,
+  blur/exposure, feature, overlap, translation, parallax and near-duplicate checks. Per-independent-
+  segment connectivity, trajectory and loop closure plus per-zone evidence drive readiness; the
+  direction/height grid is secondary and cannot complete a rotate-in-place room.
+- Shared contract: Swift and TypeScript consume the same language-neutral fixture files. Canonical
+  base length is 5,383 bytes and SHA-256 is
+  `e26d3f43c14d9d8def3ceb7105c539cc5351e66f579a1b529299216f5d104bb9`; the common adversarial UUID,
+  timestamp, optional, segment/scope and unknown-field verdict matrix passed.
+- Resilience: typed Debug/test fault checkpoints cover retention, submission, upload, receipt and
+  acceptance. In combination with the existing C14.6/C14.8/C7/C8 protected recovery and authority
+  suites, deterministic relaunch, offline transfer, expired auth/capture/signed access,
+  project/actor/role/rights change and safe resource degradation fail closed without losing or
+  reassigning immutable evidence.
+- Local gates: shared contract 17 files / 96 tests; native unit 228 logical tests / 237 device
+  invocations with zero failures/skips; guided UI 1/1 on iPhone Air Simulator, iOS 26.4 (23E244);
+  XcodeGen byte-stable at
+  `d9af33abc2d1606fbdbdf81f10834e213c3e218a02f073635b9d8f4dd8bc10a6`; Debug/Release Simulator,
+  unsigned generic-iOS Release compile, Release analysis and Release fixture exclusion passed;
+  generated drift passed; API/dependency seams 21/3; identity security 933; C14 source/control-plane
+  passed with its optional unconfigured disposable case skipped; full repository gate passed 24
+  lint, 24 typecheck, 45 unit-test and 24 build tasks, Ruff, mypy across 114 sources and Python 157
+  passed / 2 expected skips.
+- Authority/privacy: no migration, OpenAPI/generated client, root manifest/lockfile, backend
+  authority, canonical mutation or reconstruction-promotion change. C2/C7/C8/C9/C5/C10 authority,
+  consent separation and independent coordinate segments remain intact. The user-owned root
+  `AGENTS.md` stayed byte-identical at
+  `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533` and outside every commit.
+- Evidence:
+  `docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`;
+  physical handoff: `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
+- Remaining truth: all physical camera/ARKit, real process/resource fault, thermal, storage,
+  LiDAR/RoomPlan, dimensional, representative-home and C14.9 visual-quality rerun rows remain
+  `NOT RUN`.
+
+### Independent exact-head review and merge authority — 2026-08-28
+
+- Authority: the user's later instruction supersedes only the earlier leave-unmerged disposition.
+  One `gpt-5.6-sol` / `xhigh` primary session in the same checkout owns independent review,
+  correction, final verification, merge and cleanup. No subagent, separate task or worktree was
+  created.
+- Synchronization/freeze: `origin/main`, local `main`, PR #16 base and merge base were exactly
+  `97352b7027476aa48461aea3788d1e02d3268b56`; original PR head was frozen at
+  `28316d49316b07731e5101cfe37c9681add69d4d`. The branch was already based on that exact clean main,
+  so no content-changing rebase was required.
+- Evidence boundaries: C14.8 proves only its accepted ordinary non-LiDAR physical journey (26 RGB
+  keyframes, two independent segments and 22/24 observed grid cells). C14.9 proves isolated runtime
+  and repeatability for that envelope/host but found sparse, fragmented, incomplete visual output.
+  Neither transfers physical acceptance, dimensional truth, representative accuracy or consumer
+  visual-quality acceptance to C14.10.
+- Material corrections at `733b137d532c1f39d78350f290e0730316da4760`: actual persisted automatic
+  cadence and final-candidate skip semantics; actual coverage-cell accounting; thermal/memory
+  resource-policy wiring, optional-depth reconfiguration and observer/callback cleanup;
+  envelope-wide unresolved-room readiness; consistent fixture-origin submission/validation guards;
+  field-aware Swift/TypeScript canonical parity; exhaustive typed lifecycle fault coverage; and
+  deterministic lazy-list UI fixture navigation.
+- Readiness truth: direction/height grid observations are secondary only and cannot independently
+  declare readiness. Every non-empty independent segment must satisfy its own connectivity,
+  translation, overlap/parallax, feature, trajectory, loop-closure and zone policy; no segment
+  transform is invented. Automatic retention remains bounded to one per two seconds, 256 per room
+  and 512 per envelope.
+- Fixture truth: Simulator fixtures are blocked from physical runtime/capability claims at fixture
+  origin, review/submission, Swift validation and TypeScript validation; Release binaries contain no
+  fixture payload, scenario, synthetic engine or scripted fault injector.
+- Corrected gates: 19 focused C14.10 cases, 228 logical native tests / 237 device invocations, guided
+  UI 1/1, Debug/Release Simulator builds, unsigned generic-iOS Release compile, Release analysis,
+  XcodeGen byte stability and both Release fixture scans passed. Shared contracts passed 17 files /
+  96 tests; generated drift, 21 API seams, three dependency boundaries, `pnpm test:c14`, Prettier,
+  24 lint, 24 typecheck, 45 unit-test, 24 build, Ruff, mypy across 114 sources and Python 157 passed /
+  2 expected skips all passed.
+- Merge gate: all four named GitHub checks must succeed on the exact final PR #16 head; earlier green
+  runs do not transfer. Only then is normal merge authorised. PR #16 metadata is the immutable
+  exact-head check and merge record.
+- User state and residual boundary: root `AGENTS.md` stayed unstaged and byte-identical at SHA-256
+  `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533`. All physical C14.10 rows,
+  including camera/ARKit usefulness, real lifecycle/resource faults, thermal/storage behavior,
+  LiDAR/RoomPlan, VoiceOver field use, dimensional evaluation and the C14.9 visual rerun, remain
+  explicitly `NOT RUN`.
+
+## C14.10-LR — Proposal-only learned reconstruction audit
+
+### Concurrent checkpoint-number reconciliation — 2026-08-28
+
+- PR #15 and PR #16 both originated from exact base
+  `97352b7027476aa48461aea3788d1e02d3268b56`. PR #16 merged first as native product checkpoint
+  C14.10 while this independent PR #15 review was active. Native capture keeps C14.10; the learned
+  proposal-only audit is labelled C14.10-LR in shared governance without rewriting its immutable
+  filenames, schema names, source commits, original contract or private evidence.
+- The PR #15 branch integrated exact `origin/main` merge
+  `b4c2767bf13dc13b356f3de29ea4d3b2e0411f7e` after correction commit
+  `23ec7cef27616f9864714a467d0815838a84ce44`; neither checkpoint's implementation or evidence was
+  discarded. No later production authority is opened by C14.10-LR.
 
 ### Activation and contract freeze - 2026-08-28
 
