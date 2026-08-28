@@ -142,12 +142,10 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
     let imageURL = projectDirectory(projectId).appendingPathComponent(filename)
     try thumbnail.jpegData.write(to: imageURL, options: [.atomic, .completeFileProtection])
     manifest.records.append(record)
-    let excess = max(
-      0,
-      manifest.records.count - C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount
-    )
-    let removed = Array(manifest.records.prefix(excess))
-    if excess > 0 { manifest.records.removeFirst(excess) }
+    let representativeRecords = Self.representativeRecords(manifest.records)
+    let retainedIds = Set(representativeRecords.map(\.diagnosticId))
+    let removed = manifest.records.filter { !retainedIds.contains($0.diagnosticId) }
+    manifest.records = representativeRecords
     manifest.updatedAt = max(manifest.updatedAt, thumbnail.capturedAt)
     do {
       guard manifest.projectId == projectId, manifest.isValid else {
@@ -218,6 +216,29 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
       let height = properties[kCGImagePropertyPixelHeight] as? Int
     else { return nil }
     return (width, height)
+  }
+
+  private static func representativeRecords(
+    _ records: [C14_10RejectedFrameDiagnosticRecord]
+  ) -> [C14_10RejectedFrameDiagnosticRecord] {
+    var selectedIds = Set<UUID>()
+    for reason in C14_10KeyframeDecisionReason.allCases {
+      let matches = records.filter { $0.outcome.reason == reason }
+      if let first = matches.first { selectedIds.insert(first.diagnosticId) }
+      if let last = matches.last { selectedIds.insert(last.diagnosticId) }
+    }
+    var selected = records.filter { selectedIds.contains($0.diagnosticId) }
+    while selected.count > C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount {
+      let counts = Dictionary(grouping: selected, by: { $0.outcome.reason }).mapValues(\.count)
+      if let duplicateIndex = selected.firstIndex(where: {
+        (counts[$0.outcome.reason] ?? 0) > 1
+      }) {
+        selected.remove(at: duplicateIndex)
+      } else {
+        selected.removeFirst()
+      }
+    }
+    return selected
   }
 
   private static func sha256(_ data: Data) -> String {

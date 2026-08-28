@@ -58,6 +58,7 @@ final class C14_8GuidedCaptureModel {
   private(set) var roomPlanDiscoveryMessage: String?
   private(set) var state: C14_8GuidedCaptureState = .checking
   private(set) var activeZoneId: UUID?
+  private(set) var captureArmed = false
   private(set) var resourcePressure: C14_10ResourcePressure = .nominal
   private(set) var selectionInstruction: String?
   private(set) var selectionDiagnostics = C14_10SelectionDiagnostics.empty()
@@ -189,8 +190,35 @@ final class C14_8GuidedCaptureModel {
       )
     }
   }
+  var canArmCapture: Bool {
+    guard canMutate, state == .ready, currentSegmentKeyframeCount == 0,
+      let telemetry = liveTelemetry
+    else { return false }
+    return C14_10KeyframeSelector.decision(
+      telemetry: telemetry,
+      retainedCount: 0,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .manual
+    ).shouldRetain
+  }
 
   var guidance: [String] {
+    if !captureArmed {
+      guard let telemetry = liveTelemetry else {
+        return ["Lift the phone toward a well-lit corner and wait for normal tracking."]
+      }
+      let decision = C14_10KeyframeSelector.decision(
+        telemetry: telemetry,
+        retainedCount: 0,
+        lastAutomaticTimestampMicroseconds: nil,
+        mode: .manual
+      )
+      return [
+        decision.shouldRetain
+          ? "Aim at the intended room anchor, then tap Start capture here while holding steady."
+          : decision.reason.homeownerInstruction(hasRetainedView: false)
+      ]
+    }
     guard let telemetry = liveTelemetry else {
       return ["Walk slowly around the room edge and keep a wall or corner visible."]
     }
@@ -331,11 +359,21 @@ final class C14_8GuidedCaptureModel {
     captureKeyframe(mode: .manual)
   }
 
+  func armCapture() {
+    guard canArmCapture, let telemetry = liveTelemetry else { return }
+    automaticCandidateWindow = nil
+    captureArmed = true
+    engine.setCaptureArmed(true)
+    selectionInstruction = "Hold steady on this anchor while the first connected view is retained."
+    considerAutomaticCapture(telemetry)
+  }
+
   private func captureKeyframe(
     mode: C14_10KeyframeRetentionMode,
     automaticCandidateStartedAt: Int64? = nil
   ) {
-    guard canMutate, state == .ready, let projectId, let draft, let room = draft.rooms.last,
+    guard captureArmed, canMutate, state == .ready, let projectId, let draft,
+      let room = draft.rooms.last,
       let segment = draft.segments.last,
       let zoneId = activeZoneId ?? room.zones?.first?.zoneId,
       draft.keyframes.count < C14_8CaptureContract.maximumKeyframesPerEnvelope,
@@ -461,6 +499,8 @@ final class C14_8GuidedCaptureModel {
     next.endedAt = Date()
     next.updatedAt = Date()
     engine.stop()
+    engine.setCaptureArmed(false)
+    captureArmed = false
     draft = next
     state = isSyntheticFixture ? .fixtureReview : .review
     activeTask = Task { try? await journal.save(next) }
@@ -759,6 +799,8 @@ final class C14_8GuidedCaptureModel {
     }
     finalizeAutomaticCandidateWindow()
     engine.stop()
+    engine.setCaptureArmed(false)
+    captureArmed = false
     guard var next = draft else { return }
     closeCurrentSegment(in: &next)
     next.interruptionCount += 1
@@ -942,8 +984,10 @@ final class C14_8GuidedCaptureModel {
   private func startEngine() {
     let scope = activationId
     automaticCandidateWindow = nil
+    captureArmed = false
     do {
       engine.applyResourcePolicy(resourcePolicy)
+      engine.setCaptureArmed(false)
       state = .ready
       try engine.start(
         telemetry: { [weak self] telemetry in
@@ -995,7 +1039,9 @@ final class C14_8GuidedCaptureModel {
   }
 
   private func considerAutomaticCapture(_ telemetry: C14_8LiveTelemetry) {
-    guard state == .ready, automaticCaptureEnabled, resourcePolicy.automaticSelectionEnabled else {
+    guard captureArmed, state == .ready, automaticCaptureEnabled,
+      resourcePolicy.automaticSelectionEnabled
+    else {
       return
     }
     prepareAutomaticCandidateWindow(telemetry: telemetry)
@@ -1772,9 +1818,11 @@ final class C14_8GuidedCaptureModel {
     activeTask = nil
     automaticCandidateWindow = nil
     engine.stop()
+    engine.setCaptureArmed(false)
     draft = nil
     liveTelemetry = nil
     activeZoneId = nil
+    captureArmed = false
     automaticCaptureEnabled = true
     lastAutomaticTimestampMicroseconds = nil
     pendingActorScope = nil

@@ -288,7 +288,25 @@ enum C14_10KeyframeSelector {
     {
       return reject(.cooldown)
     }
-    if retainedCount == 0 { return accept() }
+    if retainedCount == 0 {
+      guard mode == .automatic else { return accept() }
+      guard spatial.connectedToPrevious,
+        spatial.overlapScoreMillionths >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+      else { return reject(.insufficientOverlap) }
+      guard
+        spatial.translationFromPreviousMicrometres
+          >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
+      else { return reject(.insufficientTranslation) }
+      guard
+        spatial.parallaxScoreMillionths
+          >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
+      else { return reject(.insufficientParallax) }
+      guard
+        spatial.overlapScoreMillionths
+          < C14_10SpatialCapturePolicy.maximumNearDuplicateOverlapScoreMillionths
+      else { return reject(.nearDuplicate) }
+      return accept()
+    }
     guard spatial.connectedToPrevious,
       spatial.overlapScoreMillionths >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
     else { return reject(.insufficientOverlap) }

@@ -384,6 +384,7 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     let model = makeModel(root: root, journal: journal)
 
     await model.activate(projectId: projectId.uuidString, actor: owner)
+    model.armCapture()
     await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
     XCTAssertEqual(model.state, .ready)
     XCTAssertTrue(model.canMutate)
@@ -421,12 +422,15 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     let model = makeModel(root: root, journal: journal)
 
     await model.activate(projectId: projectId.uuidString, actor: owner)
+    model.armCapture()
     await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
     XCTAssertEqual(model.draft?.segments.count, 1)
     model.reset()
     await model.activate(projectId: projectId.uuidString, actor: owner)
     XCTAssertEqual(model.state, .review)
     model.captureMore()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.state == .ready && model.draft?.keyframes.count == 2 }
     XCTAssertEqual(model.draft?.segments.count, 2)
     XCTAssertEqual(model.draft?.segments.last?.reason, .relaunch)
@@ -438,6 +442,8 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     model.handleBackgrounding()
     XCTAssertEqual(model.state, .interrupted)
     model.recoverAfterInterruption()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.state == .ready && model.draft?.keyframes.count == 3 }
     XCTAssertEqual(model.draft?.segments.last?.reason, .interruption)
     XCTAssertEqual(Set(model.draft?.segments.map(\.segmentId) ?? []).count, 3)
@@ -463,6 +469,8 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     await model.activate(projectId: secondProject.uuidString, actor: owner)
     await delayed.releaseLoad()
     await stale.value
+    XCTAssertEqual(model.draft?.projectId, secondProject)
+    model.armCapture()
     await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
 
     XCTAssertEqual(model.draft?.projectId, secondProject)

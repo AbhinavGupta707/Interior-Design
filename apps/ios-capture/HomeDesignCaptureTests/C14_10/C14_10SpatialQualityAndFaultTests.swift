@@ -112,7 +112,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
 
     let loadedLatest = try await store.loadLatest(projectId: projectId)
     let latest = try XCTUnwrap(loadedLatest)
-    XCTAssertEqual(latest.retainedCount, 12)
+    XCTAssertEqual(latest.retainedCount, 3)
     XCTAssertEqual(latest.record.outcome.reason, .insufficientOverlap)
     XCTAssertEqual(latest.record.outcome.overlapScoreMillionths, 120_000)
     XCTAssertEqual(latest.record.outcome.telemetryTimestampMicroseconds, 3_000_000)
@@ -127,8 +127,27 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       at: projectDirectory,
       includingPropertiesForKeys: nil
     )
-    XCTAssertEqual(storedFiles.filter { $0.pathExtension == "jpg" }.count, 12)
+    XCTAssertEqual(storedFiles.filter { $0.pathExtension == "jpg" }.count, 3)
     XCTAssertEqual(storedFiles.filter { $0.lastPathComponent == "manifest.json" }.count, 1)
+    let manifestData = try Data(
+      contentsOf: projectDirectory.appendingPathComponent("manifest.json")
+    )
+    let manifest = try JSONDecoder().decode(
+      C14_10RejectedFrameDiagnosticManifestTestView.self,
+      from: manifestData
+    )
+    XCTAssertEqual(
+      manifest.records.map(\.outcome.reason),
+      [
+        .featurePoor, .featurePoor, .insufficientOverlap,
+      ])
+    XCTAssertEqual(
+      manifest.records.map(\.capturedAt),
+      [
+        Date(timeIntervalSince1970: 1), Date(timeIntervalSince1970: 13),
+        Date(timeIntervalSince1970: 14),
+      ]
+    )
 
     try await store.clear(projectId: projectId)
     let clearedLatest = try await store.loadLatest(projectId: projectId)
@@ -339,13 +358,26 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
   }
 
   func testAutomaticSelectorRequiresConnectedTranslationOverlapAndParallax() {
-    let first = C14_10KeyframeSelector.decision(
+    let unconfirmedAnchor = C14_10KeyframeSelector.decision(
       telemetry: telemetry(),
       retainedCount: 0,
       lastAutomaticTimestampMicroseconds: nil,
       mode: .automatic
     )
-    XCTAssertTrue(first.shouldRetain)
+    XCTAssertEqual(unconfirmedAnchor.reason, .insufficientOverlap)
+
+    let confirmedAnchor = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 600_000,
+        parallax: 200_000,
+        translation: 300_000
+      ),
+      retainedCount: 0,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertTrue(confirmedAnchor.shouldRetain)
 
     let rotateInPlace = C14_10KeyframeSelector.decision(
       telemetry: telemetry(connected: true, overlap: 600_000, parallax: 0, translation: 0),
@@ -437,6 +469,9 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertEqual(model.draft?.keyframes.count, 0)
+    model.armCapture()
     await waitUntil {
       model.state == .ready
         && model.selectionInstruction?.localizedCaseInsensitiveContains("new position") == true
@@ -458,6 +493,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
 
     XCTAssertEqual(
@@ -537,6 +573,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil {
       if case .failed = model.state { return true }
       return false
@@ -557,9 +594,14 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertEqual(model.draft?.samples.count, 0)
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
     model.handleBackgrounding()
     model.recoverAfterInterruption()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 2 && model.state == .ready }
 
     let samples = try XCTUnwrap(model.draft?.samples)
@@ -577,6 +619,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let projectId = UUID().uuidString
 
     await model.activate(projectId: projectId, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
     let retainedHash = try XCTUnwrap(model.draft?.keyframes.first?.sha256)
     let retainedSegment = try XCTUnwrap(model.draft?.samples.first?.segmentId)
@@ -589,6 +632,8 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertEqual(model.draft?.segments.count, 1)
 
     model.captureMore()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 2 && model.state == .ready }
     XCTAssertEqual(model.draft?.segments.count, 2)
     XCTAssertEqual(model.draft?.segments.last?.reason, .relaunch)
@@ -610,6 +655,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
     model.automaticCaptureEnabled = false
     model.finishRoomReview()
@@ -640,6 +686,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
     model.automaticCaptureEnabled = false
     model.finishRoomReview()
@@ -815,6 +862,19 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       zoneId: zoneId
     )
   }
+}
+
+private struct C14_10RejectedFrameDiagnosticManifestTestView: Decodable {
+  struct Record: Decodable {
+    struct Outcome: Decodable {
+      let reason: C14_10KeyframeDecisionReason
+    }
+
+    let capturedAt: Date
+    let outcome: Outcome
+  }
+
+  let records: [Record]
 }
 
 @MainActor

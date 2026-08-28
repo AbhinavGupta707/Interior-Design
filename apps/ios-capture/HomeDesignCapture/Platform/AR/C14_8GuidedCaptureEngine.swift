@@ -115,6 +115,7 @@ protocol C14_8GuidedCaptureServing: AnyObject {
     maximumDimension: Int,
     telemetryTimestampMicroseconds: Int64
   ) throws -> C14_10RejectedDiagnosticThumbnail
+  func setCaptureArmed(_ enabled: Bool)
   func setRejectedDiagnosticCaptureEnabled(_ enabled: Bool)
   func start(
     telemetry: @escaping @MainActor (C14_8LiveTelemetry) -> Void,
@@ -124,6 +125,10 @@ protocol C14_8GuidedCaptureServing: AnyObject {
 }
 
 extension C14_8GuidedCaptureServing {
+  func setCaptureArmed(_ enabled: Bool) {
+    _ = enabled
+  }
+
   func captureRejectedDiagnosticThumbnail(
     capturedAt: Date,
     maximumDimension: Int,
@@ -175,9 +180,11 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     )?
   private var previousRotation: simd_quatf?
   private var previousTimestamp: TimeInterval?
+  private var provisionalAnchorObservation: C14_10ProvisionalObservation?
   private var resourceNotificationTokens: [NSObjectProtocol] = []
   private var retainedObservations: [C14_10RetainedObservation] = []
   private var resourcePolicy = C14_10ResourcePolicy.policy(for: .nominal)
+  private var firstAnchorCaptureArmed = false
   private var rejectedDiagnosticCaptureEnabled = false
   private var running = false
   private var telemetryHandler: (@MainActor (C14_8LiveTelemetry) -> Void)?
@@ -201,10 +208,12 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     previousPosition = nil
     previousRotation = nil
     previousTimestamp = nil
+    provisionalAnchorObservation = nil
     latestRejectedDiagnosticFrame = nil
     previousRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
+    firstAnchorCaptureArmed = false
     frameCounter = 0
     observeResourcePressure()
     eventHandler?(
@@ -220,10 +229,12 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     previousPosition = nil
     previousRotation = nil
     previousTimestamp = nil
+    provisionalAnchorObservation = nil
     latestRejectedDiagnosticFrame = nil
     previousRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
+    firstAnchorCaptureArmed = false
     frameCounter = 0
     telemetryHandler = nil
     eventHandler = nil
@@ -245,6 +256,11 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       latestRejectedDiagnosticFrame = nil
       previousRejectedDiagnosticFrame = nil
     }
+  }
+
+  func setCaptureArmed(_ enabled: Bool) {
+    provisionalAnchorObservation = nil
+    firstAnchorCaptureArmed = enabled
   }
 
   func captureKeyframe(
@@ -292,6 +308,20 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     guard decision.shouldRetain else {
       throw C14_8GuidedCaptureEngineError.candidateRejected(decision.reason)
     }
+    let retainedSpatialEvidence =
+      retainedObservations.isEmpty
+      ? C14_10LiveSpatialEvidence(
+        connectedToPrevious: false,
+        featurePointCount: spatialEvidence.featurePointCount,
+        loopClosureCandidate: false,
+        overlapScoreMillionths: 0,
+        parallaxScoreMillionths: 0,
+        telemetryTimestampMicroseconds: spatialEvidence.telemetryTimestampMicroseconds,
+        trajectorySpanMicrometres: 0,
+        trajectoryTravelMicrometres: 0,
+        translationFromPreviousMicrometres: 0
+      )
+      : spatialEvidence
     // Retain the native ARKit camera raster. Rotating the pixels here without applying the
     // corresponding intrinsics transform would make the retained camera model internally false.
     let image = CIImage(cvPixelBuffer: frame.capturedImage)
@@ -318,15 +348,15 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         imageHeightPixels: Int(resolution.height),
         imageWidthPixels: Int(resolution.width)
       ),
-      connectedToPrevious: spatialEvidence.connectedToPrevious,
+      connectedToPrevious: retainedSpatialEvidence.connectedToPrevious,
       exposureScoreMillionths: quality.exposureScoreMillionths,
       featurePointCount: spatialEvidence.featurePointCount,
       intrinsicsModel: "pinhole-native-camera-raster",
-      loopClosureCandidate: spatialEvidence.loopClosureCandidate,
+      loopClosureCandidate: retainedSpatialEvidence.loopClosureCandidate,
       motionScoreMillionths: latestMotionScoreMillionths,
       orientation: "landscape-right",
-      overlapScoreMillionths: spatialEvidence.overlapScoreMillionths,
-      parallaxScoreMillionths: spatialEvidence.parallaxScoreMillionths,
+      overlapScoreMillionths: retainedSpatialEvidence.overlapScoreMillionths,
+      parallaxScoreMillionths: retainedSpatialEvidence.parallaxScoreMillionths,
       poseTransform: "camera-to-world",
       quaternionOrder: "x-y-z-w",
       quaternionNanounits: [
@@ -340,9 +370,10 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       sourceTimestampMicroseconds: globalMicroseconds,
       timestampMicroseconds: globalMicroseconds,
       trackingState: tracking,
-      trajectorySpanMicrometres: spatialEvidence.trajectorySpanMicrometres,
-      trajectoryTravelMicrometres: spatialEvidence.trajectoryTravelMicrometres,
-      translationFromPreviousMicrometres: spatialEvidence.translationFromPreviousMicrometres,
+      trajectorySpanMicrometres: retainedSpatialEvidence.trajectorySpanMicrometres,
+      trajectoryTravelMicrometres: retainedSpatialEvidence.trajectoryTravelMicrometres,
+      translationFromPreviousMicrometres:
+        retainedSpatialEvidence.translationFromPreviousMicrometres,
       translationMicrometres: C14_8Translation(
         x: Self.micro(transform.columns.3.x),
         y: Self.micro(transform.columns.3.y),
@@ -354,7 +385,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     retain(
       frame: frame,
       retentionMode: retentionMode,
-      spatialEvidence: spatialEvidence,
+      spatialEvidence: retainedSpatialEvidence,
       timestampMicroseconds: globalMicroseconds
     )
     let depth = resourcePolicy.optionalDepthEnabled ? frame.sceneDepth.map(Self.depthBytes) : nil
@@ -488,18 +519,59 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let transform = frame.camera.transform
     let position = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
     let featureIds = Set(frame.rawFeaturePoints?.identifiers ?? [])
+    let timestampMicroseconds =
+      telemetryTimestampMicroseconds
+      ?? max(0, Int64((frame.timestamp * 1_000_000).rounded()))
     guard let previous = retainedObservations.last else {
-      return C14_10LiveSpatialEvidence(
+      let unconnected = C14_10LiveSpatialEvidence(
         connectedToPrevious: false,
         featurePointCount: featureIds.count,
         loopClosureCandidate: false,
         overlapScoreMillionths: 0,
         parallaxScoreMillionths: 0,
-        telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
-          ?? max(0, Int64((frame.timestamp * 1_000_000).rounded())),
+        telemetryTimestampMicroseconds: timestampMicroseconds,
         trajectorySpanMicrometres: 0,
         trajectoryTravelMicrometres: 0,
         translationFromPreviousMicrometres: 0
+      )
+      guard firstAnchorCaptureArmed else { return unconnected }
+      let current = C14_10ProvisionalObservation(featureIds: featureIds, position: position)
+      guard let provisionalAnchorObservation else {
+        if featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount {
+          self.provisionalAnchorObservation = current
+        }
+        return unconnected
+      }
+      let translation = max(
+        0,
+        Self.micro(simd_distance(position, provisionalAnchorObservation.position))
+      )
+      let overlap = Self.overlapScore(
+        left: featureIds,
+        right: provisionalAnchorObservation.featureIds
+      )
+      let connected =
+        featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount
+        && overlap >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+      let parallax = min(
+        1_000_000,
+        Int((Double(translation) / 400_000) * Double(overlap))
+      )
+      if !connected,
+        featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount
+      {
+        self.provisionalAnchorObservation = current
+      }
+      return C14_10LiveSpatialEvidence(
+        connectedToPrevious: connected,
+        featurePointCount: featureIds.count,
+        loopClosureCandidate: false,
+        overlapScoreMillionths: overlap,
+        parallaxScoreMillionths: max(0, parallax),
+        telemetryTimestampMicroseconds: timestampMicroseconds,
+        trajectorySpanMicrometres: 0,
+        trajectoryTravelMicrometres: 0,
+        translationFromPreviousMicrometres: translation
       )
     }
     let translation = max(0, Self.micro(simd_distance(position, previous.position)))
@@ -530,8 +602,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       loopClosureCandidate: loopClosure,
       overlapScoreMillionths: overlap,
       parallaxScoreMillionths: max(0, parallax),
-      telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
-        ?? max(0, Int64((frame.timestamp * 1_000_000).rounded())),
+      telemetryTimestampMicroseconds: timestampMicroseconds,
       trajectorySpanMicrometres: span,
       trajectoryTravelMicrometres: travel,
       translationFromPreviousMicrometres: translation
@@ -544,6 +615,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     spatialEvidence: C14_10LiveSpatialEvidence,
     timestampMicroseconds: Int64
   ) {
+    provisionalAnchorObservation = nil
     let transform = frame.camera.transform
     retainedObservations.append(
       C14_10RetainedObservation(
@@ -732,15 +804,17 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
           exposureScoreMillionths: 900_000,
           motionScoreMillionths: 0,
           spatialEvidence: C14_10LiveSpatialEvidence(
-            connectedToPrevious: retainedCount > 0,
+            // The fixture represents a provisionally confirmed two-view anchor. It establishes
+            // UI/state behavior only and is never accepted as physical sensor evidence.
+            connectedToPrevious: true,
             featurePointCount: 240,
             loopClosureCandidate: retainedCount >= 7,
-            overlapScoreMillionths: retainedCount > 0 ? 620_000 : 0,
-            parallaxScoreMillionths: retainedCount > 0 ? 240_000 : 0,
+            overlapScoreMillionths: 620_000,
+            parallaxScoreMillionths: 240_000,
             telemetryTimestampMicroseconds: Int64(retainedCount + 1) * 2_100_000,
             trajectorySpanMicrometres: Int64(retainedCount) * 220_000,
             trajectoryTravelMicrometres: Int64(retainedCount) * 300_000,
-            translationFromPreviousMicrometres: retainedCount > 0 ? 300_000 : 0
+            translationFromPreviousMicrometres: 300_000
           ),
           trackingState: .normal
         ))
@@ -885,6 +959,11 @@ private struct C14_10RetainedObservation {
   let timestampMicroseconds: Int64
   let trajectorySpanMicrometres: Int64
   let trajectoryTravelMicrometres: Int64
+}
+
+private struct C14_10ProvisionalObservation {
+  let featureIds: Set<UInt64>
+  let position: SIMD3<Float>
 }
 
 struct C14_8ARPreview: UIViewRepresentable {

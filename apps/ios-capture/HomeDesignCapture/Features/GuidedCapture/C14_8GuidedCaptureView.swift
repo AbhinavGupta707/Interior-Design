@@ -265,7 +265,7 @@ struct C14_8GuidedCaptureView: View {
         }
         Toggle("Select useful keyframes automatically", isOn: $model.automaticCaptureEnabled)
         Text(
-          "Automatic selection is bounded to one candidate every two seconds and skips blurry, poorly exposed, disconnected or near-duplicate views."
+          "Preview starts unarmed. Aim at the intended room anchor and tap Start capture here; automatic selection then skips blurry, poorly exposed, disconnected or near-duplicate views."
         )
         .font(.footnote)
         .foregroundStyle(.secondary)
@@ -279,7 +279,7 @@ struct C14_8GuidedCaptureView: View {
           )
           .accessibilityIdentifier("c14_10.rejected-frame-diagnostics")
           Text(
-            "Physical diagnostics only. When enabled, the app keeps at most 12 protected 640 px snapshots on this device. They stay outside the Capture Envelope, never upload and are off again after relaunch."
+            "Physical diagnostics only. When enabled, the app keeps the first and latest example for each rejection reason, capped at 12 protected 640 px snapshots on this device. They stay outside the Capture Envelope, never upload and are off again after relaunch."
           )
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -359,7 +359,7 @@ struct C14_8GuidedCaptureView: View {
         Button("Retain this useful view manually") { model.captureKeyframe() }
           .buttonStyle(.bordered)
           .accessibilityIdentifier("c14_8.capture-keyframe")
-          .disabled(model.currentSelectionDecision?.shouldRetain != true)
+          .disabled(!model.captureArmed || model.currentSelectionDecision?.shouldRetain != true)
         if model.capturedKeyframeCount > 0 {
           Button(
             model.captureReadiness?.isReady == true
@@ -377,9 +377,12 @@ struct C14_8GuidedCaptureView: View {
     let readiness = model.captureReadiness
     let telemetry = model.liveTelemetry
     let instruction =
-      model.selectionInstruction
-      ?? model.guidance.first
-      ?? "Lift the phone toward a well-lit corner and wait for normal tracking."
+      !model.captureArmed
+      ? model.guidance.first
+        ?? "Lift the phone toward a well-lit corner and wait for normal tracking."
+      : model.selectionInstruction
+        ?? model.guidance.first
+        ?? "Lift the phone toward a well-lit corner and wait for normal tracking."
     return VStack(alignment: .leading, spacing: 5) {
       Label(
         instruction,
@@ -400,6 +403,15 @@ struct C14_8GuidedCaptureView: View {
       )
       .font(.caption2.monospacedDigit())
       .lineLimit(2)
+
+      if !model.captureArmed {
+        Button("Start capture here") { model.armCapture() }
+          .buttonStyle(.borderedProminent)
+          .tint(.white)
+          .foregroundStyle(.black)
+          .disabled(!model.canArmCapture)
+          .accessibilityIdentifier("c14_10.arm-capture")
+      }
     }
     .foregroundStyle(.white)
     .padding(10)
