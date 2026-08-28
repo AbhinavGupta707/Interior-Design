@@ -14,9 +14,11 @@ independently reviewed and corrected. One accepted physical Capture Envelope sub
 the eligible isolated Windows/RTX runtime and repeatability matrix, which independent review accepts
 only for that envelope/host. Dimensional and representative accuracy remain `NOT RUN`, and the
 sparse, fragmented result is incomplete and unsuitable for consumer digital-twin presentation or
-routing. C14.10 is now open to make native completion depend on connected spatial evidence, add
-cross-language Capture Envelope goldens and close deterministic software resilience gaps without
-promoting reconstruction or claiming new physical acceptance. Starting from the C14.6
+routing. C14.10 is software-complete locally: native completion now depends on connected spatial
+evidence, Swift and TypeScript consume the same Capture Envelope goldens, and deterministic
+software resilience gaps are covered without promoting reconstruction or claiming new physical
+acceptance. The exact non-draft PR, named checks and recorded physical handoff remain the closeout
+boundary. Starting from the C14.6
 cold-launch/onboarding baseline, an authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -503,6 +505,11 @@ dimensional/representative accuracy and production promotion remain closed.
 
 ### C14.10 — Native capture quality and resilience — single primary session
 
+**Status (2026-08-28):** implementation and local acceptance complete on
+`9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`; physical rows remain `NOT RUN`. The integration branch
+must still be pushed as one non-draft, unmerged PR and pass every named GitHub check on its exact
+final head.
+
 **Outcome:** ordinary camera-first capture continuously selects a bounded connected set of useful
 RGB keyframes and explains remaining translation, overlap, parallax, feature/trajectory, loop-
 closure, blur/exposure and unresolved-area needs. The direction/height grid remains secondary.
@@ -522,6 +529,15 @@ consent separation, independent segments, proposal-only reconstruction and exist
 authority remain unchanged. Simulator proves only deterministic software/UI policy. Physical fault,
 thermal, storage-exhaustion, camera/ARKit, LiDAR, RoomPlan, dimensional, representative-home and
 reconstruction-quality acceptance remain open until their named handoff is physically executed.
+
+**Local evidence:** 224 logical native unit tests / 234 device invocations and the 1/1 guided UI
+journey passed on iPhone 17 Pro Max Simulator, iOS 26.4 (23E244). Shared contracts passed 17 files /
+96 tests; full repository verification passed 24 lint, 24 typecheck, 45 unit-test and 24 build tasks,
+Ruff, mypy and 157 Python tests with two expected skips. XcodeGen was byte-stable; Debug/Release
+Simulator builds, unsigned generic-iOS Release compilation, Release analysis and Release fixture
+exclusion passed. These are software/compile results only. See
+`docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`
+and `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

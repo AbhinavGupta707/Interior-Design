@@ -122,3 +122,26 @@ remaining physical handoff must repeat the accepted non-LiDAR room journey with 
 signals, include an irregular or multi-zone room, exercise a real process termination/offline or
 expired-authority case where safe, and then rerun the proposal-only visual benchmark. Separately
 rights-cleared ground truth remains mandatory for any dimensional claim.
+
+## Local implementation closeout — 2026-08-28
+
+- Implementation head: `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`; contract freeze `e805c6e`;
+  synchronized base `97352b7027476aa48461aea3788d1e02d3268b56`.
+- The continuous selector, per-independent-segment readiness, secondary grid, multi-zone coverage,
+  retained-frame revalidation and bounded resource degradation satisfy the frozen software policy.
+- Swift and TypeScript consume one shared 5,383-byte canonical fixture with SHA-256
+  `e26d3f43c14d9d8def3ceb7105c539cc5351e66f579a1b529299216f5d104bb9` and agree across the frozen
+  adversarial matrix.
+- Deterministic Debug/test seams and existing protected-journal/transfer/authority tests cover the
+  realistically simulatable relaunch, offline, expiry, scope/role/rights and resource cases. Release
+  fixture/injector exclusion passed.
+- Local native, shared-contract, security, C14, generated-drift, dependency/API-seam, build/analyze
+  and full repository gates passed. Exact counts and limitations are frozen in
+  `docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`.
+- No migration, OpenAPI/generated-client, root manifest/lockfile, backend authority, canonical
+  mutation or reconstruction-promotion impact exists.
+- Physical camera/ARKit usefulness, real process and resource faults, optional LiDAR/RoomPlan,
+  dimensions and visual reconstruction quality remain `NOT RUN` under
+  `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
+- Delivery is not complete until one non-draft PR is open and every named GitHub check passes on its
+  exact final head. The PR must remain unmerged.

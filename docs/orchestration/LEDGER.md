@@ -1674,3 +1674,42 @@
 - Initial claim boundary: software/Simulator policy and state evidence only. Physical process faults,
   thermal/storage behavior, camera/ARKit, depth, LiDAR, RoomPlan, dimensions, representative-home
   accuracy and reconstruction visual quality remain `NOT RUN` until the recorded physical handoff.
+
+### Local implementation and acceptance — 2026-08-28
+
+- Frozen implementation: `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2` after contract freeze
+  `e805c6e`, against exact synchronized base `97352b7027476aa48461aea3788d1e02d3268b56`.
+- Native outcome: continuous guided capture retains no more than one automatic keyframe per two
+  seconds, 256 per room and 512 per envelope. Actual retained frames must pass tracking,
+  blur/exposure, feature, overlap, translation, parallax and near-duplicate checks. Per-independent-
+  segment connectivity, trajectory and loop closure plus per-zone evidence drive readiness; the
+  direction/height grid is secondary and cannot complete a rotate-in-place room.
+- Shared contract: Swift and TypeScript consume the same language-neutral fixture files. Canonical
+  base length is 5,383 bytes and SHA-256 is
+  `e26d3f43c14d9d8def3ceb7105c539cc5351e66f579a1b529299216f5d104bb9`; the common adversarial UUID,
+  timestamp, optional, segment/scope and unknown-field verdict matrix passed.
+- Resilience: typed Debug/test fault checkpoints cover retention, submission, upload, receipt and
+  acceptance. In combination with the existing C14.6/C14.8/C7/C8 protected recovery and authority
+  suites, deterministic relaunch, offline transfer, expired auth/capture/signed access,
+  project/actor/role/rights change and safe resource degradation fail closed without losing or
+  reassigning immutable evidence.
+- Local gates: shared contract 17 files / 96 tests; native unit 224 logical tests / 234 device
+  invocations with zero failures/skips; guided UI 1/1; XcodeGen byte-stable at
+  `d9af33abc2d1606fbdbdf81f10834e213c3e218a02f073635b9d8f4dd8bc10a6`; Debug/Release Simulator,
+  unsigned generic-iOS Release compile, Release analysis and Release fixture exclusion passed;
+  generated drift passed; API/dependency seams 21/3; identity security 933; C14 source/control-plane
+  passed with its optional unconfigured disposable case skipped; full repository gate passed 24
+  lint, 24 typecheck, 45 unit-test and 24 build tasks, Ruff, mypy across 114 sources and Python 157
+  passed / 2 expected skips.
+- Authority/privacy: no migration, OpenAPI/generated client, root manifest/lockfile, backend
+  authority, canonical mutation or reconstruction-promotion change. C2/C7/C8/C9/C5/C10 authority,
+  consent separation and independent coordinate segments remain intact. The user-owned root
+  `AGENTS.md` stayed byte-identical at
+  `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533` and outside every commit.
+- Evidence:
+  `docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`;
+  physical handoff: `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
+- Remaining truth: all physical camera/ARKit, real process/resource fault, thermal, storage,
+  LiDAR/RoomPlan, dimensional, representative-home and C14.9 visual-quality rerun rows remain
+  `NOT RUN`. Delivery still requires one non-draft PR and all named checks on its exact final head;
+  the PR must remain unmerged.
