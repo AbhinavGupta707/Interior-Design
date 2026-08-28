@@ -38,6 +38,7 @@ protocol C14_10RejectedFrameDiagnosticStoring: Sendable {
   func loadLatest(projectId: UUID) async throws -> C14_10RejectedFrameDiagnosticSnapshot?
   func save(
     projectId: UUID,
+    segmentId: UUID?,
     thumbnail: C14_10RejectedDiagnosticThumbnail,
     outcome: C14_10RecentSelectionOutcome
   ) async throws -> C14_10RejectedFrameDiagnosticSnapshot
@@ -102,6 +103,7 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
 
   func save(
     projectId: UUID,
+    segmentId: UUID?,
     thumbnail: C14_10RejectedDiagnosticThumbnail,
     outcome: C14_10RecentSelectionOutcome
   ) throws -> C14_10RejectedFrameDiagnosticSnapshot {
@@ -136,7 +138,8 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
       imageSHA256: Self.sha256(thumbnail.jpegData),
       outcome: outcome,
       pixelHeight: thumbnail.pixelHeight,
-      pixelWidth: thumbnail.pixelWidth
+      pixelWidth: thumbnail.pixelWidth,
+      segmentId: segmentId
     )
     guard record.isValid else { throw C14_8ProtectedStoreError.corrupt }
     let imageURL = projectDirectory(projectId).appendingPathComponent(filename)
@@ -221,14 +224,45 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
   private static func representativeRecords(
     _ records: [C14_10RejectedFrameDiagnosticRecord]
   ) -> [C14_10RejectedFrameDiagnosticRecord] {
+    var segmentIds: [UUID?] = []
+    for record in records.reversed() where !segmentIds.contains(record.segmentId) {
+      segmentIds.append(record.segmentId)
+    }
+
+    var selected: [C14_10RejectedFrameDiagnosticRecord] = []
+    for segmentId in segmentIds {
+      let segmentRecords = records.filter { $0.segmentId == segmentId }
+      let representatives = trimRepresentatives(
+        firstAndLatestByReason(segmentRecords),
+        to: C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount - selected.count
+      )
+      selected.append(contentsOf: representatives)
+      if selected.count == C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount {
+        break
+      }
+    }
+    return selected.sorted { $0.capturedAt < $1.capturedAt }
+  }
+
+  private static func firstAndLatestByReason(
+    _ records: [C14_10RejectedFrameDiagnosticRecord]
+  ) -> [C14_10RejectedFrameDiagnosticRecord] {
     var selectedIds = Set<UUID>()
     for reason in C14_10KeyframeDecisionReason.allCases {
       let matches = records.filter { $0.outcome.reason == reason }
       if let first = matches.first { selectedIds.insert(first.diagnosticId) }
       if let last = matches.last { selectedIds.insert(last.diagnosticId) }
     }
-    var selected = records.filter { selectedIds.contains($0.diagnosticId) }
-    while selected.count > C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount {
+    return records.filter { selectedIds.contains($0.diagnosticId) }
+  }
+
+  private static func trimRepresentatives(
+    _ records: [C14_10RejectedFrameDiagnosticRecord],
+    to limit: Int
+  ) -> [C14_10RejectedFrameDiagnosticRecord] {
+    guard limit > 0 else { return [] }
+    var selected = records
+    while selected.count > limit {
       let counts = Dictionary(grouping: selected, by: { $0.outcome.reason }).mapValues(\.count)
       if let duplicateIndex = selected.firstIndex(where: {
         (counts[$0.outcome.reason] ?? 0) > 1

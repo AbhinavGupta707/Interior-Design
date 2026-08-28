@@ -519,6 +519,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let transform = frame.camera.transform
     let position = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
     let featureIds = Set(frame.rawFeaturePoints?.identifiers ?? [])
+    let featurePoints = frame.rawFeaturePoints.map { Array($0.points) } ?? []
     let timestampMicroseconds =
       telemetryTimestampMicroseconds
       ?? max(0, Int64((frame.timestamp * 1_000_000).rounded()))
@@ -535,7 +536,11 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         translationFromPreviousMicrometres: 0
       )
       guard firstAnchorCaptureArmed else { return unconnected }
-      let current = C14_10ProvisionalObservation(featureIds: featureIds, position: position)
+      let current = C14_10ProvisionalObservation(
+        featureIds: featureIds,
+        featurePoints: featurePoints,
+        position: position
+      )
       guard let provisionalAnchorObservation else {
         if featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount {
           self.provisionalAnchorObservation = current
@@ -547,8 +552,10 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         Self.micro(simd_distance(position, provisionalAnchorObservation.position))
       )
       let overlap = Self.overlapScore(
-        left: featureIds,
-        right: provisionalAnchorObservation.featureIds
+        currentFeatureIds: featureIds,
+        referenceFeatureIds: provisionalAnchorObservation.featureIds,
+        referenceFeaturePoints: provisionalAnchorObservation.featurePoints,
+        currentCamera: frame.camera
       )
       let connected =
         featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount
@@ -575,7 +582,12 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       )
     }
     let translation = max(0, Self.micro(simd_distance(position, previous.position)))
-    let overlap = Self.overlapScore(left: featureIds, right: previous.featureIds)
+    let overlap = Self.overlapScore(
+      currentFeatureIds: featureIds,
+      referenceFeatureIds: previous.featureIds,
+      referenceFeaturePoints: previous.featurePoints,
+      currentCamera: frame.camera
+    )
     let connected =
       featureIds.count >= C14_10SpatialCapturePolicy.minimumFeaturePointCount
       && overlap >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
@@ -583,7 +595,12 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let distanceFromFirst = max(0, Self.micro(simd_distance(position, first.position)))
     let span = max(previous.trajectorySpanMicrometres, distanceFromFirst)
     let travel = min(10_000_000_000, previous.trajectoryTravelMicrometres + translation)
-    let firstOverlap = Self.overlapScore(left: featureIds, right: first.featureIds)
+    let firstOverlap = Self.overlapScore(
+      currentFeatureIds: featureIds,
+      referenceFeatureIds: first.featureIds,
+      referenceFeaturePoints: first.featurePoints,
+      currentCamera: frame.camera
+    )
     let loopClosure =
       retainedObservations.count >= C14_10SpatialCapturePolicy.minimumKeyframesPerRoom - 1
       && span >= C14_10SpatialCapturePolicy.minimumTrajectorySpanMicrometres
@@ -620,6 +637,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     retainedObservations.append(
       C14_10RetainedObservation(
         featureIds: Set(frame.rawFeaturePoints?.identifiers ?? []),
+        featurePoints: frame.rawFeaturePoints.map { Array($0.points) } ?? [],
         position: SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z),
         retentionMode: retentionMode,
         timestampMicroseconds: timestampMicroseconds,
@@ -629,10 +647,28 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     )
   }
 
-  private static func overlapScore(left: Set<UInt64>, right: Set<UInt64>) -> Int {
-    let denominator = min(left.count, right.count)
-    guard denominator > 0 else { return 0 }
-    return min(1_000_000, left.intersection(right).count * 1_000_000 / denominator)
+  private static func overlapScore(
+    currentFeatureIds: Set<UInt64>,
+    referenceFeatureIds: Set<UInt64>,
+    referenceFeaturePoints: [SIMD3<Float>],
+    currentCamera: ARCamera
+  ) -> Int {
+    let resolution = currentCamera.imageResolution
+    let viewportSize = CGSize(width: resolution.width, height: resolution.height)
+    return C14_10SpatialOverlap.score(
+      currentFeatureIds: currentFeatureIds,
+      referenceFeatureIds: referenceFeatureIds,
+      referenceFeaturePoints: referenceFeaturePoints,
+      currentCameraTransform: currentCamera.transform,
+      viewportSize: viewportSize,
+      project: {
+        currentCamera.projectPoint(
+          $0,
+          orientation: .landscapeRight,
+          viewportSize: viewportSize
+        )
+      }
+    )
   }
 
   static func resourcePressure(for thermalState: ProcessInfo.ThermalState) -> C14_10ResourcePressure
@@ -952,8 +988,59 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
   }
 #endif
 
+enum C14_10SpatialOverlap {
+  static func score(
+    currentFeatureIds: Set<UInt64>,
+    referenceFeatureIds: Set<UInt64>,
+    referenceFeaturePoints: [SIMD3<Float>],
+    currentCameraTransform: simd_float4x4,
+    viewportSize: CGSize,
+    project: (SIMD3<Float>) -> CGPoint
+  ) -> Int {
+    max(
+      identifierScore(left: currentFeatureIds, right: referenceFeatureIds),
+      projectedScore(
+        referencePoints: referenceFeaturePoints,
+        currentCameraTransform: currentCameraTransform,
+        viewportSize: viewportSize,
+        project: project
+      )
+    )
+  }
+
+  static func identifierScore(left: Set<UInt64>, right: Set<UInt64>) -> Int {
+    let denominator = min(left.count, right.count)
+    guard denominator > 0 else { return 0 }
+    return min(1_000_000, left.intersection(right).count * 1_000_000 / denominator)
+  }
+
+  static func projectedScore(
+    referencePoints: [SIMD3<Float>],
+    currentCameraTransform: simd_float4x4,
+    viewportSize: CGSize,
+    project: (SIMD3<Float>) -> CGPoint
+  ) -> Int {
+    guard !referencePoints.isEmpty, viewportSize.width > 0, viewportSize.height > 0 else {
+      return 0
+    }
+    let worldToCamera = simd_inverse(currentCameraTransform)
+    let visibleCount = referencePoints.reduce(into: 0) { result, point in
+      let cameraPoint = worldToCamera * SIMD4<Float>(point.x, point.y, point.z, 1)
+      guard cameraPoint.z < -0.05 else { return }
+      let projected = project(point)
+      guard projected.x.isFinite, projected.y.isFinite,
+        projected.x >= 0, projected.y >= 0,
+        projected.x <= viewportSize.width, projected.y <= viewportSize.height
+      else { return }
+      result += 1
+    }
+    return min(1_000_000, visibleCount * 1_000_000 / referencePoints.count)
+  }
+}
+
 private struct C14_10RetainedObservation {
   let featureIds: Set<UInt64>
+  let featurePoints: [SIMD3<Float>]
   let position: SIMD3<Float>
   let retentionMode: C14_10KeyframeRetentionMode
   let timestampMicroseconds: Int64
@@ -963,6 +1050,7 @@ private struct C14_10RetainedObservation {
 
 private struct C14_10ProvisionalObservation {
   let featureIds: Set<UInt64>
+  let featurePoints: [SIMD3<Float>]
   let position: SIMD3<Float>
 }
 

@@ -279,7 +279,7 @@ struct C14_8GuidedCaptureView: View {
           )
           .accessibilityIdentifier("c14_10.rejected-frame-diagnostics")
           Text(
-            "Physical diagnostics only. When enabled, the app keeps the first and latest example for each rejection reason, capped at 12 protected 640 px snapshots on this device. They stay outside the Capture Envelope, never upload and are off again after relaunch."
+            "Physical diagnostics only. When enabled, the app prioritizes the first and latest example for each rejection reason in the newest capture segment, capped at 12 protected 640 px snapshots on this device. Older segments only fill spare capacity. They stay outside the Capture Envelope, never upload and are off again after relaunch."
           )
           .font(.footnote)
           .foregroundStyle(.secondary)

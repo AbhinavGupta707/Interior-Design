@@ -14,6 +14,7 @@ private enum C14_8SubmissionError: Error {
 }
 
 private struct C14_10AutomaticCandidateWindow {
+  let segmentId: UUID?
   let startedAtMicroseconds: Int64
   var outcome: C14_10KeyframeDecisionReason
   var retentionStarted: Bool
@@ -1077,6 +1078,7 @@ final class C14_8GuidedCaptureModel {
     }
     if automaticCandidateWindow == nil {
       automaticCandidateWindow = C14_10AutomaticCandidateWindow(
+        segmentId: draft?.segments.last?.segmentId,
         startedAtMicroseconds: telemetryTimestampMicroseconds,
         outcome: .tracking,
         retentionStarted: false,
@@ -1139,6 +1141,7 @@ final class C14_8GuidedCaptureModel {
         do {
           let latest = try await store.save(
             projectId: projectId,
+            segmentId: window.segmentId,
             thumbnail: thumbnail,
             outcome: outcome
           )

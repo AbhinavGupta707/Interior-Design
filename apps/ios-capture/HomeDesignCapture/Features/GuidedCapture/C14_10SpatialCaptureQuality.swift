@@ -150,6 +150,7 @@ struct C14_10RejectedFrameDiagnosticRecord: Codable, Equatable, Sendable {
   let outcome: C14_10RecentSelectionOutcome
   let pixelHeight: Int
   let pixelWidth: Int
+  let segmentId: UUID?
 
   var isValid: Bool {
     capturedAt == outcome.completedAt

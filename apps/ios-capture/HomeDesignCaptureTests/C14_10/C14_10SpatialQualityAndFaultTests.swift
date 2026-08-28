@@ -82,6 +82,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let store = C14_10RejectedFrameDiagnosticStore(root: root)
     let engine = C14_8FixtureGuidedCaptureEngine()
     let projectId = UUID()
+    let segmentId = UUID()
 
     for index in 0..<14 {
       let capturedAt = Date(timeIntervalSince1970: Double(index + 1))
@@ -105,6 +106,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
 
       _ = try await store.save(
         projectId: projectId,
+        segmentId: segmentId,
         thumbnail: thumbnail,
         outcome: outcome
       )
@@ -117,6 +119,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertEqual(latest.record.outcome.overlapScoreMillionths, 120_000)
     XCTAssertEqual(latest.record.outcome.telemetryTimestampMicroseconds, 3_000_000)
     XCTAssertEqual(latest.record.outcome.translationFromPreviousMicrometres, 180_000)
+    XCTAssertEqual(latest.record.segmentId, segmentId)
     XCTAssertEqual(latest.jpegData.count, latest.record.imageByteCount)
     XCTAssertTrue(latest.record.isValid)
     let projectDirectory = root.appendingPathComponent(
@@ -147,6 +150,47 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
         Date(timeIntervalSince1970: 1), Date(timeIntervalSince1970: 13),
         Date(timeIntervalSince1970: 14),
       ]
+    )
+    XCTAssertEqual(Set(manifest.records.compactMap(\.segmentId)), [segmentId])
+
+    let newestSegmentId = UUID()
+    let newestReasons: [C14_10KeyframeDecisionReason] = [
+      .blurred, .exposure, .featurePoor, .insufficientOverlap, .insufficientParallax,
+      .insufficientTranslation, .motion,
+    ]
+    for index in 0..<13 {
+      let capturedAt = Date(timeIntervalSince1970: Double(index + 15))
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: newestReasons[index % newestReasons.count],
+        telemetry: telemetry(
+          connected: true,
+          overlap: 220_000,
+          parallax: 90_000,
+          translation: 180_000
+        ),
+        completedAt: capturedAt
+      )
+      let thumbnail = try engine.captureRejectedDiagnosticThumbnail(
+        capturedAt: capturedAt,
+        maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
+        telemetryTimestampMicroseconds: 3_000_000
+      )
+      _ = try await store.save(
+        projectId: projectId,
+        segmentId: newestSegmentId,
+        thumbnail: thumbnail,
+        outcome: outcome
+      )
+    }
+    let newestManifest = try JSONDecoder().decode(
+      C14_10RejectedFrameDiagnosticManifestTestView.self,
+      from: Data(contentsOf: projectDirectory.appendingPathComponent("manifest.json"))
+    )
+    XCTAssertEqual(newestManifest.records.count, 12)
+    XCTAssertEqual(Set(newestManifest.records.compactMap(\.segmentId)), [newestSegmentId])
+    XCTAssertEqual(
+      newestManifest.records.map(\.capturedAt),
+      newestManifest.records.map(\.capturedAt).sorted()
     )
 
     try await store.clear(projectId: projectId)
@@ -399,6 +443,52 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       mode: .automatic
     )
     XCTAssertTrue(useful.shouldRetain)
+  }
+
+  func testProjectedOverlapSurvivesFeatureIdentifierChurnAndRejectsPointsBehindCamera() {
+    let referencePoints = (-2...2).flatMap { x in
+      (-2...2).map { y in
+        SIMD3<Float>(Float(x) * 0.2, Float(y) * 0.2, -2)
+      }
+    }
+    let viewport = CGSize(width: 100, height: 100)
+    let projection: (SIMD3<Float>) -> CGPoint = { point in
+      CGPoint(
+        x: 50 + CGFloat(point.x * 50),
+        y: 50 - CGFloat(point.y * 50)
+      )
+    }
+
+    XCTAssertEqual(
+      C14_10SpatialOverlap.identifierScore(left: [1, 2], right: [3, 4]),
+      0
+    )
+    XCTAssertEqual(
+      C14_10SpatialOverlap.score(
+        currentFeatureIds: [1, 2],
+        referenceFeatureIds: [3, 4],
+        referenceFeaturePoints: referencePoints,
+        currentCameraTransform: matrix_identity_float4x4,
+        viewportSize: viewport,
+        project: projection
+      ),
+      1_000_000
+    )
+
+    var oppositeCamera = matrix_identity_float4x4
+    oppositeCamera.columns.0.x = -1
+    oppositeCamera.columns.2.z = -1
+    XCTAssertEqual(
+      C14_10SpatialOverlap.score(
+        currentFeatureIds: [1, 2],
+        referenceFeatureIds: [3, 4],
+        referenceFeaturePoints: referencePoints,
+        currentCameraTransform: oppositeCamera,
+        viewportSize: viewport,
+        project: projection
+      ),
+      0
+    )
   }
 
   func testAutomaticSelectorRejectsNearDuplicatesAndEnforcesCooldown() {
@@ -872,6 +962,7 @@ private struct C14_10RejectedFrameDiagnosticManifestTestView: Decodable {
 
     let capturedAt: Date
     let outcome: Outcome
+    let segmentId: UUID?
   }
 
   let records: [Record]
