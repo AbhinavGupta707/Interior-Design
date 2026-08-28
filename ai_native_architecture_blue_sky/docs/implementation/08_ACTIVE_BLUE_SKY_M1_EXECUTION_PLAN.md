@@ -520,16 +520,20 @@ coordinate segments remain independent; all media and raw outputs remain private
 learned outputs remain proposal-only. With no independent measurements, dimensional and
 representative accuracy remain `NOT RUN`; production routing and canonical promotion are prohibited.
 
-**Proposal-only closeout:** VGGT commercial, VGGT-Omega, MASt3R and DUSt3R abstained at current
-access/licence gates. Exact Apache-2.0 DA3-LARGE-1.1 and DA3-SMALL snapshots completed the full
-16-run physical matrix with zero runtime failures and exact two-run artifacts. Both preserved
-25/25 proposal registration and increased point support, but independent held-out projection had
-zero pixel coverage for both; the black-frame score is failed quality, not appearance evidence.
-The one-view segment still cannot establish connectivity. No learned candidate materially improved
-the retained result. Dimensional/representative accuracy remain `NOT RUN`; production/canonical
-promotion remains prohibited. Direct private human/model visual review was not run because moving
-pixels into the tool channel would violate the ext4-only boundary; fixed local render/hash records
-remain private for accountable follow-up.
+**Independently reviewed proposal-only closeout:** VGGT commercial, VGGT-Omega, MASt3R and DUSt3R
+abstained at current access/licence gates. Review of exact official metadata found that
+DA3-LARGE-1.1's model card says Apache-2.0 while the exact DA3 source registry says CC BY-NC 4.0;
+Large is therefore blocked pending upstream or legal clarification. Its original execution is
+preserved as historical quarantined evidence but excluded from the accepted quality denominator.
+DA3-SMALL is the sole consistently Apache-2.0 candidate. Its corrected 8/8-run, 4/4-repeatability
+matrix exactly reproduced all historical Small artifact sets and stable result fields. It retained
+25/25 finite cameras and increased point support, but geometric connectivity is `NOT RUN` and
+independent held-out projection had zero pixel coverage; the black-frame score is failed quality,
+not appearance evidence. A twice-repeated, no-network local SigLIP2 review classified Small
+multiview as incomplete rather than a coherent room, so visual review is now `RUN` without
+publishing private pixels, paths or identifiers. Small does not materially improve retained C14.9.
+The one-view segment still cannot establish reconstruction connectivity. Dimensional and
+representative accuracy remain `NOT RUN`; production/canonical promotion remains prohibited.
 
 ### C15 - Walkthrough and design video - 4 lanes
 

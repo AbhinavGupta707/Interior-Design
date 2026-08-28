@@ -111,10 +111,10 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
     source_view_count = int(first["sourceViewCount"])
     connectivity = (
         {
-            "basis": "single-joint-multiview-inference",
-            "componentCount": 1,
-            "connectedViewCount": int(first["registeredViewCount"]),
-            "status": "observed-proposal-connectivity",
+            "basis": "joint-inference-batch-is-not-a-geometric-connectivity-measurement",
+            "componentCount": None,
+            "connectedViewCount": None,
+            "status": "NOT RUN",
         }
         if source_view_count >= 2
         else {

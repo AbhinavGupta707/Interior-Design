@@ -25,7 +25,11 @@ def load(name: str) -> ModuleType:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    sys.path.insert(0, str(PACKAGE))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(str(PACKAGE))
     return module
 
 
@@ -162,4 +166,72 @@ def test_repeatable_zero_coverage_is_failed_quality() -> None:
     assert comparison["passed"] is True
     assert comparison["artifactHashesExact"] is True
     assert comparison["heldOutQualityStatus"] == "FAILED_ZERO_COVERAGE"
-    assert comparison["connectivity"]["componentCount"] == 1
+    assert comparison["connectivity"]["componentCount"] is None
+    assert comparison["connectivity"]["connectedViewCount"] is None
+    assert comparison["connectivity"]["status"] == "NOT RUN"
+
+
+def test_runner_registry_excludes_conflicted_large_candidate() -> None:
+    runner = load("run_da3_matrix")
+    registry = PACKAGE / "c14-10-learned-candidates.json"
+    image_id = "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3"
+    candidates, limits = runner.registry_candidates(registry, image_id)
+    assert set(candidates) == {"da3-small"}
+    assert limits["processResolution"] == 392
+    assert limits["taskVramLimitBytes"] == 15 * 1024**3
+    assert limits["retainedOutputLimitBytes"] == 16 * 1024**3
+
+    value = json.loads(registry.read_bytes())
+    large = next(
+        candidate
+        for candidate in value["candidates"]
+        if candidate["candidateId"] == "da3-large-1.1"
+    )
+    assert large["executionState"] == "blocked-after-independent-review"
+    assert "CONFLICTING_OFFICIAL_WEIGHT_LICENCE_METADATA" in large["blockedReasons"]
+
+
+def test_runner_hash_binds_weight_config_and_model_card(tmp_path: Path) -> None:
+    runner = load("run_da3_matrix")
+    model_root = tmp_path / "model"
+    model_root.mkdir()
+    weight = model_root / "model.safetensors"
+    config = model_root / "config.json"
+    readme = model_root / "README.md"
+    weight.write_bytes(b"weight")
+    config.write_bytes(b"config")
+    readme.write_bytes(b"model card")
+    candidate = {
+        "modelConfigSha256": sha256(config),
+        "modelReadmeSha256": sha256(readme),
+        "weight": {
+            "file": weight.name,
+            "sha256": sha256(weight),
+            "sizeBytes": weight.stat().st_size,
+        },
+    }
+    runner.validate_model_root(model_root, candidate)
+    config.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="model config differs"):
+        runner.validate_model_root(model_root, candidate)
+
+
+def test_runner_command_keeps_gpu_and_container_isolation(tmp_path: Path) -> None:
+    runner = load("run_da3_matrix")
+    _, command = runner.docker_command(
+        candidate_id="da3-small",
+        image_id="sha256:" + "a" * 64,
+        input_root=tmp_path / "input",
+        model_root=tmp_path / "model",
+        output_root=tmp_path / "output",
+        run_index=1,
+        source_commit="b" * 40,
+        weight_sha256="c" * 64,
+        process_res=392,
+    )
+    assert "--rm" in command
+    assert command[command.index("--network") + 1] == "none"
+    assert command[command.index("--gpus") + 1] == "device=0"
+    assert command[command.index("--read-only")]
+    assert command[command.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
+    assert command[command.index("--env") + 1] == "HOME=/tmp"

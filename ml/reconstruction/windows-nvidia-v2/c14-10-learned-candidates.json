@@ -85,16 +85,22 @@
         "baseSha256": "d09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b",
         "extraSha256": "ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8"
       },
-      "executionState": "viable-quarantined-evaluation",
-      "imageId": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
+      "executionState": "blocked-after-independent-review",
+      "historicalCountedImageId": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
       "licence": {
-        "id": "Apache-2.0",
-        "localEvaluation": "permitted"
+        "codeId": "Apache-2.0",
+        "localEvaluation": "blocked-pending-upstream-or-legal-clarification",
+        "modelCardId": "Apache-2.0",
+        "sourceRegistryId": "CC-BY-NC-4.0"
       },
       "modelConfigSha256": "744dcaf53859490ed92fc6cb98d68d3daf624b8c54533aaf604bdb53f06321f5",
       "modelReadmeSha256": "2d323de54b5e27e73762486d1b6e509ab8ac32b6fcd6fbf87c17661671a6a1f0",
       "offlinePatchSha256": "ba760cd282f3dddf02f6bf4944f95cec15b8b5914f77b5e499ce472faebd53fa",
-      "role": "proposal-only-multiview-depth-camera-point-cloud",
+      "role": "historical-quarantined-output-not-quality-scored",
+      "blockedReasons": [
+        "CONFLICTING_OFFICIAL_WEIGHT_LICENCE_METADATA",
+        "NONCOMMERCIAL_WEIGHT_TERMS_NOT_ACCEPTED_BY_CHECKPOINT"
+      ],
       "weight": {
         "file": "model.safetensors",
         "repository": "depth-anything/DA3-LARGE-1.1",
@@ -117,8 +123,10 @@
       "executionState": "viable-quarantined-evaluation",
       "imageId": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
       "licence": {
-        "id": "Apache-2.0",
-        "localEvaluation": "permitted"
+        "codeId": "Apache-2.0",
+        "localEvaluation": "permitted",
+        "modelCardId": "Apache-2.0",
+        "sourceRegistryId": "Apache-2.0"
       },
       "modelConfigSha256": "a486e29e82b7ab4a7d4cefc1ea4526cfe2ae438a572c8ca98917cfbcde7447d2",
       "modelReadmeSha256": "0a711be055e4eb5293e31586e3176c09ce12eb2e79593f6b96a41f7fe5b415d0",
@@ -143,7 +151,9 @@
       "network": "none",
       "pidLimit": 512,
       "processResolution": 392,
+      "retainedOutputLimitBytes": 17179869184,
       "runCount": 2,
+      "taskVramLimitBytes": 16106127360,
       "timeoutSeconds": 2700,
       "tmpfsLimitBytes": 2147483648
     },

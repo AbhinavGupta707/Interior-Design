@@ -15,8 +15,9 @@ from pathlib import Path
 from typing import Any
 
 from capture_benchmark import canonical_bytes, private_write, safe_root, sha256_file
+from da3_metrics import load_result
 
-CANDIDATES = {"da3-large-1.1", "da3-small"}
+EXECUTABLE_CANDIDATES = {"da3-small"}
 COHORTS = ("normal", "inclusive")
 TIMEOUT_SECONDS = 45 * 60
 
@@ -36,8 +37,8 @@ def parse_model_roots(values: list[str]) -> dict[str, Path]:
     result: dict[str, Path] = {}
     for value in values:
         candidate, separator, raw_path = value.partition("=")
-        if not separator or candidate not in CANDIDATES or candidate in result:
-            raise ValueError("model roots require one unique frozen candidate=absolute-path")
+        if not separator or candidate not in EXECUTABLE_CANDIDATES or candidate in result:
+            raise ValueError("model roots require one unique executable candidate=absolute-path")
         result[candidate] = private_existing(Path(raw_path), "model root")
     return result
 
@@ -55,7 +56,9 @@ def inspect_image(image_id: str) -> None:
         raise ValueError("Docker image resolution changed the frozen image ID")
 
 
-def registry_candidates(path: Path, image_id: str) -> dict[str, dict[str, Any]]:
+def registry_candidates(
+    path: Path, image_id: str
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     value = json.loads(path.read_bytes())
     if value.get("schemaVersion") != "c14-10-learned-candidate-registry-v1":
         raise ValueError("candidate registry schema is invalid")
@@ -64,14 +67,57 @@ def registry_candidates(path: Path, image_id: str) -> dict[str, dict[str, Any]]:
         for item in value["candidates"]
         if item.get("executionState") == "viable-quarantined-evaluation"
     }
-    if set(candidates) != CANDIDATES:
-        raise ValueError("candidate registry viable set is not frozen")
+    if set(candidates) != EXECUTABLE_CANDIDATES:
+        raise ValueError("candidate registry executable set is not frozen")
     if any(item.get("imageId") != image_id for item in candidates.values()):
         raise ValueError("candidate registry image ID is not frozen")
-    return candidates
+    execution = value.get("constraints", {}).get("execution")
+    required_limits = {
+        "cpuLimit": 12,
+        "gpu": 0,
+        "memoryLimitBytes": 34359738368,
+        "pidLimit": 512,
+        "processResolution": 392,
+        "retainedOutputLimitBytes": 17179869184,
+        "runCount": 2,
+        "taskVramLimitBytes": 16106127360,
+        "timeoutSeconds": TIMEOUT_SECONDS,
+        "tmpfsLimitBytes": 2147483648,
+    }
+    if not isinstance(execution, dict) or any(
+        execution.get(key) != expected for key, expected in required_limits.items()
+    ):
+        raise ValueError("candidate registry execution limits are not frozen")
+    if execution.get("network") != "none":
+        raise ValueError("candidate registry must freeze network none")
+    return candidates, execution
 
 
-def run_logged(command: list[str], log_path: Path, timeout: int) -> int:
+def regular_hash(path: Path, expected: str, label: str) -> None:
+    if path.is_symlink() or not path.is_file() or sha256_file(path) != expected:
+        raise ValueError(f"{label} differs from the frozen registry")
+
+
+def validate_model_root(model_root: Path, candidate: dict[str, Any]) -> None:
+    weight = model_root / candidate["weight"]["file"]
+    regular_hash(weight, candidate["weight"]["sha256"], "model weight")
+    if weight.stat().st_size != candidate["weight"]["sizeBytes"]:
+        raise ValueError("model weight size differs from the frozen registry")
+    regular_hash(model_root / "config.json", candidate["modelConfigSha256"], "model config")
+    regular_hash(model_root / "README.md", candidate["modelReadmeSha256"], "model card")
+
+
+def directory_bytes(path: Path) -> int:
+    total = 0
+    for item in path.rglob("*"):
+        if item.is_symlink():
+            raise ValueError("run output must not contain symlinks")
+        if item.is_file():
+            total += item.stat().st_size
+    return total
+
+
+def run_logged(command: list[str], log_path: Path, timeout: int) -> tuple[int, bool]:
     started = time.monotonic()
     try:
         completed = subprocess.run(
@@ -82,6 +128,7 @@ def run_logged(command: list[str], log_path: Path, timeout: int) -> int:
             timeout=timeout,
         )
         payload = {
+            "argv": command,
             "argvSha256": hashlib.sha256(canonical_bytes(command)).hexdigest(),
             "exitCode": completed.returncode,
             "stderr": completed.stderr,
@@ -90,9 +137,10 @@ def run_logged(command: list[str], log_path: Path, timeout: int) -> int:
             "wallSeconds": time.monotonic() - started,
         }
         private_write(log_path, canonical_bytes(payload) + b"\n")
-        return completed.returncode
+        return completed.returncode, False
     except subprocess.TimeoutExpired as error:
         payload = {
+            "argv": command,
             "argvSha256": hashlib.sha256(canonical_bytes(command)).hexdigest(),
             "exitCode": None,
             "stderr": (error.stderr or "") if isinstance(error.stderr, str) else "",
@@ -101,7 +149,7 @@ def run_logged(command: list[str], log_path: Path, timeout: int) -> int:
             "wallSeconds": time.monotonic() - started,
         }
         private_write(log_path, canonical_bytes(payload) + b"\n")
-        return 124
+        return 124, True
 
 
 def prepare_input(
@@ -146,6 +194,7 @@ def docker_command(
     command = [
         "docker",
         "run",
+        "--rm",
         "--name",
         name,
         "--network",
@@ -165,6 +214,8 @@ def docker_command(
         "512",
         "--user",
         f"{os.getuid()}:{os.getgid()}",
+        "--env",
+        "HOME=/tmp",
         "--tmpfs",
         "/tmp:rw,noexec,nosuid,nodev,size=2g",
         "--mount",
@@ -194,45 +245,100 @@ def docker_command(
     return name, command
 
 
+def failure(
+    *,
+    candidate_id: str,
+    cohort: str,
+    failure_code: str,
+    phase: str,
+    segment_key: str,
+    run_index: int | None = None,
+    exit_code: int | None = None,
+) -> dict[str, Any]:
+    return {
+        "candidateId": candidate_id,
+        "cohort": cohort,
+        "exitCode": exit_code,
+        "failureCode": failure_code,
+        "phase": phase,
+        "runIndex": run_index,
+        "segmentKey": segment_key,
+    }
+
+
 def execute(args: argparse.Namespace) -> None:
     if shutil.which("docker") is None:
         raise RuntimeError("Docker is required")
     image_id = args.image_id
     inspect_image(image_id)
     registry = private_existing(Path(args.registry), "registry")
-    frozen = registry_candidates(registry, image_id)
+    frozen, execution_limits = registry_candidates(registry, image_id)
+    if args.process_res != execution_limits["processResolution"]:
+        raise ValueError("process resolution differs from the frozen registry")
     selection = private_existing(Path(args.selection), "selection")
     export_root = private_existing(Path(args.export_root), "export root")
     model_roots = parse_model_roots(args.model_root)
     selected = tuple(args.candidate)
-    if len(set(selected)) != len(selected) or any(item not in CANDIDATES for item in selected):
-        raise ValueError("candidate list must be unique and frozen")
+    if len(set(selected)) != len(selected) or set(selected) != EXECUTABLE_CANDIDATES:
+        raise ValueError("candidate list must contain the complete frozen executable set")
     if set(model_roots) != set(selected):
-        raise ValueError("each selected candidate requires exactly one model root")
+        raise ValueError("each executable candidate requires exactly one model root")
     output_root = safe_root(Path(args.output_root), create=True)
     if not str(output_root).startswith("/home/"):
         raise ValueError("output root must remain on private WSL ext4")
     selection_value = json.loads(selection.read_bytes())
-    failures: list[dict[str, Any]] = []
+    segment_scope_count = sum(
+        len(selection_value["cohorts"][cohort]["segments"]) for cohort in COHORTS
+    )
+    expected_run_count = len(selected) * segment_scope_count * 2
+    expected_repeatability_scope_count = len(selected) * segment_scope_count
+    run_failures: list[dict[str, Any]] = []
+    repeatability_failures: list[dict[str, Any]] = []
+    successful_run_count = 0
+    completed_repeatability_scope_count = 0
+    max_peak_task_vram_bytes = 0
+    max_retained_output_bytes = 0
     registry_sha = sha256_file(registry)
     for candidate_id in selected:
         candidate = frozen[candidate_id]
         model_root = model_roots[candidate_id]
-        if sha256_file(model_root / "model.safetensors") != candidate["weight"]["sha256"]:
-            raise ValueError("model weight differs from the frozen registry")
+        validate_model_root(model_root, candidate)
         for cohort in COHORTS:
             for segment in selection_value["cohorts"][cohort]["segments"]:
                 segment_id = segment["segmentId"]
                 segment_key = hashlib.sha256(segment_id.encode()).hexdigest()[:12]
                 input_root = output_root / "inputs" / candidate_id / cohort / segment_key
                 input_root.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-                prepare_input(
-                    cohort=cohort,
-                    export_root=export_root,
-                    output=input_root,
-                    segment_id=segment_id,
-                    selection=selection,
-                )
+                try:
+                    prepare_input(
+                        cohort=cohort,
+                        export_root=export_root,
+                        output=input_root,
+                        segment_id=segment_id,
+                        selection=selection,
+                    )
+                except (OSError, subprocess.SubprocessError, ValueError):
+                    for run_index in (1, 2):
+                        run_failures.append(
+                            failure(
+                                candidate_id=candidate_id,
+                                cohort=cohort,
+                                failure_code="INPUT_PREPARATION_FAILED",
+                                phase="input",
+                                run_index=run_index,
+                                segment_key=segment_key,
+                            )
+                        )
+                    repeatability_failures.append(
+                        failure(
+                            candidate_id=candidate_id,
+                            cohort=cohort,
+                            failure_code="RUN_PAIR_INCOMPLETE",
+                            phase="repeatability",
+                            segment_key=segment_key,
+                        )
+                    )
+                    continue
                 run_paths: list[Path] = []
                 for run_index in (1, 2):
                     run_root = (
@@ -255,7 +361,12 @@ def execute(args: argparse.Namespace) -> None:
                         weight_sha256=candidate["weight"]["sha256"],
                         process_res=args.process_res,
                     )
-                    code = run_logged(command, run_root / "runner-log.json", TIMEOUT_SECONDS)
+                    try:
+                        code, timed_out = run_logged(
+                            command, run_root / "runner-log.json", TIMEOUT_SECONDS
+                        )
+                    except OSError:
+                        code, timed_out = 125, False
                     if code != 0:
                         subprocess.run(
                             ["docker", "rm", "--force", name],
@@ -263,49 +374,146 @@ def execute(args: argparse.Namespace) -> None:
                             capture_output=True,
                             text=True,
                         )
-                        failures.append(
-                            {
-                                "candidateId": candidate_id,
-                                "cohort": cohort,
-                                "exitCode": code,
-                                "runIndex": run_index,
-                                "segmentKey": segment_key,
-                            }
+                        run_failures.append(
+                            failure(
+                                candidate_id=candidate_id,
+                                cohort=cohort,
+                                exit_code=code,
+                                failure_code=(
+                                    "RUNTIME_TIMEOUT"
+                                    if timed_out
+                                    else "INFERENCE_OR_RUNTIME_FAILED"
+                                ),
+                                phase="runtime",
+                                run_index=run_index,
+                                segment_key=segment_key,
+                            )
                         )
                         continue
-                    run_paths.append(run_root / "candidate-result.json")
-                if len(run_paths) == 2:
-                    summary_path = (
-                        output_root / "summaries" / candidate_id / cohort / f"{segment_key}.json"
+                    result_path = run_root / "candidate-result.json"
+                    try:
+                        result = load_result(result_path)
+                        if (
+                            result.get("candidateId") != candidate_id
+                            or result.get("sourceCommit") != candidate["code"]["commit"]
+                            or result.get("weightSha256") != candidate["weight"]["sha256"]
+                        ):
+                            raise ValueError("candidate result identity differs from registry")
+                        peak_vram = int(result["peakTaskVramBytes"])
+                        retained_bytes = directory_bytes(run_root)
+                        if peak_vram > execution_limits["taskVramLimitBytes"]:
+                            raise RuntimeError("TASK_VRAM_CEILING_EXCEEDED")
+                        if retained_bytes > execution_limits["retainedOutputLimitBytes"]:
+                            raise RuntimeError("RETAINED_OUTPUT_CEILING_EXCEEDED")
+                    except (KeyError, TypeError, ValueError, RuntimeError) as error:
+                        failure_code = str(error)
+                        if failure_code not in {
+                            "TASK_VRAM_CEILING_EXCEEDED",
+                            "RETAINED_OUTPUT_CEILING_EXCEEDED",
+                        }:
+                            failure_code = "RESULT_VALIDATION_FAILED"
+                        run_failures.append(
+                            failure(
+                                candidate_id=candidate_id,
+                                cohort=cohort,
+                                failure_code=failure_code,
+                                phase="validation",
+                                run_index=run_index,
+                                segment_key=segment_key,
+                            )
+                        )
+                        continue
+                    max_peak_task_vram_bytes = max(max_peak_task_vram_bytes, peak_vram)
+                    max_retained_output_bytes = max(max_retained_output_bytes, retained_bytes)
+                    successful_run_count += 1
+                    run_paths.append(result_path)
+                if len(run_paths) != 2:
+                    repeatability_failures.append(
+                        failure(
+                            candidate_id=candidate_id,
+                            cohort=cohort,
+                            failure_code="RUN_PAIR_INCOMPLETE",
+                            phase="repeatability",
+                            segment_key=segment_key,
+                        )
                     )
-                    summary_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-                    command = [
-                        sys.executable,
-                        str(Path(__file__).with_name("da3_metrics.py")),
-                        "--run-one",
-                        str(run_paths[0]),
-                        "--run-two",
-                        str(run_paths[1]),
-                        "--image-id",
-                        image_id,
-                        "--registry-sha256",
-                        registry_sha,
-                        "--output",
-                        str(summary_path),
-                    ]
-                    subprocess.run(command, check=True, capture_output=True, text=True)
+                    continue
+                summary_path = (
+                    output_root / "summaries" / candidate_id / cohort / f"{segment_key}.json"
+                )
+                summary_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                command = [
+                    sys.executable,
+                    str(Path(__file__).with_name("da3_metrics.py")),
+                    "--run-one",
+                    str(run_paths[0]),
+                    "--run-two",
+                    str(run_paths[1]),
+                    "--image-id",
+                    image_id,
+                    "--registry-sha256",
+                    registry_sha,
+                    "--output",
+                    str(summary_path),
+                ]
+                completed = subprocess.run(command, check=False, capture_output=True, text=True)
+                if completed.returncode != 0:
+                    repeatability_failures.append(
+                        failure(
+                            candidate_id=candidate_id,
+                            cohort=cohort,
+                            exit_code=completed.returncode,
+                            failure_code="REPEATABILITY_VALIDATION_FAILED",
+                            phase="repeatability",
+                            segment_key=segment_key,
+                        )
+                    )
+                    continue
+                summary = json.loads(summary_path.read_bytes())
+                if summary.get("comparison", {}).get("passed") is not True:
+                    repeatability_failures.append(
+                        failure(
+                            candidate_id=candidate_id,
+                            cohort=cohort,
+                            failure_code="REPEATABILITY_MISMATCH",
+                            phase="repeatability",
+                            segment_key=segment_key,
+                        )
+                    )
+                    continue
+                completed_repeatability_scope_count += 1
+    failures = run_failures + repeatability_failures
     record = {
+        "acceptedCandidateIds": list(selected),
         "candidateCount": len(selected),
+        "completedRepeatabilityScopeCount": completed_repeatability_scope_count,
+        "expectedRepeatabilityScopeCount": expected_repeatability_scope_count,
+        "expectedRunCount": expected_run_count,
         "failureCount": len(failures),
         "failures": failures,
         "imageId": image_id,
+        "maxObservedPeakTaskVramBytes": max_peak_task_vram_bytes,
+        "maxObservedRetainedOutputBytes": max_retained_output_bytes,
         "processRes": args.process_res,
         "registrySha256": registry_sha,
-        "schemaVersion": "c14-10-da3-matrix-run-v1",
+        "repeatabilityFailureCount": len(repeatability_failures),
+        "runFailureCount": len(run_failures),
+        "schemaVersion": "c14-10-da3-matrix-run-v2",
         "selectionSha256": sha256_file(selection),
+        "successfulRunCount": successful_run_count,
     }
     private_write(output_root / "matrix-result.json", canonical_bytes(record) + b"\n")
-    print(json.dumps({"failureCount": len(failures), "output": str(output_root)}))
+    print(
+        json.dumps(
+            {
+                "expectedRunCount": expected_run_count,
+                "failureCount": len(failures),
+                "successfulRunCount": successful_run_count,
+            }
+        )
+    )
+    if failures:
+        raise SystemExit(1)
 
 
 def parser() -> argparse.ArgumentParser:

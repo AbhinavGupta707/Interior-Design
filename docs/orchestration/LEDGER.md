@@ -1719,3 +1719,36 @@
   dimensional and representative accuracy are `NOT RUN`.
 - Delivery: GitHub PR #15 targets `main`, is non-draft and remains open/unmerged. The verified
   audit result does not bypass normal review or required repository checks.
+
+### Independent PR #15 review correction - 2026-08-28
+
+- One `gpt-5.6-sol` / `xhigh` session reviewed exact head
+  `abcd90cd72057f037abf999d742195f5d4010207` against base
+  `97352b7027476aa48461aea3788d1e02d3268b56` in the authoritative WSL checkout. No subagent,
+  separate task or worktree was created.
+- Licence correction: exact DA3 source commit
+  `3d835ec1a5802d64a8b8b15f817a1ab54809bfe4` labels DA3-LARGE-1.1 CC BY-NC 4.0 while its exact
+  model card revision labels it Apache-2.0. Large is blocked fail-closed pending explicit upstream
+  or legal clarification. Original weights, runs and inspection artifacts are preserved and
+  quarantined, but excluded from the accepted denominator.
+- Accepted denominator: DA3-SMALL only. Its exact source/weight/config/model-card hashes, fully
+  hashed dependency locks, counted image, CUDA 13.2/native `sm_120` and compute-12.0 runtime were
+  reverified. A corrected matrix completed 8/8 runs and 4/4 repeatability scopes with zero failures;
+  all eight artifact sets and stable result payloads exactly match the retained historical Small
+  evidence. Large was not rerun.
+- Evidence correction: geometric connectivity is `NOT RUN`, not inferred from joint batching.
+  Expected/completed denominators, exact private argv, typed failures and model artifact hashes are
+  now fail-closed in the runner. Small observed 1,553,910,272 bytes peak task VRAM and 6,399,457
+  bytes maximum retained output below frozen 15 GiB and 16 GiB ceilings; only the hard 2 GiB tmpfs
+  scratch upper bound is claimed.
+- Private visual review is now `RUN`: exact local SigLIP2 classification was deterministic across
+  two no-network runs and saw Small multiview as incomplete, not a coherent room. No private pixel,
+  path, identifier or source output was transmitted or published. Small's zero held-out coverage
+  and visual incompleteness support no material improvement over retained C14.9.
+- Production/canonical authority and dimensional/representative accuracy remain unchanged and
+  prohibited/`NOT RUN`. Normal merge requires `Bootstrap contract`, `JavaScript quality and build`,
+  `Python quality and tests`, and `Portable contract and security gates` on the exact final SHA.
+- Independent-review gates: complete `pnpm verify` passed 24/24 lint, typecheck and build tasks,
+  45/45 unit task groups, Ruff, mypy over 120 sources and Python 157 passed/two capability skips;
+  the exact network-disabled DA3 image focused suite passed 8/8; package-manifest integrity passed
+  4/4; and full PR-range plus correction-only `git diff --check` passed.

@@ -162,3 +162,40 @@ accepted C8/C14.9 baseline adapters are out of scope.
   unchanged. Dimensional and representative accuracy remain `NOT RUN`.
 - Delivery is GitHub PR #15 targeting `main`. It was opened non-draft and remains open/unmerged;
   normal repository review and required checks retain merge authority.
+
+## Independent PR review correction - 2026-08-28
+
+- Review authority is one `gpt-5.6-sol` / `xhigh` session in the authoritative WSL checkout at
+  exact original PR head `abcd90cd72057f037abf999d742195f5d4010207`, based on
+  `97352b7027476aa48461aea3788d1e02d3268b56`, with no subagent, separate task or worktree.
+- The counted-candidate and closeout freezes above remain the historical execution record, but
+  their Large licence decision and two-viable-candidate conclusion are superseded. Exact official
+  source metadata labels DA3-LARGE-1.1 `CC-BY-NC-4.0`, while its exact model card labels it
+  `Apache-2.0`. Governance requires fail-closed blocking pending explicit upstream or legal
+  clarification. Large's weights and outputs remain preserved, quarantined and excluded from the
+  accepted quality denominator.
+- DA3-SMALL is the sole executable candidate because its exact source registry, code licence and
+  model card consistently identify Apache-2.0. Its exact source, revision, weight/config/model-card
+  hashes, fully hashed locks, counted image, native `sm_120` probe and compute-12.0 path were
+  independently reverified.
+- The corrected Small-only denominator completed 8/8 candidate/cohort/independent-segment/run
+  scopes and 4/4 repeatability scopes with zero failures. All eight artifact sets and every stable
+  result field exactly match the preserved historical Small runs; Large was not rerun.
+- The reusable runner now requires the complete executable set, hash-binds the weight, config and
+  model card, retains exact argv privately, records typed failures plus expected/completed run and
+  repeatability counts, and checks frozen task-VRAM and retained-output ceilings. The hard tmpfs
+  ceiling remains 2 GiB; scratch peak is not instrumented and is not claimed.
+- Joint inference no longer masquerades as measured geometric connectivity. All four Small
+  connectivity scopes are `NOT RUN`; the two multiview scopes remain `FAILED_ZERO_COVERAGE`.
+- Private model visual review is `RUN`. A twice-repeated local SigLIP2 classification ran in a
+  read-only, non-root, network-disabled container without transmitting or printing private pixels,
+  paths, identifiers or outputs. Small multiview was incomplete rather than a coherent room; its
+  one-view appearance cannot establish reconstruction, scale, completeness or connectivity.
+- The corrected conclusion is only that licence-eligible DA3-SMALL does not materially improve the
+  retained C14.9 envelope. Dimensional/representative accuracy remain `NOT RUN`; production and
+  canonical promotion remain prohibited. Normal merge requires all four named GitHub checks on
+  the exact final reviewed SHA.
+- Independent-review verification passed complete `pnpm verify` (24/24 lint, typecheck and build;
+  45/45 unit task groups; Ruff; mypy over 120 sources; Python 157 passed/two capability skips), the
+  exact network-disabled DA3 image focused suite 8/8, package-manifest integrity 4/4 and both full
+  PR-range and correction-only `git diff --check`.
