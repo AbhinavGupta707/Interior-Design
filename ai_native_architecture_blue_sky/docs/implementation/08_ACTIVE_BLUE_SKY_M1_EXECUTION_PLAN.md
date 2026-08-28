@@ -14,7 +14,9 @@ independently reviewed and corrected. One accepted physical Capture Envelope sub
 the eligible isolated Windows/RTX runtime and repeatability matrix, which independent review accepts
 only for that envelope/host. Dimensional and representative accuracy remain `NOT RUN`, and the
 sparse, fragmented result is incomplete and unsuitable for consumer digital-twin presentation or
-routing. No later checkpoint is opened by this non-accuracy follow-up. Starting from the C14.6
+routing. C14.10 is now open to make native completion depend on connected spatial evidence, add
+cross-language Capture Envelope goldens and close deterministic software resilience gaps without
+promoting reconstruction or claiming new physical acceptance. Starting from the C14.6
 cold-launch/onboarding baseline, an authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -498,6 +500,28 @@ segment/depth/RoomPlan/experimental abstentions. This proves only isolated runti
 and repeatability for that envelope/host. Independent private-output review found the result sparse,
 fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing;
 dimensional/representative accuracy and production promotion remain closed.
+
+### C14.10 — Native capture quality and resilience — single primary session
+
+**Outcome:** ordinary camera-first capture continuously selects a bounded connected set of useful
+RGB keyframes and explains remaining translation, overlap, parallax, feature/trajectory, loop-
+closure, blur/exposure and unresolved-area needs. The direction/height grid remains secondary.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Native capture observability | exact `apps/ios-capture/**` guided-capture engine, model, view and tests | deterministic evidence graph/readiness, bounded automatic selection, homeowner guidance and fail-safe degradation |
+| Shared contract goldens | `packages/contracts/**` capture-envelope fixtures/schema/tests plus native test-resource consumption | common canonical bytes/hashes and adversarial UUID/timestamp/optional/segment/unknown-field verdicts |
+| Resilience and closeout | deterministic native fault seams/tests plus C14.10 contract/evidence/runbook/ledger | relaunch/offline/authority/project/role/rights/resource cases, full gates, Release exclusion and physical handoff |
+
+**Execution:** one exact `gpt-5.6-sol` / `xhigh` primary session is the sole writer and completion
+authority. No worktree, subagent, separate task or parallel lane is authorised. The integration
+vehicle is one non-draft PR left unmerged.
+
+**Gate:** spatial-evidence readiness cannot be satisfied by the coverage grid; immutable evidence,
+consent separation, independent segments, proposal-only reconstruction and existing backend
+authority remain unchanged. Simulator proves only deterministic software/UI policy. Physical fault,
+thermal, storage-exhaustion, camera/ARKit, LiDAR, RoomPlan, dimensional, representative-home and
+reconstruction-quality acceptance remain open until their named handoff is physically executed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 

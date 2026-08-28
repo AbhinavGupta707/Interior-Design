@@ -3,15 +3,15 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/c14-6-native-homeowner-readiness`
+- Integration branch: `codex/c14-10-native-capture-quality-resilience`
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design` in the primary Mac checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4/C14.5/C14.6
-  are complete. No later checkpoint is open. C6/C8/C9 native processing, C4/C5 native confirmation,
-  live provider/deployment, physical-device/hardware and C15/C16 remain closed; C8 v2 remains
-  acceptance-only.
+- Autonomous execution boundary: C0-C14 and corrective C14.1-C14.9 are complete. C14.10 is the
+  single active checkpoint. Production reconstruction promotion, dimensional acceptance, live
+  provider/deployment, new physical-device/hardware acceptance and C15/C16 remain closed; C8 v2
+  remains acceptance-only.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -1646,3 +1646,31 @@
   quality/build tasks plus Ruff, mypy and 157 Python tests with two expected skips; Prettier and
   `git diff --check` passed. Normal merge remains gated on all four named GitHub checks on the final
   reviewed SHA.
+
+## C14.10 — Native capture quality and resilience
+
+### Activation and contract freeze — 2026-08-28
+
+- Authority: user instruction to synchronize the Mac checkout to clean `origin/main`, preserve the
+  existing user-owned root `AGENTS.md` change untouched, use one `gpt-5.6-sol` / `xhigh` session and
+  open one cohesive native capture-quality/resilience checkpoint without subagents or worktrees.
+- Synchronization: fetched `origin/main` and fast-forwarded local `main` to exact
+  `97352b7027476aa48461aea3788d1e02d3268b56`. The root `AGENTS.md` SHA-256 remained byte-identical
+  at `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533` and stays excluded from every
+  checkpoint commit.
+- Integration branch: `codex/c14-10-native-capture-quality-resilience`.
+- Runtime/ownership: one primary `gpt-5.6-sol` / `xhigh` session owns contract freeze, native/shared
+  implementation, fault injection, verification, evidence and PR closeout. No subagent, worktree,
+  separate task or parallel lane is authorised.
+- Frozen contract:
+  `docs/orchestration/checkpoints/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_CONTRACT.md`.
+- Material basis: C14.8 physically accepted 26 RGB/ARKit keyframes and 22/24 observed grid cells,
+  but C14.9 registered only 20/25 unconstrained views and found the retained reconstruction sparse,
+  fragmented and unsuitable for consumer presentation. Direction/height coverage is therefore
+  demoted to secondary guidance; connected spatial evidence drives readiness.
+- Contract/migration boundary: additive backward-compatible `capture-envelope-v1` quality fields and
+  shared language-neutral fixtures only. No migration, OpenAPI/generated client, root manifest or
+  lockfile, platform authority, canonical, C8 production, C9 or reconstruction-promotion change.
+- Initial claim boundary: software/Simulator policy and state evidence only. Physical process faults,
+  thermal/storage behavior, camera/ARKit, depth, LiDAR, RoomPlan, dimensions, representative-home
+  accuracy and reconstruction visual quality remain `NOT RUN` until the recorded physical handoff.
