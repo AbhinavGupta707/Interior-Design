@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04@sha256:f9492f2eea77fbc3d0c14fa8738f35946b42da72917bf5959d284ca39b4f209a AS builder
+
+ARG DA3_SOURCE_COMMIT
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONNOUSERSITE=1 \
+    TORCH_CUDA_ARCH_LIST=12.0
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      ca-certificates patch python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/c14-10/venv
+COPY ml/reconstruction/windows-nvidia-v2/requirements-da3.lock /opt/c14-10/requirements.lock
+ENV PATH=/opt/c14-10/venv/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin
+RUN python -m pip install --no-cache-dir --require-hashes \
+      --index-url https://pypi.org/simple \
+      --extra-index-url https://download.pytorch.org/whl/cu132 \
+      --requirement /opt/c14-10/requirements.lock \
+    && python -m pip check
+COPY ml/reconstruction/windows-nvidia-v2/requirements-da3-extra.lock /opt/c14-10/requirements-extra.lock
+RUN python -m pip install --no-cache-dir --no-deps --require-hashes \
+      --index-url https://pypi.org/simple \
+      --requirement /opt/c14-10/requirements-extra.lock \
+    && python -m pip check
+COPY --from=da3_source / /opt/c14-10/source
+COPY ml/reconstruction/windows-nvidia-v2/da3-offline-inference.patch /opt/c14-10/da3-offline-inference.patch
+RUN cd /opt/c14-10/source \
+    && patch --batch --forward --fuzz=0 --strip=1 \
+      < /opt/c14-10/da3-offline-inference.patch \
+    && mkdir --parents /opt/c14-10/build-provenance \
+    && printf '%s\n' "$DA3_SOURCE_COMMIT" > /opt/c14-10/build-provenance/source-commit.txt \
+    && sha256sum /opt/c14-10/requirements.lock /opt/c14-10/requirements-extra.lock \
+      /opt/c14-10/da3-offline-inference.patch \
+      > /opt/c14-10/build-provenance/input-hashes.sha256 \
+    && python -m pip freeze --all \
+      | LC_ALL=C sort > /opt/c14-10/build-provenance/python-packages.txt \
+    && chmod --recursive a=rX /opt/c14-10/source
+COPY ml/reconstruction/windows-nvidia-v2/sm120_probe.cu /src/sm120_probe.cu
+RUN nvcc --generate-code=arch=compute_120,code=sm_120 \
+      /src/sm120_probe.cu -o /opt/c14-10/sm120-probe \
+    && cuobjdump --list-elf /opt/c14-10/sm120-probe \
+      > /opt/c14-10/build-provenance/project-sm120-probe-elf.txt
+
+FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2
+ARG DA3_SOURCE_COMMIT
+LABEL io.interior-design.c14-10.capability="proposal-only-evaluation" \
+      io.interior-design.c14-10.candidate="depth-anything-3" \
+      io.interior-design.c14-10.source-commit="${DA3_SOURCE_COMMIT}"
+ENV DEBIAN_FRONTEND=noninteractive \
+    HF_HUB_OFFLINE=1 \
+    HF_DATASETS_OFFLINE=1 \
+    PATH=/opt/c14-10/venv/bin:/usr/local/bin:/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    PYTHONPATH=/opt/c14-10/source/src \
+    PYTHONUNBUFFERED=1 \
+    TORCH_HOME=/nonexistent/torch-cache
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends libgomp1 passwd python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/sbin/groupadd --gid 65532 c14 \
+    && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c14
+COPY --from=builder /opt/c14-10 /opt/c14-10
+COPY ml/reconstruction/windows-nvidia-v2/da3_capture.py /opt/c14-10/da3_capture.py
+USER 65532:65532
+WORKDIR /c14/work
+ENTRYPOINT ["python", "/opt/c14-10/da3_capture.py"]

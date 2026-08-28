@@ -1757,3 +1757,122 @@
   including camera/ARKit usefulness, real lifecycle/resource faults, thermal/storage behavior,
   LiDAR/RoomPlan, VoiceOver field use, dimensional evaluation and the C14.9 visual rerun, remain
   explicitly `NOT RUN`.
+
+## C14.10-LR — Proposal-only learned reconstruction audit
+
+### Concurrent checkpoint-number reconciliation — 2026-08-28
+
+- PR #15 and PR #16 both originated from exact base
+  `97352b7027476aa48461aea3788d1e02d3268b56`. PR #16 merged first as native product checkpoint
+  C14.10 while this independent PR #15 review was active. Native capture keeps C14.10; the learned
+  proposal-only audit is labelled C14.10-LR in shared governance without rewriting its immutable
+  filenames, schema names, source commits, original contract or private evidence.
+- The PR #15 branch integrated exact `origin/main` merge
+  `b4c2767bf13dc13b356f3de29ea4d3b2e0411f7e` after correction commit
+  `23ec7cef27616f9864714a467d0815838a84ce44`; neither checkpoint's implementation or evidence was
+  discarded. No later production authority is opened by C14.10-LR.
+
+### Activation and contract freeze - 2026-08-28
+
+- Authority: user instruction from clean synchronized `main` at
+  `97352b7027476aa48461aea3788d1e02d3268b56` after reviewed PR #14 merged.
+- Branch: `codex/c14-10-learned-reconstruction-audit`.
+- Contract: `docs/orchestration/checkpoints/C14_10_LEARNED_RECONSTRUCTION_AUDIT_CONTRACT.md`.
+- Runtime/ownership: one `gpt-5.6-sol` / `high` primary session; no subagent, worktree, separate
+  task or parallel implementation lane. One non-draft PR will be opened and left unmerged.
+- Private authority: the already verified physical Capture Envelope at canonical SHA-256
+  `093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`; exact paths, source names,
+  raw media, outputs, logs and machine records remain only on restrictive WSL ext4 storage.
+- Scope: audit current official learned-reconstruction implementations, licences, model weights,
+  dependency reproducibility and RTX 5080 support; freeze a small viable set led by VGGT; run the
+  same immutable per-segment/cohort comparison against retained COLMAP, ARKit-prior and gsplat;
+  implement only reusable isolated evaluation support justified by the audit.
+- Frozen boundaries: segments are never silently joined; all learned output is proposal-only;
+  production routing, canonical geometry, C5/homeowner authority, migrations and generated clients
+  are unchanged. With no independent measurements, dimensional and representative accuracy are
+  `NOT RUN` and production promotion is prohibited.
+
+### Candidate and execution freeze - 2026-08-28
+
+- Upstream gate: VGGT commercial abstained at gated-weight/custom-licence acceptance; VGGT-Omega,
+  MASt3R and DUSt3R abstained at non-commercial licence gates. No blocked candidate was executed or
+  treated as a negative quality observation.
+- Executable set: Apache-2.0 DA3-LARGE-1.1 and DA3-SMALL at official source
+  '3d835ec1a5802d64a8b8b15f817a1ab54809bfe4', exact weight revisions and locally verified
+  safetensor hashes. The frozen registry owns the complete source/licence/weight record.
+- Reproducibility/runtime: fully hashed base lock
+  'd09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b', additive API-import lock
+  'ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8', and counted image
+  'sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3'.
+  Native 'sm_120', PyTorch compute 12.0 and offline generated-fixture inference passed for both
+  exact local model snapshots.
+- Counted boundary: process resolution 392, seed zero, two fresh runs, 500,000 retained-point cap,
+  GPU 0, network none, read-only root, non-root UID/GID, all capabilities dropped,
+  no-new-privileges, 12 CPUs, 32 GiB RAM, 512 PIDs, 2 GiB no-exec tmpfs and 45-minute timeout.
+  The private frozen selection reproduces 25-view and one-view independent segments for both
+  cohorts; identifiers and raw artifacts remain outside Git.
+
+### Physical comparison and closeout - 2026-08-28
+
+- Matrix: all 16 learned candidate/cohort/segment/run scopes completed without runtime, isolation
+  or resource failure; all eight two-run scopes have exact artifact hashes and zero metric deltas.
+  Normal/inclusive equality reflects the same eligible frames, not a cohort or segment join.
+- Result: both DA3 candidates retained 25/25 finite proposal cameras and denser point support, but
+  independently aligned held-out projection covered zero pixels. The 5.548452293042459 dB
+  black-frame value is `FAILED_ZERO_COVERAGE`, not appearance evidence. The one-view segment has
+  no connectivity or held-out result. No learned candidate materially improves retained C14.9.
+- Resources: DA3-SMALL peaked at 2,857,381,888 bytes RSS, 1,553,910,272 bytes task VRAM and
+  3.2631042689899914 seconds; DA3-LARGE-1.1 peaked at 4,071,612,416 bytes RSS,
+  6,531,359,744 bytes task VRAM and 6.184433551010443 seconds. No frozen ceiling was exceeded.
+- Private inspection: seven deterministic three-view render/hash sets remain on restrictive WSL
+  ext4. Automated occupancy is a density proxy only. Direct human/model visual inspection is
+  `NOT RUN` because the protected path was unavailable to the desktop viewer and streaming pixels
+  into the tool channel would violate the private-data contract; no bypass was attempted.
+- Reproducibility correction: the exact counted image remains
+  `sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3`, containing adapter SHA-256
+  `7253285f65517bf2064d501f479dae29001a83f764c6017f02cf757c3c7241b5`. The submitted adapter SHA-256
+  `6d5ca1478b5f027174374204012a904edcaa7fd1cd879d77bcc35b3023a2f3ce` differs only by `mypy`
+  annotations. Post-run metrics classify zero coverage explicitly and do not replace raw evidence.
+- Verification: complete `pnpm verify` passed formatting, 24/24 lint, 24/24 typecheck, 45/45 unit
+  tasks, 24/24 builds, Ruff, mypy over 120 source files and Python 157/157 with two expected skips.
+  The locked optional environment passed 15/15 focused C14.9/C14.10 tests; the minimal repository
+  environment passes 10 baseline tests and one explicit optional-module skip.
+- Durable redacted evidence:
+  `docs/evaluation/reconstruction/C14_10_LEARNED_RECONSTRUCTION_AUDIT_2026-08-28.md`. Contract and
+  migration impact is none; production/canonical/homeowner authority remains unchanged;
+  dimensional and representative accuracy are `NOT RUN`.
+- Delivery: GitHub PR #15 targets `main`, is non-draft and remains open/unmerged. The verified
+  audit result does not bypass normal review or required repository checks.
+
+### Independent PR #15 review correction - 2026-08-28
+
+- One `gpt-5.6-sol` / `xhigh` session reviewed exact head
+  `abcd90cd72057f037abf999d742195f5d4010207` against base
+  `97352b7027476aa48461aea3788d1e02d3268b56` in the authoritative WSL checkout. No subagent,
+  separate task or worktree was created.
+- Licence correction: exact DA3 source commit
+  `3d835ec1a5802d64a8b8b15f817a1ab54809bfe4` labels DA3-LARGE-1.1 CC BY-NC 4.0 while its exact
+  model card revision labels it Apache-2.0. Large is blocked fail-closed pending explicit upstream
+  or legal clarification. Original weights, runs and inspection artifacts are preserved and
+  quarantined, but excluded from the accepted denominator.
+- Accepted denominator: DA3-SMALL only. Its exact source/weight/config/model-card hashes, fully
+  hashed dependency locks, counted image, CUDA 13.2/native `sm_120` and compute-12.0 runtime were
+  reverified. A corrected matrix completed 8/8 runs and 4/4 repeatability scopes with zero failures;
+  all eight artifact sets and stable result payloads exactly match the retained historical Small
+  evidence. Large was not rerun.
+- Evidence correction: geometric connectivity is `NOT RUN`, not inferred from joint batching.
+  Expected/completed denominators, exact private argv, typed failures and model artifact hashes are
+  now fail-closed in the runner. Small observed 1,553,910,272 bytes peak task VRAM and 6,399,457
+  bytes maximum retained output below frozen 15 GiB and 16 GiB ceilings; only the hard 2 GiB tmpfs
+  scratch upper bound is claimed.
+- Private visual review is now `RUN`: exact local SigLIP2 classification was deterministic across
+  two no-network runs and saw Small multiview as incomplete, not a coherent room. No private pixel,
+  path, identifier or source output was transmitted or published. Small's zero held-out coverage
+  and visual incompleteness support no material improvement over retained C14.9.
+- Production/canonical authority and dimensional/representative accuracy remain unchanged and
+  prohibited/`NOT RUN`. Normal merge requires `Bootstrap contract`, `JavaScript quality and build`,
+  `Python quality and tests`, and `Portable contract and security gates` on the exact final SHA.
+- Independent-review gates: complete `pnpm verify` passed 24/24 lint, typecheck and build tasks,
+  45/45 unit task groups, Ruff, mypy over 120 sources and Python 157 passed/two capability skips;
+  the exact network-disabled DA3 image focused suite passed 8/8; package-manifest integrity passed
+  4/4; and full PR-range plus correction-only `git diff --check` passed.

@@ -1,0 +1,18 @@
+diff --git a/src/depth_anything_3/api.py b/src/depth_anything_3/api.py
+index db25f3d..3811cd1 100644
+--- a/src/depth_anything_3/api.py
++++ b/src/depth_anything_3/api.py
+@@ -24 +24,0 @@ from PIL import Image
+-from depth_anything_3.utils.export import export
+@@ -418,0 +417,2 @@ class DepthAnything3(nn.Module, PyTorchModelHubMixin):
++        from depth_anything_3.utils.export import export
++
+diff --git a/src/depth_anything_3/utils/pose_align.py b/src/depth_anything_3/utils/pose_align.py
+index c74e909..641fb49 100644
+--- a/src/depth_anything_3/utils/pose_align.py
++++ b/src/depth_anything_3/utils/pose_align.py
+@@ -17 +17,0 @@
+-from evo.core.trajectory import PosePath3D
+@@ -70,0 +69,2 @@ def _poses_from_ext(ext_ref, ext_est):
++    from evo.core.trajectory import PosePath3D
++

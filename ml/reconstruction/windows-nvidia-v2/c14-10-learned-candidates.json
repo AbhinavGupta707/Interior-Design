@@ -1,0 +1,165 @@
+{
+  "candidates": [
+    {
+      "candidateId": "vggt-1b-commercial",
+      "code": {
+        "commit": "a288dd0f14786c93483e45524328726ab7b1b4ce",
+        "repository": "https://github.com/facebookresearch/vggt.git"
+      },
+      "executionState": "blocked",
+      "licence": {
+        "fileSha256": "b94e46746792d1adfa0ebdbccada5d4576d244ae230be9de8a46b5868fff001b",
+        "id": "VGGT-License-v1",
+        "localEvaluation": "requires-application-and-explicit-agreement"
+      },
+      "role": "proposal-only-cameras-depth-point-map",
+      "weight": {
+        "repository": "facebook/VGGT-1B-Commercial",
+        "revision": "ebb29a532abe92960eeb6903a5530f16990ef4ab",
+        "sha256": null
+      },
+      "blockedReasons": ["GATED_WEIGHT_ACCESS", "LICENCE_AGREEMENT_NOT_ACCEPTED_BY_CHECKPOINT"]
+    },
+    {
+      "candidateId": "vggt-omega-1.4b",
+      "code": {
+        "commit": "282ec70363edeff59424bf43731658092fba3d37",
+        "repository": "https://github.com/facebookresearch/vggt-omega.git"
+      },
+      "executionState": "blocked",
+      "licence": {
+        "fileSha256": "27696e51930daf5d24222e2d9d65339f529153e853de0e2eb457133a1a6f5239",
+        "id": "FAIR-Noncommercial-Research-License",
+        "localEvaluation": "non-commercial-research-only"
+      },
+      "role": "proposal-only-cameras-depth-point-map",
+      "weight": {
+        "repository": "facebook/VGGT-Omega-1.4B",
+        "revision": null,
+        "sha256": null
+      },
+      "blockedReasons": ["NONCOMMERCIAL_LICENCE", "GATED_WEIGHT_ACCESS"]
+    },
+    {
+      "candidateId": "mast3r-vitlarge-512",
+      "code": {
+        "commit": "f5209afc300cec36239a7ac992263f36847bbba0",
+        "repository": "https://github.com/naver/mast3r.git",
+        "submodules": {
+          "dust3r": "3cc8c88c413bb9e34c41db0e0eef99c2ee010b12"
+        }
+      },
+      "executionState": "blocked",
+      "licence": {
+        "fileSha256": "949b1a3b437ed0b38ce51dae24babcca3395c9adae55163311ba84d44766b8ec",
+        "id": "CC-BY-NC-SA-4.0",
+        "noticeSha256": "c8d29cd209e95dceaffbef989bde3e635870ac0e14f9593b26685a812226a20f"
+      },
+      "role": "proposal-only-matching-point-map",
+      "blockedReasons": [
+        "NONCOMMERCIAL_LICENCE",
+        "TRAINING_DATASET_RESTRICTIONS_REQUIRE_SEPARATE_REVIEW"
+      ]
+    },
+    {
+      "candidateId": "dust3r-vitlarge-512",
+      "code": {
+        "commit": "4c24a6ebf04809f2cfe59915e51779c8984aaa40",
+        "repository": "https://github.com/naver/dust3r.git"
+      },
+      "executionState": "blocked",
+      "licence": {
+        "id": "CC-BY-NC-SA-4.0"
+      },
+      "role": "proposal-only-pairwise-3d-reconstruction",
+      "blockedReasons": ["NONCOMMERCIAL_LICENCE", "NO_JUSTIFIED_ADVANTAGE_AFTER_MAST3R_GATE"]
+    },
+    {
+      "candidateId": "da3-large-1.1",
+      "code": {
+        "commit": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+        "licenceSha256": "78446e29c48900cda82620a8df183cca61f0a595e05a49d0401a5fd604dd1870",
+        "repository": "https://github.com/ByteDance-Seed/Depth-Anything-3.git"
+      },
+      "dependencyLocks": {
+        "baseSha256": "d09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b",
+        "extraSha256": "ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8"
+      },
+      "executionState": "blocked-after-independent-review",
+      "historicalCountedImageId": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
+      "licence": {
+        "codeId": "Apache-2.0",
+        "localEvaluation": "blocked-pending-upstream-or-legal-clarification",
+        "modelCardId": "Apache-2.0",
+        "sourceRegistryId": "CC-BY-NC-4.0"
+      },
+      "modelConfigSha256": "744dcaf53859490ed92fc6cb98d68d3daf624b8c54533aaf604bdb53f06321f5",
+      "modelReadmeSha256": "2d323de54b5e27e73762486d1b6e509ab8ac32b6fcd6fbf87c17661671a6a1f0",
+      "offlinePatchSha256": "ba760cd282f3dddf02f6bf4944f95cec15b8b5914f77b5e499ce472faebd53fa",
+      "role": "historical-quarantined-output-not-quality-scored",
+      "blockedReasons": [
+        "CONFLICTING_OFFICIAL_WEIGHT_LICENCE_METADATA",
+        "NONCOMMERCIAL_WEIGHT_TERMS_NOT_ACCEPTED_BY_CHECKPOINT"
+      ],
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "depth-anything/DA3-LARGE-1.1",
+        "revision": "0e109ae307c5982f319a67cf6f9f99ccdc0ec97c",
+        "sha256": "739905c423cf0d6ccaf9e61a8401d82ba1ac32d7f4d3ee6dca8f92b377633f64",
+        "sizeBytes": 1643843860
+      }
+    },
+    {
+      "candidateId": "da3-small",
+      "code": {
+        "commit": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+        "licenceSha256": "78446e29c48900cda82620a8df183cca61f0a595e05a49d0401a5fd604dd1870",
+        "repository": "https://github.com/ByteDance-Seed/Depth-Anything-3.git"
+      },
+      "dependencyLocks": {
+        "baseSha256": "d09ec9260741c2fb248eaf8775d09104b038bb8920ff1a9c099e9a1fb03e684b",
+        "extraSha256": "ca324ccc2fdc24d6894ddfd72880b5740949d8fdf527cf9a46d56c48ec4cc5b8"
+      },
+      "executionState": "viable-quarantined-evaluation",
+      "imageId": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
+      "licence": {
+        "codeId": "Apache-2.0",
+        "localEvaluation": "permitted",
+        "modelCardId": "Apache-2.0",
+        "sourceRegistryId": "Apache-2.0"
+      },
+      "modelConfigSha256": "a486e29e82b7ab4a7d4cefc1ea4526cfe2ae438a572c8ca98917cfbcde7447d2",
+      "modelReadmeSha256": "0a711be055e4eb5293e31586e3176c09ce12eb2e79593f6b96a41f7fe5b415d0",
+      "offlinePatchSha256": "ba760cd282f3dddf02f6bf4944f95cec15b8b5914f77b5e499ce472faebd53fa",
+      "role": "proposal-only-multiview-depth-camera-point-cloud-resource-control",
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "depth-anything/DA3-SMALL",
+        "revision": "e08cab65ca0ec38e7826075418411ab90cab4da3",
+        "sha256": "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf",
+        "sizeBytes": 137248940
+      }
+    }
+  ],
+  "constraints": {
+    "coordinateSegments": "independent-never-joined",
+    "dimensionalAccuracy": "NOT RUN",
+    "execution": {
+      "cpuLimit": 12,
+      "gpu": 0,
+      "memoryLimitBytes": 34359738368,
+      "network": "none",
+      "pidLimit": 512,
+      "processResolution": 392,
+      "retainedOutputLimitBytes": 17179869184,
+      "runCount": 2,
+      "taskVramLimitBytes": 16106127360,
+      "timeoutSeconds": 2700,
+      "tmpfsLimitBytes": 2147483648
+    },
+    "privateInputsAndOutputs": "wsl-ext4-only",
+    "productionPromotion": "prohibited",
+    "representativeAccuracy": "NOT RUN"
+  },
+  "schemaVersion": "c14-10-learned-candidate-registry-v1"
+}

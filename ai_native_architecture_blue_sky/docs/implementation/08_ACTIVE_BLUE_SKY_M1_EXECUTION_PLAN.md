@@ -547,6 +547,47 @@ exclusion passed. These are software/compile results only. See
 `docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`
 and `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
 
+### C14.10-LR — Proposal-only learned reconstruction audit — concurrent R&D record
+
+**Concurrent-number reconciliation:** PR #15 opened this audit as C14.10 from the same
+predecessor before the distinct native C14.10 product checkpoint in PR #16 merged. Native capture
+retains the authoritative C14.10 product number. This audit is recorded as C14.10-LR in shared
+governance while its frozen filenames, schemas and original contract identity remain unchanged.
+
+**Outcome:** evaluate a small, licence-permitted and exactly reproducible set of modern learned
+reconstruction candidates against the retained C14.9 physical Capture Envelope baselines, without
+changing production routing, canonical geometry or homeowner authority.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Upstream and licence audit | official candidate sources/model cards plus isolated private source/weight roots | exact source, licence, weight, dependency, image and RTX 5080 gates; typed abstention for every blocked candidate |
+| Segment-safe physical evaluation | additive `ml/reconstruction/windows-nvidia-v2/**` audit support and private WSL outputs | same immutable per-segment inputs, two fresh runs, registration/connectivity/completeness, held-out appearance, repeatability and resource evidence |
+| Integrated evidence and delivery | C14.10 contract/evaluation/ledger and focused tests | private visual review, honest material-improvement verdict, repository/GPU gates and one non-draft unmerged PR |
+
+**Execution:** one exact `gpt-5.6-sol` / `high` primary session is the sole writer and completion
+authority. No worktree, subagent, separate task or parallel implementation lane is authorised.
+
+**Gate:** candidate sources, dependencies and weights are exact-hash pinned before counted use;
+incompatible or licence-blocked candidates abstain without blocking viable candidates; the two
+coordinate segments remain independent; all media and raw outputs remain private on WSL ext4;
+learned outputs remain proposal-only. With no independent measurements, dimensional and
+representative accuracy remain `NOT RUN`; production routing and canonical promotion are prohibited.
+
+**Independently reviewed proposal-only closeout:** VGGT commercial, VGGT-Omega, MASt3R and DUSt3R
+abstained at current access/licence gates. Review of exact official metadata found that
+DA3-LARGE-1.1's model card says Apache-2.0 while the exact DA3 source registry says CC BY-NC 4.0;
+Large is therefore blocked pending upstream or legal clarification. Its original execution is
+preserved as historical quarantined evidence but excluded from the accepted quality denominator.
+DA3-SMALL is the sole consistently Apache-2.0 candidate. Its corrected 8/8-run, 4/4-repeatability
+matrix exactly reproduced all historical Small artifact sets and stable result fields. It retained
+25/25 finite cameras and increased point support, but geometric connectivity is `NOT RUN` and
+independent held-out projection had zero pixel coverage; the black-frame score is failed quality,
+not appearance evidence. A twice-repeated, no-network local SigLIP2 review classified Small
+multiview as incomplete rather than a coherent room, so visual review is now `RUN` without
+publishing private pixels, paths or identifiers. Small does not materially improve retained C14.9.
+The one-view segment still cannot establish reconstruction connectivity. Dimensional and
+representative accuracy remain `NOT RUN`; production/canonical promotion remains prohibited.
+
 ### C15 — Walkthrough and design video — 4 lanes
 
 **Outcome:** users can generate collision-checked deterministic camera-path videos and separately labelled AI-enhanced cinematic versions with captions/narration.
