@@ -6,6 +6,34 @@ final class C14_6HomeownerReadinessUITests: XCTestCase {
   }
 
   @MainActor
+  func testProjectCanBeReopenedAfterNavigationBack() {
+    let app = launch(scenario: "cold-launch", clearsRecovery: true)
+
+    let signIn = app.buttons["c14_6.sign-in"]
+    XCTAssertTrue(signIn.waitForExistence(timeout: 10))
+    signIn.tap()
+
+    let project = app.buttons.matching(
+      NSPredicate(format: "label CONTAINS %@", "Riverside terrace")
+    ).firstMatch
+    XCTAssertTrue(project.waitForExistence(timeout: 10))
+    project.tap()
+    XCTAssertTrue(app.staticTexts["Homeowner hub"].waitForExistence(timeout: 5))
+
+    let back = app.navigationBars["Riverside terrace"].buttons["Home Design Studio"]
+    XCTAssertTrue(back.waitForExistence(timeout: 5))
+    back.tap()
+    XCTAssertTrue(app.navigationBars["Home Design Studio"].waitForExistence(timeout: 5))
+
+    let reopenedProject = app.buttons.matching(
+      NSPredicate(format: "label CONTAINS %@", "Riverside terrace")
+    ).firstMatch
+    XCTAssertTrue(reopenedProject.waitForExistence(timeout: 5))
+    reopenedProject.tap()
+    XCTAssertTrue(app.staticTexts["Homeowner hub"].waitForExistence(timeout: 5))
+  }
+
+  @MainActor
   func testColdLaunchProgressesToNativeProposalReadiness() {
     let app = launch(scenario: "cold-launch", clearsRecovery: true)
 
