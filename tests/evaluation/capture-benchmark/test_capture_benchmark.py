@@ -63,6 +63,25 @@ def test_fixture_verifies_and_tampering_fails(tmp_path: Path) -> None:
         module.verify_export(root)
 
 
+def test_physical_export_allows_only_an_explicit_runtime_root_alias(tmp_path: Path) -> None:
+    module = load_module()
+    root = make_fixture(tmp_path)
+    manifest_path = root / "export-manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["acceptedAt"] = "2026-08-28T00:00:00Z"
+    manifest["inputClass"] = "accepted-physical-capture"
+    write_canonical(manifest_path, manifest)
+    runtime_root = root.rename(tmp_path / "export")
+
+    with pytest.raises(ValueError, match="physical export root"):
+        module.verify_export(runtime_root)
+    with pytest.raises(ValueError, match="physical export root"):
+        module.verify_export(runtime_root, physical_root_alias="other")
+
+    verified, _ = module.verify_export(runtime_root, physical_root_alias="export")
+    assert verified["envelopeSha256"] == manifest["envelopeSha256"]
+
+
 def test_room_story_remains_optional_in_frozen_envelope_schema(tmp_path: Path) -> None:
     module = load_module()
     root = make_fixture(tmp_path)

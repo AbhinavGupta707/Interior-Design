@@ -132,3 +132,31 @@ physical sequence is
 `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`. Real Capture Envelope transfer,
 physical-device compatibility, representative accuracy, production routing, canonical mutation and
 promotion remain `NOT RUN` / prohibited.
+
+## Physical non-accuracy follow-up - 2026-08-28
+
+After PR #13 merged, the private physical envelope completed the eligible Windows/RTX matrix under
+the frozen isolation and resource ceilings. All 12 required fragments were supplied with zero
+missing, partial, failed, isolation-violating or resource-ceiling runs, and all six repeatability
+scopes passed. Depth/Open3D, RoomPlan and experimental candidates abstained honestly where their
+input/licence/dependency/image gates were not met. The immutable machine record retains physical
+compatibility `requires-review`; independent review accepts only this one envelope's export,
+isolated runtime and repeatability evidence. Dimensional and representative accuracy remain
+`NOT RUN`; production promotion is prohibited. Independent review additionally found the retained reconstruction sparse,
+fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing; runtime
+and repeatability success is not visual-quality acceptance. Redacted evidence is in
+`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.
+
+## PR #14 independent review closeout - 2026-08-28
+
+The exact submitted head `80d859860641fdb8f900a60e5a8c01b5a9ef748b` was reviewed against
+exact base `30b0417eb2249038f8f686a5337fdca0d47e3028` in the authoritative checkout. One
+`gpt-5.6-sol` / `xhigh` primary retained correction, verification, merge and cleanup authority;
+one bounded read-only `gpt-5.6-terra` / `high` correctness reviewer was used, with no task or
+worktree.
+
+Correction commit `7663ef5eaa92c2b90885474c71c887078ce11fb0` reconciles the durable
+record with the complete retained private evidence and explicit visual-quality verdict. Focused
+tests, complete repository verification, Prettier and `git diff --check` pass. Normal merge remains
+gated on all four named GitHub checks on the final reviewed SHA. Private export and raw benchmark
+outputs remain preserved and unpublished.

@@ -32,7 +32,11 @@ def main() -> None:
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     export_root = Path(args.export_root)
-    export_manifest, envelope, selection = load_selection(export_root, Path(args.selection))
+    export_manifest, envelope, selection = load_selection(
+        export_root,
+        Path(args.selection),
+        physical_root_alias="export",
+    )
     output = Path(args.output)
     if output.is_symlink() or not output.is_dir() or any(output.iterdir()):
         raise ValueError("output must be a new empty mounted directory")

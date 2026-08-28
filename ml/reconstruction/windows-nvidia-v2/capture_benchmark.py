@@ -960,7 +960,9 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         raise ValueError("quality denominators disagree with immutable evidence")
 
 
-def verify_export(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+def verify_export(
+    root: Path, *, physical_root_alias: str | None = None
+) -> tuple[dict[str, Any], dict[str, Any]]:
     root = safe_root(root)
     manifest_path = root / "export-manifest.json"
     envelope_path = root / "envelope.json"
@@ -1022,8 +1024,11 @@ def verify_export(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     envelope_sha = sha256_bytes(envelope_bytes)
     if manifest.get("envelopeSha256") != envelope_sha:
         raise ValueError("canonical envelope hash mismatch")
+    physical_root_name_is_valid = root.name == envelope_sha or (
+        physical_root_alias is not None and root.name == physical_root_alias
+    )
     if manifest.get("inputClass") == "accepted-physical-capture" and (
-        root.name != envelope_sha or manifest.get("acceptedAt") is None
+        not physical_root_name_is_valid or manifest.get("acceptedAt") is None
     ):
         raise ValueError("physical export root or acceptance record is invalid")
     if manifest.get("rights") != envelope.get("rights"):
@@ -1283,9 +1288,14 @@ def write_selection(args: argparse.Namespace) -> None:
 
 
 def load_selection(
-    export_root: Path, selection_path: Path
+    export_root: Path,
+    selection_path: Path,
+    *,
+    physical_root_alias: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    manifest, envelope = verify_export(export_root)
+    manifest, envelope = verify_export(
+        export_root, physical_root_alias=physical_root_alias
+    )
     if selection_path.is_symlink() or not selection_path.is_file():
         raise ValueError("selection must be a regular file")
     selection_bytes = selection_path.read_bytes()
