@@ -4,7 +4,8 @@
 
 **NOT RUN — C14.10 has only software, compile and Simulator evidence.**
 
-Run this handoff against the exact final non-draft C14.10 PR head. Keep raw property media,
+Run this handoff against the exact final reviewed C14.10 PR #16 head or its resulting merge commit.
+Neither merge nor successful Simulator fixtures fill any row below. Keep raw property media,
 addresses, people, device identifiers, signing material, credentials, signed URLs and detailed logs
 in approved restricted storage. Git may contain only privacy-minimised aggregates and non-identifying
 hashes.

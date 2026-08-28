@@ -9,7 +9,9 @@
 - Runtime and ownership: one `gpt-5.6-sol` / `xhigh` primary session is the sole planner,
   implementation writer, reviewer and completion authority. No subagent, worktree, separate task
   or parallel implementation lane is authorised.
-- Delivery: one non-draft PR targeting `main`, left unmerged.
+- Delivery: one non-draft PR targeting `main`. The later user-directed independent review supersedes
+  only the original leave-unmerged disposition and authorises normal merge after all four named
+  GitHub checks pass on the exact final reviewed head.
 - Outcome: camera-first capture completion is driven by retained, connected spatial evidence rather
   than the direction/height coverage grid. C14.10 also closes the inexpensive C14.8 shared-contract
   fixture and deterministic software fault-injection gaps without changing backend authority.
@@ -110,8 +112,9 @@ policy/state evidence only.
    formatting and `git diff --check` pass on the final reviewed SHA.
 6. The final evidence records exact commands, counts, hashes, hardware/provider truth, limitations,
    residual risks and the remaining physical handoff.
-7. Push the final branch and open one non-draft PR. Do not merge it. All named GitHub checks must run
-   on the exact final PR head; earlier green results do not transfer.
+7. Push the final branch and maintain one non-draft PR. All four named GitHub checks must run on the
+   exact final PR head; earlier green results do not transfer. Normal merge is authorised only after
+   that exact-head result.
 
 ## Physical and professional non-claims
 
@@ -123,10 +126,12 @@ signals, include an irregular or multi-zone room, exercise a real process termin
 expired-authority case where safe, and then rerun the proposal-only visual benchmark. Separately
 rights-cleared ground truth remains mandatory for any dimensional claim.
 
-## Local implementation closeout — 2026-08-28
+## Local implementation and independent-review closeout — 2026-08-28
 
-- Implementation head: `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`; contract freeze `e805c6e`;
-  synchronized base `97352b7027476aa48461aea3788d1e02d3268b56`.
+- Original implementation: `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`; contract freeze
+  `e805c6e`; exact PR #16 base `97352b7027476aa48461aea3788d1e02d3268b56`; frozen review head
+  `28316d49316b07731e5101cfe37c9681add69d4d`; reviewed source correction
+  `733b137d532c1f39d78350f290e0730316da4760`.
 - The continuous selector, per-independent-segment readiness, secondary grid, multi-zone coverage,
   retained-frame revalidation and bounded resource degradation satisfy the frozen software policy.
 - Swift and TypeScript consume one shared 5,383-byte canonical fixture with SHA-256
@@ -135,6 +140,11 @@ rights-cleared ground truth remains mandatory for any dimensional claim.
 - Deterministic Debug/test seams and existing protected-journal/transfer/authority tests cover the
   realistically simulatable relaunch, offline, expiry, scope/role/rights and resource cases. Release
   fixture/injector exclusion passed.
+- Independent review corrected persisted automatic cadence and final-candidate skip behavior,
+  actual-cell accounting, real resource-signal wiring/cleanup, envelope-wide readiness presentation,
+  fixture-origin claim inflation, field-aware Swift/TypeScript canonical parity and exhaustive typed
+  lifecycle-checkpoint coverage. Grid observations remain secondary and Simulator fixtures remain
+  unable to create physical claims.
 - Local native, shared-contract, security, C14, generated-drift, dependency/API-seam, build/analyze
   and full repository gates passed. Exact counts and limitations are frozen in
   `docs/evaluation/homeowner-journey/C14_10_NATIVE_CAPTURE_QUALITY_RESILIENCE_ACCEPTANCE_2026-08-28.md`.
@@ -143,5 +153,5 @@ rights-cleared ground truth remains mandatory for any dimensional claim.
 - Physical camera/ARKit usefulness, real process and resource faults, optional LiDAR/RoomPlan,
   dimensions and visual reconstruction quality remain `NOT RUN` under
   `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
-- Delivery is not complete until one non-draft PR is open and every named GitHub check passes on its
-  exact final head. The PR must remain unmerged.
+- Exact-head CI and normal-merge disposition are retained by PR #16. Physical acceptance remains
+  separately `NOT RUN` and cannot be inferred from merge, Simulator, fixtures or compile evidence.

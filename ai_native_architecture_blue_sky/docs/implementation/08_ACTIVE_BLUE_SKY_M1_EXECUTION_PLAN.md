@@ -17,8 +17,9 @@ sparse, fragmented result is incomplete and unsuitable for consumer digital-twin
 routing. C14.10 is software-complete locally: native completion now depends on connected spatial
 evidence, Swift and TypeScript consume the same Capture Envelope goldens, and deterministic
 software resilience gaps are covered without promoting reconstruction or claiming new physical
-acceptance. The exact non-draft PR, named checks and recorded physical handoff remain the closeout
-boundary. Starting from the C14.6
+acceptance. PR #16 has been independently reviewed and materially corrected on its exact clean-main
+base; normal merge is authorised only after all four named checks pass on the exact final head. The
+recorded physical handoff remains `NOT RUN`. Starting from the C14.6
 cold-launch/onboarding baseline, an authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
@@ -505,10 +506,13 @@ dimensional/representative accuracy and production promotion remain closed.
 
 ### C14.10 — Native capture quality and resilience — single primary session
 
-**Status (2026-08-28):** implementation and local acceptance complete on
-`9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`; physical rows remain `NOT RUN`. The integration branch
-must still be pushed as one non-draft, unmerged PR and pass every named GitHub check on its exact
-final head.
+**Status (2026-08-28):** original implementation `9b0884c8c8b5632fbbf29e3bb9ee48243d223fe2`
+was independently reviewed from exact PR #16 head
+`28316d49316b07731e5101cfe37c9681add69d4d` against clean-main base
+`97352b7027476aa48461aea3788d1e02d3268b56` and corrected at
+`733b137d532c1f39d78350f290e0730316da4760`. Physical rows remain `NOT RUN`. The later user
+instruction supersedes only the old leave-unmerged disposition; normal merge requires all four
+named GitHub checks on the exact final head.
 
 **Outcome:** ordinary camera-first capture continuously selects a bounded connected set of useful
 RGB keyframes and explains remaining translation, overlap, parallax, feature/trajectory, loop-
@@ -522,7 +526,8 @@ closure, blur/exposure and unresolved-area needs. The direction/height grid rema
 
 **Execution:** one exact `gpt-5.6-sol` / `xhigh` primary session is the sole writer and completion
 authority. No worktree, subagent, separate task or parallel lane is authorised. The integration
-vehicle is one non-draft PR left unmerged.
+vehicle is one non-draft PR; after independent review, normal merge is authorised only on an exact
+final head with all four named checks successful.
 
 **Gate:** spatial-evidence readiness cannot be satisfied by the coverage grid; immutable evidence,
 consent separation, independent segments, proposal-only reconstruction and existing backend
@@ -530,8 +535,11 @@ authority remain unchanged. Simulator proves only deterministic software/UI poli
 thermal, storage-exhaustion, camera/ARKit, LiDAR, RoomPlan, dimensional, representative-home and
 reconstruction-quality acceptance remain open until their named handoff is physically executed.
 
-**Local evidence:** 224 logical native unit tests / 234 device invocations and the 1/1 guided UI
-journey passed on iPhone 17 Pro Max Simulator, iOS 26.4 (23E244). Shared contracts passed 17 files /
+**Local evidence:** 228 logical native unit tests / 237 device invocations and the 1/1 guided UI
+journey passed on iPhone Air Simulator, iOS 26.4 (23E244). Nineteen focused cases cover exact spatial
+thresholds, automatic selection and final revalidation, actual-cell accounting, secondary-grid and
+independent-segment behavior, resources, shared goldens and every typed lifecycle checkpoint.
+Shared contracts passed 17 files /
 96 tests; full repository verification passed 24 lint, 24 typecheck, 45 unit-test and 24 build tasks,
 Ruff, mypy and 157 Python tests with two expected skips. XcodeGen was byte-stable; Debug/Release
 Simulator builds, unsigned generic-iOS Release compilation, Release analysis and Release fixture

@@ -1693,8 +1693,9 @@
   suites, deterministic relaunch, offline transfer, expired auth/capture/signed access,
   project/actor/role/rights change and safe resource degradation fail closed without losing or
   reassigning immutable evidence.
-- Local gates: shared contract 17 files / 96 tests; native unit 224 logical tests / 234 device
-  invocations with zero failures/skips; guided UI 1/1; XcodeGen byte-stable at
+- Local gates: shared contract 17 files / 96 tests; native unit 228 logical tests / 237 device
+  invocations with zero failures/skips; guided UI 1/1 on iPhone Air Simulator, iOS 26.4 (23E244);
+  XcodeGen byte-stable at
   `d9af33abc2d1606fbdbdf81f10834e213c3e218a02f073635b9d8f4dd8bc10a6`; Debug/Release Simulator,
   unsigned generic-iOS Release compile, Release analysis and Release fixture exclusion passed;
   generated drift passed; API/dependency seams 21/3; identity security 933; C14 source/control-plane
@@ -1711,5 +1712,48 @@
   physical handoff: `docs/runbooks/ios/C14_10_PHYSICAL_CAPTURE_QUALITY_HANDOFF.md`.
 - Remaining truth: all physical camera/ARKit, real process/resource fault, thermal, storage,
   LiDAR/RoomPlan, dimensional, representative-home and C14.9 visual-quality rerun rows remain
-  `NOT RUN`. Delivery still requires one non-draft PR and all named checks on its exact final head;
-  the PR must remain unmerged.
+  `NOT RUN`.
+
+### Independent exact-head review and merge authority — 2026-08-28
+
+- Authority: the user's later instruction supersedes only the earlier leave-unmerged disposition.
+  One `gpt-5.6-sol` / `xhigh` primary session in the same checkout owns independent review,
+  correction, final verification, merge and cleanup. No subagent, separate task or worktree was
+  created.
+- Synchronization/freeze: `origin/main`, local `main`, PR #16 base and merge base were exactly
+  `97352b7027476aa48461aea3788d1e02d3268b56`; original PR head was frozen at
+  `28316d49316b07731e5101cfe37c9681add69d4d`. The branch was already based on that exact clean main,
+  so no content-changing rebase was required.
+- Evidence boundaries: C14.8 proves only its accepted ordinary non-LiDAR physical journey (26 RGB
+  keyframes, two independent segments and 22/24 observed grid cells). C14.9 proves isolated runtime
+  and repeatability for that envelope/host but found sparse, fragmented, incomplete visual output.
+  Neither transfers physical acceptance, dimensional truth, representative accuracy or consumer
+  visual-quality acceptance to C14.10.
+- Material corrections at `733b137d532c1f39d78350f290e0730316da4760`: actual persisted automatic
+  cadence and final-candidate skip semantics; actual coverage-cell accounting; thermal/memory
+  resource-policy wiring, optional-depth reconfiguration and observer/callback cleanup;
+  envelope-wide unresolved-room readiness; consistent fixture-origin submission/validation guards;
+  field-aware Swift/TypeScript canonical parity; exhaustive typed lifecycle fault coverage; and
+  deterministic lazy-list UI fixture navigation.
+- Readiness truth: direction/height grid observations are secondary only and cannot independently
+  declare readiness. Every non-empty independent segment must satisfy its own connectivity,
+  translation, overlap/parallax, feature, trajectory, loop-closure and zone policy; no segment
+  transform is invented. Automatic retention remains bounded to one per two seconds, 256 per room
+  and 512 per envelope.
+- Fixture truth: Simulator fixtures are blocked from physical runtime/capability claims at fixture
+  origin, review/submission, Swift validation and TypeScript validation; Release binaries contain no
+  fixture payload, scenario, synthetic engine or scripted fault injector.
+- Corrected gates: 19 focused C14.10 cases, 228 logical native tests / 237 device invocations, guided
+  UI 1/1, Debug/Release Simulator builds, unsigned generic-iOS Release compile, Release analysis,
+  XcodeGen byte stability and both Release fixture scans passed. Shared contracts passed 17 files /
+  96 tests; generated drift, 21 API seams, three dependency boundaries, `pnpm test:c14`, Prettier,
+  24 lint, 24 typecheck, 45 unit-test, 24 build, Ruff, mypy across 114 sources and Python 157 passed /
+  2 expected skips all passed.
+- Merge gate: all four named GitHub checks must succeed on the exact final PR #16 head; earlier green
+  runs do not transfer. Only then is normal merge authorised. PR #16 metadata is the immutable
+  exact-head check and merge record.
+- User state and residual boundary: root `AGENTS.md` stayed unstaged and byte-identical at SHA-256
+  `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533`. All physical C14.10 rows,
+  including camera/ARKit usefulness, real lifecycle/resource faults, thermal/storage behavior,
+  LiDAR/RoomPlan, VoiceOver field use, dimensional evaluation and the C14.9 visual rerun, remain
+  explicitly `NOT RUN`.
