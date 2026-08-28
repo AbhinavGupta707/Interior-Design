@@ -14,6 +14,7 @@
 		0A5A192A769F9A10F6BC6CE9 /* C14_5DesignStudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B96DC3D4879D45CE4B676A /* C14_5DesignStudioService.swift */; };
 		10250F9A5A217E5B0C852F7B /* C8CapabilityAndStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CAB53465834E55ED289D3E7 /* C8CapabilityAndStorageTests.swift */; };
 		109FDDB62242C5C36CE7B984 /* RoomPlanNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FA313D6A2491915A01B4DE /* RoomPlanNormalizer.swift */; };
+		12FFA8E68EC50BDBBB8FD7AF /* C14_10CaptureEnvelopeGoldenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3E6C5F9914E1F874CDD2BF0 /* C14_10CaptureEnvelopeGoldenTests.swift */; };
 		140394C559D4724756E77E56 /* CaptureCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */; };
 		18846D4A6E1BA9E9FEDCA3F1 /* C8CameraCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605F8BA350D6E2417667C0D8 /* C8CameraCaptureEngine.swift */; };
 		1937B18E9817A4519D2B8980 /* ProjectSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AC0B167F4E34C517BA2C8E /* ProjectSelectionView.swift */; };
@@ -62,6 +63,7 @@
 		7D2DB178833ED11F81389A50 /* ManualEvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCD513E21B995439356829E /* ManualEvidenceView.swift */; };
 		7D532A62835469F85D2F79DA /* ProtectedCaptureJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E591A8E99A20C7A4A6DA3D /* ProtectedCaptureJournalTests.swift */; };
 		7D585E5ABD64184BD4099F92 /* C7CaptureContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */; };
+		7DED7A9959FD179B0DEC8CC4 /* C14_10FaultInjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA1F0181C5AFED9960E03175 /* C14_10FaultInjection.swift */; };
 		7E52B000508308589A620715 /* C14_7TwinIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B092305BCF402B847D5B06D /* C14_7TwinIntegrationTests.swift */; };
 		80DD524A5564A040AA5F8259 /* EvidenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DE930A75C9651B86254FEB /* EvidenceModels.swift */; };
 		83463E6A6CA1CCD6CE41B7A0 /* BackgroundFileUploadCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF133F287305C66CC6952B54 /* BackgroundFileUploadCoordinator.swift */; };
@@ -79,6 +81,7 @@
 		935A64E83FF421E70C5FE22B /* UnsupportedCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8BDA07D8BB603A9F29469F /* UnsupportedCaptureView.swift */; };
 		940FDBB79B930C589F848D9E /* RoomCaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */; };
 		95CC6475C455531DB64E2BA8 /* CaptureEligibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */; };
+		9B5EE548B2928D678D13A9A4 /* C14_10SpatialQualityAndFaultTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9C2816BE4169A4A45F967B /* C14_10SpatialQualityAndFaultTests.swift */; };
 		A0ACEEE327276AAB4164223D /* C14_8GuidedCaptureModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B86FCF1ECC9892D5F3489B4 /* C14_8GuidedCaptureModel.swift */; };
 		A1C1339F90E84B6043AA5933 /* RoomCaptureStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46B5E6B534485B478A45300 /* RoomCaptureStateMachineTests.swift */; };
 		A7855EECEEF453B5E44159EE /* C8UITestFixtureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770844001F2FE6982F857329 /* C8UITestFixtureView.swift */; };
@@ -90,6 +93,7 @@
 		B6BEF6212725980010CB2184 /* C14_8CaptureEnvelopeContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56104228163E7E244A0FCCEB /* C14_8CaptureEnvelopeContracts.swift */; };
 		B73DFA85458CB221C2A065E1 /* HomeDesignCaptureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172FFF65118DCA71C1E775E7 /* HomeDesignCaptureApp.swift */; };
 		B9969B731C492DDA092C4A4C /* C8CaptureQuality.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582F428111A74DB3EC4061E9 /* C8CaptureQuality.swift */; };
+		BA0B8C739161D9797ECB02DD /* base.json in Resources */ = {isa = PBXBuildFile; fileRef = 727BDCF27C9CD62A4F156493 /* base.json */; };
 		BA994BFC6AEE982A95BC2269 /* ProjectRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575256D77057FBCF01D5F50E /* ProjectRepositoryTests.swift */; };
 		BBD051DB9558BC2E86CC030E /* C14_6HomeSetupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18449A9C8A25F4868F6AC8E0 /* C14_6HomeSetupTests.swift */; };
 		BC1909C0108480485D0353A3 /* C14_5DesignStudioContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73ACD7764DA2AD6CE47F88DA /* C14_5DesignStudioContracts.swift */; };
@@ -100,6 +104,7 @@
 		CFB3A197CC5EFF652CF85A22 /* CaptureSyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0376BC0A613C3278078E0F1 /* CaptureSyncEngineTests.swift */; };
 		D35C166805D059F78B587D0F /* C7SyntheticFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */; };
 		D3825C56B4F4C84C312CE397 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C338BE72776A66E8E31FAFB /* AVFoundation.framework */; };
+		D3F1670A2C474EEDFEF91C69 /* C14_10CaptureEnvelopeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD63F0584DBC8E465E60AC8 /* C14_10CaptureEnvelopeCodec.swift */; };
 		D454210FE4F5B8CCBC57615D /* C8UITestFixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33AC1DD603CE6B233F16FC22 /* C8UITestFixtureScenarioTests.swift */; };
 		D537DCA3034B4C5F11E65879 /* C14_7TwinIntegrationContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EDED16B3EF844FB1C64544 /* C14_7TwinIntegrationContracts.swift */; };
 		D5BE264D063D8C96245404C5 /* C8ProtectedMediaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8047368D704422A88B4D7370 /* C8ProtectedMediaStore.swift */; };
@@ -110,6 +115,7 @@
 		DB91FEBD12707F2253613DBA /* RoomPlanCaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E687264CB5F845F543439C83 /* RoomPlanCaptureEngine.swift */; };
 		DD6A623F1958729D24C2975D /* CapturePreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77825EBF2BAD6485E718255 /* CapturePreparationView.swift */; };
 		DF03FE0A6FE67AA8BD47D1B9 /* C14_6FixtureScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AEC227CCEB617893BD4E5F /* C14_6FixtureScenarioTests.swift */; };
+		E071AA0F4FA4707CA566A270 /* C14_10SpatialCaptureQuality.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5EF5AA472EAD658406E675 /* C14_10SpatialCaptureQuality.swift */; };
 		E447F537833EDF8B69BAB7CE /* C14_8ProtectedCaptureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42E6797547AAA54603DF852 /* C14_8ProtectedCaptureStore.swift */; };
 		E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BFDB7EF44F7B7B7956EC11 /* AppRootView.swift */; };
 		E6EC91AE19D040DBB857DC46 /* CaptureProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */; };
@@ -122,6 +128,7 @@
 		F48DE2FDFF00664D90B5CAAF /* C14_5HomeownerJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7FA2F030E9F3CF7642290C /* C14_5HomeownerJourneyUITests.swift */; };
 		F5C1551AF49B951F1F148A4C /* CaptureSyncModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5610CEED4CC3D00A39533A5A /* CaptureSyncModels.swift */; };
 		F8AC4400D1DF1A1AE77B519F /* C8ContractAndQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF257CFE0A4B85F48680B21D /* C8ContractAndQualityTests.swift */; };
+		FBDA8783F1A949304C66C3DA /* cases.json in Resources */ = {isa = PBXBuildFile; fileRef = 86658FDE2043EDD06C8135B3 /* cases.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -173,6 +180,7 @@
 		33AC1DD603CE6B233F16FC22 /* C8UITestFixtureScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8UITestFixtureScenarioTests.swift; sourceTree = "<group>"; };
 		355194F068616831A4B117DC /* CaptureWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModel.swift; sourceTree = "<group>"; };
 		35802FA6AE1B015F3F3CAC44 /* CaptureWorkspaceModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceModelTests.swift; sourceTree = "<group>"; };
+		3C5EF5AA472EAD658406E675 /* C14_10SpatialCaptureQuality.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_10SpatialCaptureQuality.swift; sourceTree = "<group>"; };
 		3E0BAAA44A7B9D122B7795ED /* CaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureWorkspaceView.swift; sourceTree = "<group>"; };
 		3E8A3E8DF37BEAF0292F9FA1 /* C14_6HomeownerReadinessUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6HomeownerReadinessUITests.swift; sourceTree = "<group>"; };
 		3FE8C70B60C1E8764AF33382 /* C14_6HomeSetupContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6HomeSetupContracts.swift; sourceTree = "<group>"; };
@@ -203,6 +211,7 @@
 		70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8ReconstructionContracts.swift; sourceTree = "<group>"; };
 		719E635CC6392666BDD7C133 /* CaptureEligibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEligibilityView.swift; sourceTree = "<group>"; };
 		723E88E7142B7D8BD39A0140 /* HomeDesignCaptureUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeDesignCaptureUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		727BDCF27C9CD62A4F156493 /* base.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = base.json; sourceTree = "<group>"; };
 		732FEE08EF9FA4919802F879 /* C7AcceptanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7AcceptanceUITests.swift; sourceTree = "<group>"; };
 		73ACD7764DA2AD6CE47F88DA /* C14_5DesignStudioContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioContracts.swift; sourceTree = "<group>"; };
 		743A51114C47A62D1D7CD442 /* C7CaptureContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7CaptureContractTests.swift; sourceTree = "<group>"; };
@@ -211,9 +220,11 @@
 		75597AD1D851552CBCCF5C3A /* RoomPlanCaptureSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureSurface.swift; sourceTree = "<group>"; };
 		770844001F2FE6982F857329 /* C8UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8UITestFixtureView.swift; sourceTree = "<group>"; };
 		79DE525CE2EA3C029B8AB6D5 /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
+		7F9C2816BE4169A4A45F967B /* C14_10SpatialQualityAndFaultTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_10SpatialQualityAndFaultTests.swift; sourceTree = "<group>"; };
 		8047368D704422A88B4D7370 /* C8ProtectedMediaStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8ProtectedMediaStore.swift; sourceTree = "<group>"; };
 		83092AB6A2ABCDAADE89B522 /* C14_6AuthenticationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_6AuthenticationTests.swift; sourceTree = "<group>"; };
 		838A0254ED72823AE11B121D /* CaptureQualityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityView.swift; sourceTree = "<group>"; };
+		86658FDE2043EDD06C8135B3 /* cases.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = cases.json; sourceTree = "<group>"; };
 		879E165983B7BF350C32A8B1 /* C8MediaCaptureWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8MediaCaptureWorkspaceView.swift; sourceTree = "<group>"; };
 		8A39FC101026EF5E466FC8F0 /* RoomCaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureCoordinator.swift; sourceTree = "<group>"; };
 		8D80846E5E08B2A25CAE6DC8 /* CaptureProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProject.swift; sourceTree = "<group>"; };
@@ -222,10 +233,12 @@
 		9779AA1BF97D1555D1D61754 /* RoomCaptureArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomCaptureArtifacts.swift; sourceTree = "<group>"; };
 		9866AA56DD62EFC75C61ACE0 /* SyntheticRoomCaptureFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticRoomCaptureFixtures.swift; sourceTree = "<group>"; };
 		99B9486170E8B361E9267D81 /* C14_5DesignStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_5DesignStudioView.swift; sourceTree = "<group>"; };
+		9DD63F0584DBC8E465E60AC8 /* C14_10CaptureEnvelopeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_10CaptureEnvelopeCodec.swift; sourceTree = "<group>"; };
 		9ED836C4D459143C8A9EE90A /* C14_8UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8UITestFixtureView.swift; sourceTree = "<group>"; };
 		9F14F9074FE8FB59F3A173EA /* C14_8GuidedCaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_8GuidedCaptureEngine.swift; sourceTree = "<group>"; };
 		A01F9D75D504F547AB452E4A /* C7SyntheticFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7SyntheticFixtures.swift; sourceTree = "<group>"; };
 		A358A8C8088780616E6C981D /* C14_7PlanOperationBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7PlanOperationBuilder.swift; sourceTree = "<group>"; };
+		A3E6C5F9914E1F874CDD2BF0 /* C14_10CaptureEnvelopeGoldenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_10CaptureEnvelopeGoldenTests.swift; sourceTree = "<group>"; };
 		A5139C1007F5376C97AEA9E6 /* CaptureQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQualityTests.swift; sourceTree = "<group>"; };
 		A58EA85EF682535ADF8A8216 /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
 		AF133F287305C66CC6952B54 /* BackgroundFileUploadCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFileUploadCoordinator.swift; sourceTree = "<group>"; };
@@ -234,6 +247,7 @@
 		B5A2670FE46DAA0B02E01239 /* EvidenceRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceRepositoryTests.swift; sourceTree = "<group>"; };
 		B71CCB4C1458DB26E9E114BA /* C14_7UITestFixtureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_7UITestFixtureView.swift; sourceTree = "<group>"; };
 		B8BE23A7D168FFAF26011979 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		BA1F0181C5AFED9960E03175 /* C14_10FaultInjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C14_10FaultInjection.swift; sourceTree = "<group>"; };
 		BAE383901D322151EDB013DA /* CaptureSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSyncEngine.swift; sourceTree = "<group>"; };
 		BB146E16E0FE857399290A36 /* C8CameraCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C8CameraCapability.swift; sourceTree = "<group>"; };
 		BC63546001772B6B43829640 /* RoomPlan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RoomPlan.framework; path = System/Library/Frameworks/RoomPlan.framework; sourceTree = SDKROOT; };
@@ -306,6 +320,8 @@
 				4B86FCF1ECC9892D5F3489B4 /* C14_8GuidedCaptureModel.swift */,
 				E533F6667F86822A9F1D692E /* C14_8GuidedCaptureView.swift */,
 				C42E6797547AAA54603DF852 /* C14_8ProtectedCaptureStore.swift */,
+				BA1F0181C5AFED9960E03175 /* C14_10FaultInjection.swift */,
+				3C5EF5AA472EAD658406E675 /* C14_10SpatialCaptureQuality.swift */,
 			);
 			path = GuidedCapture;
 			sourceTree = "<group>";
@@ -456,6 +472,24 @@
 			path = Evidence;
 			sourceTree = "<group>";
 		};
+		634A4CCAFFF001F9E0E606CE /* C14_10 */ = {
+			isa = PBXGroup;
+			children = (
+				A3E6C5F9914E1F874CDD2BF0 /* C14_10CaptureEnvelopeGoldenTests.swift */,
+				7F9C2816BE4169A4A45F967B /* C14_10SpatialQualityAndFaultTests.swift */,
+			);
+			path = C14_10;
+			sourceTree = "<group>";
+		};
+		71452B8D07D82380D65BC519 /* capture-envelope-v1 */ = {
+			isa = PBXGroup;
+			children = (
+				727BDCF27C9CD62A4F156493 /* base.json */,
+				86658FDE2043EDD06C8135B3 /* cases.json */,
+			);
+			path = "capture-envelope-v1";
+			sourceTree = "<group>";
+		};
 		74D7CCB216A6A9EA69E9B49F /* C14_8 */ = {
 			isa = PBXGroup;
 			children = (
@@ -519,6 +553,7 @@
 				3AEE4307F6C074A804449AFD /* HomeDesignCapture */,
 				B4CD5AB503A04870C474EBDA /* HomeDesignCaptureTests */,
 				F96E2278E5F993197F981738 /* HomeDesignCaptureUITests */,
+				B7CBE2E4314D82A980BBC9E3 /* Interior Design */,
 				44DF8E4BD6712F39D77F844B /* Packages */,
 				F8B5B205FF1ABDD92FA9C6D6 /* Frameworks */,
 				97C93C92619CB4ADF8A6C554 /* Products */,
@@ -533,6 +568,7 @@
 				1FA546697FEAF202305FFC7F /* C7CaptureContracts.swift */,
 				70C81F81698B005E52CB9C2D /* C8ReconstructionContracts.swift */,
 				56104228163E7E244A0FCCEB /* C14_8CaptureEnvelopeContracts.swift */,
+				9DD63F0584DBC8E465E60AC8 /* C14_10CaptureEnvelopeCodec.swift */,
 			);
 			path = Capture;
 			sourceTree = "<group>";
@@ -581,6 +617,7 @@
 				E7B65E7965C6C61308647EBD /* C14_6 */,
 				C2CF099F30120E2105E233E6 /* C14_7 */,
 				13F4E6F8E99D997E7B05F060 /* C14_8 */,
+				634A4CCAFFF001F9E0E606CE /* C14_10 */,
 				52D8BDA7E9427BA30E827DC5 /* AppConfigurationLoaderTests.swift */,
 				EB7E5CBE32CBEA935283A24B /* CaptureCapabilityTests.swift */,
 				D406F16442FC65DFCC025B94 /* CaptureFlowModelTests.swift */,
@@ -598,6 +635,15 @@
 				67906FD3699FF600156187AA /* C14_7TwinIntegrationView.swift */,
 			);
 			path = TwinIntegration;
+			sourceTree = "<group>";
+		};
+		B7CBE2E4314D82A980BBC9E3 /* Interior Design */ = {
+			isa = PBXGroup;
+			children = (
+				C3AB1B1430AEF213D786122A /* packages */,
+			);
+			name = "Interior Design";
+			path = ../..;
 			sourceTree = "<group>";
 		};
 		BA7A12FB0A5E4B99FB5E4174 /* RoomCapture */ = {
@@ -633,6 +679,14 @@
 			path = DesignStudio;
 			sourceTree = "<group>";
 		};
+		C1BC84192BA94D55236FE186 /* fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				71452B8D07D82380D65BC519 /* capture-envelope-v1 */,
+			);
+			path = fixtures;
+			sourceTree = "<group>";
+		};
 		C2CF099F30120E2105E233E6 /* C14_7 */ = {
 			isa = PBXGroup;
 			children = (
@@ -641,12 +695,28 @@
 			path = C14_7;
 			sourceTree = "<group>";
 		};
+		C3AB1B1430AEF213D786122A /* packages */ = {
+			isa = PBXGroup;
+			children = (
+				C8EA98261EE8392FDAD38050 /* contracts */,
+			);
+			path = packages;
+			sourceTree = "<group>";
+		};
 		C8C35B27AA8DEE5C2F4E6BF6 /* Home */ = {
 			isa = PBXGroup;
 			children = (
 				69EA6D3FCDE5CA504D3CE94D /* C14_5HomeownerHubView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		C8EA98261EE8392FDAD38050 /* contracts */ = {
+			isa = PBXGroup;
+			children = (
+				C1BC84192BA94D55236FE186 /* fixtures */,
+			);
+			path = contracts;
 			sourceTree = "<group>";
 		};
 		C98CEB64F7E23F6690E8DE34 /* Features */ = {
@@ -817,6 +887,7 @@
 			buildConfigurationList = 3A1677F3AA44688463AAF845 /* Build configuration list for PBXNativeTarget "HomeDesignCaptureTests" */;
 			buildPhases = (
 				BC4EDFD85724F36AA92D6293 /* Sources */,
+				0C7F48CE91BA16ADB99D104E /* Resources */,
 			);
 			buildRules = (
 			);
@@ -908,6 +979,18 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		0C7F48CE91BA16ADB99D104E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA0B8C739161D9797ECB02DD /* base.json in Resources */,
+				FBDA8783F1A949304C66C3DA /* cases.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		1A7B21014E6C4F17583E2519 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -931,6 +1014,9 @@
 				3C6788DFB0EAF683DFB01B8D /* AppConfiguration.swift in Sources */,
 				E4F4D063A1F1ED83D1B98258 /* AppRootView.swift in Sources */,
 				83463E6A6CA1CCD6CE41B7A0 /* BackgroundFileUploadCoordinator.swift in Sources */,
+				D3F1670A2C474EEDFEF91C69 /* C14_10CaptureEnvelopeCodec.swift in Sources */,
+				7DED7A9959FD179B0DEC8CC4 /* C14_10FaultInjection.swift in Sources */,
+				E071AA0F4FA4707CA566A270 /* C14_10SpatialCaptureQuality.swift in Sources */,
 				6F22621C2753F12E53CAD767 /* C14_5DesignRecovery.swift in Sources */,
 				BC1909C0108480485D0353A3 /* C14_5DesignStudioContracts.swift in Sources */,
 				069832BC9CF6D835FAB10CCB /* C14_5DesignStudioModel.swift in Sources */,
@@ -1006,6 +1092,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				701C85FA5E5A8B9D27D00C5E /* AppConfigurationLoaderTests.swift in Sources */,
+				12FFA8E68EC50BDBBB8FD7AF /* C14_10CaptureEnvelopeGoldenTests.swift in Sources */,
+				9B5EE548B2928D678D13A9A4 /* C14_10SpatialQualityAndFaultTests.swift in Sources */,
 				544ACD9C9573636D070A52E2 /* C14_5DesignStudioTests.swift in Sources */,
 				2C719CE891BE505F0845C92C /* C14_6AuthenticationTests.swift in Sources */,
 				DF03FE0A6FE67AA8BD47D1B9 /* C14_6FixtureScenarioTests.swift in Sources */,

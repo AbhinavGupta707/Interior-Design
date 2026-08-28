@@ -50,7 +50,11 @@ final class C14_8GuidedCaptureModel {
   private(set) var roomPlanDiscoveryInProgress = false
   private(set) var roomPlanDiscoveryMessage: String?
   private(set) var state: C14_8GuidedCaptureState = .checking
+  private(set) var activeZoneId: UUID?
+  private(set) var resourcePressure: C14_10ResourcePressure = .nominal
+  private(set) var selectionInstruction: String?
 
+  var automaticCaptureEnabled = true
   var includeAppearance = false
   var rightsBasis: EvidenceRightsBasis = .ownedByUser
   var serviceProcessingConsent = false
@@ -66,11 +70,13 @@ final class C14_8GuidedCaptureModel {
   @ObservationIgnored private let engine: any C14_8GuidedCaptureServing
   @ObservationIgnored private let envelopeService: any C14_8CaptureEnvelopeServing
   @ObservationIgnored private let evidenceService: any EvidenceServing
+  @ObservationIgnored private let faultInjector: any C14_10FaultInjecting
   @ObservationIgnored private let journal: any C14_8ProtectedCaptureStoring
   @ObservationIgnored private let mediaStore: any C8ProtectedMediaStoring
   @ObservationIgnored private let mediaUploader: any C8ImmutableEvidenceUploading
   @ObservationIgnored private let permissionProvider: any C8CameraPermissionProviding
   @ObservationIgnored private var pendingSegmentReason: C14_8SegmentReason?
+  @ObservationIgnored private var lastAutomaticTimestampMicroseconds: Int64?
   @ObservationIgnored private var projectId: UUID?
   @ObservationIgnored private var scopeMismatch = false
 
@@ -83,6 +89,7 @@ final class C14_8GuidedCaptureModel {
     evidenceService: any EvidenceServing,
     mediaUploader: any C8ImmutableEvidenceUploading,
     depthUploader: any C14_8DepthUploading,
+    faultInjector: any C14_10FaultInjecting = C14_10NoFaultInjector(),
     journal: any C14_8ProtectedCaptureStoring = C14_8ProtectedCaptureStore(),
     mediaStore: any C8ProtectedMediaStoring = C8ProtectedMediaStore()
   ) {
@@ -94,6 +101,7 @@ final class C14_8GuidedCaptureModel {
     self.evidenceService = evidenceService
     self.mediaUploader = mediaUploader
     self.depthUploader = depthUploader
+    self.faultInjector = faultInjector
     self.journal = journal
     self.mediaStore = mediaStore
     capabilities = capabilityProvider.current()
@@ -124,32 +132,63 @@ final class C14_8GuidedCaptureModel {
     currentRoom?.coverage.filter { $0.status == .observed }.count ?? 0
   }
   var totalRoomCount: Int { draft?.rooms.count ?? 0 }
+  var currentRoomKeyframeCount: Int {
+    guard let roomId = currentRoom?.roomId else { return 0 }
+    return draft?.samples.filter { $0.roomId == roomId }.count ?? 0
+  }
+  var currentSegmentKeyframeCount: Int {
+    guard let segmentId = draft?.segments.last?.segmentId else { return 0 }
+    return draft?.samples.filter { $0.segmentId == segmentId }.count ?? 0
+  }
+  var captureReadiness: C14_10CaptureReadiness? {
+    guard let room = currentRoom, let samples = draft?.samples else { return nil }
+    return C14_10SpatialReadinessEvaluator.evaluate(room: room, samples: samples)
+  }
+  var unresolvedRoomCount: Int {
+    guard let draft else { return 0 }
+    return draft.rooms.filter {
+      !C14_10SpatialReadinessEvaluator.evaluate(room: $0, samples: draft.samples).isReady
+    }.count
+  }
+  var envelopeSpatiallyReady: Bool {
+    guard draft?.rooms.isEmpty == false else { return false }
+    return unresolvedRoomCount == 0
+  }
+  var resourcePolicy: C14_10ResourcePolicy {
+    C14_10ResourcePolicy.policy(for: resourcePressure)
+  }
+  var currentSelectionDecision: C14_10KeyframeDecision? {
+    liveTelemetry.map {
+      C14_10KeyframeSelector.decision(
+        telemetry: $0,
+        retainedCount: currentSegmentKeyframeCount,
+        lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
+        mode: .manual
+      )
+    }
+  }
 
   var guidance: [String] {
     guard let telemetry = liveTelemetry else {
-      return ["Aim at a wall, corner or opening; the live cell will appear here."]
+      return ["Walk slowly around the room edge and keep a wall or corner visible."]
     }
     var result: [String] = []
-    if telemetry.trackingState != .normal {
-      result.append("Tracking is limited. Move slowly toward a textured surface before retaining a keyframe.")
-    }
-    if telemetry.motionScoreMillionths > 400_000 {
-      result.append("Slow down and hold steady.")
-    }
-    if telemetry.exposureScoreMillionths < C8CaptureQualityEvaluator.minimumAcceptedExposure
-      || (telemetry.ambientIntensity ?? 1_000) < 300
-    {
-      result.append("Improve even lighting; avoid dark corners and bright windows.")
-    }
-    if telemetry.blurScoreMillionths < C8CaptureQualityEvaluator.minimumAcceptedBlur {
-      result.append("This view is blurry. Pause before capture.")
-    }
+    let decision = C14_10KeyframeSelector.decision(
+      telemetry: telemetry,
+      retainedCount: currentSegmentKeyframeCount,
+      lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
+      mode: .automatic
+    )
+    result.append(selectionInstruction ?? decision.reason.homeownerInstruction)
     if currentRoom?.coverage.first(where: { $0.id == telemetry.coverageCellId })?.status
       == .observed
     {
-      result.append("This area is covered. Turn toward a missing lower, middle or upper area.")
+      result.append("Secondary guide: turn toward an unresolved lower, middle or upper area.")
     } else {
-      result.append("This area is missing. Retain a keyframe when steady.")
+      result.append("Secondary guide: this direction and height are still unresolved.")
+    }
+    if let readiness = captureReadiness, !readiness.isReady {
+      result.append(contentsOf: readiness.reasons.prefix(2))
     }
     return result
   }
@@ -170,7 +209,7 @@ final class C14_8GuidedCaptureModel {
     currentRole = actor.role
     let scope = activationId
     do {
-      if let restored = try await journal.load(projectId: projectId) {
+      if var restored = try await journal.load(projectId: projectId) {
         guard scope == activationId, self.projectId == projectId else { return }
         guard restored.actorUserId == actorUserId, restored.tenantId == tenantId else {
           draft = nil
@@ -178,7 +217,17 @@ final class C14_8GuidedCaptureModel {
           state = .readOnly
           return
         }
+        for roomIndex in restored.rooms.indices where restored.rooms[roomIndex].zones == nil {
+          restored.rooms[roomIndex].zones = [
+            C14_10CaptureZone(
+              label: "Main area",
+              status: .missing,
+              zoneId: restored.rooms[roomIndex].roomId
+            )
+          ]
+        }
         draft = restored
+        activeZoneId = restored.rooms.last?.zones?.first?.zoneId
         guard scope == activationId else { return }
         rightsBasis = restored.captureSession?.brief.rights.basis.evidenceBasis ?? .ownedByUser
         serviceProcessingConsent = restored.captureSession != nil
@@ -244,14 +293,34 @@ final class C14_8GuidedCaptureModel {
   }
 
   func captureKeyframe() {
+    captureKeyframe(mode: .manual)
+  }
+
+  private func captureKeyframe(mode: C14_10KeyframeRetentionMode) {
     guard canMutate, state == .ready, let projectId, let draft, let room = draft.rooms.last,
-      let segment = draft.segments.last
+      let segment = draft.segments.last,
+      let zoneId = activeZoneId ?? room.zones?.first?.zoneId,
+      draft.keyframes.count < C14_8CaptureContract.maximumKeyframesPerEnvelope,
+      currentRoomKeyframeCount < C14_8CaptureContract.maximumKeyframesPerRoom,
+      let telemetry = liveTelemetry
     else { return }
+    let decision = C14_10KeyframeSelector.decision(
+      telemetry: telemetry,
+      retainedCount: currentSegmentKeyframeCount,
+      lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
+      mode: mode
+    )
+    guard decision.shouldRetain else {
+      selectionInstruction = decision.reason.homeownerInstruction
+      return
+    }
+    selectionInstruction = nil
     state = .capturing
     let scope = activationId
     activeTask = Task { [weak self] in
       guard let self else { return }
       do {
+        try await self.faultInjector.checkpoint(.beforeKeyframeRetention)
         let destination = try await self.mediaStore.allocateDestination()
         do {
           let captured = try await self.engine.captureKeyframe(
@@ -259,7 +328,9 @@ final class C14_8GuidedCaptureModel {
             localIdentifier: destination.id,
             roomId: room.roomId,
             segmentId: segment.segmentId,
-            captureStartedAt: draft.createdAt
+            captureStartedAt: draft.createdAt,
+            retentionMode: mode,
+            zoneId: zoneId
           )
           let handle = try await self.mediaStore.finalize(
             id: destination.id,
@@ -285,22 +356,40 @@ final class C14_8GuidedCaptureModel {
             next.depthHandles.append(depth)
             try self.assertCurrent(scope: scope, projectId: projectId)
           }
-          self.markObserved(telemetry: self.liveTelemetry, in: &next)
+          self.markObserved(coverageCellId: captured.coverageCellId, in: &next)
+          self.markZoneObservedIfEnough(zoneId: zoneId, in: &next)
           self.closeCurrentSegment(in: &next)
           next.updatedAt = Date()
           try self.assertCurrent(scope: scope, projectId: projectId)
           try await self.journal.save(next)
           try self.assertCurrent(scope: scope, projectId: projectId)
           self.draft = next
+          if mode == .automatic {
+            self.lastAutomaticTimestampMicroseconds =
+              telemetry.spatialEvidence.telemetryTimestampMicroseconds
+          }
           self.state = .ready
         } catch {
           try? FileManager.default.removeItem(at: destination.url)
           throw error
         }
+      } catch let error as C14_8GuidedCaptureEngineError {
+        guard scope == self.activationId else { return }
+        if case .candidateRejected(let reason) = error {
+          self.selectionInstruction = reason.homeownerInstruction
+          self.state = .ready
+          return
+        }
+        self.state = .failed(
+          message:
+            "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
+          retryable: true
+        )
       } catch {
         guard scope == self.activationId else { return }
         self.state = .failed(
-          message: "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
+          message:
+            "No keyframe was retained. Restore tracking, lighting and protected storage, then retry.",
           retryable: true
         )
       }
@@ -308,25 +397,27 @@ final class C14_8GuidedCaptureModel {
   }
 
   func finishRoomReview() {
-    guard canMutate, var next = draft, !next.keyframes.isEmpty, next.acceptance == nil else { return }
+    guard canMutate, var next = draft, !next.keyframes.isEmpty, next.acceptance == nil else {
+      return
+    }
     closeCurrentSegment(in: &next)
     next.endedAt = Date()
     next.updatedAt = Date()
     engine.stop()
     draft = next
-    state = engine.syntheticFixture ? .fixtureReview : .review
-    Task { try? await journal.save(next) }
+    state = isSyntheticFixture ? .fixtureReview : .review
+    activeTask = Task { try? await journal.save(next) }
   }
 
   func captureMore() {
     guard var next = draft, canMutate, next.acceptance == nil else { return }
     appendSegment(reason: pendingSegmentReason ?? .manualRestart, to: &next)
     pendingSegmentReason = nil
+    lastAutomaticTimestampMicroseconds = nil
     next.endedAt = nil
     next.updatedAt = Date()
     draft = next
-    Task { try? await journal.save(next) }
-    startEngine()
+    persistTransitionThenStart(next, activeZoneId: activeZoneId)
   }
 
   func addRoom() {
@@ -338,13 +429,15 @@ final class C14_8GuidedCaptureModel {
     appendSegment(reason: .roomTransition, to: &next, attachToCurrentRoom: false)
     guard let segmentId = next.segments.last?.segmentId else { return }
     next.rooms.append(
-      .empty(label: "Room \(next.rooms.count + 1)", sequence: next.rooms.count + 1, segmentId: segmentId)
+      .empty(
+        label: "Room \(next.rooms.count + 1)", sequence: next.rooms.count + 1, segmentId: segmentId)
     )
+    let nextZoneId = next.rooms.last?.zones?.first?.zoneId
+    lastAutomaticTimestampMicroseconds = nil
     next.endedAt = nil
     next.updatedAt = Date()
     draft = next
-    Task { try? await journal.save(next) }
-    startEngine()
+    persistTransitionThenStart(next, activeZoneId: nextZoneId)
   }
 
   func renameCurrentRoom(_ label: String) {
@@ -357,6 +450,46 @@ final class C14_8GuidedCaptureModel {
     next.updatedAt = Date()
     draft = next
     Task { try? await journal.save(next) }
+  }
+
+  func addZone() {
+    guard canMutate, var next = draft, next.acceptance == nil, let roomIndex = currentRoomIndex
+    else {
+      return
+    }
+    var zones = next.rooms[roomIndex].zones ?? []
+    guard zones.count < 32 else { return }
+    let zone = C14_10CaptureZone(
+      label: "Connected zone \(zones.count + 1)",
+      status: .missing,
+      zoneId: UUID()
+    )
+    zones.append(zone)
+    next.rooms[roomIndex].zones = zones
+    next.updatedAt = Date()
+    activeZoneId = zone.zoneId
+    draft = next
+    Task { try? await journal.save(next) }
+  }
+
+  func selectZone(_ zoneId: UUID) {
+    guard currentRoom?.zones?.contains(where: { $0.zoneId == zoneId }) == true else { return }
+    activeZoneId = zoneId
+  }
+
+  func applyResourcePressure(_ pressure: C14_10ResourcePressure) {
+    resourcePressure = pressure
+    let policy = C14_10ResourcePolicy.policy(for: pressure)
+    engine.applyResourcePolicy(policy)
+    if !policy.automaticSelectionEnabled {
+      selectionInstruction =
+        "Capture analysis is paused to protect retained evidence. Wait for the device to recover or use a steady manual view."
+    } else if pressure == .constrained {
+      selectionInstruction =
+        "Optional depth is paused while RGB capture continues at a reduced analysis rate."
+    } else {
+      selectionInstruction = nil
+    }
   }
 
   func cycleCoverage(_ cellId: String) {
@@ -377,7 +510,8 @@ final class C14_8GuidedCaptureModel {
 
   func updateSemantic(layer: C14_8SemanticLayer, status: C14_8SemanticStatus) {
     guard canMutate, var next = draft, next.acceptance == nil, let roomIndex = currentRoomIndex,
-      let index = next.rooms[roomIndex].semanticDeclarations.firstIndex(where: { $0.layer == layer })
+      let index = next.rooms[roomIndex].semanticDeclarations.firstIndex(where: { $0.layer == layer }
+      )
     else { return }
     next.rooms[roomIndex].semanticDeclarations[index].status = status
     next.updatedAt = Date()
@@ -442,7 +576,8 @@ final class C14_8GuidedCaptureModel {
         }
         try self.assertCurrent(scope: scope, projectId: projectId)
         self.roomPlanCandidates = candidates.sorted { $0.id < $1.id }
-        self.roomPlanDiscoveryMessage = candidates.isEmpty
+        self.roomPlanDiscoveryMessage =
+          candidates.isEmpty
           ? "No rights-compatible processed RoomPlan package is available yet."
           : nil
         self.roomPlanDiscoveryInProgress = false
@@ -480,7 +615,7 @@ final class C14_8GuidedCaptureModel {
     guard canMutate, serviceProcessingConsent, let projectId, let draft,
       !draft.keyframes.isEmpty, draft.acceptance == nil
     else { return }
-    guard capabilities.runtime == .physicalDevice else {
+    guard !isSyntheticFixture, capabilities.runtime == .physicalDevice else {
       state = .fixtureReview
       return
     }
@@ -508,7 +643,8 @@ final class C14_8GuidedCaptureModel {
       guard selected.count == expected.count else { throw C14_8ContractError.invalidEvidence }
       if selected.contains(where: { [.quarantined, .rejected, .aborted].contains($0.status) }) {
         state = .failed(
-          message: "An immutable RGB source failed evidence validation. Reconstruction remains blocked.",
+          message:
+            "An immutable RGB source failed evidence validation. Reconstruction remains blocked.",
           retryable: false
         )
       } else {
@@ -565,16 +701,16 @@ final class C14_8GuidedCaptureModel {
     next.updatedAt = Date()
     draft = next
     state = .interrupted
-    Task { try? await journal.save(next) }
+    activeTask = Task { try? await journal.save(next) }
   }
 
   func recoverAfterInterruption() {
     guard var next = draft, canMutate, next.acceptance == nil else { return }
     appendSegment(reason: .interruption, to: &next)
+    lastAutomaticTimestampMicroseconds = nil
     next.updatedAt = Date()
     draft = next
-    Task { try? await journal.save(next) }
-    startEngine()
+    persistTransitionThenStart(next, activeZoneId: activeZoneId)
   }
 
   func reset() {
@@ -614,11 +750,13 @@ final class C14_8GuidedCaptureModel {
         startEngine()
       } catch {
         guard scope == activationId, projectId == expectedProjectId else { return }
-        state = .failed(message: "Protected guided capture fixture could not start.", retryable: true)
+        state = .failed(
+          message: "Protected guided capture fixture could not start.", retryable: true)
       }
       return
     }
-    let permission = requestPermission
+    let permission =
+      requestPermission
       ? await permissionProvider.requestPermission()
       : permissionProvider.currentPermission()
     guard scope == activationId, projectId == expectedProjectId, canMutate else { return }
@@ -694,20 +832,69 @@ final class C14_8GuidedCaptureModel {
   private func startEngine() {
     let scope = activationId
     do {
+      engine.applyResourcePolicy(resourcePolicy)
+      state = .ready
       try engine.start(
         telemetry: { [weak self] telemetry in
           guard let self, self.activationId == scope else { return }
           self.liveTelemetry = telemetry
+          self.considerAutomaticCapture(telemetry)
         },
         events: { [weak self] event in
           guard let self, self.activationId == scope else { return }
           self.handle(event)
         }
       )
-      state = .ready
     } catch {
-      state = .failed(message: "ARKit could not establish a fresh tracking segment.", retryable: true)
+      state = .failed(
+        message: "ARKit could not establish a fresh tracking segment.", retryable: true)
     }
+  }
+
+  private func persistTransitionThenStart(
+    _ next: C14_8GuidedCaptureDraft,
+    activeZoneId nextZoneId: UUID?
+  ) {
+    guard let projectId else { return }
+    let scope = activationId
+    let pendingPersistence = activeTask
+    state = .checking
+    activeTask = Task { [weak self] in
+      guard let self else { return }
+      await pendingPersistence?.value
+      do {
+        try Task.checkCancellation()
+        try self.assertCurrent(scope: scope, projectId: projectId)
+        try await self.journal.save(next)
+        try self.assertCurrent(scope: scope, projectId: projectId)
+        self.draft = next
+        self.activeZoneId = nextZoneId
+        self.startEngine()
+      } catch is CancellationError {
+        return
+      } catch {
+        guard scope == self.activationId, self.projectId == projectId else { return }
+        self.state = .failed(
+          message:
+            "The fresh independent capture segment could not be protected before the camera restarted.",
+          retryable: true
+        )
+      }
+    }
+  }
+
+  private func considerAutomaticCapture(_ telemetry: C14_8LiveTelemetry) {
+    guard state == .ready, automaticCaptureEnabled, resourcePolicy.automaticSelectionEnabled else {
+      return
+    }
+    let decision = C14_10KeyframeSelector.decision(
+      telemetry: telemetry,
+      retainedCount: currentSegmentKeyframeCount,
+      lastAutomaticTimestampMicroseconds: lastAutomaticTimestampMicroseconds,
+      mode: .automatic
+    )
+    selectionInstruction = decision.reason.homeownerInstruction
+    if decision.shouldRetain { captureKeyframe(mode: .automatic) }
   }
 
   private func handle(_ event: C14_8GuidedCaptureEvent) {
@@ -716,9 +903,12 @@ final class C14_8GuidedCaptureModel {
       handleBackgrounding()
     case .interruptionEnded:
       state = .interrupted
+    case .resourcePressure(let pressure):
+      applyResourcePressure(pressure)
     case .runtimeFailure:
       handleBackgrounding()
-      state = .failed(message: "ARKit stopped this segment after a runtime failure.", retryable: true)
+      state = .failed(
+        message: "ARKit stopped this segment after a runtime failure.", retryable: true)
     }
   }
 
@@ -728,6 +918,7 @@ final class C14_8GuidedCaptureModel {
     scope: UUID
   ) async {
     do {
+      try await faultInjector.checkpoint(.beforeSubmission)
       var next = Self.prepareSubmissionDraft(initialDraft, at: Date())
       try await journal.save(next)
       try assertCurrent(scope: scope, projectId: projectId)
@@ -746,7 +937,8 @@ final class C14_8GuidedCaptureModel {
               serviceProcessingConsent: true
             )
           ),
-          idempotencyKey: "c14-8-session-\(projectId.uuidString.lowercased())-\(Int(next.createdAt.timeIntervalSince1970))"
+          idempotencyKey:
+            "c14-8-session-\(projectId.uuidString.lowercased())-\(Int(next.createdAt.timeIntervalSince1970))"
         )
         try assertCurrent(scope: scope, projectId: projectId)
         next.captureSession = session
@@ -761,6 +953,7 @@ final class C14_8GuidedCaptureModel {
       let uploadedIds = Set(next.mediaReceipts.map(\.localIdentifier))
       let pendingMedia = next.keyframes.filter { !uploadedIds.contains($0.localIdentifier) }
       for (index, handle) in pendingMedia.enumerated() {
+        try await faultInjector.checkpoint(.beforeUpload)
         state = .submitting(
           stage: .uploadingRGB,
           progress: Double(index) / Double(max(1, pendingMedia.count))
@@ -804,6 +997,7 @@ final class C14_8GuidedCaptureModel {
         }
         try assertCurrent(scope: scope, projectId: projectId)
         draft = next
+        try await faultInjector.checkpoint(.afterUploadReceipt)
       }
       let uploadedDepthIds = Set(next.depthReceipts.map(\.sampleId))
       let pendingDepth = next.depthHandles.filter { !uploadedDepthIds.contains($0.sampleId) }
@@ -826,6 +1020,7 @@ final class C14_8GuidedCaptureModel {
         draft = next
       }
       state = .submitting(stage: .accepting, progress: 1)
+      try await faultInjector.checkpoint(.beforeEnvelopeAcceptance)
       let envelope = try buildEnvelope(next, rightsBasis: boundRightsBasis)
       let record = try await envelopeService.accept(
         projectId: projectId,
@@ -853,7 +1048,8 @@ final class C14_8GuidedCaptureModel {
     } catch C14_8SubmissionError.receiptPersistence {
       guard scope == activationId else { return }
       state = .failed(
-        message: "A completed RGB upload could not be committed to the protected capture journal. The server copy remains immutable and will be reconciled without re-uploading.",
+        message:
+          "A completed RGB upload could not be committed to the protected capture journal. The server copy remains immutable and will be reconciled without re-uploading.",
         retryable: true
       )
     } catch {
@@ -863,9 +1059,61 @@ final class C14_8GuidedCaptureModel {
   }
 
   static func submissionFailure(for error: any Error) -> C14_8GuidedCaptureState {
+    if let fault = error as? C14_10InjectedFault {
+      switch fault {
+      case .offline:
+        return .failed(
+          message:
+            "Upload paused because this device is offline. Protected evidence and completed receipts remain resumable.",
+          retryable: true
+        )
+      case .authenticationExpired:
+        return .failed(
+          message:
+            "Authentication expired before acceptance. Sign in again; retained evidence is unchanged.",
+          retryable: true
+        )
+      case .captureAuthorityExpired:
+        return .failed(
+          message:
+            "The scoped capture authority expired. A fresh server-authorised capture session is required.",
+          retryable: false
+        )
+      case .signedURLExpired:
+        return .failed(
+          message:
+            "Short-lived upload access expired. Completed immutable parts remain resumable with fresh authority.",
+          retryable: true
+        )
+      case .serviceUnavailable:
+        return .failed(
+          message: "The capture service is temporarily unavailable. No envelope was accepted.",
+          retryable: true
+        )
+      case .projectChanged, .roleChanged:
+        return .failed(
+          message:
+            "Project or role authority changed during capture. Stale work was discarded without accepting an envelope.",
+          retryable: false
+        )
+      case .rightsWithdrawn:
+        return .failed(
+          message:
+            "Service-processing rights were withdrawn. Upload and acceptance remain blocked.",
+          retryable: false
+        )
+      case .protectedStoragePressure:
+        return .failed(
+          message:
+            "Protected storage could not retain another artifact safely. Existing evidence remains unchanged.",
+          retryable: true
+        )
+      }
+    }
     if error is C14_8ContractError || error is C14_8ProtectedStoreError {
       return .failed(
-        message: "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
+        message:
+          "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
         retryable: false
       )
     }
@@ -874,42 +1122,50 @@ final class C14_8GuidedCaptureModel {
       switch evidenceError {
       case .offline:
         return .failed(
-          message: "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
+          message:
+            "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
           retryable: true
         )
       case .unavailable:
         return .failed(
-          message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+          message:
+            "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
           retryable: true
         )
       case .expired:
         return .failed(
-          message: "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
+          message:
+            "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
           retryable: true
         )
       case .forbidden:
         return .failed(
-          message: "The current project role is not authorised to upload this capture. No envelope was accepted.",
+          message:
+            "The current project role is not authorised to upload this capture. No envelope was accepted.",
           retryable: false
         )
       case .signedURLExpired:
         return .failed(
-          message: "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
+          message:
+            "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
           retryable: true
         )
       case .checksumBindingMissing:
         return .failed(
-          message: "The upload service did not bind a transfer to its expected checksum. Transfer stopped without accepting an envelope.",
+          message:
+            "The upload service did not bind a transfer to its expected checksum. Transfer stopped without accepting an envelope.",
           retryable: false
         )
       case .invalidResponse:
         return .failed(
-          message: "The capture service response did not match the accepted upload contract. No envelope was accepted.",
+          message:
+            "The capture service response did not match the accepted upload contract. No envelope was accepted.",
           retryable: false
         )
       case .unsupported:
         return .failed(
-          message: "A retained capture artifact does not meet the immutable upload contract. No envelope was accepted.",
+          message:
+            "A retained capture artifact does not meet the immutable upload contract. No envelope was accepted.",
           retryable: false
         )
       }
@@ -919,52 +1175,62 @@ final class C14_8GuidedCaptureModel {
       switch captureError {
       case .offline:
         return .failed(
-          message: "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
+          message:
+            "Upload paused because this device cannot reach the capture service. Protected receipts will reconcile on retry.",
           retryable: true
         )
       case .unavailable:
         return .failed(
-          message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+          message:
+            "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
           retryable: true
         )
       case .authenticationExpired:
         return .failed(
-          message: "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
+          message:
+            "The authenticated capture session expired before envelope acceptance. Protected local evidence remains available; sign in again before retrying.",
           retryable: true
         )
       case .forbidden:
         return .failed(
-          message: "The current project role is not authorised to submit this capture. No envelope was accepted.",
+          message:
+            "The current project role is not authorised to submit this capture. No envelope was accepted.",
           retryable: false
         )
       case .captureExpired:
         return .failed(
-          message: "The server-issued capture brief expired. Protected local evidence remains available, but a fresh scoped capture session is required.",
+          message:
+            "The server-issued capture brief expired. Protected local evidence remains available, but a fresh scoped capture session is required.",
           retryable: false
         )
       case .signedURLExpired:
         return .failed(
-          message: "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
+          message:
+            "A short-lived upload URL expired after bounded refresh attempts. Completed immutable parts remain resumable.",
           retryable: true
         )
       case .conflict:
         return .failed(
-          message: "The server and protected capture journal disagree. Refresh before retrying; no envelope was accepted.",
+          message:
+            "The server and protected capture journal disagree. Refresh before retrying; no envelope was accepted.",
           retryable: true
         )
       case .checksumBindingMissing, .checksumMismatch:
         return .failed(
-          message: "Immutable upload checksum validation failed. Transfer stopped without accepting an envelope.",
+          message:
+            "Immutable upload checksum validation failed. Transfer stopped without accepting an envelope.",
           retryable: false
         )
       case .rightsWithdrawn:
         return .failed(
-          message: "Service-processing rights were withdrawn. Upload and envelope acceptance remain blocked.",
+          message:
+            "Service-processing rights were withdrawn. Upload and envelope acceptance remain blocked.",
           retryable: false
         )
       case .invalidResponse:
         return .failed(
-          message: "The capture service response did not match the accepted capture contract. No envelope was accepted.",
+          message:
+            "The capture service response did not match the accepted capture contract. No envelope was accepted.",
           retryable: false
         )
       case .cancelled:
@@ -973,7 +1239,8 @@ final class C14_8GuidedCaptureModel {
     }
 
     return .failed(
-      message: "Submission stopped without accepting an envelope. Immutable completed uploads remain resumable.",
+      message:
+        "Submission stopped without accepting an envelope. Immutable completed uploads remain resumable.",
       retryable: true
     )
   }
@@ -1039,9 +1306,10 @@ final class C14_8GuidedCaptureModel {
       guard let parsedEnd = C7ISO8601.date(from: wireEndedAt) else {
         throw C14_8ContractError.invalidEvidence
       }
-      let encodedDurationMicroseconds = Int64(
-        (parsedEnd.timeIntervalSince(parsedStart) * 1_000).rounded()
-      ) * 1_000
+      let encodedDurationMicroseconds =
+        Int64(
+          (parsedEnd.timeIntervalSince(parsedStart) * 1_000).rounded()
+        ) * 1_000
       if encodedDurationMicroseconds >= requiredEndMicroseconds,
         encodedDurationMicroseconds <= C14_8CaptureContract.maximumDurationMicroseconds
       {
@@ -1098,10 +1366,15 @@ final class C14_8GuidedCaptureModel {
         ambientIntensity: sample.ambientIntensity,
         blurScoreMillionths: sample.blurScoreMillionths,
         cameraIntrinsicsMicropixels: sample.cameraIntrinsicsMicropixels,
+        connectedToPrevious: sample.connectedToPrevious,
         exposureScoreMillionths: sample.exposureScoreMillionths,
+        featurePointCount: sample.featurePointCount,
         intrinsicsModel: sample.intrinsicsModel,
+        loopClosureCandidate: sample.loopClosureCandidate,
         motionScoreMillionths: sample.motionScoreMillionths,
         orientation: sample.orientation,
+        overlapScoreMillionths: sample.overlapScoreMillionths,
+        parallaxScoreMillionths: sample.parallaxScoreMillionths,
         poseTransform: sample.poseTransform,
         quaternionOrder: sample.quaternionOrder,
         quaternionNanounits: sample.quaternionNanounits,
@@ -1112,7 +1385,12 @@ final class C14_8GuidedCaptureModel {
         sourceTimestampMicroseconds: sample.sourceTimestampMicroseconds,
         timestampMicroseconds: sample.timestampMicroseconds,
         trackingState: sample.trackingState,
-        translationMicrometres: sample.translationMicrometres
+        trajectorySpanMicrometres: sample.trajectorySpanMicrometres,
+        trajectoryTravelMicrometres: sample.trajectoryTravelMicrometres,
+        translationFromPreviousMicrometres: sample.translationFromPreviousMicrometres,
+        translationMicrometres: sample.translationMicrometres,
+        retentionMode: sample.retentionMode,
+        zoneId: sample.zoneId
       )
     }
     return C14_8CaptureEnvelopeRequest(
@@ -1139,7 +1417,8 @@ final class C14_8GuidedCaptureModel {
         )
       },
       endedAt: wireTimeline.endedAt,
-      generator: C14_8EnvelopeGenerator(name: "ios-guided-capture", version: capabilities.appVersion),
+      generator: C14_8EnvelopeGenerator(
+        name: "ios-guided-capture", version: capabilities.appVersion),
       intent: draft.rooms.count > 1 ? "small-apartment" : "room-by-room",
       mediaSources: mediaSources,
       projectId: draft.projectId,
@@ -1158,29 +1437,59 @@ final class C14_8GuidedCaptureModel {
   }
 
   private func qualitySummary(_ draft: C14_8GuidedCaptureDraft) -> C14_8QualitySummary {
-    C14_8QualitySummary(
+    let readiness = draft.rooms.map {
+      C14_10SpatialReadinessEvaluator.evaluate(room: $0, samples: draft.samples)
+    }
+    return C14_8QualitySummary(
       interruptionCount: draft.interruptionCount,
       lowLightSampleCount: draft.samples.filter {
         ($0.ambientIntensity ?? 1_000) < 300
           || $0.exposureScoreMillionths < C8CaptureQualityEvaluator.minimumAcceptedExposure
       }.count,
-      missingCoverageCellCount: draft.rooms.flatMap(\.coverage).filter { $0.status == .missing }.count,
+      missingCoverageCellCount: draft.rooms.flatMap(\.coverage).filter { $0.status == .missing }
+        .count,
       motionWarningSampleCount: draft.samples.filter { $0.motionScoreMillionths > 400_000 }.count,
-      occludedCoverageCellCount: draft.rooms.flatMap(\.coverage).filter { $0.status == .occluded }.count,
+      occludedCoverageCellCount: draft.rooms.flatMap(\.coverage).filter { $0.status == .occluded }
+        .count,
       trackingLimitedSampleCount: draft.samples.filter { $0.trackingState != .normal }.count,
       unusableBlurSampleCount: draft.samples.filter {
         $0.blurScoreMillionths < C8CaptureQualityEvaluator.minimumAcceptedBlur
-      }.count
+      }.count,
+      spatialEvidence: C14_10SpatialQualitySummary(
+        automaticallySelectedSampleCount: draft.samples.filter { $0.retentionMode == .automatic }
+          .count,
+        connectedSampleCount: draft.samples.filter { $0.connectedToPrevious == true }.count,
+        loopClosureSampleCount: draft.samples.filter { $0.loopClosureCandidate == true }.count,
+        unresolvedRoomCount: readiness.filter { !$0.isReady }.count,
+        unresolvedZoneCount: readiness.reduce(0) { $0 + $1.unresolvedZoneCount }
+      )
     )
   }
 
-  private func markObserved(telemetry: C14_8LiveTelemetry?, in draft: inout C14_8GuidedCaptureDraft) {
-    guard let telemetry, let roomIndex = draft.rooms.indices.last,
+  private func markObserved(
+    coverageCellId: String,
+    in draft: inout C14_8GuidedCaptureDraft
+  ) {
+    guard let roomIndex = draft.rooms.indices.last,
       let cellIndex = draft.rooms[roomIndex].coverage.firstIndex(where: {
-        $0.id == telemetry.coverageCellId
+        $0.id == coverageCellId
       })
     else { return }
     draft.rooms[roomIndex].coverage[cellIndex].status = .observed
+  }
+
+  private func markZoneObservedIfEnough(
+    zoneId: UUID,
+    in draft: inout C14_8GuidedCaptureDraft
+  ) {
+    guard let roomIndex = draft.rooms.indices.last,
+      let zoneIndex = draft.rooms[roomIndex].zones?.firstIndex(where: { $0.zoneId == zoneId })
+    else { return }
+    let roomId = draft.rooms[roomIndex].roomId
+    let count = draft.samples.filter { $0.roomId == roomId && $0.zoneId == zoneId }.count
+    if count >= C14_10SpatialCapturePolicy.minimumZoneSamples {
+      draft.rooms[roomIndex].zones?[zoneIndex].status = .observed
+    }
   }
 
   private func appendSegment(
@@ -1234,6 +1543,9 @@ final class C14_8GuidedCaptureModel {
     engine.stop()
     draft = nil
     liveTelemetry = nil
+    activeZoneId = nil
+    automaticCaptureEnabled = true
+    lastAutomaticTimestampMicroseconds = nil
     pendingActorScope = nil
     pendingSegmentReason = nil
     projectId = nil
@@ -1246,12 +1558,14 @@ final class C14_8GuidedCaptureModel {
     roomPlanCandidates = []
     roomPlanDiscoveryInProgress = false
     roomPlanDiscoveryMessage = nil
+    resourcePressure = .nominal
+    selectionInstruction = nil
     scopeMismatch = false
   }
 }
 
-private extension EvidenceRightsBasis {
-  var c7Basis: C7RightsBasis {
+extension EvidenceRightsBasis {
+  fileprivate var c7Basis: C7RightsBasis {
     switch self {
     case .licensed: .licensed
     case .ownedByUser: .ownedByUser
@@ -1261,8 +1575,8 @@ private extension EvidenceRightsBasis {
   }
 }
 
-private extension C7RightsBasis {
-  var evidenceBasis: EvidenceRightsBasis {
+extension C7RightsBasis {
+  fileprivate var evidenceBasis: EvidenceRightsBasis {
     switch self {
     case .licensed: .licensed
     case .ownedByUser: .ownedByUser

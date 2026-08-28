@@ -1,0 +1,199 @@
+{
+  "schemaVersion": "capture-envelope-golden-cases-v1",
+  "baseFile": "base.json",
+  "expectedCanonicalByteLength": 5383,
+  "expectedCanonicalSha256": "e26d3f43c14d9d8def3ceb7105c539cc5351e66f579a1b529299216f5d104bb9",
+  "cases": [
+    { "id": "canonical", "expected": "valid", "mutations": [] },
+    {
+      "id": "uppercase-uuid-input",
+      "expected": "valid",
+      "sameCanonicalAsBase": true,
+      "mutations": [{ "operation": "uppercase-uuids" }]
+    },
+    {
+      "id": "trimmed-bounded-strings",
+      "expected": "valid",
+      "sameCanonicalAsBase": true,
+      "mutations": [
+        { "operation": "set", "path": "/capabilities/appVersion", "value": "  1.0.0  " },
+        {
+          "operation": "set",
+          "path": "/capabilities/operatingSystemVersion",
+          "value": "  26.0  "
+        },
+        { "operation": "set", "path": "/generator/version", "value": "  1.0.0  " },
+        { "operation": "set", "path": "/rooms/0/label", "value": "  Living room  " },
+        { "operation": "set", "path": "/rooms/0/zones/0/label", "value": "  Main area  " }
+      ]
+    },
+    {
+      "id": "uuid-shaped-user-label-preserves-case",
+      "expected": "valid",
+      "expectedCanonicalByteLength": 5408,
+      "expectedCanonicalSha256": "8c175ea522e3992f71fe07ac95a2d9933222cfaf472151d03a1f24caab15f54a",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/rooms/0/label",
+          "value": "14800000-0000-4000-8000-ABCDEFABCDEF"
+        }
+      ]
+    },
+    {
+      "id": "simulator-physical-capability-inflation",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/capabilities/runtime",
+          "value": "simulator-fixture"
+        },
+        {
+          "operation": "set",
+          "path": "/capabilities/qualityTier",
+          "value": "simulator-fixture"
+        }
+      ]
+    },
+    {
+      "id": "legacy-optional-fields-absent",
+      "expected": "valid",
+      "mutations": [
+        { "operation": "remove", "path": "/cameraSamples/0/connectedToPrevious" },
+        { "operation": "remove", "path": "/cameraSamples/0/featurePointCount" },
+        { "operation": "remove", "path": "/cameraSamples/0/loopClosureCandidate" },
+        { "operation": "remove", "path": "/cameraSamples/0/overlapScoreMillionths" },
+        { "operation": "remove", "path": "/cameraSamples/0/parallaxScoreMillionths" },
+        { "operation": "remove", "path": "/cameraSamples/0/retentionMode" },
+        { "operation": "remove", "path": "/cameraSamples/0/trajectorySpanMicrometres" },
+        { "operation": "remove", "path": "/cameraSamples/0/trajectoryTravelMicrometres" },
+        { "operation": "remove", "path": "/cameraSamples/0/translationFromPreviousMicrometres" },
+        { "operation": "remove", "path": "/cameraSamples/0/zoneId" },
+        { "operation": "remove", "path": "/quality/spatialEvidence" },
+        { "operation": "remove", "path": "/rooms/0/zones" }
+      ]
+    },
+    {
+      "id": "optional-story-absent",
+      "expected": "valid",
+      "mutations": [{ "operation": "remove", "path": "/rooms/0/story" }]
+    },
+    {
+      "id": "optional-story-null",
+      "expected": "invalid",
+      "mutations": [{ "operation": "set", "path": "/rooms/0/story", "value": null }]
+    },
+    {
+      "id": "invalid-uuid",
+      "expected": "invalid",
+      "mutations": [{ "operation": "set", "path": "/projectId", "value": "not-a-uuid" }]
+    },
+    {
+      "id": "timestamp-without-zone",
+      "expected": "invalid",
+      "mutations": [
+        { "operation": "set", "path": "/startedAt", "value": "2026-08-26T10:00:00.000" }
+      ]
+    },
+    {
+      "id": "millisecond-offset-timestamp",
+      "expected": "valid",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/startedAt",
+          "value": "2026-08-26T10:00:00.000+00:00"
+        }
+      ]
+    },
+    {
+      "id": "timestamp-submillisecond-precision",
+      "expected": "invalid",
+      "mutations": [
+        { "operation": "set", "path": "/startedAt", "value": "2026-08-26T10:00:00.000123Z" }
+      ]
+    },
+    {
+      "id": "timestamp-invalid-offset",
+      "expected": "invalid",
+      "mutations": [
+        { "operation": "set", "path": "/startedAt", "value": "2026-08-26T10:00:00.000+24:00" }
+      ]
+    },
+    {
+      "id": "nested-transfer-timestamp-submillisecond-precision",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/mediaSources/0/transfer/reconciledAt",
+          "value": "2026-08-26T10:06:00.000123Z"
+        }
+      ]
+    },
+    {
+      "id": "partial-spatial-optionals",
+      "expected": "invalid",
+      "mutations": [{ "operation": "remove", "path": "/cameraSamples/0/parallaxScoreMillionths" }]
+    },
+    {
+      "id": "duplicate-segment",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "append-copy",
+          "from": "/coordinateSegments/0",
+          "path": "/coordinateSegments"
+        }
+      ]
+    },
+    {
+      "id": "overlapping-independent-segment",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "append",
+          "path": "/coordinateSegments",
+          "value": {
+            "coordinateSystem": "arkit-right-handed-y-up",
+            "endedAtMicroseconds": 6000000,
+            "reason": "relaunch",
+            "segmentId": "14800000-0000-4000-8000-000000000008",
+            "startedAtMicroseconds": 4000000,
+            "translationUnit": "micrometres",
+            "worldOriginRelationship": "independent-unless-later-registered"
+          }
+        },
+        {
+          "operation": "append",
+          "path": "/rooms/0/coordinateSegmentIds",
+          "value": "14800000-0000-4000-8000-000000000008"
+        }
+      ]
+    },
+    {
+      "id": "sample-unknown-segment",
+      "expected": "invalid",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": "/cameraSamples/0/segmentId",
+          "value": "14800000-0000-4000-8000-000000000099"
+        }
+      ]
+    },
+    {
+      "id": "unknown-envelope-field",
+      "expected": "invalid",
+      "mutations": [{ "operation": "set", "path": "/futureAuthority", "value": true }]
+    },
+    {
+      "id": "unknown-nested-field",
+      "expected": "invalid",
+      "mutations": [
+        { "operation": "set", "path": "/cameraSamples/0/surveyAccurate", "value": true }
+      ]
+    }
+  ]
+}

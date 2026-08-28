@@ -18,9 +18,10 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     )
     let encodedStart = try XCTUnwrap(C7ISO8601.date(from: timeline.startedAt))
     let encodedEnd = try XCTUnwrap(C7ISO8601.date(from: timeline.endedAt))
-    let encodedDurationMicroseconds = Int64(
-      (encodedEnd.timeIntervalSince(encodedStart) * 1_000).rounded()
-    ) * 1_000
+    let encodedDurationMicroseconds =
+      Int64(
+        (encodedEnd.timeIntervalSince(encodedStart) * 1_000).rounded()
+      ) * 1_000
 
     XCTAssertGreaterThanOrEqual(encodedDurationMicroseconds, requiredEndMicroseconds)
     XCTAssertLessThan(encodedDurationMicroseconds - requiredEndMicroseconds, 1_000)
@@ -52,28 +53,32 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     XCTAssertEqual(
       C14_8GuidedCaptureModel.submissionFailure(for: EvidenceServiceError.unavailable),
       .failed(
-        message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+        message:
+          "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
         retryable: true
       )
     )
     XCTAssertEqual(
       C14_8GuidedCaptureModel.submissionFailure(for: EvidenceServiceError.invalidResponse),
       .failed(
-        message: "The capture service response did not match the accepted upload contract. No envelope was accepted.",
+        message:
+          "The capture service response did not match the accepted upload contract. No envelope was accepted.",
         retryable: false
       )
     )
     XCTAssertEqual(
       C14_8GuidedCaptureModel.submissionFailure(for: C7CaptureServiceError.unavailable),
       .failed(
-        message: "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
+        message:
+          "The capture service became temporarily unavailable before envelope acceptance. Completed immutable uploads remain resumable; retry after service health returns.",
         retryable: true
       )
     )
     XCTAssertEqual(
       C14_8GuidedCaptureModel.submissionFailure(for: C14_8ContractError.invalidEvidence),
       .failed(
-        message: "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
+        message:
+          "The protected capture draft failed local integrity validation before envelope acceptance. No source evidence was changed.",
         retryable: false
       )
     )
@@ -143,7 +148,8 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     XCTAssertEqual(restored, draft)
     XCTAssertNil(foreign)
 
-    let journal = root
+    let journal =
+      root
       .appendingPathComponent(projectId.uuidString.lowercased(), isDirectory: true)
       .appendingPathComponent("journal.json")
     let text = String(decoding: try Data(contentsOf: journal), as: UTF8.self)
@@ -205,7 +211,9 @@ final class C14_8CaptureFoundationTests: XCTestCase {
       localIdentifier: destination.id,
       roomId: room.roomId,
       segmentId: segmentId,
-      captureStartedAt: createdAt
+      captureStartedAt: createdAt,
+      retentionMode: .manual,
+      zoneId: try XCTUnwrap(room.zones?.first?.zoneId)
     )
     let handle = try await mediaStore.finalize(
       id: destination.id,
@@ -354,7 +362,9 @@ final class C14_8CaptureFoundationTests: XCTestCase {
       localIdentifier: localIdentifier,
       roomId: roomId,
       segmentId: segmentId,
-      captureStartedAt: Date()
+      captureStartedAt: Date(),
+      retentionMode: .manual,
+      zoneId: UUID()
     )
 
     XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))
@@ -374,6 +384,7 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     let model = makeModel(root: root, journal: journal)
 
     await model.activate(projectId: projectId.uuidString, actor: owner)
+    await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
     XCTAssertEqual(model.state, .ready)
     XCTAssertTrue(model.canMutate)
     let originalLabel = model.currentRoom?.label
@@ -410,9 +421,13 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     let model = makeModel(root: root, journal: journal)
 
     await model.activate(projectId: projectId.uuidString, actor: owner)
+    await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
     XCTAssertEqual(model.draft?.segments.count, 1)
     model.reset()
     await model.activate(projectId: projectId.uuidString, actor: owner)
+    XCTAssertEqual(model.state, .review)
+    model.captureMore()
+    await waitUntil { model.state == .ready && model.draft?.keyframes.count == 2 }
     XCTAssertEqual(model.draft?.segments.count, 2)
     XCTAssertEqual(model.draft?.segments.last?.reason, .relaunch)
     XCTAssertEqual(
@@ -423,7 +438,7 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     model.handleBackgrounding()
     XCTAssertEqual(model.state, .interrupted)
     model.recoverAfterInterruption()
-    XCTAssertEqual(model.state, .ready)
+    await waitUntil { model.state == .ready && model.draft?.keyframes.count == 3 }
     XCTAssertEqual(model.draft?.segments.last?.reason, .interruption)
     XCTAssertEqual(Set(model.draft?.segments.map(\.segmentId) ?? []).count, 3)
   }
@@ -448,10 +463,23 @@ final class C14_8CaptureFoundationTests: XCTestCase {
     await model.activate(projectId: secondProject.uuidString, actor: owner)
     await delayed.releaseLoad()
     await stale.value
+    await waitUntil { model.state == .ready && model.draft?.keyframes.count == 1 }
 
     XCTAssertEqual(model.draft?.projectId, secondProject)
     XCTAssertEqual(model.state, .ready)
     XCTAssertTrue(model.canMutate)
+  }
+
+  @MainActor
+  private func waitUntil(
+    attempts: Int = 1_000,
+    _ condition: @escaping @MainActor () -> Bool
+  ) async {
+    for _ in 0..<attempts {
+      if condition() { return }
+      await Task.yield()
+    }
+    XCTFail("Timed out waiting for the deterministic capture state.")
   }
 
   private func fixtureDraft(
