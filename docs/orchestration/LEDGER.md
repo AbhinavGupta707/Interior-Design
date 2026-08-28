@@ -1580,3 +1580,45 @@
   deny/grant/offline/process-termination/role-withdrawal/storage/thermal/accessibility matrix,
   second journey or Windows resource/repeatability metrics. Structural, regulatory, cost,
   availability and professional certainty remain unclaimed.
+
+## C14.9 physical Capture Envelope non-accuracy benchmark - 2026-08-28
+
+- Authority: user instruction after reviewed PR #13 merged at
+  `30b0417eb2249038f8f686a5337fdca0d47e3028`, with reviewed source
+  `5254049964c0b226fef820d84de590266a4bf863`. One `gpt-5.6-sol` / `high` primary session used the
+  authoritative WSL checkout and one sequential private-data/GPU lane; no subagent or worktree.
+- Transfer/privacy: the complete export moved Mac-to-WSL-ext4 over fingerprint-pinned encrypted
+  SSH. Temporary Remote Login was disabled and the LAN port closed after verification. The export
+  has exactly 28 mode-`0600` regular files and four mode-`0700` directories, with no links or
+  special files. Raw media, geometry, logs, identifiers and private paths remain outside Git,
+  GitHub, CI and Windows-mounted storage.
+- Private authority: the pre-authorized envelope/manifest and frozen selection, policy,
+  corrected-host-inventory and final-strict-record digests were reverified after cleanup. Exact
+  values remain only in restrictive WSL evidence and are not Git-visible identifiers.
+- Host/images: RTX 5080, driver 595.79, compute 12.0, 16,303 MiB VRAM; Docker 29.5.3; WSL kernel
+  `6.6.87.2-microsoft-standard-WSL2`. Exact images are COLMAP
+  `sha256:68be6852c13de3573a79fb049ee2116937ba424cbd29b56583dc6a58617364f6`, Open3D
+  `sha256:141f6039bd347a21728df4c72c28c255b91bd8d7acf833d557027f0f21b2114f`, and corrected gsplat
+  `sha256:93add58cb6b3ee7df927a47e98af0ed1d7d9fbac8605dea6de92d96a14e70d0`.
+- Matrix: 6 selected scopes, 22 typed abstained scopes, 12/12 supplied fresh runs, zero
+  missing/partial/failed/isolation/resource violations and six passing repeatability scopes.
+  Unconstrained COLMAP repeats exactly at 20/25 registered, 6,706 points and 1.003727 px;
+  ARKit-prior repeats exactly at 25/25, 7,370 points and 1.637097 px; fixed-geometry gsplat repeats
+  exactly at 5.841315879702146 dB held-out PSNR. Visual coherence has no quality floor.
+- Abstentions: the one-view interrupted segment remained independent and ineligible. Exact bound
+  depth is absent, so Open3D abstained in all four segment/cohort scopes. RoomPlan is absent. VGGT,
+  MASt3R and Video Depth Anything remained blocked at frozen licence/weight/source/lock/image gates;
+  no experimental package ran.
+- Resources: maximum observed run values were 4,488,240,824 bytes host/container memory,
+  1,292,894,208 bytes task VRAM, 1,833,271,566 bytes scratch and 1,560.368453 seconds. No baseline
+  ceiling was exceeded.
+- Recoverable correction: the runbook's `/c14/export` container alias conflicted with the physical
+  root-name verifier. The narrow explicit-alias correction plus regression test is frozen at
+  `0fb9943b18856e8719d595cea3ac1cd092c0e18b`; default verification remains strict. The corrected
+  gsplat image was rebuilt before affected reruns. Because unconstrained COLMAP covered only 20/25
+  selected images, final gsplat runs used each corresponding same-run 25/25 ARKit-prior model;
+  validation was not weakened and no run/cohort/segment was mixed.
+- Verdict: runtime `pass`; physical compatibility `requires-review`; dimensional accuracy
+  `NOT RUN`; representative accuracy `NOT RUN`; production promotion prohibited. Durable redacted
+  evidence is
+  `docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.

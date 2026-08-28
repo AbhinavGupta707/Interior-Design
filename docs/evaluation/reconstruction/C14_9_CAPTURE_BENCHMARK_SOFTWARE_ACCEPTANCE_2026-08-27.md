@@ -187,3 +187,12 @@ and the new lifecycle behavior is not claimed as physical-device evidence.
 Requirement 4 and the benchmark portions of requirements 5–6 remain `NOT RUN` for this physical
 input: no Windows/RTX candidate cohort, repeatability/resource matrix, ground truth, accuracy or
 production promotion was executed or inferred.
+
+## Superseding physical non-accuracy follow-up - 2026-08-28
+
+The Windows/RTX candidate and repeatability/resource portions were subsequently executed after PR
+#13 merged. The complete private eligible matrix passes runtime and repeatability with explicit
+depth/Open3D, RoomPlan and experimental abstentions. Physical compatibility still requires
+independent review; dimensional and representative accuracy remain `NOT RUN`; production promotion
+remains prohibited. Exact privacy-redacted evidence is in
+`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.

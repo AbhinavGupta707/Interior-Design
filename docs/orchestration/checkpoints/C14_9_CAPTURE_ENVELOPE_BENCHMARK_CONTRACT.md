@@ -132,3 +132,14 @@ physical sequence is
 `docs/runbooks/development/C14_9_CAPTURE_ENVELOPE_BENCHMARK.md`. Real Capture Envelope transfer,
 physical-device compatibility, representative accuracy, production routing, canonical mutation and
 promotion remain `NOT RUN` / prohibited.
+
+## Physical non-accuracy follow-up - 2026-08-28
+
+After PR #13 merged, the private physical envelope completed the eligible Windows/RTX matrix under
+the frozen isolation and resource ceilings. All 12 required fragments were supplied with zero
+missing, partial, failed, isolation-violating or resource-ceiling runs, and all six repeatability
+scopes passed. Depth/Open3D, RoomPlan and experimental candidates abstained honestly where their
+input/licence/dependency/image gates were not met. Physical compatibility remains
+`requires-review`; dimensional and representative accuracy remain `NOT RUN`; production promotion
+is prohibited. Redacted evidence is in
+`docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.
