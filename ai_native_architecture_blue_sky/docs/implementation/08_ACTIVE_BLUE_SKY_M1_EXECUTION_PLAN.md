@@ -499,7 +499,28 @@ and repeatability for that envelope/host. Independent private-output review foun
 fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing;
 dimensional/representative accuracy and production promotion remain closed.
 
-### C15 — Walkthrough and design video — 4 lanes
+### C14.10 - Proposal-only learned reconstruction audit - single primary session
+
+**Outcome:** evaluate a small, licence-permitted and exactly reproducible set of modern learned
+reconstruction candidates against the retained C14.9 physical Capture Envelope baselines, without
+changing production routing, canonical geometry or homeowner authority.
+
+| Sequential body | Exclusive ownership | Required output |
+| --- | --- | --- |
+| Upstream and licence audit | official candidate sources/model cards plus isolated private source/weight roots | exact source, licence, weight, dependency, image and RTX 5080 gates; typed abstention for every blocked candidate |
+| Segment-safe physical evaluation | additive `ml/reconstruction/windows-nvidia-v2/**` audit support and private WSL outputs | same immutable per-segment inputs, two fresh runs, registration/connectivity/completeness, held-out appearance, repeatability and resource evidence |
+| Integrated evidence and delivery | C14.10 contract/evaluation/ledger and focused tests | private visual review, honest material-improvement verdict, repository/GPU gates and one non-draft unmerged PR |
+
+**Execution:** one exact `gpt-5.6-sol` / `high` primary session is the sole writer and completion
+authority. No worktree, subagent, separate task or parallel implementation lane is authorised.
+
+**Gate:** candidate sources, dependencies and weights are exact-hash pinned before counted use;
+incompatible or licence-blocked candidates abstain without blocking viable candidates; the two
+coordinate segments remain independent; all media and raw outputs remain private on WSL ext4;
+learned outputs remain proposal-only. With no independent measurements, dimensional and
+representative accuracy remain `NOT RUN`; production routing and canonical promotion are prohibited.
+
+### C15 - Walkthrough and design video - 4 lanes
 
 **Outcome:** users can generate collision-checked deterministic camera-path videos and separately labelled AI-enhanced cinematic versions with captions/narration.
 

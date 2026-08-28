@@ -3,15 +3,14 @@
 ## Programme
 
 - Active plan: `ai_native_architecture_blue_sky/docs/implementation/08_ACTIVE_BLUE_SKY_M1_EXECUTION_PLAN.md`
-- Integration branch: `codex/c14-6-native-homeowner-readiness`
+- Integration branch: `codex/c14-10-learned-reconstruction-audit`
 - Repository/project root: `/Users/abhinavgupta/Desktop/Interior Design` in the primary Mac checkout
 - Remote: `https://github.com/AbhinavGupta707/Interior-Design.git`
 - Worktree policy: project-scoped Codex worktree tasks only
 - Worker runtime policy: explicit `gpt-5.6-sol` for every lane; `high` for bounded/straightforward work and `xhigh` for complex architecture, security, geometry, inference, concurrency, adversarial or integration-heavy work. Each checkpoint records the assignment before launch.
-- Autonomous execution boundary: C0-C14 and corrective C14.1/C14.2/C14.3/C14.4/C14.5/C14.6
-  are complete. No later checkpoint is open. C6/C8/C9 native processing, C4/C5 native confirmation,
-  live provider/deployment, physical-device/hardware and C15/C16 remain closed; C8 v2 remains
-  acceptance-only.
+- Autonomous execution boundary: C0-C14 and corrective C14.1-C14.9 are complete. C14.10 is open as
+  a proposal-only learned-reconstruction audit. Production C8/C9 routing, canonical promotion,
+  dimensional/representative accuracy, live provider/deployment and C15/C16 remain closed.
 - Gate policy: no later checkpoint opens until code, contracts, security/data behavior, browser/UI/UX and applicable simulator/runtime evidence for the current checkpoint are integrated and recorded
 
 ## C0 — Repository and multi-surface delivery substrate
@@ -1646,3 +1645,25 @@
   quality/build tasks plus Ruff, mypy and 157 Python tests with two expected skips; Prettier and
   `git diff --check` passed. Normal merge remains gated on all four named GitHub checks on the final
   reviewed SHA.
+
+## C14.10 - Proposal-only learned reconstruction audit
+
+### Activation and contract freeze - 2026-08-28
+
+- Authority: user instruction from clean synchronized `main` at
+  `97352b7027476aa48461aea3788d1e02d3268b56` after reviewed PR #14 merged.
+- Branch: `codex/c14-10-learned-reconstruction-audit`.
+- Contract: `docs/orchestration/checkpoints/C14_10_LEARNED_RECONSTRUCTION_AUDIT_CONTRACT.md`.
+- Runtime/ownership: one `gpt-5.6-sol` / `high` primary session; no subagent, worktree, separate
+  task or parallel implementation lane. One non-draft PR will be opened and left unmerged.
+- Private authority: the already verified physical Capture Envelope at canonical SHA-256
+  `093e9f6259429ab28281ba60032fd6b3592f299eb90b4353103ffe7c11c48cd9`; exact paths, source names,
+  raw media, outputs, logs and machine records remain only on restrictive WSL ext4 storage.
+- Scope: audit current official learned-reconstruction implementations, licences, model weights,
+  dependency reproducibility and RTX 5080 support; freeze a small viable set led by VGGT; run the
+  same immutable per-segment/cohort comparison against retained COLMAP, ARKit-prior and gsplat;
+  implement only reusable isolated evaluation support justified by the audit.
+- Frozen boundaries: segments are never silently joined; all learned output is proposal-only;
+  production routing, canonical geometry, C5/homeowner authority, migrations and generated clients
+  are unchanged. With no independent measurements, dimensional and representative accuracy are
+  `NOT RUN` and production promotion is prohibited.
