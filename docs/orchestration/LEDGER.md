@@ -1593,13 +1593,15 @@
   special files. Raw media, geometry, logs, identifiers and private paths remain outside Git,
   GitHub, CI and Windows-mounted storage.
 - Private authority: the pre-authorized envelope/manifest and frozen selection, policy,
-  corrected-host-inventory and final-strict-record digests were reverified after cleanup. Exact
-  values remain only in restrictive WSL evidence and are not Git-visible identifiers.
+  corrected-host-inventory and final-strict-record digests were reverified after cleanup. The
+  envelope and manifest evidence identifiers were already committed by the reviewed C14.8 handoff;
+  the latter four values, raw authority, source identifiers and private paths remain only in
+  restrictive WSL evidence.
 - Host/images: RTX 5080, driver 595.79, compute 12.0, 16,303 MiB VRAM; Docker 29.5.3; WSL kernel
   `6.6.87.2-microsoft-standard-WSL2`. Exact images are COLMAP
   `sha256:68be6852c13de3573a79fb049ee2116937ba424cbd29b56583dc6a58617364f6`, Open3D
   `sha256:141f6039bd347a21728df4c72c28c255b91bd8d7acf833d557027f0f21b2114f`, and corrected gsplat
-  `sha256:93add58cb6b3ee7df927a47e98af0ed1d7d9fbac8605dea6de92d96a14e70d0`.
+  `sha256:93add58cb6b3ee7df927a47e98af0ed1d7d9fbac8607edea6de92d96a14e70d0`.
 - Matrix: 6 selected scopes, 22 typed abstained scopes, 12/12 supplied fresh runs, zero
   missing/partial/failed/isolation/resource violations and six passing repeatability scopes.
   Unconstrained COLMAP repeats exactly at 20/25 registered, 6,706 points and 1.003727 px;
@@ -1617,8 +1619,16 @@
   `0fb9943b18856e8719d595cea3ac1cd092c0e18b`; default verification remains strict. The corrected
   gsplat image was rebuilt before affected reruns. Because unconstrained COLMAP covered only 20/25
   selected images, final gsplat runs used each corresponding same-run 25/25 ARKit-prior model;
-  validation was not weakened and no run/cohort/segment was mixed.
-- Verdict: runtime `pass`; physical compatibility `requires-review`; dimensional accuracy
-  `NOT RUN`; representative accuracy `NOT RUN`; production promotion prohibited. Durable redacted
+  validation was not weakened and no run/cohort/segment was mixed. Four original alias failures
+  and four superseded model-completeness failures remain retained outside the final denominator.
+- Verdict: runtime `pass`. The immutable machine record retains physical compatibility
+  `requires-review`; independent review accepts only this one envelope's export, isolated runtime
+  and repeatability evidence. Dimensional accuracy is `NOT RUN`, representative accuracy is
+  `NOT RUN` and production promotion is prohibited. Durable redacted
   evidence is
   `docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.
+- Independent PR review inspected the retained private authority and outputs without publishing
+  them. It accepts only the one-envelope runtime/repeatability result. The reconstruction is sparse,
+  fragmented, not established as a recognisable complete room, incomplete and unsuitable for
+  consumer digital-twin presentation or routing. Visual quality did not pass and no quality floor,
+  accuracy, completeness or production claim is created from the runtime pass.

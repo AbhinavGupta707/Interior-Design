@@ -7,10 +7,19 @@ matrix is runtime-executable and repeatable on the Windows/WSL RTX 5080 host. Al
 fragments were supplied; there were zero missing, partial, failed, isolation-violating or
 resource-ceiling runs; and all six selected candidate/cohort repeatability scopes passed.
 
-This is proposal-only non-accuracy evidence. `physicalCaptureCompatibility` remains
-`requires-review`, representative accuracy is `NOT RUN`, dimensional accuracy is `NOT RUN`, and
-production promotion is prohibited. No result establishes canonical geometry, dimensions, scale,
+This is proposal-only non-accuracy evidence. The immutable machine record retains
+`physicalCaptureCompatibility: requires-review`; this independent review accepts only the
+one-envelope export, isolated runtime and repeatability evidence. Representative accuracy is
+`NOT RUN`, dimensional accuracy is `NOT RUN`, and production promotion is prohibited. No result
+establishes canonical geometry, dimensions, scale,
 structural or regulatory truth, cost, availability or professional certainty.
+
+Independent review of the retained private outputs found the point-cloud and appearance evidence
+sparse and fragmented. It does not establish a recognisable, complete room reconstruction. The
+one-view independent segment remains unreconstructed, exact depth and RoomPlan are absent, the
+unconstrained baseline registers only 20/25 selected views, and held-out gsplat PSNR is only
+5.841315879702146 dB. The result is therefore incomplete and unsuitable for consumer digital-twin
+presentation or routing. Runtime and repeatability passed; visual reconstruction quality did not.
 
 ## Authority and privacy boundary
 
@@ -26,7 +35,8 @@ structural or regulatory truth, cost, availability or professional certainty.
 - The export contains exactly 28 private regular files and four private directories. Directories
   are mode `0700`; files are mode `0600`; no symlink, hard-linked file or special file exists.
 - The official offline verifier matched both pre-authorized envelope and export-manifest digests.
-  Their exact values remain only in the private WSL evidence.
+  Those two evidence identifiers were already committed during the reviewed C14.8 handoff; raw
+  authority, source identifiers, paths and media remain private.
 - Raw media, geometry, command logs, complete strict records, source identifiers and private paths
   remain only in restrictive WSL-ext4 storage. None is committed or attached to the PR.
 
@@ -106,12 +116,12 @@ unrequested or wrong alias still fails. The corrected source was committed and f
 affected rerun at `0fb9943b18856e8719d595cea3ac1cd092c0e18b`; the corrected gsplat image above was
 built from that exact commit.
 
-The first corrected attempt then honestly failed model completeness because unconstrained COLMAP
-registered only 20 of 25 selected images. Validation was not weakened. The final fresh gsplat runs
-used each corresponding same-run ARKit-prior text model, whose cameras, images and points all came
-from that one run and covered 25/25 selected views. No model, run, cohort or coordinate segment was
-mixed. Original and superseded failure logs/fragments remain retained privately outside the final
-denominator.
+The first corrected attempt then honestly produced four further preparation failures because
+unconstrained COLMAP registered only 20 of 25 selected images. Validation was not weakened. The
+final fresh gsplat runs used each corresponding same-run ARKit-prior text model, whose cameras,
+images and points all came from that one run and covered 25/25 selected views. No model, run, cohort
+or coordinate segment was mixed. All eight original and superseded failure logs/fragments remain
+retained privately outside the final 12-run denominator.
 
 ## Verification and inspection
 
@@ -127,6 +137,8 @@ denominator.
   on WSL ext4. The viewer uses no external script or network request and is served only on Windows
   loopback for local human inspection. Neither viewer data nor its private path is committed.
 
-Independent review must check the actual device/runtime, secure transfer, rights, RGB,
+Independent review checked the retained device/runtime, transfer, rights, RGB,
 intrinsics/orientation, camera convention, independent segments, depth/RoomPlan abstentions,
-failures and resource evidence. The PR must remain unmerged until that review completes.
+failures, resource evidence and private visual outputs. It accepted runtime/repeatability only and
+rejected visual-quality or consumer-twin suitability. Normal merge still requires all four named
+GitHub checks on the final reviewed SHA.

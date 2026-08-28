@@ -139,7 +139,10 @@ After PR #13 merged, the private physical envelope completed the eligible Window
 the frozen isolation and resource ceilings. All 12 required fragments were supplied with zero
 missing, partial, failed, isolation-violating or resource-ceiling runs, and all six repeatability
 scopes passed. Depth/Open3D, RoomPlan and experimental candidates abstained honestly where their
-input/licence/dependency/image gates were not met. Physical compatibility remains
-`requires-review`; dimensional and representative accuracy remain `NOT RUN`; production promotion
-is prohibited. Redacted evidence is in
+input/licence/dependency/image gates were not met. The immutable machine record retains physical
+compatibility `requires-review`; independent review accepts only this one envelope's export,
+isolated runtime and repeatability evidence. Dimensional and representative accuracy remain
+`NOT RUN`; production promotion is prohibited. Independent review additionally found the retained reconstruction sparse,
+fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing; runtime
+and repeatability success is not visual-quality acceptance. Redacted evidence is in
 `docs/evaluation/reconstruction/C14_9_CAPTURE_BENCHMARK_PHYSICAL_NON_ACCURACY_2026-08-28.md`.

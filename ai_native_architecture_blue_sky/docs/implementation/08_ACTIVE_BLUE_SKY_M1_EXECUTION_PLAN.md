@@ -10,10 +10,12 @@ M1 is now **Complete Home Design System**, not a small plan-to-3D pilot. Its tar
 
 On 2026-08-27 C14.8 merged the device-neutral, camera-first mobile capture software foundation.
 C14.9 secure Capture Envelope export and isolated Windows/RTX benchmark software has now been
-independently reviewed and corrected. The first accepted physical Capture Envelope, physical-device
-compatibility and representative accuracy remain `NOT RUN`; no later checkpoint is opened by this
-software closeout. Starting from the C14.6 cold-launch/onboarding baseline, an
-authorised homeowner can now
+independently reviewed and corrected. One accepted physical Capture Envelope subsequently completed
+the eligible isolated Windows/RTX runtime and repeatability matrix, which independent review accepts
+only for that envelope/host. Dimensional and representative accuracy remain `NOT RUN`, and the
+sparse, fragmented result is incomplete and unsuitable for consumer digital-twin presentation or
+routing. No later checkpoint is opened by this non-accuracy follow-up. Starting from the C14.6
+cold-launch/onboarding baseline, an authorised homeowner can now
 review exact C6/C8 proposals, optionally reconcile exact C6/C7/C8 sources through C9, explicitly
 correct/review/preview/confirm C4/C5 operations, compile the exact committed twin through C10 and
 enter the existing C11-C14 native design loop. Server membership and persisted version/hash pins
@@ -489,6 +491,13 @@ images and the strict 16/16-run common record are frozen in the C14.9 evidence a
 outputs remain proposal/evaluation-only. Current rights on the envelope and separately referenced
 RoomPlan source sessions, private physical transfer, both cohorts per independent segment,
 physical review and rights-cleared ground truth remain gates for the first real envelope.
+
+**Physical non-accuracy follow-up:** after reviewed PR #13 merged, one accepted physical envelope
+completed all 12 selected baseline runs with six passing repeatability scopes and explicit
+segment/depth/RoomPlan/experimental abstentions. This proves only isolated runtime compatibility
+and repeatability for that envelope/host. Independent private-output review found the result sparse,
+fragmented, incomplete and unsuitable for consumer digital-twin presentation or routing;
+dimensional/representative accuracy and production promotion remain closed.
 
 ### C15 — Walkthrough and design video — 4 lanes
 
