@@ -14,8 +14,10 @@ private enum C14_8SubmissionError: Error {
 }
 
 private struct C14_10AutomaticCandidateWindow {
+  let retainedCountAtStart: Int
   let segmentId: UUID?
   let startedAtMicroseconds: Int64
+  let zoneId: UUID?
   var outcome: C14_10KeyframeDecisionReason
   var retentionStarted: Bool
   var telemetry: C14_8LiveTelemetry
@@ -98,6 +100,8 @@ final class C14_8GuidedCaptureModel {
   @ObservationIgnored private var selectionDiagnosticsPersistenceTask: Task<Void, Never>?
   @ObservationIgnored private var pendingSegmentReason: C14_8SegmentReason?
   @ObservationIgnored private var lastAutomaticTimestampMicroseconds: Int64?
+  @ObservationIgnored private var lastRejectedDiagnosticTimestampByReason:
+    [C14_10KeyframeDecisionReason: Int64] = [:]
   @ObservationIgnored private var projectId: UUID?
   @ObservationIgnored private var scopeMismatch = false
 
@@ -154,6 +158,30 @@ final class C14_8GuidedCaptureModel {
   var capturedKeyframeCount: Int { draft?.keyframes.count ?? 0 }
   var observedCellCount: Int {
     currentRoom?.coverage.filter { $0.status == .observed }.count ?? 0
+  }
+  var coverageGuidance: String? {
+    currentRoom.flatMap { C14_10CoverageGuidance.instruction(for: $0.coverage) }
+  }
+  var loopClosureProgress: String? {
+    guard currentSegmentKeyframeCount > 0 else { return nil }
+    guard let spatial = liveTelemetry?.spatialEvidence,
+      let distance = spatial.startAnchorDistanceMicrometres,
+      let distanceThreshold = spatial.loopClosureDistanceThresholdMicrometres,
+      let overlap = spatial.startAnchorOverlapScoreMillionths,
+      let requiredOverlap = spatial.loopClosureRequiredOverlapScoreMillionths
+    else {
+      return "Start view saved. Complete the route, then return to the same view."
+    }
+    if spatial.loopClosureCandidate {
+      return "Start view matched. Hold steady so the loop-closing view can be retained."
+    }
+    return String(
+      format: "Start view: %.1f m away (target %.1f m) · match %d%% (need %d%%)",
+      Double(distance) / 1_000_000,
+      Double(distanceThreshold) / 1_000_000,
+      overlap / 10_000,
+      requiredOverlap / 10_000
+    )
   }
   var totalRoomCount: Int { draft?.rooms.count ?? 0 }
   var currentRoomKeyframeCount: Int {
@@ -234,13 +262,7 @@ final class C14_8GuidedCaptureModel {
       selectionInstruction
         ?? decision.reason.homeownerInstruction(hasRetainedView: currentSegmentKeyframeCount > 0)
     )
-    if currentRoom?.coverage.first(where: { $0.id == telemetry.coverageCellId })?.status
-      == .observed
-    {
-      result.append("Secondary guide: turn toward an unresolved lower, middle or upper area.")
-    } else {
-      result.append("Secondary guide: this direction and height are still unresolved.")
-    }
+    if let coverageGuidance { result.append(coverageGuidance) }
     if let readiness = captureReadiness, !readiness.isReady {
       result.append(contentsOf: readiness.reasons.prefix(2))
     }
@@ -457,11 +479,12 @@ final class C14_8GuidedCaptureModel {
         }
       } catch let error as C14_8GuidedCaptureEngineError {
         guard scope == self.activationId else { return }
-        if case .candidateRejected(let reason) = error {
+        if case .candidateRejected(let reason, let finalTelemetry) = error {
           self.selectionInstruction = reason.homeownerInstruction(
             hasRetainedView: self.currentSegmentKeyframeCount > 0)
           self.updateAutomaticCandidateOutcome(
             reason,
+            telemetry: finalTelemetry,
             startedAtMicroseconds: automaticCandidateStartedAt
           )
           self.state = .ready
@@ -985,6 +1008,7 @@ final class C14_8GuidedCaptureModel {
   private func startEngine() {
     let scope = activationId
     automaticCandidateWindow = nil
+    lastRejectedDiagnosticTimestampByReason = [:]
     captureArmed = false
     do {
       engine.applyResourcePolicy(resourcePolicy)
@@ -1078,8 +1102,10 @@ final class C14_8GuidedCaptureModel {
     }
     if automaticCandidateWindow == nil {
       automaticCandidateWindow = C14_10AutomaticCandidateWindow(
+        retainedCountAtStart: currentSegmentKeyframeCount,
         segmentId: draft?.segments.last?.segmentId,
         startedAtMicroseconds: telemetryTimestampMicroseconds,
+        zoneId: activeZoneId,
         outcome: .tracking,
         retentionStarted: false,
         telemetry: telemetry
@@ -1089,18 +1115,30 @@ final class C14_8GuidedCaptureModel {
 
   private func updateAutomaticCandidateOutcome(
     _ outcome: C14_10KeyframeDecisionReason,
+    telemetry: C14_8LiveTelemetry? = nil,
     startedAtMicroseconds: Int64?
   ) {
     guard let startedAtMicroseconds,
       automaticCandidateWindow?.startedAtMicroseconds == startedAtMicroseconds
     else { return }
     automaticCandidateWindow?.outcome = outcome
+    if let telemetry { automaticCandidateWindow?.telemetry = telemetry }
   }
 
   private func finalizeAutomaticCandidateWindow() {
     guard let window = automaticCandidateWindow else { return }
     let completedAt = Date()
-    selectionDiagnostics.record(window.outcome, telemetry: window.telemetry, at: completedAt)
+    selectionDiagnostics.record(
+      window.outcome,
+      telemetry: window.telemetry,
+      context: C14_10SelectionDiagnosticContext(
+        coverageCellId: window.telemetry.coverageCellId,
+        retainedCountAtStart: window.retainedCountAtStart,
+        segmentId: window.segmentId,
+        zoneId: window.zoneId
+      ),
+      at: completedAt
+    )
     #if DEBUG
       captureRejectedFrameDiagnosticIfEnabled(window: window, completedAt: completedAt)
     #endif
@@ -1116,18 +1154,25 @@ final class C14_8GuidedCaptureModel {
       guard rejectedFrameDiagnosticsEnabled, window.outcome != .accepted, let projectId else {
         return
       }
+      let telemetryTimestamp = window.telemetry.spatialEvidence.telemetryTimestampMicroseconds
+      if let lastTimestamp = lastRejectedDiagnosticTimestampByReason[window.outcome],
+        telemetryTimestamp - lastTimestamp
+          < C14_10RejectedFrameDiagnosticPolicy.minimumSameReasonSnapshotIntervalMicroseconds
+      {
+        return
+      }
       let thumbnail: C14_10RejectedDiagnosticThumbnail
       do {
         thumbnail = try engine.captureRejectedDiagnosticThumbnail(
           capturedAt: completedAt,
           maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
-          telemetryTimestampMicroseconds:
-            window.telemetry.spatialEvidence.telemetryTimestampMicroseconds
+          telemetryTimestampMicroseconds: telemetryTimestamp
         )
       } catch {
         rejectedFrameDiagnosticsPersistenceFailed = true
         return
       }
+      lastRejectedDiagnosticTimestampByReason[window.outcome] = telemetryTimestamp
       let outcome = C14_10RecentSelectionOutcome(
         reason: window.outcome,
         telemetry: window.telemetry,
@@ -1828,6 +1873,7 @@ final class C14_8GuidedCaptureModel {
     captureArmed = false
     automaticCaptureEnabled = true
     lastAutomaticTimestampMicroseconds = nil
+    lastRejectedDiagnosticTimestampByReason = [:]
     pendingActorScope = nil
     pendingSegmentReason = nil
     projectId = nil

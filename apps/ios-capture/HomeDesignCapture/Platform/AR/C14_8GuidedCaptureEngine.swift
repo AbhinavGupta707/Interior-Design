@@ -8,11 +8,35 @@ import UIKit
 struct C14_8LiveTelemetry: Equatable, Sendable {
   let ambientIntensity: Int?
   let blurScoreMillionths: Int
+  let cameraPositionMicrometres: [Int64]?
+  let cameraQuaternionNanounits: [Int64]?
   let coverageCellId: String
   let exposureScoreMillionths: Int
   let motionScoreMillionths: Int
   let spatialEvidence: C14_10LiveSpatialEvidence
   let trackingState: C14_8TrackingState
+
+  init(
+    ambientIntensity: Int?,
+    blurScoreMillionths: Int,
+    coverageCellId: String,
+    exposureScoreMillionths: Int,
+    motionScoreMillionths: Int,
+    spatialEvidence: C14_10LiveSpatialEvidence,
+    trackingState: C14_8TrackingState,
+    cameraPositionMicrometres: [Int64]? = nil,
+    cameraQuaternionNanounits: [Int64]? = nil
+  ) {
+    self.ambientIntensity = ambientIntensity
+    self.blurScoreMillionths = blurScoreMillionths
+    self.cameraPositionMicrometres = cameraPositionMicrometres
+    self.cameraQuaternionNanounits = cameraQuaternionNanounits
+    self.coverageCellId = coverageCellId
+    self.exposureScoreMillionths = exposureScoreMillionths
+    self.motionScoreMillionths = motionScoreMillionths
+    self.spatialEvidence = spatialEvidence
+    self.trackingState = trackingState
+  }
 }
 
 enum C14_8GuidedCaptureEvent: Equatable, Sendable {
@@ -23,7 +47,7 @@ enum C14_8GuidedCaptureEvent: Equatable, Sendable {
 }
 
 enum C14_8GuidedCaptureEngineError: Error, Equatable, Sendable {
-  case candidateRejected(C14_10KeyframeDecisionReason)
+  case candidateRejected(C14_10KeyframeDecisionReason, telemetry: C14_8LiveTelemetry?)
   case encodingFailed
   case frameUnavailable
   case trackingUnavailable
@@ -179,6 +203,11 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       pixelBuffer: CVPixelBuffer,
       telemetryTimestampMicroseconds: Int64
     )?
+  private var revalidatedRejectedDiagnosticFrame:
+    (
+      pixelBuffer: CVPixelBuffer,
+      telemetryTimestampMicroseconds: Int64
+    )?
   private var previousRotation: simd_quatf?
   private var previousTimestamp: TimeInterval?
   private var provisionalAnchorObservation: C14_10ProvisionalObservation?
@@ -212,6 +241,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     provisionalAnchorObservation = nil
     latestRejectedDiagnosticFrame = nil
     previousRejectedDiagnosticFrame = nil
+    revalidatedRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
     firstAnchorCaptureArmed = false
@@ -233,6 +263,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     provisionalAnchorObservation = nil
     latestRejectedDiagnosticFrame = nil
     previousRejectedDiagnosticFrame = nil
+    revalidatedRejectedDiagnosticFrame = nil
     latestMotionScoreMillionths = 0
     retainedObservations = []
     firstAnchorCaptureArmed = false
@@ -256,6 +287,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     if !enabled {
       latestRejectedDiagnosticFrame = nil
       previousRejectedDiagnosticFrame = nil
+      revalidatedRejectedDiagnosticFrame = nil
     }
   }
 
@@ -288,18 +320,28 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     let spatialEvidence = spatialEvidence(
       for: frame, telemetryTimestampMicroseconds: globalMicroseconds)
     let transform = frame.camera.transform
+    let cameraRotation = simd_quatf(transform)
     let forward = -SIMD3(transform.columns.2.x, transform.columns.2.y, transform.columns.2.z)
     let coverageCellId = Self.coverageCell(forward: forward)
+    let captureTelemetry = C14_8LiveTelemetry(
+      ambientIntensity: frame.lightEstimate.map { Int($0.ambientIntensity.rounded()) },
+      blurScoreMillionths: quality.blurScoreMillionths,
+      coverageCellId: coverageCellId,
+      exposureScoreMillionths: quality.exposureScoreMillionths,
+      motionScoreMillionths: latestMotionScoreMillionths,
+      spatialEvidence: spatialEvidence,
+      trackingState: tracking,
+      cameraPositionMicrometres: [
+        Self.micro(transform.columns.3.x), Self.micro(transform.columns.3.y),
+        Self.micro(transform.columns.3.z),
+      ],
+      cameraQuaternionNanounits: [
+        Self.nano(cameraRotation.imag.x), Self.nano(cameraRotation.imag.y),
+        Self.nano(cameraRotation.imag.z), Self.nano(cameraRotation.real),
+      ]
+    )
     let decision = C14_10KeyframeSelector.decision(
-      telemetry: C14_8LiveTelemetry(
-        ambientIntensity: frame.lightEstimate.map { Int($0.ambientIntensity.rounded()) },
-        blurScoreMillionths: quality.blurScoreMillionths,
-        coverageCellId: coverageCellId,
-        exposureScoreMillionths: quality.exposureScoreMillionths,
-        motionScoreMillionths: latestMotionScoreMillionths,
-        spatialEvidence: spatialEvidence,
-        trackingState: tracking
-      ),
+      telemetry: captureTelemetry,
       retainedCount: retainedObservations.count,
       lastAutomaticTimestampMicroseconds: retainedObservations.last(where: {
         $0.retentionMode == .automatic
@@ -307,7 +349,16 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       mode: retentionMode
     )
     guard decision.shouldRetain else {
-      throw C14_8GuidedCaptureEngineError.candidateRejected(decision.reason)
+      if rejectedDiagnosticCaptureEnabled {
+        revalidatedRejectedDiagnosticFrame = (
+          pixelBuffer: frame.capturedImage,
+          telemetryTimestampMicroseconds: globalMicroseconds
+        )
+      }
+      throw C14_8GuidedCaptureEngineError.candidateRejected(
+        decision.reason,
+        telemetry: captureTelemetry
+      )
     }
     let retainedSpatialEvidence =
       retainedObservations.isEmpty
@@ -336,7 +387,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       )
     else { throw C14_8GuidedCaptureEngineError.encodingFailed }
     try jpeg.write(to: destination, options: [.atomic, .completeFileProtection])
-    let quaternion = simd_quatf(transform)
+    let quaternion = cameraRotation
     let intrinsics = frame.camera.intrinsics
     let resolution = frame.camera.imageResolution
     let sample = C14_8LocalCameraSample(
@@ -408,16 +459,25 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     guard 1...C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension ~= maximumDimension
     else { throw C14_8GuidedCaptureEngineError.frameUnavailable }
     let pixelBuffer: CVPixelBuffer
-    if latestRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
+    let consumesRevalidatedFrame: Bool
+    if revalidatedRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
+      == telemetryTimestampMicroseconds,
+      let revalidatedRejectedDiagnosticFrame
+    {
+      pixelBuffer = revalidatedRejectedDiagnosticFrame.pixelBuffer
+      consumesRevalidatedFrame = true
+    } else if latestRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
       == telemetryTimestampMicroseconds,
       let latestRejectedDiagnosticFrame
     {
       pixelBuffer = latestRejectedDiagnosticFrame.pixelBuffer
+      consumesRevalidatedFrame = false
     } else if previousRejectedDiagnosticFrame?.telemetryTimestampMicroseconds
       == telemetryTimestampMicroseconds,
       let previousRejectedDiagnosticFrame
     {
       pixelBuffer = previousRejectedDiagnosticFrame.pixelBuffer
+      consumesRevalidatedFrame = false
     } else {
       throw C14_8GuidedCaptureEngineError.frameUnavailable
     }
@@ -441,13 +501,15 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       !jpeg.isEmpty,
       jpeg.count <= C14_10RejectedFrameDiagnosticPolicy.maximumImageBytes
     else { throw C14_8GuidedCaptureEngineError.encodingFailed }
-    return C14_10RejectedDiagnosticThumbnail(
+    let thumbnail = C14_10RejectedDiagnosticThumbnail(
       capturedAt: capturedAt,
       jpegData: jpeg,
       pixelHeight: Int(scaledExtent.height),
       pixelWidth: Int(scaledExtent.width),
       telemetryTimestampMicroseconds: telemetryTimestampMicroseconds
     )
+    if consumesRevalidatedFrame { revalidatedRejectedDiagnosticFrame = nil }
+    return thumbnail
   }
 
   func session(_ session: ARSession, didUpdate frame: ARFrame) {
@@ -487,7 +549,14 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         exposureScoreMillionths: quality.exposureScoreMillionths,
         motionScoreMillionths: motion,
         spatialEvidence: spatialEvidence,
-        trackingState: Self.tracking(frame.camera.trackingState)
+        trackingState: Self.tracking(frame.camera.trackingState),
+        cameraPositionMicrometres: [
+          Self.micro(position.x), Self.micro(position.y), Self.micro(position.z),
+        ],
+        cameraQuaternionNanounits: [
+          Self.nano(rotation.imag.x), Self.nano(rotation.imag.y),
+          Self.nano(rotation.imag.z), Self.nano(rotation.real),
+        ]
       ))
   }
 
@@ -609,11 +678,17 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       referenceFeaturePoints: first.featurePoints,
       currentCamera: frame.camera
     )
-    let loopClosure =
-      retainedObservations.count >= C14_10SpatialCapturePolicy.minimumKeyframesPerRoom - 1
-      && span >= C14_10SpatialCapturePolicy.minimumTrajectorySpanMicrometres
-      && distanceFromFirst <= C14_10SpatialCapturePolicy.minimumLoopClosureDistanceMicrometres
-      && firstOverlap >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+    let rotationFromFirst = C14_10SpatialRotation.microradians(
+      unitQuaternionDot: Double(abs(simd_dot(rotation.vector, first.rotation.vector)))
+    )
+    let loopClosure = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: retainedObservations.count,
+      trajectorySpanMicrometres: span,
+      trajectoryTravelMicrometres: travel,
+      startAnchorDistanceMicrometres: distanceFromFirst,
+      startAnchorOverlapScoreMillionths: firstOverlap,
+      startAnchorRotationMicroradians: rotationFromFirst
+    )
     let parallax = min(
       1_000_000,
       Int(
@@ -624,14 +699,20 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     return C14_10LiveSpatialEvidence(
       connectedToPrevious: connected,
       featurePointCount: featureIds.count,
-      loopClosureCandidate: loopClosure,
+      loopClosureCandidate: loopClosure.isCandidate,
       overlapScoreMillionths: overlap,
       parallaxScoreMillionths: max(0, parallax),
       rotationFromPreviousMicroradians: rotationFromPrevious,
       telemetryTimestampMicroseconds: timestampMicroseconds,
       trajectorySpanMicrometres: span,
       trajectoryTravelMicrometres: travel,
-      translationFromPreviousMicrometres: translation
+      translationFromPreviousMicrometres: translation,
+      loopClosureDistanceThresholdMicrometres: loopClosure.distanceThresholdMicrometres,
+      loopClosureRequiredOverlapScoreMillionths:
+        loopClosure.requiredOverlapScoreMillionths,
+      startAnchorDistanceMicrometres: distanceFromFirst,
+      startAnchorOverlapScoreMillionths: firstOverlap,
+      startAnchorRotationMicroradians: rotationFromFirst
     )
   }
 

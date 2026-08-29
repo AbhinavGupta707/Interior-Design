@@ -233,7 +233,7 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
     for segmentId in segmentIds {
       let segmentRecords = records.filter { $0.segmentId == segmentId }
       let representatives = trimRepresentatives(
-        firstAndLatestByReason(segmentRecords),
+        routeRepresentativesByReason(segmentRecords),
         to: C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount - selected.count
       )
       selected.append(contentsOf: representatives)
@@ -244,16 +244,41 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
     return selected.sorted { $0.capturedAt < $1.capturedAt }
   }
 
-  private static func firstAndLatestByReason(
+  private static func routeRepresentativesByReason(
     _ records: [C14_10RejectedFrameDiagnosticRecord]
   ) -> [C14_10RejectedFrameDiagnosticRecord] {
     var selectedIds = Set<UUID>()
-    for reason in C14_10KeyframeDecisionReason.allCases {
+    for reason in C14_10KeyframeDecisionReason.allCases where reason != .accepted {
       let matches = records.filter { $0.outcome.reason == reason }
-      if let first = matches.first { selectedIds.insert(first.diagnosticId) }
-      if let last = matches.last { selectedIds.insert(last.diagnosticId) }
+      let limit = C14_10RejectedFrameDiagnosticPolicy.maximumRepresentativesPerReasonAndSegment
+      guard matches.count > limit else {
+        selectedIds.formUnion(matches.map(\.diagnosticId))
+        continue
+      }
+      selectedIds.formUnion(spreadRepresentatives(matches, to: limit).map(\.diagnosticId))
     }
     return records.filter { selectedIds.contains($0.diagnosticId) }
+  }
+
+  private static func spreadRepresentatives(
+    _ records: [C14_10RejectedFrameDiagnosticRecord],
+    to limit: Int
+  ) -> [C14_10RejectedFrameDiagnosticRecord] {
+    guard limit > 1 else { return records.last.map { [$0] } ?? [] }
+    var selected = records.sorted { $0.capturedAt < $1.capturedAt }
+    while selected.count > limit {
+      let removable = 1..<(selected.count - 1)
+      let index =
+        removable.min { left, right in
+          let leftSpan = selected[left + 1].capturedAt.timeIntervalSince(
+            selected[left - 1].capturedAt)
+          let rightSpan = selected[right + 1].capturedAt.timeIntervalSince(
+            selected[right - 1].capturedAt)
+          return leftSpan == rightSpan ? left < right : leftSpan < rightSpan
+        } ?? 1
+      selected.remove(at: index)
+    }
+    return selected
   }
 
   private static func trimRepresentatives(
@@ -263,14 +288,23 @@ actor C14_10RejectedFrameDiagnosticStore: C14_10RejectedFrameDiagnosticStoring {
     guard limit > 0 else { return [] }
     var selected = records
     while selected.count > limit {
-      let counts = Dictionary(grouping: selected, by: { $0.outcome.reason }).mapValues(\.count)
-      if let duplicateIndex = selected.firstIndex(where: {
-        (counts[$0.outcome.reason] ?? 0) > 1
-      }) {
-        selected.remove(at: duplicateIndex)
-      } else {
+      let grouped = Dictionary(grouping: selected, by: { $0.outcome.reason })
+      let reason = grouped.keys.sorted {
+        let leftCount = grouped[$0]?.count ?? 0
+        let rightCount = grouped[$1]?.count ?? 0
+        return leftCount == rightCount ? $0.rawValue < $1.rawValue : leftCount > rightCount
+      }.first
+      guard let reason, let matches = grouped[reason], !matches.isEmpty else {
         selected.removeFirst()
+        continue
       }
+      let retained = spreadRepresentatives(matches, to: matches.count - 1)
+      let retainedIds = Set(retained.map(\.diagnosticId))
+      guard let removed = matches.first(where: { !retainedIds.contains($0.diagnosticId) }) else {
+        selected.removeFirst()
+        continue
+      }
+      selected.removeAll { $0.diagnosticId == removed.diagnosticId }
     }
     return selected
   }

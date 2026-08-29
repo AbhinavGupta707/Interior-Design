@@ -233,7 +233,9 @@ struct C14_8GuidedCaptureView: View {
           }
           captureGuidanceOverlay
         }
-        .frame(minHeight: 320)
+        // Keep enough unobscured preview above the always-visible guidance so a
+        // homeowner can still compose the wall, corner or opening being requested.
+        .frame(minHeight: 440)
         .clipShape(RoundedRectangle(cornerRadius: 18))
       }
 
@@ -262,6 +264,18 @@ struct C14_8GuidedCaptureView: View {
             "Parallax signal",
             value: "\(telemetry.spatialEvidence.parallaxScoreMillionths / 10_000)%")
           LabeledContent("Tracking", value: telemetry.trackingState.rawValue)
+          if let distance = telemetry.spatialEvidence.startAnchorDistanceMicrometres,
+            let threshold = telemetry.spatialEvidence.loopClosureDistanceThresholdMicrometres
+          {
+            LabeledContent(
+              "Return to start",
+              value: String(
+                format: "%.1f m away · %.1f m target",
+                Double(distance) / 1_000_000,
+                Double(threshold) / 1_000_000
+              )
+            )
+          }
         }
         Toggle("Select useful keyframes automatically", isOn: $model.automaticCaptureEnabled)
         Text(
@@ -279,7 +293,7 @@ struct C14_8GuidedCaptureView: View {
           )
           .accessibilityIdentifier("c14_10.rejected-frame-diagnostics")
           Text(
-            "Physical diagnostics only. When enabled, the app prioritizes the first and latest example for each rejection reason in the newest capture segment, capped at 12 protected 640 px snapshots on this device. Older segments only fill spare capacity. They stay outside the Capture Envelope, never upload and are off again after relaunch."
+            "Physical diagnostics only. When enabled, the app keeps route-spread examples for each rejection reason, newest segment first, capped at \(C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount) protected 640 px snapshots on this device. Structured candidate telemetry is separately protected. Neither enters the Capture Envelope or uploads, and image capture is off again after relaunch."
           )
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -306,7 +320,8 @@ struct C14_8GuidedCaptureView: View {
           if model.rejectedFrameDiagnosticCount > 0 {
             LabeledContent(
               "Private diagnostic snapshots",
-              value: "\(model.rejectedFrameDiagnosticCount) of 12"
+              value:
+                "\(model.rejectedFrameDiagnosticCount) of \(C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount)"
             )
             Button("Delete private diagnostic snapshots", role: .destructive) {
               model.clearRejectedFrameDiagnostics()
@@ -332,6 +347,11 @@ struct C14_8GuidedCaptureView: View {
             "Retained / skipped",
             value:
               "\(model.selectionDiagnostics.retainedCandidateCount) / \(model.selectionDiagnostics.skippedCandidateCount)"
+          )
+          LabeledContent(
+            "Protected detailed windows",
+            value:
+              "\(model.selectionDiagnostics.detailedOutcomes?.count ?? 0) of \(C14_10SelectionDiagnostics.maximumDetailedOutcomeCount)"
           )
           if let latest = model.selectionDiagnostics.recentOutcomes?.last {
             LabeledContent(
@@ -404,6 +424,18 @@ struct C14_8GuidedCaptureView: View {
       .font(.caption2.monospacedDigit())
       .lineLimit(2)
 
+      if let coverageGuidance = model.coverageGuidance {
+        Text(coverageGuidance)
+          .font(.caption2)
+          .lineLimit(2)
+      }
+
+      if let loopClosureProgress = model.loopClosureProgress {
+        Text(loopClosureProgress)
+          .font(.caption2.monospacedDigit())
+          .lineLimit(2)
+      }
+
       if !model.captureArmed {
         Button("Start capture here") { model.armCapture() }
           .buttonStyle(.borderedProminent)
@@ -412,12 +444,22 @@ struct C14_8GuidedCaptureView: View {
           .disabled(!model.canArmCapture)
           .accessibilityIdentifier("c14_10.arm-capture")
       }
+      if model.captureArmed, model.currentSegmentKeyframeCount > 0 {
+        Button(
+          model.captureReadiness?.isReady == true
+            ? "Review connected capture" : "Review unresolved capture"
+        ) { model.finishRoomReview() }
+        .buttonStyle(.borderedProminent)
+        .tint(.white)
+        .foregroundStyle(.black)
+        .accessibilityIdentifier("c14_10.review-live-capture")
+      }
     }
     .foregroundStyle(.white)
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(Color.black.opacity(0.78))
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("c14_10.capture-guidance-overlay")
   }
 

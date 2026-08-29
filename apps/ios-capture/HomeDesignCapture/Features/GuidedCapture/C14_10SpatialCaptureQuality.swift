@@ -14,6 +14,9 @@ enum C14_10SpatialCapturePolicy {
   static let minimumFeaturePointCount = 60
   static let minimumKeyframesPerRoom = 8
   static let minimumLoopClosureDistanceMicrometres: Int64 = 650_000
+  static let maximumLoopClosureDistanceMicrometres: Int64 = 1_200_000
+  static let maximumLoopClosureRotationMicroradians = 785_398
+  static let maximumLoopClosureOverlapScoreMillionths = 350_000
   static let minimumOverlapScoreMillionths = 180_000
   static let maximumNearDuplicateOverlapScoreMillionths = 940_000
   static let minimumParallaxScoreMillionths = 80_000
@@ -28,13 +31,137 @@ struct C14_10LiveSpatialEvidence: Codable, Equatable, Sendable {
   let connectedToPrevious: Bool
   let featurePointCount: Int
   let loopClosureCandidate: Bool
+  let loopClosureDistanceThresholdMicrometres: Int64?
+  let loopClosureRequiredOverlapScoreMillionths: Int?
   let overlapScoreMillionths: Int
   let parallaxScoreMillionths: Int
   let rotationFromPreviousMicroradians: Int
+  let startAnchorDistanceMicrometres: Int64?
+  let startAnchorOverlapScoreMillionths: Int?
+  let startAnchorRotationMicroradians: Int?
   let telemetryTimestampMicroseconds: Int64
   let trajectorySpanMicrometres: Int64
   let trajectoryTravelMicrometres: Int64
   let translationFromPreviousMicrometres: Int64
+
+  init(
+    connectedToPrevious: Bool,
+    featurePointCount: Int,
+    loopClosureCandidate: Bool,
+    overlapScoreMillionths: Int,
+    parallaxScoreMillionths: Int,
+    rotationFromPreviousMicroradians: Int,
+    telemetryTimestampMicroseconds: Int64,
+    trajectorySpanMicrometres: Int64,
+    trajectoryTravelMicrometres: Int64,
+    translationFromPreviousMicrometres: Int64,
+    loopClosureDistanceThresholdMicrometres: Int64? = nil,
+    loopClosureRequiredOverlapScoreMillionths: Int? = nil,
+    startAnchorDistanceMicrometres: Int64? = nil,
+    startAnchorOverlapScoreMillionths: Int? = nil,
+    startAnchorRotationMicroradians: Int? = nil
+  ) {
+    self.connectedToPrevious = connectedToPrevious
+    self.featurePointCount = featurePointCount
+    self.loopClosureCandidate = loopClosureCandidate
+    self.loopClosureDistanceThresholdMicrometres = loopClosureDistanceThresholdMicrometres
+    self.loopClosureRequiredOverlapScoreMillionths =
+      loopClosureRequiredOverlapScoreMillionths
+    self.overlapScoreMillionths = overlapScoreMillionths
+    self.parallaxScoreMillionths = parallaxScoreMillionths
+    self.rotationFromPreviousMicroradians = rotationFromPreviousMicroradians
+    self.startAnchorDistanceMicrometres = startAnchorDistanceMicrometres
+    self.startAnchorOverlapScoreMillionths = startAnchorOverlapScoreMillionths
+    self.startAnchorRotationMicroradians = startAnchorRotationMicroradians
+    self.telemetryTimestampMicroseconds = telemetryTimestampMicroseconds
+    self.trajectorySpanMicrometres = trajectorySpanMicrometres
+    self.trajectoryTravelMicrometres = trajectoryTravelMicrometres
+    self.translationFromPreviousMicrometres = translationFromPreviousMicrometres
+  }
+}
+
+struct C14_10LoopClosureAssessment: Equatable, Sendable {
+  let distanceThresholdMicrometres: Int64
+  let isCandidate: Bool
+  let requiredOverlapScoreMillionths: Int
+}
+
+enum C14_10LoopClosureEvaluator {
+  static func evaluate(
+    retainedObservationCount: Int,
+    trajectorySpanMicrometres: Int64,
+    trajectoryTravelMicrometres: Int64,
+    startAnchorDistanceMicrometres: Int64,
+    startAnchorOverlapScoreMillionths: Int,
+    startAnchorRotationMicroradians: Int
+  ) -> C14_10LoopClosureAssessment {
+    let distanceThreshold = distanceThresholdMicrometres(
+      trajectoryTravelMicrometres: trajectoryTravelMicrometres)
+    let requiredOverlap = requiredOverlapScoreMillionths(
+      startAnchorDistanceMicrometres: startAnchorDistanceMicrometres)
+    let isCandidate =
+      retainedObservationCount >= C14_10SpatialCapturePolicy.minimumKeyframesPerRoom - 1
+      && trajectorySpanMicrometres
+        >= C14_10SpatialCapturePolicy.minimumTrajectorySpanMicrometres
+      && trajectoryTravelMicrometres
+        >= C14_10SpatialCapturePolicy.minimumTrajectoryTravelMicrometres
+      && startAnchorDistanceMicrometres <= distanceThreshold
+      && startAnchorOverlapScoreMillionths >= requiredOverlap
+      && startAnchorRotationMicroradians
+        <= C14_10SpatialCapturePolicy.maximumLoopClosureRotationMicroradians
+    return C14_10LoopClosureAssessment(
+      distanceThresholdMicrometres: distanceThreshold,
+      isCandidate: isCandidate,
+      requiredOverlapScoreMillionths: requiredOverlap
+    )
+  }
+
+  static func distanceThresholdMicrometres(
+    trajectoryTravelMicrometres: Int64
+  ) -> Int64 {
+    let base = C14_10SpatialCapturePolicy.minimumLoopClosureDistanceMicrometres
+    let maximum = C14_10SpatialCapturePolicy.maximumLoopClosureDistanceMicrometres
+    let boundedDriftAllowance = min(maximum - base, max(0, trajectoryTravelMicrometres) / 50)
+    return base + boundedDriftAllowance
+  }
+
+  static func requiredOverlapScoreMillionths(
+    startAnchorDistanceMicrometres: Int64
+  ) -> Int {
+    let baseDistance = C14_10SpatialCapturePolicy.minimumLoopClosureDistanceMicrometres
+    let maximumDistance = C14_10SpatialCapturePolicy.maximumLoopClosureDistanceMicrometres
+    let baseOverlap = C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+    let maximumOverlap = C14_10SpatialCapturePolicy.maximumLoopClosureOverlapScoreMillionths
+    guard startAnchorDistanceMicrometres > baseDistance else { return baseOverlap }
+    let boundedDistance = min(maximumDistance, startAnchorDistanceMicrometres)
+    let distanceAboveBase = boundedDistance - baseDistance
+    let distanceRange = maximumDistance - baseDistance
+    let overlapRange = maximumOverlap - baseOverlap
+    return baseOverlap + Int(distanceAboveBase * Int64(overlapRange) / distanceRange)
+  }
+}
+
+enum C14_10CoverageGuidance {
+  static func instruction(for coverage: [C14_8CoverageCell]) -> String? {
+    for band in [C14_8VerticalBand.upper, .middle, .lower] {
+      let unresolvedCount = coverage.filter {
+        $0.verticalBand == band && ($0.status == .missing || $0.status == .unknown)
+      }.count
+      guard unresolvedCount > 0 else { continue }
+      switch band {
+      case .upper:
+        return
+          "Secondary guide: \(unresolvedCount) upper directions remain. Tilt toward wall/ceiling junctions while keeping the last wall visible."
+      case .middle:
+        return
+          "Secondary guide: \(unresolvedCount) middle directions remain. Keep walls, openings and fixed fittings in overlapping views."
+      case .lower:
+        return
+          "Secondary guide: \(unresolvedCount) lower directions remain. Tilt toward wall/floor junctions while keeping the last wall visible."
+      }
+    }
+    return nil
+  }
 }
 
 enum C14_10SpatialRotation {
@@ -121,13 +248,20 @@ enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Has
 
 struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
   let blurScoreMillionths: Int
+  let cameraPositionMicrometres: [Int64]?
+  let cameraQuaternionNanounits: [Int64]?
   let completedAt: Date
   let featurePointCount: Int
+  let loopClosureDistanceThresholdMicrometres: Int64?
+  let loopClosureRequiredOverlapScoreMillionths: Int?
   let motionScoreMillionths: Int
   let overlapScoreMillionths: Int
   let parallaxScoreMillionths: Int
   let rotationFromPreviousMicroradians: Int?
   let reason: C14_10KeyframeDecisionReason
+  let startAnchorDistanceMicrometres: Int64?
+  let startAnchorOverlapScoreMillionths: Int?
+  let startAnchorRotationMicroradians: Int?
   let telemetryTimestampMicroseconds: Int64
   let trackingState: C14_8TrackingState
   let translationFromPreviousMicrometres: Int64
@@ -138,14 +272,24 @@ struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
     completedAt: Date
   ) {
     blurScoreMillionths = telemetry.blurScoreMillionths
+    cameraPositionMicrometres = telemetry.cameraPositionMicrometres
+    cameraQuaternionNanounits = telemetry.cameraQuaternionNanounits
     self.completedAt = completedAt
     featurePointCount = telemetry.spatialEvidence.featurePointCount
+    loopClosureDistanceThresholdMicrometres =
+      telemetry.spatialEvidence.loopClosureDistanceThresholdMicrometres
+    loopClosureRequiredOverlapScoreMillionths =
+      telemetry.spatialEvidence.loopClosureRequiredOverlapScoreMillionths
     motionScoreMillionths = telemetry.motionScoreMillionths
     overlapScoreMillionths = telemetry.spatialEvidence.overlapScoreMillionths
     parallaxScoreMillionths = telemetry.spatialEvidence.parallaxScoreMillionths
     rotationFromPreviousMicroradians =
       telemetry.spatialEvidence.rotationFromPreviousMicroradians
     self.reason = reason
+    startAnchorDistanceMicrometres = telemetry.spatialEvidence.startAnchorDistanceMicrometres
+    startAnchorOverlapScoreMillionths =
+      telemetry.spatialEvidence.startAnchorOverlapScoreMillionths
+    startAnchorRotationMicroradians = telemetry.spatialEvidence.startAnchorRotationMicroradians
     telemetryTimestampMicroseconds = telemetry.spatialEvidence.telemetryTimestampMicroseconds
     trackingState = telemetry.trackingState
     translationFromPreviousMicrometres =
@@ -154,11 +298,24 @@ struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
 
   var isValid: Bool {
     blurScoreMillionths >= 0 && blurScoreMillionths <= 1_000_000
+      && (cameraPositionMicrometres.map { $0.count == 3 } ?? true)
+      && (cameraQuaternionNanounits.map { $0.count == 4 } ?? true)
       && featurePointCount >= 0 && featurePointCount <= 1_000_000
+      && (loopClosureDistanceThresholdMicrometres.map {
+        $0 >= C14_10SpatialCapturePolicy.minimumLoopClosureDistanceMicrometres
+          && $0 <= C14_10SpatialCapturePolicy.maximumLoopClosureDistanceMicrometres
+      } ?? true)
+      && (loopClosureRequiredOverlapScoreMillionths.map {
+        $0 >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+          && $0 <= C14_10SpatialCapturePolicy.maximumLoopClosureOverlapScoreMillionths
+      } ?? true)
       && motionScoreMillionths >= 0 && motionScoreMillionths <= 1_000_000
       && overlapScoreMillionths >= 0 && overlapScoreMillionths <= 1_000_000
       && parallaxScoreMillionths >= 0 && parallaxScoreMillionths <= 1_000_000
       && (rotationFromPreviousMicroradians.map { $0 >= 0 && $0 <= 3_141_593 } ?? true)
+      && (startAnchorDistanceMicrometres.map { $0 >= 0 } ?? true)
+      && (startAnchorOverlapScoreMillionths.map { $0 >= 0 && $0 <= 1_000_000 } ?? true)
+      && (startAnchorRotationMicroradians.map { $0 >= 0 && $0 <= 3_141_593 } ?? true)
       && telemetryTimestampMicroseconds >= 0
       && translationFromPreviousMicrometres >= 0
   }
@@ -208,15 +365,52 @@ struct C14_10RejectedFrameDiagnosticSnapshot: Equatable, Sendable {
 enum C14_10RejectedFrameDiagnosticPolicy {
   static let maximumImageBytes = 512_000
   static let maximumPixelDimension = 640
-  static let maximumRetainedCount = 12
+  static let maximumRepresentativesPerReasonAndSegment = 6
+  static let maximumRetainedCount = 64
+  static let minimumSameReasonSnapshotIntervalMicroseconds: Int64 = 8_000_000
   static let schemaVersion = "c14-10-rejected-frame-diagnostics-v1"
+}
+
+struct C14_10SelectionDiagnosticContext: Codable, Equatable, Sendable {
+  let coverageCellId: String?
+  let retainedCountAtStart: Int
+  let segmentId: UUID?
+  let zoneId: UUID?
+
+  static let empty = Self(
+    coverageCellId: nil,
+    retainedCountAtStart: 0,
+    segmentId: nil,
+    zoneId: nil
+  )
+
+  var isValid: Bool {
+    (coverageCellId.map { !$0.isEmpty && $0.count <= 64 } ?? true)
+      && retainedCountAtStart >= 0
+  }
+}
+
+struct C14_10SelectionOutcomeDetail: Codable, Equatable, Sendable {
+  let candidateSequence: Int
+  let context: C14_10SelectionDiagnosticContext
+  let outcome: C14_10RecentSelectionOutcome
+
+  var isValid: Bool {
+    candidateSequence > 0
+      && context.isValid
+      && outcome.isValid
+  }
 }
 
 struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
   static let schemaVersion = "c14-10-selection-diagnostics-v1"
   static let maximumCandidateCount = 20_000
+  static let maximumDetailedOutcomeCount = 4_096
+  static let preservedInitialDetailedOutcomeCount = 256
   static let maximumRecentOutcomeCount = 20
 
+  var detailedOutcomeDroppedCount: Int?
+  var detailedOutcomes: [C14_10SelectionOutcomeDetail]?
   var outcomeCounts: [String: Int]
   var recentOutcomes: [C14_10RecentSelectionOutcome]?
   let schemaVersion: String
@@ -225,6 +419,8 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
 
   static func empty(at date: Date = Date()) -> Self {
     Self(
+      detailedOutcomeDroppedCount: 0,
+      detailedOutcomes: [],
       outcomeCounts: [:],
       recentOutcomes: [],
       schemaVersion: schemaVersion,
@@ -258,20 +454,37 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
   mutating func record(
     _ reason: C14_10KeyframeDecisionReason,
     telemetry: C14_8LiveTelemetry? = nil,
+    context: C14_10SelectionDiagnosticContext = .empty,
     at date: Date = Date()
   ) {
     guard totalAutomaticCandidateCount < Self.maximumCandidateCount else { return }
     totalAutomaticCandidateCount += 1
     outcomeCounts[reason.rawValue, default: 0] += 1
     if let telemetry {
-      var recent = recentOutcomes ?? []
-      recent.append(
-        C14_10RecentSelectionOutcome(reason: reason, telemetry: telemetry, completedAt: date)
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: reason,
+        telemetry: telemetry,
+        completedAt: date
       )
+      var recent = recentOutcomes ?? []
+      recent.append(outcome)
       if recent.count > Self.maximumRecentOutcomeCount {
         recent.removeFirst(recent.count - Self.maximumRecentOutcomeCount)
       }
       recentOutcomes = recent
+      var detailed = detailedOutcomes ?? []
+      if detailed.count == Self.maximumDetailedOutcomeCount {
+        detailed.remove(at: Self.preservedInitialDetailedOutcomeCount)
+        detailedOutcomeDroppedCount = (detailedOutcomeDroppedCount ?? 0) + 1
+      }
+      detailed.append(
+        C14_10SelectionOutcomeDetail(
+          candidateSequence: totalAutomaticCandidateCount,
+          context: context,
+          outcome: outcome
+        )
+      )
+      detailedOutcomes = detailed
     }
     updatedAt = max(updatedAt, date)
   }
@@ -285,6 +498,11 @@ struct C14_10SelectionDiagnostics: Codable, Equatable, Sendable {
       }
       && outcomeCounts.values.allSatisfy { $0 >= 0 }
       && outcomeCounts.values.reduce(0, +) == totalAutomaticCandidateCount
+      && (detailedOutcomeDroppedCount ?? 0) >= 0
+      && (detailedOutcomes?.count ?? 0) <= Self.maximumDetailedOutcomeCount
+      && (detailedOutcomes ?? []).allSatisfy {
+        $0.isValid && $0.candidateSequence <= totalAutomaticCandidateCount
+      }
       && (recentOutcomes?.count ?? 0) <= Self.maximumRecentOutcomeCount
       && (recentOutcomes ?? []).allSatisfy(\.isValid)
   }
