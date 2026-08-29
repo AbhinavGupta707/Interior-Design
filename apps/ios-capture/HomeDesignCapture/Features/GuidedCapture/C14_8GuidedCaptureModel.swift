@@ -192,6 +192,9 @@ final class C14_8GuidedCaptureModel {
     guard let segmentId = draft?.segments.last?.segmentId else { return 0 }
     return draft?.samples.filter { $0.segmentId == segmentId }.count ?? 0
   }
+  var canStopCapture: Bool {
+    captureArmed && currentSegmentKeyframeCount > 0 && state == .ready
+  }
   var captureReadiness: C14_10CaptureReadiness? {
     guard let room = currentRoom, let samples = draft?.samples else { return nil }
     return C14_10SpatialReadinessEvaluator.evaluate(room: room, samples: samples)
@@ -515,7 +518,9 @@ final class C14_8GuidedCaptureModel {
   }
 
   func finishRoomReview() {
-    guard canMutate, var next = draft, !next.keyframes.isEmpty, next.acceptance == nil else {
+    guard state != .capturing, canMutate, var next = draft, !next.keyframes.isEmpty,
+      next.acceptance == nil
+    else {
       return
     }
     finalizeAutomaticCandidateWindow()

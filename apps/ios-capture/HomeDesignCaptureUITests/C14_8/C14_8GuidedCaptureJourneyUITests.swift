@@ -27,6 +27,9 @@ final class C14_8GuidedCaptureJourneyUITests: XCTestCase {
     let review = app.buttons["c14_10.review-live-capture"]
     for _ in 0..<6 where !review.exists { app.swipeDown() }
     XCTAssertTrue(review.waitForExistence(timeout: 10))
+    XCTAssertEqual(review.label, "Stop capture and review")
+    expectation(for: NSPredicate(format: "isEnabled == true"), evaluatedWith: review)
+    waitForExpectations(timeout: 10)
     review.tap()
 
     let fixtureComplete = app.staticTexts["Fixture journey complete"]

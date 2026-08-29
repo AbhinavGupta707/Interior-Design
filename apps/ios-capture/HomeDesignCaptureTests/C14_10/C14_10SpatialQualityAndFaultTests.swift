@@ -1045,7 +1045,10 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     model.armCapture()
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
     model.automaticCaptureEnabled = false
+    XCTAssertTrue(model.canStopCapture)
     model.finishRoomReview()
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertFalse(model.canStopCapture)
     model.serviceProcessingConsent = true
     model.submit()
     await waitUntil {

@@ -381,11 +381,8 @@ struct C14_8GuidedCaptureView: View {
           .accessibilityIdentifier("c14_8.capture-keyframe")
           .disabled(!model.captureArmed || model.currentSelectionDecision?.shouldRetain != true)
         if model.capturedKeyframeCount > 0 {
-          Button(
-            model.captureReadiness?.isReady == true
-              ? "Review connected room capture"
-              : "Review unresolved capture"
-          ) { model.finishRoomReview() }
+          Button("Stop capture and review") { model.finishRoomReview() }
+            .disabled(!model.canStopCapture)
         }
       }
 
@@ -445,13 +442,18 @@ struct C14_8GuidedCaptureView: View {
           .accessibilityIdentifier("c14_10.arm-capture")
       }
       if model.captureArmed, model.currentSegmentKeyframeCount > 0 {
-        Button(
-          model.captureReadiness?.isReady == true
-            ? "Review connected capture" : "Review unresolved capture"
-        ) { model.finishRoomReview() }
+        Button(model.canStopCapture ? "Stop capture and review" : "Saving current view…") {
+          model.finishRoomReview()
+        }
         .buttonStyle(.borderedProminent)
         .tint(.white)
         .foregroundStyle(.black)
+        .disabled(!model.canStopCapture)
+        .accessibilityHint(
+          model.captureReadiness?.isReady == true
+            ? "Stops camera analysis and opens the connected capture review."
+            : "Stops camera analysis and opens review with unresolved evidence kept explicit."
+        )
         .accessibilityIdentifier("c14_10.review-live-capture")
       }
     }
