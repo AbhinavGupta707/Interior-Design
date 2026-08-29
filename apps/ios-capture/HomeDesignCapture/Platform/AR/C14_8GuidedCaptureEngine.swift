@@ -167,6 +167,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
     loopClosureCandidate: false,
     overlapScoreMillionths: 0,
     parallaxScoreMillionths: 0,
+    rotationFromPreviousMicroradians: 0,
     telemetryTimestampMicroseconds: 0,
     trajectorySpanMicrometres: 0,
     trajectoryTravelMicrometres: 0,
@@ -316,6 +317,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         loopClosureCandidate: false,
         overlapScoreMillionths: 0,
         parallaxScoreMillionths: 0,
+        rotationFromPreviousMicroradians: 0,
         telemetryTimestampMicroseconds: spatialEvidence.telemetryTimestampMicroseconds,
         trajectorySpanMicrometres: 0,
         trajectoryTravelMicrometres: 0,
@@ -518,6 +520,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
   ) -> C14_10LiveSpatialEvidence {
     let transform = frame.camera.transform
     let position = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
+    let rotation = simd_quatf(transform)
     let featureIds = Set(frame.rawFeaturePoints?.identifiers ?? [])
     let featurePoints = frame.rawFeaturePoints.map { Array($0.points) } ?? []
     let timestampMicroseconds =
@@ -530,6 +533,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         loopClosureCandidate: false,
         overlapScoreMillionths: 0,
         parallaxScoreMillionths: 0,
+        rotationFromPreviousMicroradians: 0,
         telemetryTimestampMicroseconds: timestampMicroseconds,
         trajectorySpanMicrometres: 0,
         trajectoryTravelMicrometres: 0,
@@ -575,6 +579,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         loopClosureCandidate: false,
         overlapScoreMillionths: overlap,
         parallaxScoreMillionths: max(0, parallax),
+        rotationFromPreviousMicroradians: 0,
         telemetryTimestampMicroseconds: timestampMicroseconds,
         trajectorySpanMicrometres: 0,
         trajectoryTravelMicrometres: 0,
@@ -582,6 +587,9 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       )
     }
     let translation = max(0, Self.micro(simd_distance(position, previous.position)))
+    let rotationFromPrevious = C14_10SpatialRotation.microradians(
+      unitQuaternionDot: Double(abs(simd_dot(rotation.vector, previous.rotation.vector)))
+    )
     let overlap = Self.overlapScore(
       currentFeatureIds: featureIds,
       referenceFeatureIds: previous.featureIds,
@@ -619,6 +627,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
       loopClosureCandidate: loopClosure,
       overlapScoreMillionths: overlap,
       parallaxScoreMillionths: max(0, parallax),
+      rotationFromPreviousMicroradians: rotationFromPrevious,
       telemetryTimestampMicroseconds: timestampMicroseconds,
       trajectorySpanMicrometres: span,
       trajectoryTravelMicrometres: travel,
@@ -639,6 +648,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         featureIds: Set(frame.rawFeaturePoints?.identifiers ?? []),
         featurePoints: frame.rawFeaturePoints.map { Array($0.points) } ?? [],
         position: SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z),
+        rotation: simd_quatf(transform),
         retentionMode: retentionMode,
         timestampMicroseconds: timestampMicroseconds,
         trajectorySpanMicrometres: spatialEvidence.trajectorySpanMicrometres,
@@ -847,6 +857,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
             loopClosureCandidate: retainedCount >= 7,
             overlapScoreMillionths: 620_000,
             parallaxScoreMillionths: 240_000,
+            rotationFromPreviousMicroradians: 0,
             telemetryTimestampMicroseconds: Int64(retainedCount + 1) * 2_100_000,
             trajectorySpanMicrometres: Int64(retainedCount) * 220_000,
             trajectoryTravelMicrometres: Int64(retainedCount) * 300_000,
@@ -890,6 +901,7 @@ final class C14_8ARKitGuidedCaptureEngine: NSObject, C14_8GuidedCaptureServing,
         loopClosureCandidate: retainedCount >= 7,
         overlapScoreMillionths: retainedCount > 0 ? 620_000 : 0,
         parallaxScoreMillionths: retainedCount > 0 ? 240_000 : 0,
+        rotationFromPreviousMicroradians: 0,
         telemetryTimestampMicroseconds: Int64(retainedCount + 1) * 2_100_000,
         trajectorySpanMicrometres: Int64(retainedCount) * 220_000,
         trajectoryTravelMicrometres: Int64(retainedCount) * 300_000,
@@ -1042,6 +1054,7 @@ private struct C14_10RetainedObservation {
   let featureIds: Set<UInt64>
   let featurePoints: [SIMD3<Float>]
   let position: SIMD3<Float>
+  let rotation: simd_quatf
   let retentionMode: C14_10KeyframeRetentionMode
   let timestampMicroseconds: Int64
   let trajectorySpanMicrometres: Int64

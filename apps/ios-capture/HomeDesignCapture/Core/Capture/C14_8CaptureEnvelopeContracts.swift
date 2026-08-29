@@ -448,6 +448,32 @@ enum C14_8ContractError: Error, Equatable, Sendable {
   case staleOperation
 }
 
+enum C14_10RetainedEdgeValidator {
+  static func isValid(
+    previous: C14_8LocalCameraSample,
+    current: C14_8LocalCameraSample
+  ) -> Bool {
+    let overlap = current.overlapScoreMillionths ?? 0
+    guard current.connectedToPrevious == true,
+      overlap >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
+    else { return false }
+    if current.loopClosureCandidate == true { return true }
+    guard overlap < C14_10SpatialCapturePolicy.maximumNearDuplicateOverlapScoreMillionths
+    else { return false }
+    let hasBaseline =
+      (current.translationFromPreviousMicrometres ?? 0)
+      >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
+      && (current.parallaxScoreMillionths ?? 0)
+        >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
+    let isConnectedRotationBridge =
+      C14_10SpatialRotation.microradians(
+        quaternionNanounits: previous.quaternionNanounits,
+        current.quaternionNanounits
+      ) >= C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians
+    return hasBaseline || isConnectedRotationBridge
+  }
+}
+
 enum C14_8ContractValidator {
   static func validate(draft: C14_8GuidedCaptureDraft) throws {
     let keyframeIds = Set(draft.keyframes.map(\.localIdentifier))
@@ -632,18 +658,8 @@ enum C14_8ContractValidator {
       }),
       spatialSegments.allSatisfy({ segmentSamples in
         guard segmentSamples.first?.connectedToPrevious == false else { return false }
-        let edgesValid = segmentSamples.dropFirst().allSatisfy { sample in
-          guard sample.connectedToPrevious == true,
-            (sample.overlapScoreMillionths ?? 0)
-              >= C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths
-          else { return false }
-          if sample.loopClosureCandidate == true { return true }
-          return (sample.translationFromPreviousMicrometres ?? 0)
-            >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
-            && (sample.parallaxScoreMillionths ?? 0)
-              >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
-            && (sample.overlapScoreMillionths ?? 0)
-              < C14_10SpatialCapturePolicy.maximumNearDuplicateOverlapScoreMillionths
+        let edgesValid = zip(segmentSamples, segmentSamples.dropFirst()).allSatisfy {
+          C14_10RetainedEdgeValidator.isValid(previous: $0, current: $1)
         }
         let cumulativeEvidenceIsMonotonic = zip(segmentSamples, segmentSamples.dropFirst())
           .allSatisfy { previous, current in

@@ -10,6 +10,7 @@ enum C14_10SpatialCapturePolicy {
   static let maximumKeyframesPerEnvelope = 512
   static let maximumKeyframesPerRoom = 256
   static let minimumConnectedRatioMillionths = 750_000
+  static let minimumConnectedBridgeRotationMicroradians = 150_000
   static let minimumFeaturePointCount = 60
   static let minimumKeyframesPerRoom = 8
   static let minimumLoopClosureDistanceMicrometres: Int64 = 650_000
@@ -29,10 +30,32 @@ struct C14_10LiveSpatialEvidence: Codable, Equatable, Sendable {
   let loopClosureCandidate: Bool
   let overlapScoreMillionths: Int
   let parallaxScoreMillionths: Int
+  let rotationFromPreviousMicroradians: Int
   let telemetryTimestampMicroseconds: Int64
   let trajectorySpanMicrometres: Int64
   let trajectoryTravelMicrometres: Int64
   let translationFromPreviousMicrometres: Int64
+}
+
+enum C14_10SpatialRotation {
+  static func microradians(unitQuaternionDot: Double) -> Int {
+    let clamped = min(1, max(0, abs(unitQuaternionDot)))
+    return max(0, Int((2 * acos(clamped) * 1_000_000).rounded()))
+  }
+
+  static func microradians(
+    quaternionNanounits left: [Int64],
+    _ right: [Int64]
+  ) -> Int {
+    guard left.count == 4, right.count == 4 else { return 0 }
+    let leftValues = left.map(Double.init)
+    let rightValues = right.map(Double.init)
+    let leftLength = sqrt(leftValues.reduce(0) { $0 + $1 * $1 })
+    let rightLength = sqrt(rightValues.reduce(0) { $0 + $1 * $1 })
+    guard leftLength > 0, rightLength > 0 else { return 0 }
+    let dot = zip(leftValues, rightValues).reduce(0) { $0 + $1.0 * $1.1 }
+    return microradians(unitQuaternionDot: dot / (leftLength * rightLength))
+  }
 }
 
 enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
@@ -71,6 +94,10 @@ enum C14_10KeyframeDecisionReason: String, CaseIterable, Codable, Equatable, Has
       return
         "Turn back until part of the last retained wall or corner is visible, then sidestep slowly."
     }
+    if self == .insufficientOverlap, hasRetainedView {
+      return
+        "Return until the last retained wall is visible, then sweep the corner slowly in small overlapping arcs."
+    }
     return homeownerInstruction
   }
 
@@ -99,6 +126,7 @@ struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
   let motionScoreMillionths: Int
   let overlapScoreMillionths: Int
   let parallaxScoreMillionths: Int
+  let rotationFromPreviousMicroradians: Int?
   let reason: C14_10KeyframeDecisionReason
   let telemetryTimestampMicroseconds: Int64
   let trackingState: C14_8TrackingState
@@ -115,6 +143,8 @@ struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
     motionScoreMillionths = telemetry.motionScoreMillionths
     overlapScoreMillionths = telemetry.spatialEvidence.overlapScoreMillionths
     parallaxScoreMillionths = telemetry.spatialEvidence.parallaxScoreMillionths
+    rotationFromPreviousMicroradians =
+      telemetry.spatialEvidence.rotationFromPreviousMicroradians
     self.reason = reason
     telemetryTimestampMicroseconds = telemetry.spatialEvidence.telemetryTimestampMicroseconds
     trackingState = telemetry.trackingState
@@ -128,6 +158,7 @@ struct C14_10RecentSelectionOutcome: Codable, Equatable, Sendable {
       && motionScoreMillionths >= 0 && motionScoreMillionths <= 1_000_000
       && overlapScoreMillionths >= 0 && overlapScoreMillionths <= 1_000_000
       && parallaxScoreMillionths >= 0 && parallaxScoreMillionths <= 1_000_000
+      && (rotationFromPreviousMicroradians.map { $0 >= 0 && $0 <= 3_141_593 } ?? true)
       && telemetryTimestampMicroseconds >= 0
       && translationFromPreviousMicrometres >= 0
   }
@@ -313,17 +344,23 @@ enum C14_10KeyframeSelector {
     else { return reject(.insufficientOverlap) }
     if spatial.loopClosureCandidate { return accept() }
     guard
-      spatial.translationFromPreviousMicrometres
-        >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
-    else { return reject(.insufficientTranslation) }
-    guard
-      spatial.parallaxScoreMillionths
-        >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
-    else { return reject(.insufficientParallax) }
-    guard
       spatial.overlapScoreMillionths
         < C14_10SpatialCapturePolicy.maximumNearDuplicateOverlapScoreMillionths
     else { return reject(.nearDuplicate) }
+    let hasTranslation =
+      spatial.translationFromPreviousMicrometres
+      >= C14_10SpatialCapturePolicy.minimumTranslationMicrometres
+    let hasParallax =
+      spatial.parallaxScoreMillionths
+      >= C14_10SpatialCapturePolicy.minimumParallaxScoreMillionths
+    if hasTranslation && hasParallax { return accept() }
+    if spatial.rotationFromPreviousMicroradians
+      >= C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians
+    {
+      return accept()
+    }
+    guard hasTranslation else { return reject(.insufficientTranslation) }
+    guard hasParallax else { return reject(.insufficientParallax) }
     return accept()
   }
 

@@ -51,6 +51,11 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
         .homeownerInstruction(hasRetainedView: true)
         .contains("last retained wall or corner")
     )
+    XCTAssertTrue(
+      C14_10KeyframeDecisionReason.insufficientOverlap
+        .homeownerInstruction(hasRetainedView: true)
+        .contains("small overlapping arcs")
+    )
   }
 
   func testLegacyAggregateDiagnosticsDecodeWithoutRecentOutcomes() throws {
@@ -445,6 +450,130 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertTrue(useful.shouldRetain)
   }
 
+  func testAutomaticSelectorAcceptsOnlyConnectedRotationalCornerBridges() {
+    let bridge = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 450_000,
+        parallax: 0,
+        rotation: C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertTrue(bridge.shouldRetain)
+
+    let tooLittleRotation = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 450_000,
+        parallax: 0,
+        rotation: C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians - 1,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertEqual(tooLittleRotation.reason, .insufficientTranslation)
+
+    let disconnectedTurn = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: false,
+        overlap: C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths - 1,
+        parallax: 0,
+        rotation: 500_000,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertEqual(disconnectedTurn.reason, .insufficientOverlap)
+  }
+
+  func testSpatialRotationUsesShortestQuaternionArc() {
+    XCTAssertEqual(
+      C14_10SpatialRotation.microradians(
+        quaternionNanounits: [0, 0, 0, 1_000_000_000],
+        [0, 0, 0, -1_000_000_000]
+      ),
+      0
+    )
+    XCTAssertEqual(
+      C14_10SpatialRotation.microradians(
+        quaternionNanounits: [0, 0, 0, 1_000_000_000],
+        [0, 707_106_781, 0, 707_106_781]
+      ),
+      1_570_796,
+      accuracy: 2
+    )
+  }
+
+  func testRetainedEdgeContractAllowsConnectedCornerBridgeButNotSmallOrDisconnectedTurns() {
+    let segmentId = UUID()
+    let roomId = UUID()
+    let zoneId = UUID()
+    let anchor = sample(
+      index: 0,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: false,
+      loopClosure: false,
+      parallax: 0,
+      span: 0,
+      travel: 0,
+      translation: 0
+    )
+    let bridge = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: true,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 87_155_743, 0, 996_194_698],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertTrue(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: bridge))
+
+    let smallTurn = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: true,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 43_619_387, 0, 999_048_222],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertFalse(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: smallTurn))
+
+    let disconnected = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: false,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 87_155_743, 0, 996_194_698],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertFalse(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: disconnected))
+  }
+
   func testProjectedOverlapSurvivesFeatureIdentifierChurnAndRejectsPointsBehindCamera() {
     let referencePoints = (-2...2).flatMap { x in
       (-2...2).map { y in
@@ -794,6 +923,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     connected: Bool = false,
     overlap: Int = 0,
     parallax: Int = 0,
+    rotation: Int = 0,
     translation: Int64 = 0
   ) -> C14_8LiveTelemetry {
     C14_8LiveTelemetry(
@@ -808,6 +938,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
         loopClosureCandidate: false,
         overlapScoreMillionths: overlap,
         parallaxScoreMillionths: parallax,
+        rotationFromPreviousMicroradians: rotation,
         telemetryTimestampMicroseconds: 3_000_000,
         trajectorySpanMicrometres: translation,
         trajectoryTravelMicrometres: translation,
@@ -874,6 +1005,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     connected: Bool,
     loopClosure: Bool,
     parallax: Int,
+    quaternion: [Int64] = [0, 0, 0, 1_000_000_000],
     span: Int64,
     travel: Int64,
     translation: Int64
@@ -900,7 +1032,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       parallaxScoreMillionths: parallax,
       poseTransform: "camera-to-world",
       quaternionOrder: "x-y-z-w",
-      quaternionNanounits: [0, 0, 0, 1_000_000_000],
+      quaternionNanounits: quaternion,
       roomId: roomId,
       sampleId: UUID(),
       segmentId: segmentId,
