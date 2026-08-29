@@ -94,6 +94,24 @@ def test_room_story_remains_optional_in_frozen_envelope_schema(tmp_path: Path) -
         module.validate_envelope_shape(envelope)
 
 
+def test_c14_10_spatial_quality_envelope_is_backward_compatible_and_strict() -> None:
+    module = load_module()
+    envelope = json.loads(
+        (ROOT / "packages/contracts/fixtures/capture-envelope-v1/base.json").read_bytes()
+    )
+    module.validate_envelope_shape(envelope)
+
+    mismatched = json.loads(json.dumps(envelope))
+    mismatched["quality"]["spatialEvidence"]["connectedSampleCount"] = 1
+    with pytest.raises(ValueError, match="spatial quality summary"):
+        module.validate_envelope_shape(mismatched)
+
+    unknown = json.loads(json.dumps(envelope))
+    unknown["cameraSamples"][0]["unexpected"] = True
+    with pytest.raises(ValueError, match="camera sample fields"):
+        module.validate_envelope_shape(unknown)
+
+
 def test_export_access_idempotency_is_scoped_to_one_attempt() -> None:
     module = load_module()
     first_attempt = uuid.UUID("10000000-0000-4000-8000-000000000001")
