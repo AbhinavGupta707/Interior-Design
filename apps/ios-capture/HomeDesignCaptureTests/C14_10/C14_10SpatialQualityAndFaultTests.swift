@@ -356,6 +356,33 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertEqual(readiness.loopClosureCount, 1)
   }
 
+  func testConsecutiveLoopClosureViewsCountAsOneEpisode() {
+    let segmentId = UUID()
+    var room = C14_8RoomEnvelope.empty(label: "Living room", sequence: 1, segmentId: segmentId)
+    let zoneId = room.zones![0].zoneId
+    room.zones![0].status = .observed
+    let samples = (0..<12).map {
+      sample(
+        index: $0,
+        segmentId: segmentId,
+        roomId: room.roomId,
+        zoneId: zoneId,
+        connected: $0 > 0,
+        loopClosure: (7...9).contains($0) || $0 == 11,
+        parallax: $0 == 0 ? 0 : 240_000,
+        span: min(1_400_000, Int64($0) * 240_000),
+        travel: Int64($0) * 400_000,
+        translation: $0 == 0 ? 0 : 400_000
+      )
+    }
+
+    let readiness = C14_10SpatialReadinessEvaluator.evaluate(room: room, samples: samples)
+
+    XCTAssertTrue(readiness.isReady)
+    XCTAssertEqual(readiness.loopClosureCount, 2)
+    XCTAssertEqual(samples.filter { $0.loopClosureCandidate == true }.count, 4)
+  }
+
   func testIrregularMultiZoneRoomRequiresEvidenceInEveryDeclaredZone() {
     let segmentId = UUID()
     var room = C14_8RoomEnvelope.empty(label: "L-shaped kitchen", sequence: 1, segmentId: segmentId)

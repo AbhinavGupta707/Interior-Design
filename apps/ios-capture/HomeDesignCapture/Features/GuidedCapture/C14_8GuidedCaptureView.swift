@@ -251,7 +251,7 @@ struct C14_8GuidedCaptureView: View {
             "Route travelled",
             value: String(
               format: "%.1f m", Double(readiness.trajectoryTravelMicrometres) / 1_000_000))
-          LabeledContent("Loop closures", value: String(readiness.loopClosureCount))
+          LabeledContent("Loop-closure events", value: String(readiness.loopClosureCount))
           LabeledContent("Unresolved zones", value: String(readiness.unresolvedZoneCount))
         }
         LabeledContent("Direction / height guide", value: "\(model.observedCellCount) of 24")
@@ -410,7 +410,7 @@ struct C14_8GuidedCaptureView: View {
       .lineLimit(2)
 
       Text(
-        "\(model.capturedKeyframeCount) retained · \((readiness?.connectedRatioMillionths ?? 0) / 10_000)% connected · \(String(format: "%.1f m", Double(readiness?.trajectoryTravelMicrometres ?? 0) / 1_000_000)) · \(readiness?.loopClosureCount ?? 0) loop · \(readiness?.unresolvedZoneCount ?? 1) unresolved"
+        "\(model.capturedKeyframeCount) retained · \((readiness?.connectedRatioMillionths ?? 0) / 10_000)% connected · \(String(format: "%.1f m", Double(readiness?.trajectoryTravelMicrometres ?? 0) / 1_000_000)) · \(readiness?.loopClosureCount ?? 0) closure event · \(readiness?.unresolvedZoneCount ?? 1) unresolved"
       )
       .font(.caption.monospacedDigit())
       .lineLimit(2)
@@ -485,7 +485,7 @@ struct C14_8GuidedCaptureView: View {
         LabeledContent(
           "Optional depth samples", value: String(model.draft?.depthHandles.count ?? 0))
         LabeledContent(
-          "Missing areas",
+          "Unobserved direction / height cells",
           value: String(
             model.draft?.rooms.flatMap(\.coverage).filter { $0.status == .missing }.count ?? 0)
         )
@@ -507,7 +507,7 @@ struct C14_8GuidedCaptureView: View {
           }
         }
         Text(
-          "Missing, occluded and unknown areas remain explicit. They are not inferred as walls, openings or dimensions."
+          "Direction / height cells are a secondary composition guide, not inferred physical areas. Missing, occluded and unknown evidence remains explicit and is never invented as walls, openings or dimensions."
         )
         .font(.footnote)
         .foregroundStyle(.secondary)

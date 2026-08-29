@@ -602,6 +602,21 @@ struct C14_10CaptureReadiness: Equatable, Sendable {
   let unresolvedZoneCount: Int
 }
 
+enum C14_10LoopClosureCounter {
+  static func distinctEpisodeCount(in samples: [C14_8LocalCameraSample]) -> Int {
+    Dictionary(grouping: samples, by: \.segmentId).values.reduce(0) { total, samples in
+      let sorted = samples.sorted { $0.timestampMicroseconds < $1.timestampMicroseconds }
+      var previousWasClosure = false
+      let episodeCount = sorted.reduce(into: 0) { count, sample in
+        let isClosure = sample.loopClosureCandidate == true
+        if isClosure && !previousWasClosure { count += 1 }
+        previousWasClosure = isClosure
+      }
+      return total + episodeCount
+    }
+  }
+}
+
 enum C14_10SpatialReadinessEvaluator {
   static func evaluate(
     room: C14_8RoomEnvelope,
@@ -618,7 +633,10 @@ enum C14_10SpatialReadinessEvaluator {
       $0 + max(0, $1.count - 1)
     }
     let connectedRatio = possibleEdges == 0 ? 0 : connected * 1_000_000 / possibleEdges
-    let loopClosures = roomSamples.filter { $0.loopClosureCandidate == true }.count
+    // Several retained views can legitimately satisfy the start-anchor test while the
+    // homeowner remains in the closure region. Present that contiguous run as one
+    // closure event while preserving every per-sample flag in the immutable envelope.
+    let loopClosures = C14_10LoopClosureCounter.distinctEpisodeCount(in: roomSamples)
     let span = roomSamples.compactMap(\.trajectorySpanMicrometres).max() ?? 0
     let travel = roomSamples.compactMap(\.trajectoryTravelMicrometres).max() ?? 0
     let zones = room.zones ?? []
