@@ -1,0 +1,165 @@
+{
+  "authority": "private-proposal-evaluation-only",
+  "baseline": {
+    "captureAlias": "c14-8-retained-25",
+    "finalRecordSha256": "47d223e3af842a784c19d85b0c1137885364359f933830f81a742f61cfc759d3",
+    "frameCount": 25,
+    "reuse": "required-unless-core-integrity-or-comparability-fails"
+  },
+  "cohortRule": {
+    "countedCohort": "normal",
+    "inclusiveHandling": "deduplicate-only-when-byte-identical-selection",
+    "segmentHandling": "independent-never-join"
+  },
+  "comparisonRules": {
+    "captureQualityControl": "same-25-view-count-ordered-quantile-v1",
+    "causalClaim": "forbidden-observational-comparison",
+    "failureRetention": "preserve-do-not-replace-or-conceal",
+    "fullCaptureQuestion": "capture-and-reconstruction-usefulness",
+    "imageCountQuestion": "directional-control-not-causal-isolation",
+    "privatePatchedRunnerAuthority": "diagnostic-only-unless-resealed-by-committed-code"
+  },
+  "datasets": [
+    {
+      "captureAlias": "c14-10-rectangular-132",
+      "fullFrameCount": 132
+    },
+    {
+      "captureAlias": "c14-10-irregular-165",
+      "fullFrameCount": 165
+    }
+  ],
+  "determinism": {
+    "colmapSeeds": {
+      "defaultRandomSeed": 0,
+      "mapperRandomSeed": 0,
+      "twoViewGeometryRandomSeed": 0
+    },
+    "colmapSparseThreads": 1,
+    "gsplatSeed": 0,
+    "gsplatSteps": 100
+  },
+  "executionOrder": {
+    "da3Small": [
+      "c14-10-rectangular-132-r1",
+      "c14-10-irregular-165-r1",
+      "c14-10-irregular-165-r2",
+      "c14-10-rectangular-132-r2"
+    ],
+    "fullSequentialMobile": [
+      "c14-10-rectangular-132-r1",
+      "c14-10-irregular-165-r1",
+      "c14-10-irregular-165-r2",
+      "c14-10-rectangular-132-r2"
+    ],
+    "ordered25ExhaustiveControl": [
+      "c14-10-rectangular-132-r1",
+      "c14-10-irregular-165-r1",
+      "c14-10-irregular-165-r2",
+      "c14-10-rectangular-132-r2"
+    ]
+  },
+  "exhaustiveScalabilityEvidence": [
+    {
+      "attemptCount": 1,
+      "captureAlias": "c14-10-rectangular-132",
+      "expectedFailure": "COMMAND_TIMEOUT",
+      "timeoutSeconds": 1800
+    },
+    {
+      "attemptCount": 2,
+      "captureAlias": "c14-10-irregular-165",
+      "expectedFailure": "COMMAND_TIMEOUT",
+      "timeoutSeconds": 1800
+    }
+  ],
+  "images": {
+    "colmap": "sha256:68be6852c13de3573a79fb049ee2116937ba424cbd29b56583dc6a58617364f6",
+    "da3Small": "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3",
+    "gsplat": "sha256:93add58cb6b3ee7df927a47e98af0ed1d7d9fbac8607edea6de92d96a14e70d0"
+  },
+  "lanes": {
+    "da3Small": {
+      "candidateId": "da3-small",
+      "frameScope": "full",
+      "repeats": 2,
+      "weightSha256": "364492e33c715a6314bad96d9484c5472db23a42b9202615753ac53c8501575b"
+    },
+    "fullSequentialMobile": {
+      "frameScope": "full",
+      "matcher": {
+        "loopDetection": false,
+        "mode": "sequential-mobile",
+        "overlap": 10,
+        "quadraticOverlap": true
+      },
+      "repeats": 2
+    },
+    "ordered25ExhaustiveControl": {
+      "frameScope": "ordered-quantile-25-v1",
+      "matcher": {
+        "mode": "exhaustive"
+      },
+      "repeats": 2,
+      "sampleCount": 25
+    }
+  },
+  "metrics": {
+    "appearance": [
+      "heldoutPsnrDb",
+      "failure-or-abstention"
+    ],
+    "dense": [
+      "validatedVerticesPerEligibleFrame",
+      "failure-or-abstention"
+    ],
+    "normalization": {
+      "pointsPerRegisteredFrame": "finitePointCount/registeredFrameCount",
+      "registeredFraction": "registeredFrameCount/eligibleFrameCount",
+      "validatedVerticesPerEligibleFrame": "validatedVertexCount/eligibleFrameCount"
+    },
+    "resources": [
+      "wallTimeSeconds",
+      "peakHostMemoryBytes",
+      "peakVramBytes",
+      "scratchBytes"
+    ],
+    "sparse": [
+      "registeredFraction",
+      "pointsPerRegisteredFrame",
+      "meanTrackLength",
+      "meanReprojectionErrorPixels",
+      "disconnectedComponentCount",
+      "failure-or-abstention"
+    ]
+  },
+  "open3d": {
+    "reason": "EXACT_BOUND_DEPTH_ABSENT",
+    "status": "abstained-not-run"
+  },
+  "productSourceCommit": "62a0ed823dcd85f3355b4f24040484cff720ea75",
+  "resourceProfiles": {
+    "baseline": {
+      "cpuLimit": 12,
+      "memoryLimitBytes": 25769803776,
+      "pidLimit": 512,
+      "scratchLimitBytes": 12884901888,
+      "taskVramLimitBytes": 15032385536,
+      "timeoutSeconds": 1800
+    },
+    "da3": {
+      "cpuLimit": 12,
+      "memoryLimitBytes": 34359738368,
+      "pidLimit": 512,
+      "retainedOutputLimitBytes": 17179869184,
+      "taskVramLimitBytes": 16106127360,
+      "timeoutSeconds": 2700
+    }
+  },
+  "schemaVersion": "c14-10-physical-evaluation-plan-v1",
+  "visualInspection": {
+    "claims": "proposal-usefulness-only-no-dimensional-or-representative-accuracy",
+    "method": "deterministic-local-rendered-views",
+    "required": true
+  }
+}

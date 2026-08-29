@@ -1540,11 +1540,41 @@ def selected_segment(
     return segment
 
 
-def colmap_image_name(frame: dict[str, Any]) -> str:
+def ordered_frame_indices(frame_count: int, sample_count: int | None) -> tuple[int, ...]:
+    if frame_count < 2:
+        raise ValueError("COLMAP requires at least two selected frames")
+    if sample_count is None:
+        return tuple(range(frame_count))
+    if not 2 <= sample_count <= frame_count:
+        raise ValueError("ordered sample count must be between two and the frame count")
+    denominator = sample_count - 1
+    indices = tuple(
+        (index * (frame_count - 1) + denominator // 2) // denominator
+        for index in range(sample_count)
+    )
+    if len(set(indices)) != sample_count or indices[0] != 0 or indices[-1] != frame_count - 1:
+        raise ValueError("ordered frame sampling did not produce unique endpoints")
+    return indices
+
+
+def selected_colmap_frames(
+    frames: list[dict[str, Any]], sample_count: int | None
+) -> list[tuple[int, dict[str, Any]]]:
+    return [
+        (index + 1, frames[index]) for index in ordered_frame_indices(len(frames), sample_count)
+    ]
+
+
+def colmap_image_name(frame: dict[str, Any], *, capture_index: int | None = None) -> str:
     suffix = PurePosixPath(cast("str", frame["imagePath"])).suffix.lower()
     if suffix not in {".jpg", ".jpeg", ".png"}:
         raise ValueError("COLMAP baseline supports selected JPEG/PNG keyframes only")
-    return cast("str", frame["sampleId"]) + suffix
+    sample_name = cast("str", frame["sampleId"]) + suffix
+    if capture_index is None:
+        return sample_name
+    if not 1 <= capture_index <= 999_999:
+        raise ValueError("capture index is outside the ordered filename range")
+    return f"{capture_index:06d}-{sample_name}"
 
 
 def write_colmap_input(args: argparse.Namespace) -> None:
@@ -1552,33 +1582,49 @@ def write_colmap_input(args: argparse.Namespace) -> None:
     _, _, selection = load_selection(export_root, Path(args.selection))
     segment = selected_segment(selection, args.cohort, args.segment_id)
     frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
-    if len(frames) < 2:
-        raise ValueError("COLMAP requires at least two selected frames")
+    ordered_image_names = bool(getattr(args, "ordered_image_names", False))
+    ordered_sample_count = getattr(args, "ordered_sample_count", None)
+    selected_frames = selected_colmap_frames(frames, ordered_sample_count)
     output = Path(args.output)
     safe_root(output, create=True)
     images = output / "images"
     images.mkdir(mode=0o700)
     records: list[dict[str, object]] = []
-    for frame in frames:
+    for capture_index, frame in selected_frames:
         source = export_root.joinpath(*PurePosixPath(cast("str", frame["imagePath"])).parts)
-        name = colmap_image_name(frame)
+        name = colmap_image_name(
+            frame, capture_index=capture_index if ordered_image_names else None
+        )
         destination = images / name
         private_copy(source, destination)
         if sha256_file(destination) != frame["imageSha256"]:
             raise ValueError("derived COLMAP input copy changed immutable RGB bytes")
         records.append(
-            {"imageName": name, "imageSha256": frame["imageSha256"], "sampleId": frame["sampleId"]}
+            {
+                "captureIndex": capture_index,
+                "imageName": name,
+                "imageSha256": frame["imageSha256"],
+                "sampleId": frame["sampleId"],
+            }
         )
     input_manifest = {
         "authority": "proposal-only-input-copy",
         "cohort": args.cohort,
         "frames": records,
-        "schemaVersion": "c14-9-colmap-input-v1",
+        "imageOrder": "capture-order" if ordered_image_names else "sample-id-lexical",
+        "sampling": (
+            "full"
+            if ordered_sample_count is None
+            else f"ordered-quantile-{ordered_sample_count}-v1"
+        ),
+        "schemaVersion": (
+            "c14-10-ordered-colmap-input-v2" if ordered_image_names else "c14-9-colmap-input-v1"
+        ),
         "segmentId": args.segment_id,
         "selectionSha256": sha256_file(Path(args.selection)),
     }
     private_write(output / "colmap-input.json", canonical_bytes(input_manifest) + b"\n")
-    print(json.dumps({"frameCount": len(frames), "output": str(output)}, sort_keys=True))
+    print(json.dumps({"frameCount": len(selected_frames), "output": str(output)}, sort_keys=True))
 
 
 def rotation_from_quaternion(values: object) -> tuple[tuple[float, float, float], ...]:
@@ -1647,9 +1693,10 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
     export_root = Path(args.export_root)
     _, _, selection = load_selection(export_root, Path(args.selection))
     segment = selected_segment(selection, args.cohort, args.segment_id)
-    frames = cast("list[object]", segment["frames"])
-    if len(frames) < 2:
-        raise ValueError("ARKit-prior COLMAP requires at least two selected frames")
+    frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
+    ordered_image_names = bool(getattr(args, "ordered_image_names", False))
+    ordered_sample_count = getattr(args, "ordered_sample_count", None)
+    selected_frames = selected_colmap_frames(frames, ordered_sample_count)
     database_ids: dict[str, tuple[int, int]] = {}
     if args.database is not None:
         database = Path(args.database)
@@ -1675,10 +1722,11 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
     ]
     transform_records: list[dict[str, object]] = []
     used_ids: set[int] = set()
-    for index, raw in enumerate(frames, start=1):
-        frame = as_object(raw, "frame")
-        image_name = colmap_image_name(frame)
-        image_id, camera_id = database_ids.get(image_name, (index, index))
+    for output_index, (capture_index, frame) in enumerate(selected_frames, start=1):
+        image_name = colmap_image_name(
+            frame, capture_index=capture_index if ordered_image_names else None
+        )
+        image_id, camera_id = database_ids.get(image_name, (output_index, output_index))
         if database_ids and image_name not in database_ids:
             raise ValueError("COLMAP database image names do not match the immutable selection")
         if image_id in used_ids:
@@ -1700,7 +1748,12 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         )
         image_lines.append("")
         transform_records.append(
-            {"imageName": image_name, "sampleId": frame["sampleId"], "worldToCamera": matrix}
+            {
+                "captureIndex": capture_index,
+                "imageName": image_name,
+                "sampleId": frame["sampleId"],
+                "worldToCamera": matrix,
+            }
         )
     private_write(output / "cameras.txt", ("\n".join(camera_lines) + "\n").encode())
     private_write(output / "images.txt", ("\n".join(image_lines) + "\n").encode())
@@ -1711,6 +1764,12 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         "authority": "proposal-only-arkit-prior-diagnostic",
         "cohort": args.cohort,
         "frames": transform_records,
+        "imageOrder": "capture-order" if ordered_image_names else "sample-id-lexical",
+        "sampling": (
+            "full"
+            if ordered_sample_count is None
+            else f"ordered-quantile-{ordered_sample_count}-v1"
+        ),
         "segmentId": args.segment_id,
         "selectionSha256": sha256_file(Path(args.selection)),
         "sourceCoordinateSystem": "arkit-right-handed-y-up-camera-to-world",
@@ -1718,7 +1777,7 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         "translationUnit": "metres-from-arkit-not-independently-validated",
     }
     private_write(output / "prior-manifest.json", canonical_bytes(prior) + b"\n")
-    print(json.dumps({"frameCount": len(frames), "output": str(output)}, sort_keys=True))
+    print(json.dumps({"frameCount": len(selected_frames), "output": str(output)}, sort_keys=True))
 
 
 def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[str, str]]:
@@ -2019,6 +2078,8 @@ def build_parser() -> argparse.ArgumentParser:
     prior.add_argument("--cohort", choices=("normal", "inclusive"), required=True)
     prior.add_argument("--segment-id", required=True)
     prior.add_argument("--database")
+    prior.add_argument("--ordered-image-names", action="store_true")
+    prior.add_argument("--ordered-sample-count", type=int)
     prior.add_argument("--output", required=True)
     prior.set_defaults(function=write_colmap_prior)
     colmap_input = commands.add_parser(
@@ -2028,6 +2089,8 @@ def build_parser() -> argparse.ArgumentParser:
     colmap_input.add_argument("--selection", required=True)
     colmap_input.add_argument("--cohort", choices=("normal", "inclusive"), required=True)
     colmap_input.add_argument("--segment-id", required=True)
+    colmap_input.add_argument("--ordered-image-names", action="store_true")
+    colmap_input.add_argument("--ordered-sample-count", type=int)
     colmap_input.add_argument("--output", required=True)
     colmap_input.set_defaults(function=write_colmap_input)
     policy = commands.add_parser(
