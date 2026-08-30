@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import sqlite3
@@ -239,27 +240,116 @@ def test_runner_binds_exact_frozen_plan_and_rejects_scope_drift() -> None:
         "colmap_image": "sha256:68be6852c13de3573a79fb049ee2116937ba424cbd29b56583dc6a58617364f6",
         "gsplat_image": "sha256:93add58cb6b3ee7df927a47e98af0ed1d7d9fbac8607edea6de92d96a14e70d0",
     }
-    sequential_sha = runner.validate_evaluation_plan(
+    sequential_sha, quality_profile = runner.validate_evaluation_plan(
         **common,
         matcher_mode="sequential-mobile",
         sample_count=None,
         expected_frame_count=132,
+        execution_profile="quality-full",
+        run_index=1,
     )
-    exhaustive_sha = runner.validate_evaluation_plan(
+    exhaustive_sha, control_profile = runner.validate_evaluation_plan(
         **common,
         matcher_mode="exhaustive",
         sample_count=25,
         expected_frame_count=165,
+        execution_profile="control-25",
+        run_index=1,
     )
     assert sequential_sha == exhaustive_sha
     assert len(sequential_sha) == 64
+    assert quality_profile["name"] == "qualityFull"
+    assert quality_profile["stageTimeoutSeconds"]["colmap.matching"] == 3600
+    assert quality_profile["stageTimeoutSeconds"]["colmap.patchmatch"] == 7200
+    assert quality_profile["scratchLimitBytes"] == 24 * 1024**3
+    assert control_profile["name"] == "control25"
+    probe_sha, probe_profile = runner.validate_evaluation_plan(
+        **common,
+        matcher_mode="exhaustive",
+        sample_count=20,
+        expected_frame_count=132,
+        execution_profile="adapter-probe",
+        run_index=1,
+    )
+    assert probe_sha == sequential_sha
+    assert probe_profile["name"] == "adapterProbe"
     with pytest.raises(ValueError, match="frozen evaluation plan"):
         runner.validate_evaluation_plan(
             **common,
             matcher_mode="exhaustive",
             sample_count=24,
             expected_frame_count=132,
+            execution_profile="control-25",
+            run_index=1,
         )
+
+
+def test_all_execution_calls_bind_profiles_and_stage_limits() -> None:
+    tree = ast.parse((PACKAGE / "run_physical_capture_matrix.py").read_text(encoding="utf-8"))
+
+    def calls_named(name: str) -> list[ast.Call]:
+        return [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == name
+        ]
+
+    sampled = calls_named("run_sampled")
+    assert len(sampled) == 4
+    assert all(
+        {"timeout_seconds", "vram_limit_bytes"} <= {kw.arg for kw in call.keywords}
+        for call in sampled
+    )
+    docker = calls_named("docker_command")
+    assert len(docker) == 4
+    assert all("resource_profile" in {kw.arg for kw in call.keywords} for call in docker)
+    host = calls_named("run_host")
+    assert len(host) == 5
+    assert all(len(call.args) == 4 for call in host)
+
+
+def test_quality_profile_is_enforced_by_container_boundary(tmp_path: Path) -> None:
+    runner = load_module(
+        "physical_capture_runner_resources",
+        PACKAGE / "run_physical_capture_matrix.py",
+    )
+    plan = json.loads((PACKAGE / "c14-10-physical-evaluation-plan.json").read_bytes())
+    profile = {**plan["resourceProfiles"]["qualityFull"], "name": "qualityFull"}
+    command = runner.docker_command(
+        name="test",
+        image="sha256:" + ("0" * 64),
+        mounts=[(tmp_path, "/input", True)],
+        command=["true"],
+        resource_profile=profile,
+    )
+    assert command[command.index("--cpus") + 1] == "12"
+    assert command[command.index("--memory") + 1] == str(24 * 1024**3)
+    assert command[command.index("--pids-limit") + 1] == "512"
+    boundary = runner.execution_boundary(profile)
+    assert boundary["scratchLimitBytes"] == 24 * 1024**3
+    fragment = runner.fragment(
+        candidate="gsplat-direct",
+        cohort="normal",
+        segment_id="private-segment",
+        run_index=1,
+        derived_sha256="0" * 64,
+        result_metrics={},
+        resources={},
+        artifacts=[],
+        failure_code=None,
+        selection_sha256="1" * 64,
+        policy_sha256="2" * 64,
+        image_id="sha256:" + ("3" * 64),
+        plan={},
+        execution_profile="quality-full",
+        resource_profile=profile,
+    )
+    assert fragment["executionProfile"] == "quality-full"
+    assert fragment["execution"]["scratchLimitBytes"] == 24 * 1024**3
+    assert len(fragment["resourceProfileSha256"]) == 64
+    assert boundary["taskVramLimitBytes"] == 14 * 1024**3
 
 
 def test_runner_derives_one_private_segment_without_command_line_disclosure() -> None:
