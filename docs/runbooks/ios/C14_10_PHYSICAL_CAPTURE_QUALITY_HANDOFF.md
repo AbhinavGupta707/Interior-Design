@@ -109,10 +109,18 @@ lifecycle row, start product C8 or establish physical-checkpoint acceptance.
 
 The complete 132- and 165-frame first passes covered unconstrained and ARKit-prior COLMAP,
 same-dataset recovered gsplat and exact DA3-SMALL. Original fixed-limit, adapter and recovery
-failures remain separately retained. Reverse 25-view controls completed twice per capture; full
-quality repeat 2 was not run because the first pass and private inspection were decisive.
+failures remain separately retained. Ordered-quantile 25-view controls ran twice per capture and
+repeated their sparse outcomes, but their artifacts were not byte-exact. Full-quality, recovered-
+gsplat and DA3 repeatability remains `NOT RUN`. Full quality repeat 2 was not run because the first
+pass was sufficient to choose the next evidence-changing experiment, not because repeatability was
+established.
 
 The 165-frame ARKit-prior dense proposal was the strongest private result and materially improved
 proposal usefulness over C14.8, but no lane formed a closed room shell or passed consumer-quality,
 dimensional, representative or canonical-geometry gates. The durable redacted comparison is
 `docs/evaluation/reconstruction/C14_10_PHYSICAL_CAPTURE_RECONSTRUCTION_2026-08-30.md`.
+
+The homeowner's private qualitative inspection found that the 165-frame result made the bed, sofa,
+curtains, cabinets, colours and overall room zones recognisable, while the computer-desk corner and
+continuous room shell remained incomplete. This is private qualitative evidence only, not
+dimensional, representative, canonical or consumer-grade acceptance.

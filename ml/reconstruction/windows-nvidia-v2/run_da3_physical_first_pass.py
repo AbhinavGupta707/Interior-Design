@@ -30,6 +30,7 @@ PRODUCT_SOURCE_COMMIT = "62a0ed823dcd85f3355b4f24040484cff720ea75"
 EXPECTED_FRAME_COUNTS = {132, 165}
 IMAGE_ID = "sha256:246b7363b7ff9d2a38a688607aa9d89d6085734c1b7acc88221e00f04590e0d3"
 CANDIDATE_ID = "da3-small"
+WEIGHT_SHA256 = "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf"
 RUN_INDEX = 1
 
 
@@ -78,6 +79,7 @@ def validate_plan(path: Path, expected_frame_count: int) -> tuple[str, dict[str,
         or plan.get("images", {}).get("da3Small") != IMAGE_ID
         or expected_frame_count not in datasets
         or lane.get("candidateId") != CANDIDATE_ID
+        or lane.get("weightSha256") != WEIGHT_SHA256
         or lane.get("frameScope") != "full"
         or lane.get("firstPassOnly") is not True
         or lane.get("repeats") != 1
@@ -208,6 +210,8 @@ def execute(args: argparse.Namespace) -> None:
     if set(model_roots) != {CANDIDATE_ID}:
         raise ValueError("exactly one frozen DA3-SMALL model root is required")
     candidate = frozen[CANDIDATE_ID]
+    if candidate.get("weight", {}).get("sha256") != WEIGHT_SHA256:
+        raise ValueError("DA3 registry weight differs from the frozen physical lane")
     model_root = model_roots[CANDIDATE_ID]
     validate_model_root(model_root, candidate)
     output_root = safe_root(Path(args.output_root), create=True)

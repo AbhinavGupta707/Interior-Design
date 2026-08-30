@@ -275,7 +275,7 @@ def test_physical_first_pass_rejects_nonidentical_or_incomplete_cohorts() -> Non
         runner.select_single_normal_segment(selection, 165)
 
 
-def test_physical_first_pass_plan_closes_second_repeats() -> None:
+def test_physical_first_pass_plan_closes_second_repeats(tmp_path: Path) -> None:
     runner = load("run_da3_physical_first_pass")
     plan_path = PACKAGE / "c14-10-physical-evaluation-plan.json"
     plan_sha, profile = runner.validate_plan(plan_path, 132)
@@ -289,6 +289,14 @@ def test_physical_first_pass_plan_closes_second_repeats() -> None:
         == "not-run-first-pass-sufficient"
     )
     assert plan["firstPassStopRule"]["fullQualityRepeat2"] == "not-run"
+    assert plan["lanes"]["da3Small"]["weightSha256"] == runner.WEIGHT_SHA256
+
+    mismatched = json.loads(json.dumps(plan))
+    mismatched["lanes"]["da3Small"]["weightSha256"] = "0" * 64
+    mismatched_path = tmp_path / "mismatched-plan.json"
+    mismatched_path.write_text(json.dumps(mismatched), encoding="utf-8")
+    with pytest.raises(ValueError, match="first-pass stop rule"):
+        runner.validate_plan(mismatched_path, 132)
 
 
 def test_private_side_by_side_viewer_is_complete_and_path_redacted(

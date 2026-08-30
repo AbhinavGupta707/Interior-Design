@@ -1,7 +1,7 @@
 {
   "authority": "private-proposal-evaluation-only",
   "amendment": {
-    "firstPassStopReason": "complete first-pass comparison declared sufficient; finish reverse controls and one DA3-SMALL first pass per complete capture, then stop experimental compute",
+    "firstPassStopReason": "complete first-pass comparison declared sufficient; finish ordered-quantile controls and one DA3-SMALL first pass per complete capture, then stop experimental compute",
     "probeRevisionReason": "retained 20-view diagnostic triangulated zero prior points; 32 views are required to exercise downstream adapters",
     "reason": "separate fixed-limit operational scalability evidence from complete reconstruction-quality evaluation",
     "retained20ViewProbeRecordSha256": "37f33761cf496dd08c3c806c330a7b1d18b3ef2868f871c73739c5d9891e08c8",
@@ -156,7 +156,7 @@
       "firstPassOnly": true,
       "frameScope": "full",
       "repeats": 1,
-      "weightSha256": "364492e33c715a6314bad96d9484c5472db23a42b9202615753ac53c8501575b"
+      "weightSha256": "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf"
     },
     "fullSequentialMobileFixedLimit": {
       "countedAs": "operational-scalability-evidence-only",

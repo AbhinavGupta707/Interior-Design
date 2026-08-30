@@ -1909,8 +1909,15 @@
 - One authoritative full quality first pass completed for each 132- and 165-frame capture under
   the same data-size-appropriate stage rules. Original direct-gsplat schema-limit failures remain
   preserved; a separately declared same-dataset recovery adapter completed both gsplat lanes.
-  Reverse 25-view controls completed twice per capture, and exact DA3-SMALL completed once per full
-  capture. Full quality repeat 2 is `NOT RUN — first pass sufficient`.
+  Ordered-quantile 25-view controls completed twice per capture. Their registration, sparse-point,
+  track, reprojection and failure outcomes repeated, but their retained artifacts were not
+  byte-exact. Exact DA3-SMALL completed once per full capture. Full-quality, recovered-gsplat and
+  DA3 repeatability remains `NOT RUN`; full quality repeat 2 is
+  `NOT RUN — first pass sufficient for choosing the next experimental direction`.
+- The homeowner's private qualitative inspection found that the 165-frame result made the bed, sofa,
+  curtains, cabinets, colours and overall room zones recognisable, while the computer-desk corner
+  and a continuous room shell remained incomplete. This is private qualitative evidence only, not
+  dimensional, representative, canonical or consumer-grade acceptance.
 - Best result: 165-frame ARKit-prior dense COLMAP, with 165/165 views, 90,679 sparse points and
   947,276 dense vertices. It gives the clearest private kitchen/bed/study relationship. The
   132-frame prior result is second. Both materially improve proposal usefulness over C14.8, but no
@@ -1931,19 +1938,31 @@
 ### Corrections, verification and delivery boundary
 
 - Counted runner/schema/dependency support was committed with regression coverage before
-  acceptance. Final strict typing required only local-name/direct-import corrections with no
-  runtime semantic change. The frozen counted plan remains byte-identical at SHA-256
-  `6143f3e06e3a94fb588bae5a5293053ae41b8d18ca1182e722789f553553fce3` and is guarded by package
-  integrity rather than formatter rewriting.
-- Full affected capture tests passed 38/38; combined focused Python/package tests passed 42/42;
-  package Vitest passed 3/3. Complete `pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck,
-  45/45 unit and 24/24 build tasks, Ruff, mypy over 125 sources and Python 157 passed / 2 expected
-  skips. `git diff --check` passed.
+  acceptance. The sealed records retain their historical plan/harness bindings: full quality used
+  plan `224ca5820cfbcb1bcec5561079824f998a4bfb5241c9743ea8701a1aa2a7b66b` with harness
+  `3cdc7b7c4bf85a27833ca71de2cbc0f756895866`; recovery/control used plan
+  `3650457e570cd6e8ffe9fc34ef940afe3e5be39e66929a610f67a5e7f58df494` with harness
+  `46ef82251f46750c4c2dbb1502d25bfadabcbddf`; DA3 used plan
+  `6143f3e06e3a94fb588bae5a5293053ae41b8d18ca1182e722789f553553fce3` with harness
+  `1002327faef3ce77df65d2b80cbd318f770d2bc5`.
+- Independent PR review corrected the current plan's mistyped DA3 weight declaration, added exact
+  plan/registry weight gates, brought the offline verifier into parity for all-or-none spatial
+  evidence and the two-second automatic keyframe interval, and replaced reverse/exact-repeat
+  overclaims. The corrected current plan is package-bound at SHA-256
+  `1abf9232f2bdff93709aad185d1d492956df85cc629c4faac62ea2aa2e2f4d74`; sealed results were not
+  rewritten or rebound.
+- Original delivery gates passed 38/38 affected capture tests, 42/42 combined focused
+  Python/package tests and package Vitest 3/3.
+- Independent PR review reran the capture-benchmark, export-verifier security and package-integrity
+  Python gate: 33 passed with one expected optional DA3 evaluation-runtime skip. Complete
+  `corepack pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck, 45/45 unit and 24/24 build
+  tasks, Ruff, mypy over 125 sources and Python 157 passed / 2 expected capability skips.
+  `git diff --check` passed.
 - Contract/migration impact: none. No migration, OpenAPI/generated client, production route,
   canonical mutation, product C8, root manifest or lockfile changed. The output is not sufficient
   for consumer, dimensional, representative, structural, regulatory or professional use.
 - Next experiment: a newly captured continuous loop-closure route with calibrated real depth,
   measured anchors and deliberate upper-wall/ceiling coverage, followed by shell-closure and
   regional held-out evaluation. No identical full repeat is justified by this inspection.
-- Delivery: one non-draft PR will target `main` and remain open/unmerged. Normal review and all
-  applicable exact-head checks remain required.
+- Delivery: non-draft PR #17 targets `main`. Normal review and all four named exact-head checks
+  remain required before merge.

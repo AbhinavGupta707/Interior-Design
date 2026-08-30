@@ -16,8 +16,10 @@ exist. The 165-frame ARKit-prior output is useful only as a private design/recon
 It is not canonical, dimensional, representative, as-built, structural or regulatory evidence.
 
 The complete first pass is sufficient to choose the next experimental direction. No full quality
-repeat 2, additional model, parameter search or quality-gate relaxation was run. The visual review
-identified no material ambiguity that an identical repeat would resolve.
+repeat 2, additional model, parameter search or quality-gate relaxation was run. An identical repeat
+would not supply the missing upper-shell, depth, measured-anchor or ground-truth evidence.
+Repeatability of the accepted full-quality, recovered-gsplat and DA3 results remains `NOT RUN`;
+the decision to stop is not a repeatability finding.
 
 ## Authority, privacy and immutable inputs
 
@@ -59,11 +61,11 @@ approved weight SHA-256 `364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091
 Exact depth was absent, so Open3D correctly abstained; no depth was manufactured.
 
 The frozen plan ran unconstrained COLMAP, ARKit-prior COLMAP, same-dataset fixed-geometry gsplat
-and exact DA3-SMALL independently for each complete capture. A deterministic reverse-order
-25-view control was repeated twice per capture only to probe the image-count/continuity confound.
-The authoritative complete quality first passes used identical data-size-appropriate stage rules
-derived before execution from observed throughput. Compute stopped after the requested controls
-and one DA3 first pass per full capture.
+and exact DA3-SMALL independently for each complete capture. A deterministic ordered-quantile
+25-view control was run twice per capture only to probe the image-count/continuity confound. The
+authoritative complete quality first passes used identical data-size-appropriate stage rules derived
+before execution from observed throughput. Compute stopped after the requested controls and one DA3
+first pass per full capture.
 
 | Evidence class                           | Denominator treatment                                                               |
 | ---------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -73,7 +75,7 @@ and one DA3 first pass per full capture.
 | Complete full-capture quality passes     | Accepted authority: one 132-frame and one 165-frame first pass                      |
 | Original direct-gsplat failures          | Preserved as `GSPLAT_DIRECT_FAILED`; not relabelled or removed                      |
 | Focused gsplat recovery                  | Separate paired adapter ablation using corresponding same-dataset prior geometry    |
-| Reverse 25-view controls                 | Two exact repeats per capture; secondary controls only                              |
+| Ordered-quantile 25-view controls        | Two runs per capture; sparse outcomes repeated, artifacts were not byte-exact       |
 | Full quality repeat 2                    | `NOT RUN — first pass sufficient`                                                   |
 
 ## Quantitative comparison
@@ -106,31 +108,44 @@ room-shell conclusion.
 
 ## Resources and repeat controls
 
-| Full-capture lane        |   Wall time | Peak host memory |  Peak task VRAM |      Peak scratch/output |
-| ------------------------ | ----------: | ---------------: | --------------: | -----------------------: |
-| 132 unconstrained COLMAP | 5,961.913 s |  8,730,594,771 B | 1,724,907,520 B | 12,063,358,088 B scratch |
-| 165 unconstrained COLMAP | 6,994.167 s | 10,301,479,059 B | 1,724,907,520 B | 14,942,105,311 B scratch |
-| 132 ARKit-prior COLMAP   | 2,954.629 s |  7,949,984,465 B |       ~1.672 GB |       ~10.693 GB scratch |
-| 165 ARKit-prior COLMAP   | 4,210.980 s | 10,484,015,170 B |       ~1.725 GB |       ~15.045 GB scratch |
-| 132 recovered gsplat     |   343.614 s |  1,317,208,064 B |       ~4.892 GB |          ~238 MB scratch |
-| 165 recovered gsplat     |   438.769 s |  1,322,012,672 B |       ~6.005 GB |          ~287 MB scratch |
-| 132 DA3-SMALL            |     8.442 s |  3,618,828,288 B | 3,584,794,624 B |     7,439,302 B retained |
-| 165 DA3-SMALL            |     9.809 s |  4,024,336,384 B | 4,197,139,968 B |     8,095,291 B retained |
+| Full-capture lane        |      Wall time | Peak host memory |  Peak task VRAM |      Peak scratch/output |
+| ------------------------ | -------------: | ---------------: | --------------: | -----------------------: |
+| 132 unconstrained COLMAP | 5,961.913159 s |  8,730,594,771 B | 1,724,907,520 B | 12,063,358,088 B scratch |
+| 165 unconstrained COLMAP | 6,994.166688 s | 10,301,479,059 B | 1,724,907,520 B | 14,942,105,311 B scratch |
+| 132 ARKit-prior COLMAP   | 2,954.628637 s |  7,949,984,465 B | 1,672,478,720 B | 10,693,329,165 B scratch |
+| 165 ARKit-prior COLMAP   | 4,210.980435 s | 10,484,015,170 B | 1,724,907,520 B | 15,044,637,296 B scratch |
+| 132 recovered gsplat     |      343.614 s |  1,317,208,064 B | 4,891,607,040 B |    238,243,150 B scratch |
+| 165 recovered gsplat     |      438.769 s |  1,322,012,672 B | 6,005,194,752 B |    287,066,941 B scratch |
+| 132 DA3-SMALL            |        8.442 s |  3,618,828,288 B | 3,584,794,624 B |     7,439,302 B retained |
+| 165 DA3-SMALL            |        9.809 s |  4,024,336,384 B | 4,197,139,968 B |     8,095,291 B retained |
 
-Both reverse 25-view repeats were exact within each capture. The 132 control registered 4/25
-unconstrained views with 370 points, then retained 25 prior cameras but zero points and failed
-`ARKIT_PRIOR_ALGORITHM_GATE_FAILED`. The 165 control registered 5/25 unconstrained views with
-580 points and produced the same honest prior failure. Downstream lanes were unavailable. Reverse
-sampling destroys the continuous overlap required by the full routes; it confirms that the gain
-does not survive an old-sized discontinuous sample but cannot causally isolate count from route
-quality.
+Both ordered-quantile 25-view controls repeated outcome-level sparse metrics within each capture:
+the 132 control repeated `4/25`, `370`, `2.616216` mean track length and `0.709133 px`
+reprojection error, then retained 25 prior cameras with zero points and repeated
+`ARKIT_PRIOR_ALGORITHM_GATE_FAILED`; the 165 control repeated `5/25`, `580`, `2.844828`
+and `0.726480 px`, followed by the same prior failure. They were not artifact-byte-exact. The 132
+total output size stayed `149,169` bytes, but fused/analyzer/validation/failure artifact hashes
+differed. The 165 total output changed from `175,746` to `175,699` bytes and the fused PLY from
+`110,230` to `110,203` bytes, with other artifact hashes also different. The controls therefore
+show repeated sparse outcomes, not artifact-level repeatability. Downstream lanes were unavailable.
+
+The widely spaced ordered-quantile samples weaken the continuous local overlap available in the full
+routes. The control confirms that the gain does not survive an old-sized discontinuous sample but
+cannot causally isolate count from route quality.
 
 Both original direct-gsplat attempts failed because their preparation manifests exceeded the
 strict 4 MiB schema limit. Those failures remain outside the accepted quality denominator. A
-focused committed streaming/schema adapter recovered both same-dataset runs without changing
-images, geometry or quality gates.
+focused committed streaming/schema adapter recovered one same-dataset run per capture without
+changing images, geometry or quality gates. Each recovery ran once; recovered-gsplat repeatability
+is `NOT RUN`.
 
 ## Private side-by-side inspection
+
+The homeowner's qualitative inspection of the retained private viewer found that the 165-frame
+result made the bed, sofa, curtains, cabinets, colours and overall room zones recognisable, while
+the computer-desk corner and a continuous room shell remained incomplete. This is private
+qualitative evidence only. It is not dimensional, representative, canonical or consumer-grade
+acceptance, and it does not upgrade any geometric or appearance-quality gate.
 
 A self-contained network-free viewer compares 36 hash-verified normalized images: C14.8, 132 and
 165 across all four lanes and three deterministic views. It remains on restrictive private WSL
@@ -147,11 +162,11 @@ path is committed.
 | Third kitchen wall; cabinets/oven   | 165 prior, partial            | Blank cabinetry has holes and weak planar support                        |
 | Kitchen open boundary               | 165 prior, coherent proposal  | Best zone transition; not a validated shell opening                      |
 | Sofa/middle                         | 165 prior, partial            | Relative placement reads; surfaces are incomplete                        |
-| Study-table                         | 165 prior, partial/coherent   | Relationship reads; local geometry is noisy                              |
+| Study-table                         | Homeowner recognisable in 165 | Computer-desk corner remains incomplete; local geometry is noisy         |
 | Bed                                 | 165 prior, partial/coherent   | Connected to broader proposal, not measurable                            |
 | Narrow passage                      | 165 prior, visually related   | Clearance/topology unvalidated; occlusion leaves holes                   |
-| Bright window/curtain               | All partial or missing        | Exposure and weak/variable texture leave gaps                            |
-| Blank cabinets                      | Prior lanes partial           | Low texture produces missing/weak planes                                 |
+| Bright window/curtain               | Homeowner recognisable in 165 | Curtain geometry remains partial; exposure/texture leave gaps            |
+| Blank cabinets                      | Homeowner recognisable in 165 | Cabinet planes remain incomplete, with holes/weak support                |
 | Reflective glass/metal/cooker       | All floating/warped/partial   | Specularity produces outliers and missing surfaces                       |
 | Lower wall/floor boundaries         | 165 prior, partial            | No closed perimeter or trustworthy floor plane                           |
 | Upper wall/ceiling boundaries       | Unsupported/missing           | Both captures observed zero upper cells; no complete ceiling/shell       |
@@ -182,8 +197,8 @@ no shell geometry.
 10. **ARKit-prior registration benefit:** material for 165 (165/165 versus 163/165) and visually
     material for both. It does not change 132 registration count, and higher reprojection error
     prevents treating ARKit poses as ground truth.
-11. **Gsplat usefulness:** a weak private appearance proposal only; recoverable/repeatable but
-    fragmented at roughly 6 dB PSNR.
+11. **Gsplat usefulness:** one bounded recovery completed per capture, yielding a weak private
+    appearance proposal at roughly 6 dB PSNR; recovery repeatability is `NOT RUN`.
 12. **DA3 versus C14.8 zero coverage:** numerically yes, especially 165 at 6.95678%; not a useful
     quality pass. The 132 result remains near zero and both have duplicated radial surfaces.
 13. **Private proposal use:** yes for 165 prior if uncertainty is explicit and no measurement is
@@ -192,12 +207,12 @@ no shell geometry.
 
 ## Failure preservation and evidence reconciliation
 
-| Record                   | 132 SHA-256                                                        | 165 SHA-256                                                        |
-| ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Accepted full first pass | `fe8849df0d92b0094a3de74173d8f609bf3ed1504fd1e5e8533f9351df2edf7e` | `13b20fd6f55b4e7946632c6bccc9745371c73a9234e388afa4a6a80a12a256bd` |
-| Gsplat recovery          | `23d6cb40164927f62f42e7302f25769683689924abb932f699ad8fd1c0e5ec2c` | `e08d60a63cf2dfc9f91083b6108f3bf762b4c5997fa7e814d399d8f436342017` |
-| Reverse control r2       | `7591b945cce788f7c2bb00045e8b3867e03a9052066e9abe4c6f7e26b202e8d3` | `8974e0b7269c104f740a19b6af746c0beaeb77b985b4166b13f3a81a0b78fcf7` |
-| DA3-SMALL first pass     | `aaff506fa397c1dbd514b032e4f0b00c53a9880763fddf1590afb53e6d4f1a60` | `6c7769d50c051495cde8dc96905346e076744860c025ed78127dfa6935b8b3e2` |
+| Record                      | 132 SHA-256                                                        | 165 SHA-256                                                        |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Accepted full first pass    | `fe8849df0d92b0094a3de74173d8f609bf3ed1504fd1e5e8533f9351df2edf7e` | `13b20fd6f55b4e7946632c6bccc9745371c73a9234e388afa4a6a80a12a256bd` |
+| Gsplat recovery             | `23d6cb40164927f62f42e7302f25769683689924abb932f699ad8fd1c0e5ec2c` | `e08d60a63cf2dfc9f91083b6108f3bf762b4c5997fa7e814d399d8f436342017` |
+| Ordered-quantile control r2 | `7591b945cce788f7c2bb00045e8b3867e03a9052066e9abe4c6f7e26b202e8d3` | `8974e0b7269c104f740a19b6af746c0beaeb77b985b4166b13f3a81a0b78fcf7` |
+| DA3-SMALL first pass        | `aaff506fa397c1dbd514b032e4f0b00c53a9880763fddf1590afb53e6d4f1a60` | `6c7769d50c051495cde8dc96905346e076744860c025ed78127dfa6935b8b3e2` |
 
 Original fixed-limit/exhaustive records remain separately sealed in the private ledger. The
 ordered 132 attempt completed matching in 1,697.7 seconds and mapping in 809 seconds before both
@@ -212,17 +227,27 @@ adapter and recovery failures remain separately retained.
 
 ## Final verification
 
-- The complete affected capture-benchmark suite passed 38/38. Combined with package integrity,
-  42 focused Python tests passed; the Windows package Vitest path passed 3/3.
-- Complete `corepack pnpm verify` passed Prettier, 24/24 JavaScript lint tasks, 24/24 typecheck
-  tasks, 45/45 unit-test task groups, 24/24 builds, Ruff, strict mypy over 125 Python sources and
-  Python 157 passed / 2 expected capability skips.
+- Original delivery gates passed the complete affected capture-benchmark suite 38/38, 42/42 focused
+  Python/package-integrity tests and the Windows package Vitest path 3/3.
+- Independent PR review reran the capture-benchmark, export-verifier security and package-integrity
+  Python gate: 33 passed with one expected optional DA3 evaluation-runtime skip.
+- Independent PR review reran complete `corepack pnpm verify`: Prettier, 24/24 JavaScript lint,
+  24/24 typecheck, 45/45 unit-test groups, 24/24 builds, Ruff, strict mypy over 125 Python sources
+  and Python 157 passed / 2 expected capability skips.
 - Both immutable exports passed the committed offline verifier again after compute. The counted
-  evaluation plan remains byte-identical at SHA-256
-  `6143f3e06e3a94fb588bae5a5293053ae41b8d18ca1182e722789f553553fce3`; it is package-hash
-  verified and deliberately excluded from formatter rewrites.
-- Final strict typing found and corrected only static name/import issues in the exporter, recovery
-  runner and viewer regression. Package hashes and regression coverage were updated; runtime
+  records retain their historical plan/harness bindings: full quality used plan
+  `224ca5820cfbcb1bcec5561079824f998a4bfb5241c9743ea8701a1aa2a7b66b` with harness
+  `3cdc7b7c4bf85a27833ca71de2cbc0f756895866`; recovery/control used plan
+  `3650457e570cd6e8ffe9fc34ef940afe3e5be39e66929a610f67a5e7f58df494` with harness
+  `46ef82251f46750c4c2dbb1502d25bfadabcbddf`; DA3 used plan
+  `6143f3e06e3a94fb588bae5a5293053ae41b8d18ca1182e722789f553553fce3` with harness
+  `1002327faef3ce77df65d2b80cbd318f770d2bc5`.
+- Independent PR review corrected the current plan's mistyped DA3 weight declaration and
+  reverse-order wording. The corrected current plan is package-bound at SHA-256
+  `1abf9232f2bdff93709aad185d1d492956df85cc629c4faac62ea2aa2e2f4d74`; no sealed result was
+  rewritten or rebound to it.
+- Original delivery's final strict typing found and corrected only static name/import issues in the
+  exporter, recovery runner and viewer regression. Package hashes and regression coverage were updated; runtime
   semantics and all sealed results are unchanged.
 - `git diff --check` passed. Contract and migration impact is none: no OpenAPI/generated client,
   schema migration, canonical mutation, production route, root manifest or lockfile changed.

@@ -38,6 +38,7 @@ IMAGE_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 MAX_DOWNLOAD_BYTES = 21_474_836_480
+AUTOMATIC_KEYFRAME_INTERVAL_MICROSECONDS = 2_000_000
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -824,10 +825,24 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         room_zones[room_id] = zone_ids
     if any(not rooms for rooms in rooms_by_segment.values()):
         raise ValueError("every coordinate segment must belong to a room")
+    spatial_sample_fields = {
+        "connectedToPrevious",
+        "featurePointCount",
+        "loopClosureCandidate",
+        "overlapScoreMillionths",
+        "parallaxScoreMillionths",
+        "retentionMode",
+        "trajectorySpanMicrometres",
+        "trajectoryTravelMicrometres",
+        "translationFromPreviousMicrometres",
+        "zoneId",
+    }
+    camera_samples = [
+        as_object(raw, "camera sample") for raw in cast("list[object]", arrays["cameraSamples"])
+    ]
     sample_ids: set[str] = set()
     timestamps: set[tuple[str, int]] = set()
-    for raw in cast("list[object]", arrays["cameraSamples"]):
-        sample = as_object(raw, "camera sample")
+    for sample in camera_samples:
         required = {
             "blurScoreMillionths",
             "cameraIntrinsicsMicropixels",
@@ -862,6 +877,9 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         }
         if not required.issubset(sample) or not (set(sample) - required).issubset(optional):
             raise ValueError("camera sample fields do not match the frozen schema")
+        populated_spatial_fields = spatial_sample_fields.intersection(sample)
+        if populated_spatial_fields and populated_spatial_fields != spatial_sample_fields:
+            raise ValueError("spatial camera sample evidence must be complete when present")
         sample_id = str(sample.get("sampleId"))
         segment_id = str(sample.get("segmentId"))
         room_id = str(sample.get("roomId"))
@@ -967,6 +985,21 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         sample_ids.add(sample_id)
         timestamps.add((segment_id, timestamp))
     depth_sample_ids: set[str] = set()
+    automatic_samples_by_segment: dict[str, list[dict[str, Any]]] = {}
+    for sample in camera_samples:
+        if sample.get("retentionMode") == "automatic":
+            automatic_samples_by_segment.setdefault(cast("str", sample["segmentId"]), []).append(
+                sample
+            )
+    for samples in automatic_samples_by_segment.values():
+        ordered = sorted(samples, key=lambda sample: cast("int", sample["timestampMicroseconds"]))
+        if any(
+            cast("int", current["timestampMicroseconds"])
+            - cast("int", previous["timestampMicroseconds"])
+            < AUTOMATIC_KEYFRAME_INTERVAL_MICROSECONDS
+            for previous, current in zip(ordered, ordered[1:], strict=False)
+        ):
+            raise ValueError("automatic retained keyframes violate the bounded selection interval")
     depth_artifact_ids: set[str] = set()
     for raw in cast("list[object]", arrays["depthSources"]):
         source = as_object(raw, "depth source")

@@ -111,6 +111,20 @@ def test_c14_10_spatial_quality_envelope_is_backward_compatible_and_strict() -> 
     with pytest.raises(ValueError, match="camera sample fields"):
         module.validate_envelope_shape(unknown)
 
+    partial_spatial = json.loads(json.dumps(envelope))
+    partial_spatial["cameraSamples"][0].pop("featurePointCount")
+    with pytest.raises(ValueError, match="spatial camera sample evidence"):
+        module.validate_envelope_shape(partial_spatial)
+
+    too_close = json.loads(json.dumps(envelope))
+    second_sample = json.loads(json.dumps(too_close["cameraSamples"][0]))
+    second_sample["sampleId"] = "14800000-0000-4000-8000-000000000008"
+    second_sample["sourceTimestampMicroseconds"] = 2_999_999
+    second_sample["timestampMicroseconds"] = 2_999_999
+    too_close["cameraSamples"].append(second_sample)
+    with pytest.raises(ValueError, match="bounded selection interval"):
+        module.validate_envelope_shape(too_close)
+
 
 def test_export_access_idempotency_is_scoped_to_one_attempt() -> None:
     module = load_module()
