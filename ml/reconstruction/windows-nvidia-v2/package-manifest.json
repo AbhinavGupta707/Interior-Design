@@ -9,7 +9,7 @@
     "Dockerfile.open3d": "e3b8a4d1767fe30e9aa9a5aa99a57bb608e3a23ce82f6133c4c6a07ec99f8f06",
     "README.md": "41af3308cd0a01b0350baa4915bdb8cd1a86005ec818a57750cfdf1859dec527",
     "c14-10-learned-candidates.json": "c192fe6ece38970ec8c0f79d6c127156f42aca79fd280136e55801c7d7827ec4",
-    "c14-10-physical-evaluation-plan.json": "1765d9c7e41f3bef17338ee5ef3c2f949ebeb0cbae1a6b52546a1cdfe7a2c1e5",
+    "c14-10-physical-evaluation-plan.json": "224ca5820cfbcb1bcec5561079824f998a4bfb5241c9743ea8701a1aa2a7b66b",
     "capture_benchmark.py": "f86191023233912121b2119df497f2ad837a80673d61a08ae291df9617d31213",
     "capture_host_inventory.py": "696a98c571fe8f8f2e03790c518c4afd073a4f293474bc4286d176089ae2754a",
     "capture_metrics.py": "228ec50f6ff08f7c148497343ada8f8b9c27b8d0897eb300bd393e83486edbae",
@@ -37,7 +37,7 @@
     "requirements-open3d.lock": "c4e38506beeba813fdb4169eecc223d42e18f0b02ae58c77556e97864ef7522a",
     "run_acceptance.py": "d096434edd876cc70b880884f69fb5f66d83f96034ef2b5e01ea50fdaadfb1c4",
     "run_da3_matrix.py": "3dfa70b95112b7dd7dbd1dddea158a18d527887ff5c4aa8119aaaef2da8c7cb8",
-    "run_physical_capture_matrix.py": "38126251010d0e5b0405a677292c28b12a6ba420e6bef3ad5153fbf65df2956b",
+    "run_physical_capture_matrix.py": "31936fcb054b531915d50d15797d5da72f72c2f2ef30a86a507bbc1e05fdff0f",
     "sm120_probe.cu": "4b6415390eba1e9b60919b414c10bf07c1e4ea6dfa52057c188497914db00d0d",
     "validate_colmap_outputs.py": "858828ff3c48629cf2a0a9a7f9e31441438142b5c0d727beeff8ef272be2b15b",
     "versions.json": "d2ea9b30a13023630c828836f2d3ef289dfdedf0acc0993bb7d99ae844ee5248"

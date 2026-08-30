@@ -266,7 +266,7 @@ def test_runner_binds_exact_frozen_plan_and_rejects_scope_drift() -> None:
     probe_sha, probe_profile = runner.validate_evaluation_plan(
         **common,
         matcher_mode="exhaustive",
-        sample_count=20,
+        sample_count=32,
         expected_frame_count=132,
         execution_profile="adapter-probe",
         run_index=1,

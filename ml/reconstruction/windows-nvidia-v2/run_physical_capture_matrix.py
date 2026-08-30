@@ -1067,7 +1067,7 @@ def execute(args: argparse.Namespace) -> None:
     effective_count = args.sample_count or full_count
     if args.matcher_mode == "sequential-mobile" and args.sample_count is not None:
         raise ValueError("sequential-mobile is reserved for the complete capture")
-    if args.matcher_mode == "exhaustive" and args.sample_count not in (20, 25):
+    if args.matcher_mode == "exhaustive" and args.sample_count not in (25, 32):
         raise ValueError("exhaustive scope is reserved for the declared probe or control")
 
     run_root = output_root / f"{args.record_stem}-r{args.run_index}"

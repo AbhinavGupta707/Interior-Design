@@ -1,7 +1,9 @@
 {
   "authority": "private-proposal-evaluation-only",
   "amendment": {
+    "probeRevisionReason": "retained 20-view diagnostic triangulated zero prior points; 32 views are required to exercise downstream adapters",
     "reason": "separate fixed-limit operational scalability evidence from complete reconstruction-quality evaluation",
+    "retained20ViewProbeRecordSha256": "37f33761cf496dd08c3c806c330a7b1d18b3ef2868f871c73739c5d9891e08c8",
     "supersedesPlanSha256": "c87bd7585713bb65905acd2ae6210391442cffac4e1ab738352ad8766b6a736b"
   },
   "baseline": {
@@ -102,13 +104,13 @@
       "candidateScope": "complete-colmap-prior-dense-gsplat-adapter-chain",
       "counted": false,
       "datasetFrameCount": 132,
-      "frameScope": "ordered-quantile-20-v1",
+      "frameScope": "ordered-quantile-32-v1",
       "matcher": {
         "mode": "exhaustive"
       },
       "repeats": 1,
       "resourceProfile": "adapterProbe",
-      "sampleCount": 20
+      "sampleCount": 32
     },
     "da3Small": {
       "candidateId": "da3-small",
