@@ -235,3 +235,57 @@ def test_runner_command_keeps_gpu_and_container_isolation(tmp_path: Path) -> Non
     assert command[command.index("--read-only")]
     assert command[command.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
     assert command[command.index("--env") + 1] == "HOME=/tmp"
+
+
+def test_physical_first_pass_deduplicates_identical_complete_cohorts() -> None:
+    runner = load("run_da3_physical_first_pass")
+    segment = {
+        "frames": [{"sampleId": str(index)} for index in range(132)],
+        "segmentId": "private-segment",
+    }
+    selection = {
+        "cohorts": {
+            "inclusive": {"segments": [segment]},
+            "normal": {"segments": [segment]},
+        }
+    }
+    segment_id, segment_key = runner.select_single_normal_segment(selection, 132)
+    assert segment_id == "private-segment"
+    assert segment_key == hashlib.sha256(segment_id.encode()).hexdigest()[:12]
+
+
+def test_physical_first_pass_rejects_nonidentical_or_incomplete_cohorts() -> None:
+    runner = load("run_da3_physical_first_pass")
+    normal = {
+        "frames": [{"sampleId": str(index)} for index in range(132)],
+        "segmentId": "s",
+    }
+    inclusive = json.loads(json.dumps(normal))
+    inclusive["frames"].append({"sampleId": "extra"})
+    selection = {
+        "cohorts": {
+            "inclusive": {"segments": [inclusive]},
+            "normal": {"segments": [normal]},
+        }
+    }
+    with pytest.raises(ValueError, match="byte-identical"):
+        runner.select_single_normal_segment(selection, 132)
+    selection["cohorts"]["inclusive"]["segments"] = [normal]
+    with pytest.raises(ValueError, match="complete declared capture"):
+        runner.select_single_normal_segment(selection, 165)
+
+
+def test_physical_first_pass_plan_closes_second_repeats() -> None:
+    runner = load("run_da3_physical_first_pass")
+    plan_path = PACKAGE / "c14-10-physical-evaluation-plan.json"
+    plan_sha, profile = runner.validate_plan(plan_path, 132)
+    assert len(plan_sha) == 64
+    assert profile["timeoutSeconds"] == 2700
+    plan = json.loads(plan_path.read_bytes())
+    assert plan["lanes"]["da3Small"]["repeats"] == 1
+    assert plan["lanes"]["qualityFullSequentialMobile"]["repeats"] == 2
+    assert (
+        plan["lanes"]["qualityFullSequentialMobile"]["repeat2Decision"]
+        == "not-run-first-pass-sufficient"
+    )
+    assert plan["firstPassStopRule"]["fullQualityRepeat2"] == "not-run"

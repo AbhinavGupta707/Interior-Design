@@ -1,10 +1,11 @@
 {
   "authority": "private-proposal-evaluation-only",
   "amendment": {
+    "firstPassStopReason": "complete first-pass comparison declared sufficient; finish reverse controls and one DA3-SMALL first pass per complete capture, then stop experimental compute",
     "probeRevisionReason": "retained 20-view diagnostic triangulated zero prior points; 32 views are required to exercise downstream adapters",
     "reason": "separate fixed-limit operational scalability evidence from complete reconstruction-quality evaluation",
     "retained20ViewProbeRecordSha256": "37f33761cf496dd08c3c806c330a7b1d18b3ef2868f871c73739c5d9891e08c8",
-    "supersedesPlanSha256": "c87bd7585713bb65905acd2ae6210391442cffac4e1ab738352ad8766b6a736b"
+    "supersedesPlanSha256": "3650457e570cd6e8ffe9fc34ef940afe3e5be39e66929a610f67a5e7f58df494"
   },
   "baseline": {
     "captureAlias": "c14-8-retained-25",
@@ -86,9 +87,7 @@
   "executionOrder": {
     "da3Small": [
       "c14-10-rectangular-132-r1",
-      "c14-10-irregular-165-r1",
-      "c14-10-irregular-165-r2",
-      "c14-10-rectangular-132-r2"
+      "c14-10-irregular-165-r1"
     ],
     "fullSequentialMobileFixedLimit": [
       "c14-10-rectangular-132-r1",
@@ -100,9 +99,7 @@
     ],
     "qualityFullSequentialMobile": [
       "c14-10-rectangular-132-r1",
-      "c14-10-irregular-165-r1",
-      "c14-10-irregular-165-r2-if-first-pass-gate-passes",
-      "c14-10-rectangular-132-r2-if-first-pass-gate-passes"
+      "c14-10-irregular-165-r1"
     ],
     "ordered25ExhaustiveControl": [
       "c14-10-rectangular-132-r1",
@@ -110,6 +107,17 @@
       "c14-10-irregular-165-r2",
       "c14-10-rectangular-132-r2"
     ]
+  },
+  "firstPassStopRule": {
+    "additionalModelsOrParameterSearch": "forbidden",
+    "allowedRemainingExperimentalCompute": [
+      "ordered25ExhaustiveControl:c14-10-rectangular-132-r2",
+      "da3Small:c14-10-rectangular-132-r1",
+      "da3Small:c14-10-irregular-165-r1"
+    ],
+    "fullQualityRepeat2": "not-run",
+    "postCompute": "private-side-by-side-visual-inspection-only",
+    "repeatRecommendationGate": "specific-material-ambiguity-observed-in-private-visual-inspection"
   },
   "exhaustiveScalabilityEvidence": [
     {
@@ -145,8 +153,9 @@
     },
     "da3Small": {
       "candidateId": "da3-small",
+      "firstPassOnly": true,
       "frameScope": "full",
-      "repeats": 2,
+      "repeats": 1,
       "weightSha256": "364492e33c715a6314bad96d9484c5472db23a42b9202615753ac53c8501575b"
     },
     "fullSequentialMobileFixedLimit": {
@@ -182,8 +191,9 @@
         "quadraticOverlap": true
       },
       "repeats": 2,
-      "resourceProfile": "qualityFull",
-      "repeat2Conditional": true
+      "repeat2Conditional": true,
+      "repeat2Decision": "not-run-first-pass-sufficient",
+      "resourceProfile": "qualityFull"
     },
     "ordered25ExhaustiveControl": {
       "frameScope": "ordered-quantile-25-v1",

@@ -394,6 +394,15 @@ def test_runner_binds_exact_frozen_plan_and_rejects_scope_drift() -> None:
     assert quality_profile["stageTimeoutSeconds"]["colmap.patchmatch"] == 7200
     assert quality_profile["scratchLimitBytes"] == 24 * 1024**3
     assert control_profile["name"] == "control25"
+    with pytest.raises(ValueError, match="repeat 2 is closed"):
+        runner.validate_evaluation_plan(
+            **common,
+            matcher_mode="sequential-mobile",
+            sample_count=None,
+            expected_frame_count=165,
+            execution_profile="quality-full",
+            run_index=2,
+        )
     probe_sha, probe_profile = runner.validate_evaluation_plan(
         **common,
         matcher_mode="exhaustive",

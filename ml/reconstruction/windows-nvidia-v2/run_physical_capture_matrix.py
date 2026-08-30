@@ -956,6 +956,15 @@ def validate_evaluation_plan(
         matcher_mode != "sequential-mobile" or sample_count is not None
     ):
         raise ValueError("quality-full scope differs from the frozen plan")
+    if execution_profile == "quality-full":
+        stop_rule = cast("dict[str, object]", plan.get("firstPassStopRule"))
+        if (
+            stop_rule.get("fullQualityRepeat2") != "not-run"
+            or lane.get("repeat2Decision") != "not-run-first-pass-sufficient"
+        ):
+            raise ValueError("quality-full stop rule differs from the frozen plan")
+        if run_index != 1:
+            raise ValueError("quality-full repeat 2 is closed by the frozen stop rule")
     if execution_profile == "control-25" and (matcher_mode != "exhaustive" or sample_count != 25):
         raise ValueError("control-25 scope differs from the frozen plan")
     if matcher_mode == "sequential-mobile" and matcher != {
