@@ -712,6 +712,7 @@ def gsplat_prepare_command(
     model: Path,
     output: Path,
     sample_count: int | None,
+    maximum_initial_gaussians: int,
 ) -> list[str]:
     argv = [
         "unshare",
@@ -738,6 +739,7 @@ def gsplat_prepare_command(
     ]
     if sample_count is not None:
         argv.extend(("--ordered-sample-count", str(sample_count)))
+    argv.extend(("--maximum-initial-gaussians", str(maximum_initial_gaussians)))
     argv.extend(("--steps", "100"))
     return argv
 
@@ -920,7 +922,7 @@ def validate_evaluation_plan(
         raise ValueError("evaluation plan must be a regular file in the repository")
     plan = load_object(path)
     if (
-        plan.get("schemaVersion") != "c14-10-physical-evaluation-plan-v2"
+        plan.get("schemaVersion") != "c14-10-physical-evaluation-plan-v3"
         or plan.get("productSourceCommit") != product_source_commit
     ):
         raise ValueError("evaluation plan source contract is invalid")
@@ -970,6 +972,14 @@ def validate_evaluation_plan(
         or rules.get("sparseThreads") != 1
     ):
         raise ValueError("evaluation execution rules are invalid")
+    determinism = cast("dict[str, object]", plan.get("determinism"))
+    maximum_initial_gaussians = determinism.get("maximumInitialGaussians")
+    if (
+        maximum_initial_gaussians != 20_000
+        or determinism.get("initialGaussianSampling") != "sha256-ranked-colmap-record-v1"
+        or determinism.get("gsplatManifestByteLimit") != 4 * 1024 * 1024
+    ):
+        raise ValueError("gsplat manifest compatibility contract is invalid")
     profiles = cast("dict[str, dict[str, object]]", plan.get("resourceProfiles"))
     profile_name = lane.get("resourceProfile")
     resource_profile = profiles.get(cast("str", profile_name), {})
@@ -991,6 +1001,7 @@ def validate_evaluation_plan(
         raise ValueError("evaluation stage timeout contract is invalid")
     validated_profile = dict(resource_profile)
     validated_profile["name"] = profile_name
+    validated_profile["maximumInitialGaussians"] = maximum_initial_gaussians
     return sha256_file(path), validated_profile
 
 
@@ -1027,6 +1038,7 @@ def execute(args: argparse.Namespace) -> None:
     stage_timeouts = cast("dict[str, int]", resource_profile["stageTimeoutSeconds"])
     scratch_limit_bytes = cast("int", resource_profile["scratchLimitBytes"])
     vram_limit_bytes = cast("int", resource_profile["taskVramLimitBytes"])
+    maximum_initial_gaussians = cast("int", resource_profile["maximumInitialGaussians"])
     inspect_image(args.colmap_image)
     inspect_image(args.gsplat_image)
     export_root = private_existing(Path(args.export_root), "export root", directory=True)
@@ -1545,6 +1557,7 @@ def execute(args: argparse.Namespace) -> None:
                 model=prior_output / "model-text",
                 output=gsplat_input,
                 sample_count=args.sample_count,
+                maximum_initial_gaussians=maximum_initial_gaussians,
             ),
             logs / "gsplat-prepare.log",
             repository,

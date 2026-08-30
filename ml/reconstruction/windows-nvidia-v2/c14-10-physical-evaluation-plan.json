@@ -25,6 +25,29 @@
     "imageCountQuestion": "directional-control-not-causal-isolation",
     "privatePatchedRunnerAuthority": "diagnostic-only-unless-resealed-by-committed-code"
   },
+  "gsplatManifestRecovery": {
+    "countedAs": "paired-adapter-compatibility-ablation",
+    "failureRetention": "source GSPLAT_DIRECT_FAILED records remain authoritative first-pass outcomes",
+    "maximumInitialGaussians": 20000,
+    "manifestByteLimit": 4194304,
+    "pairedRule": "execute once for both datasets before any repeat-2 decision",
+    "sampling": "sha256-ranked-colmap-record-v1",
+    "sourceEvaluationHarnessCommit": "3cdc7b02610c974b0ed634cf0b514c24f4e622a0",
+    "sourceEvaluationPlanSha256": "224ca5820cfbcb1bcec5561079824f998a4bfb5241c9743ea8701a1aa2a7b66b",
+    "sourceRecords": {
+      "132": {
+        "fullInitialGaussianCount": 51811,
+        "manifestBytes": 8397973,
+        "recordSha256": "fe8849df0d92b0094a3de74173d8f609bf3ed1504fd1e5e8533f9351df2edf7e"
+      },
+      "165": {
+        "fullInitialGaussianCount": 90679,
+        "manifestBytes": 14578210,
+        "recordSha256": "13b20fd6f55b4e7946632c6bccc9745371c73a9234e388afa4a6a80a12a256bd"
+      }
+    },
+    "upstreamReuse": "exact sealed run-1 ARKit-prior text model; no sparse or dense reconstruction rerun"
+  },
   "executionRules": {
     "adapterProbeRequiredBeforeQuality": true,
     "datasetConcurrency": 1,
@@ -32,7 +55,8 @@
       "c14-10-rectangular-132-r1",
       "c14-10-irregular-165-r1"
     ],
-    "repeat2Gate": "both first-pass pipelines must seal a complete successful or informative terminal record",
+    "recoveryBeforeRepeat2": true,
+    "repeat2Gate": "both first-pass pipelines and both paired gsplat recovery records must seal before any repeat-2 decision",
     "sparseThreads": 1,
     "stageConcurrency": 1
   },
@@ -53,8 +77,11 @@
       "twoViewGeometryRandomSeed": 0
     },
     "colmapSparseThreads": 1,
+    "gsplatManifestByteLimit": 4194304,
     "gsplatSeed": 0,
-    "gsplatSteps": 100
+    "gsplatSteps": 100,
+    "initialGaussianSampling": "sha256-ranked-colmap-record-v1",
+    "maximumInitialGaussians": 20000
   },
   "executionOrder": {
     "da3Small": [
@@ -64,6 +91,10 @@
       "c14-10-rectangular-132-r2"
     ],
     "fullSequentialMobileFixedLimit": [
+      "c14-10-rectangular-132-r1",
+      "c14-10-irregular-165-r1"
+    ],
+    "gsplatManifestRecovery": [
       "c14-10-rectangular-132-r1",
       "c14-10-irregular-165-r1"
     ],
@@ -130,6 +161,16 @@
       "repeats": 1,
       "resourceProfile": "fixedLimitBaseline",
       "status": "closed"
+    },
+    "gsplatManifestRecovery": {
+      "candidateId": "gsplat-direct",
+      "countedAs": "paired-adapter-compatibility-ablation",
+      "frameScope": "full",
+      "initialGaussianLimit": 20000,
+      "repeats": 1,
+      "resourceProfile": "qualityFull",
+      "sourceLane": "qualityFullSequentialMobile",
+      "sourceRunIndex": 1
     },
     "qualityFullSequentialMobile": {
       "countedAs": "reconstruction-quality",
@@ -322,7 +363,7 @@
       "taskVramLimitBytes": 15032385536
     }
   },
-  "schemaVersion": "c14-10-physical-evaluation-plan-v2",
+  "schemaVersion": "c14-10-physical-evaluation-plan-v3",
   "visualInspection": {
     "claims": "proposal-usefulness-only-no-dimensional-or-representative-accuracy",
     "method": "deterministic-local-rendered-views",

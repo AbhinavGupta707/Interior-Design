@@ -214,6 +214,7 @@ def test_gsplat_preparation_uses_committed_host_adapter_in_network_namespace(
         model=tmp_path / "model",
         output=tmp_path / "output",
         sample_count=None,
+        maximum_initial_gaussians=20_000,
     )
     assert command[:6] == [
         "unshare",
@@ -225,6 +226,136 @@ def test_gsplat_preparation_uses_committed_host_adapter_in_network_namespace(
     ]
     assert str(PACKAGE / "prepare_gsplat_capture.py") in command
     assert "/opt/c8/prepare_gsplat_capture.py" not in command
+
+
+def test_gsplat_point_cap_is_deterministic_and_manifest_bounded(
+    tmp_path: Path,
+) -> None:
+    prepare = load_module(
+        "prepare_gsplat_capture_bounded",
+        PACKAGE / "prepare_gsplat_capture.py",
+    )
+    rows = [f"{index} {index / 10} 0 1 255 128 0 0 1 0" for index in range(1, 8)]
+    forward = tmp_path / "forward.txt"
+    reverse = tmp_path / "reverse.txt"
+    forward.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    reverse.write_text("\n".join(reversed(rows)) + "\n", encoding="utf-8")
+
+    forward_gaussians, forward_count = prepare.parse_points(forward, 3)
+    reverse_gaussians, reverse_count = prepare.parse_points(reverse, 3)
+    assert forward_count == reverse_count == 7
+    assert forward_gaussians == reverse_gaussians
+    assert len(forward_gaussians) == 3
+    with pytest.raises(ValueError, match="maximum initial Gaussian"):
+        prepare.parse_points(forward, 2)
+
+    payload = prepare.bounded_manifest_bytes({"payload": "bounded"})
+    assert payload.endswith(b"\n")
+    with pytest.raises(ValueError, match="manifest byte limit"):
+        prepare.bounded_manifest_bytes({"payload": "x" * prepare.MAXIMUM_GSPLAT_MANIFEST_BYTES})
+
+
+def test_recovery_plan_binds_both_sealed_failures_and_identical_cap() -> None:
+    recovery_runner = load_module(
+        "gsplat_recovery_plan",
+        PACKAGE / "run_gsplat_recovery.py",
+    )
+    plan_path = PACKAGE / "c14-10-physical-evaluation-plan.json"
+    plan = json.loads(plan_path.read_bytes())
+    source = plan["gsplatManifestRecovery"]["sourceRecords"]["132"]
+    plan_sha, recovery, evidence, profile = recovery_runner.validate_recovery_plan(
+        plan_path,
+        repository=ROOT,
+        product_source_commit="62a0ed823dcd85f3355b4f24040484cff720ea75",
+        expected_frame_count=132,
+        source_record_sha256=source["recordSha256"],
+        gsplat_image=plan["images"]["gsplat"],
+    )
+    assert len(plan_sha) == 64
+    assert evidence == source
+    assert recovery["sourceRecords"]["165"]["recordSha256"] == (
+        "13b20fd6f55b4e7946632c6bccc9745371c73a9234e388afa4a6a80a12a256bd"
+    )
+    assert profile["maximumInitialGaussians"] == 20_000
+    with pytest.raises(ValueError, match="recovery evidence contract"):
+        recovery_runner.validate_recovery_plan(
+            plan_path,
+            repository=ROOT,
+            product_source_commit="62a0ed823dcd85f3355b4f24040484cff720ea75",
+            expected_frame_count=132,
+            source_record_sha256="0" * 64,
+            gsplat_image=plan["images"]["gsplat"],
+        )
+
+
+def test_recovery_source_gate_requires_the_sealed_failed_first_pass() -> None:
+    recovery_runner = load_module(
+        "gsplat_recovery_source",
+        PACKAGE / "run_gsplat_recovery.py",
+    )
+    recovery = {
+        "sourceEvaluationHarnessCommit": "3cdc7b02610c974b0ed634cf0b514c24f4e622a0",
+        "sourceEvaluationPlanSha256": (
+            "224ca5820cfbcb1bcec5561079824f998a4bfb5241c9743ea8701a1aa2a7b66b"
+        ),
+    }
+    source = {
+        "fullInitialGaussianCount": 51_811,
+        "recordSha256": "a" * 64,
+    }
+    record = {
+        "counted": True,
+        "evaluationHarnessCommit": recovery["sourceEvaluationHarnessCommit"],
+        "evaluationPlanSha256": recovery["sourceEvaluationPlanSha256"],
+        "executionProfile": "quality-full",
+        "productSourceCommit": "62a0ed823dcd85f3355b4f24040484cff720ea75",
+        "runIndex": 1,
+        "schemaVersion": "c14-10-physical-matrix-v3",
+        "selectionSha256": "b" * 64,
+        "runs": [
+            {
+                "candidateId": "colmap-arkit-prior",
+                "metrics": {
+                    "eligibleFrameCount": 132,
+                    "finitePointCount": 51_811,
+                    "registeredFrameCount": 132,
+                },
+                "status": "pass",
+            },
+            {
+                "candidateId": "gsplat-direct",
+                "failureCode": "GSPLAT_DIRECT_FAILED",
+                "metrics": {
+                    "eligibleFrameCount": 132,
+                    "finitePointCount": 51_811,
+                },
+                "policySha256": "c" * 64,
+                "status": "fail",
+            },
+        ],
+    }
+    recovery_runner.validate_source_record(
+        record,
+        record_sha256="a" * 64,
+        recovery=recovery,
+        source=source,
+        expected_frame_count=132,
+        product_source_commit="62a0ed823dcd85f3355b4f24040484cff720ea75",
+        selection_sha256="b" * 64,
+        policy_sha256="c" * 64,
+    )
+    record["productSourceCommit"] = "0" * 40
+    with pytest.raises(ValueError, match="not eligible"):
+        recovery_runner.validate_source_record(
+            record,
+            record_sha256="a" * 64,
+            recovery=recovery,
+            source=source,
+            expected_frame_count=132,
+            product_source_commit="62a0ed823dcd85f3355b4f24040484cff720ea75",
+            selection_sha256="b" * 64,
+            policy_sha256="c" * 64,
+        )
 
 
 def test_runner_binds_exact_frozen_plan_and_rejects_scope_drift() -> None:
