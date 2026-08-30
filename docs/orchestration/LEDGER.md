@@ -1876,3 +1876,74 @@
   45/45 unit task groups, Ruff, mypy over 120 sources and Python 157 passed/two capability skips;
   the exact network-disabled DA3 image focused suite passed 8/8; package-manifest integrity passed
   4/4; and full PR-range plus correction-only `git diff --check` passed.
+
+## C14.10-PC — Private physical-capture reconstruction comparison
+
+### Activation, transfer and frozen authority — 2026-08-29 to 2026-08-30
+
+- Authority: the user's reconstruction-only physical handover, performed by one
+  `gpt-5.6-sol` / `xhigh` Windows/WSL task. No subagent, separate task or worktree was created.
+  Branch: `codex/c14-10-physical-capture-quality-acceptance`.
+- Exact product source `62a0ed823dcd85f3355b4f24040484cff720ea75` exists and descends from
+  `f8297043dfcee4cfbd3d3a285be9b986b6571918`. The handover recorded the Mac checkout's unstaged
+  user-owned `AGENTS.md` at SHA-256
+  `6a8dd3f230ce5f9bab435e4ac242467597f2e861ff5ff71f94852e5cc21f9533`; it was never transferred,
+  overwritten or staged. WSL tracks SHA-256
+  `8c96b15eb76053aaf80e943679e3d8965dda157b51f51b788aaa43cfad89b89a` at source and current HEAD,
+  with no worktree or index diff.
+- The complete handoff moved by fingerprint-pinned SSH into fresh restrictive WSL-ext4 storage.
+  Handoff-index SHA-256
+  `581bec5ffb48702f3b7c9fe32d2af8a51eed066bfe48386004fa5e4a6f325b48` and both approved
+  envelope/export digests passed the committed offline verifier. Modes, ownership, regular-file
+  types, link counts and hashes passed before and after compute. Mac Remote Login was disabled and
+  LAN port 22 verified closed.
+- Private RGB, geometry, renders, weights, output records and screenshots remain off Git, GitHub,
+  CI, `/mnt/c` and cloud storage. Product C8 was not started; Open3D abstained because exact depth
+  is absent. Captures remained independent and no canonical geometry was published.
+
+### Counted design and result
+
+- The original exhaustive/fixed-limit and early ordered attempts are retained separately as
+  operational scalability evidence. Matching and dense 30-minute timeouts are not reconstruction-
+  quality failures and were not repeatedly reproduced.
+- One authoritative full quality first pass completed for each 132- and 165-frame capture under
+  the same data-size-appropriate stage rules. Original direct-gsplat schema-limit failures remain
+  preserved; a separately declared same-dataset recovery adapter completed both gsplat lanes.
+  Reverse 25-view controls completed twice per capture, and exact DA3-SMALL completed once per full
+  capture. Full quality repeat 2 is `NOT RUN — first pass sufficient`.
+- Best result: 165-frame ARKit-prior dense COLMAP, with 165/165 views, 90,679 sparse points and
+  947,276 dense vertices. It gives the clearest private kitchen/bed/study relationship. The
+  132-frame prior result is second. Both materially improve proposal usefulness over C14.8, but no
+  lane forms a closed or measurable room shell.
+- Recovered gsplat remains fragmented appearance evidence near 6 dB PSNR. DA3-SMALL improves from
+  C14.8 zero coverage to 0.07046% for 132 and 6.95678% for 165, but both fail useful quality and
+  show radial/fan-like duplicated surfaces. The 132 smoother route does not outperform the 165
+  route overall.
+- A private network-free viewer seals 36 normalized comparison images across three captures, four
+  lanes and three views. Viewer HTML SHA-256 is
+  `8b7ee48f06227ca6106977fc02fecc9a3e49725fef5c5bfeacbcc76ab03c9c65`; path-redacted manifest
+  SHA-256 is `704306f4f7c828407e1549ec10b180ad8127aaa18c8a7549a46fa5e0cc27812a`.
+- Durable redacted evidence:
+  `docs/evaluation/reconstruction/C14_10_PHYSICAL_CAPTURE_RECONSTRUCTION_2026-08-30.md`. The
+  physical handoff records only its proposal-visual row as run; every lifecycle, safe-resource,
+  VoiceOver, LiDAR/RoomPlan, dimensional and representative-accuracy row remains `NOT RUN`.
+
+### Corrections, verification and delivery boundary
+
+- Counted runner/schema/dependency support was committed with regression coverage before
+  acceptance. Final strict typing required only local-name/direct-import corrections with no
+  runtime semantic change. The frozen counted plan remains byte-identical at SHA-256
+  `6143f3e06e3a94fb588bae5a5293053ae41b8d18ca1182e722789f553553fce3` and is guarded by package
+  integrity rather than formatter rewriting.
+- Full affected capture tests passed 38/38; combined focused Python/package tests passed 42/42;
+  package Vitest passed 3/3. Complete `pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck,
+  45/45 unit and 24/24 build tasks, Ruff, mypy over 125 sources and Python 157 passed / 2 expected
+  skips. `git diff --check` passed.
+- Contract/migration impact: none. No migration, OpenAPI/generated client, production route,
+  canonical mutation, product C8, root manifest or lockfile changed. The output is not sufficient
+  for consumer, dimensional, representative, structural, regulatory or professional use.
+- Next experiment: a newly captured continuous loop-closure route with calibrated real depth,
+  measured anchors and deliberate upper-wall/ceiling coverage, followed by shell-closure and
+  regional held-out evaluation. No identical full repeat is justified by this inspection.
+- Delivery: one non-draft PR will target `main` and remain open/unmerged. Normal review and all
+  applicable exact-head checks remain required.

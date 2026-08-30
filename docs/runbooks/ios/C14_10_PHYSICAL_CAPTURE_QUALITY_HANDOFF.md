@@ -85,18 +85,34 @@ cannot be registered, retain it independently and report the abstention.
 
 ## Physical result record
 
-| Row                                    | Result    |
-| -------------------------------------- | --------- |
-| Non-LiDAR rectangular capture          | `NOT RUN` |
-| Non-LiDAR irregular/multi-zone capture | `NOT RUN` |
-| Real termination/relaunch              | `NOT RUN` |
-| Offline and authority transitions      | `NOT RUN` |
-| Safe resource observation              | `NOT RUN` |
-| Optional LiDAR/scene-depth/RoomPlan    | `NOT RUN` |
-| VoiceOver field usability              | `NOT RUN` |
-| C14.9 proposal visual-quality rerun    | `NOT RUN` |
-| Rights-cleared dimensional evaluation  | `NOT RUN` |
+| Row                                    | Result                                         |
+| -------------------------------------- | ---------------------------------------------- |
+| Non-LiDAR rectangular capture          | `NOT RUN`                                      |
+| Non-LiDAR irregular/multi-zone capture | `NOT RUN`                                      |
+| Real termination/relaunch              | `NOT RUN`                                      |
+| Offline and authority transitions      | `NOT RUN`                                      |
+| Safe resource observation              | `NOT RUN`                                      |
+| Optional LiDAR/scene-depth/RoomPlan    | `NOT RUN`                                      |
+| VoiceOver field usability              | `NOT RUN`                                      |
+| C14.9 proposal visual-quality rerun    | `RUN — proposal only; consumer quality failed` |
+| Rights-cleared dimensional evaluation  | `NOT RUN`                                      |
 
 The checkpoint may be called physically accepted only when both mandatory non-LiDAR room journeys
 and every applicable safe-resilience row pass on the exact reviewed build. Optional sensor success
 does not close a failed ordinary-phone row, and Simulator evidence never fills this table.
+
+## Reconstruction-only follow-up - 2026-08-30
+
+The two already accepted immutable non-LiDAR exports were verified and compared privately with the
+retained C14.8 baseline. This follow-up did not rerun the physical capture journeys, fill any
+lifecycle row, start product C8 or establish physical-checkpoint acceptance.
+
+The complete 132- and 165-frame first passes covered unconstrained and ARKit-prior COLMAP,
+same-dataset recovered gsplat and exact DA3-SMALL. Original fixed-limit, adapter and recovery
+failures remain separately retained. Reverse 25-view controls completed twice per capture; full
+quality repeat 2 was not run because the first pass and private inspection were decisive.
+
+The 165-frame ARKit-prior dense proposal was the strongest private result and materially improved
+proposal usefulness over C14.8, but no lane formed a closed room shell or passed consumer-quality,
+dimensional, representative or canonical-geometry gates. The durable redacted comparison is
+`docs/evaluation/reconstruction/C14_10_PHYSICAL_CAPTURE_RECONSTRUCTION_2026-08-30.md`.

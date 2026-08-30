@@ -6,7 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -289,3 +289,47 @@ def test_physical_first_pass_plan_closes_second_repeats() -> None:
         == "not-run-first-pass-sufficient"
     )
     assert plan["firstPassStopRule"]["fullQualityRepeat2"] == "not-run"
+
+
+def test_private_side_by_side_viewer_is_complete_and_path_redacted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    viewer = load("build_private_side_by_side_viewer")
+    sources = []
+    for capture in viewer.CAPTURES:
+        for lane in viewer.LANES:
+            key = f"{capture}/{lane}"
+            root = tmp_path / capture / lane
+            root.mkdir(parents=True)
+            artifacts = {}
+            for index, view in enumerate(viewer.VIEWS):
+                image = root / f"{view}.png"
+                Image.new("RGB", (2, 2), (index, 20, 30)).save(image)
+                artifacts[image.name] = sha256(image)
+            (root / "inspection.json").write_text(
+                json.dumps(
+                    {
+                        "artifacts": artifacts,
+                        "inputSha256": "a" * 64,
+                        "renderedPointCount": 2,
+                        "schemaVersion": "c14-10-private-ply-inspection-v1",
+                        "sourceVertexCount": 2,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            sources.append(f"{key}={root}")
+    output = tmp_path / "viewer"
+    output.mkdir()
+    monkeypatch.setattr(viewer, "private_existing", lambda path, _label: path)
+    monkeypatch.setattr(viewer, "private_output", lambda path: path)
+    viewer.build(SimpleNamespace(output=str(output), source=sources))
+    manifest = json.loads((output / "viewer-manifest.json").read_bytes())
+    assert manifest["schemaVersion"] == "c14-10-private-side-by-side-viewer-v1"
+    assert len(manifest["records"]) == 12
+    assert len(list((output / "assets").glob("*.png"))) == 36
+    viewer_html = (output / "index.html").read_text(encoding="utf-8")
+    assert str(tmp_path) not in viewer_html
+    assert "no-dimensional-or-representative-accuracy" in manifest["claims"]
+    with pytest.raises(ValueError, match="every declared capture"):
+        viewer.parse_sources(sources[:-1])

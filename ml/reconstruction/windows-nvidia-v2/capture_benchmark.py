@@ -866,7 +866,7 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         segment_id = str(sample.get("segmentId"))
         room_id = str(sample.get("roomId"))
         source_id = str(sample.get("sourceAssetId"))
-        zone_id = sample.get("zoneId")
+        sample_zone_id = sample.get("zoneId")
         timestamp = sample.get("timestampMicroseconds")
         if (
             UUID.fullmatch(sample_id) is None
@@ -884,8 +884,11 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             or sample.get("orientation")
             not in {"portrait", "portrait-upside-down", "landscape-left", "landscape-right"}
             or (
-                zone_id is not None
-                and (not isinstance(zone_id, str) or zone_id not in room_zones.get(room_id, set()))
+                sample_zone_id is not None
+                and (
+                    not isinstance(sample_zone_id, str)
+                    or sample_zone_id not in room_zones.get(room_id, set())
+                )
             )
         ):
             raise ValueError("camera sample scope or convention is invalid")

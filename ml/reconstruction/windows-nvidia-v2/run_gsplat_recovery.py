@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, cast
 
+from capture_benchmark import safe_root, sha256_file
 from run_physical_capture_matrix import (
     aggregate_resources,
     docker_command,
@@ -24,8 +25,6 @@ from run_physical_capture_matrix import (
     restrict_tree,
     run_host,
     run_sampled,
-    safe_root,
-    sha256_file,
     validate_repository,
     write_new,
 )

@@ -18,3 +18,4 @@ captures/
 pnpm-lock.yaml
 uv.lock
 packages/catalog/fixtures/source/release.json
+ml/reconstruction/windows-nvidia-v2/c14-10-physical-evaluation-plan.json
