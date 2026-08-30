@@ -1,0 +1,11 @@
+--extra-index-url https://download.pytorch.org/whl/cu132
+
+einops==0.8.2
+gtsam-develop==4.3a2.dev202608240418
+numpy==1.26.4
+pillow==12.3.0
+safetensors==0.6.2
+scipy==1.16.1
+termcolor==3.1.0
+torch==2.13.0
+torchvision==0.28.0

@@ -1966,3 +1966,79 @@
   regional held-out evaluation. No identical full repeat is justified by this inspection.
 - Delivery: non-draft PR #17 targets `main`. Normal review and all four named exact-head checks
   remain required before merge.
+
+## C14.10-VGGT-NC — Private non-commercial learned reconstruction feasibility
+
+### Activation and immutable execution freeze — 2026-08-30
+
+- Authority: the user's explicit strictly private, non-commercial research authorisation, executed
+  by one `gpt-5.6-sol` / `high` task in the authoritative WSL checkout. No subagent, separate task,
+  worktree or orchestration skill is used. Branch: `codex/c14-10-vggt-nc-feasibility`.
+- Quarantine: original ungated `facebook/VGGT-1B` CC BY-NC 4.0 evidence only. No gated
+  `VGGT-1B-Commercial`, contact submission, Meta commercial-terms acceptance, production routing,
+  commercially deployable dependency path, canonical mutation, C8 start or dimensional claim is
+  authorised. Future commercial evaluation must be repeated with appropriately licensed weights
+  or another commercially permissible model.
+- Physical scope: only the retained C14.10 165-frame Capture Envelope selection
+  `5e90939980de540ef01b45918b06058b10ecf1b57320d6d1b60ba409df183ae3` is eligible. The
+  132-frame capture and all independent segments are excluded. The sealed 165-frame ARKit-prior
+  dense COLMAP artifact `422d760d2e8a13ccf9f6f31356bcab1e535fcaca862484ae54e7b7cc64315a41`
+  remains the read-only control and is not rerun.
+- Candidate freeze: direct VGGT-SPARK at
+  `6e6e16107b88e8e76c751826af10d4295d87ecd2` and the patched VGGT-SLAM-derived
+  no-loop adapter at
+  `35327ac28b7d193df9ccc39ba6346052bb6f1207`, both using original VGGT model revision
+  `860abec7937da0a4c03c41d3c269c366e82abdf9` and safetensors SHA-256
+  `f164acf60724910d8fe1578bb499d800850c7bb0948db7555c413f9fbe60467e`. SLAM3R and CUT3R
+  are outside the bounded executable set because their roles are redundant, not because
+  non-commercial or share-alike licensing alone blocks this authorised research. SALAD-based loop
+  closure is `NOT RUN` because its additional checkpoint/security/dependency path was deliberately
+  excluded; adapter results make no claim about upstream VGGT-SLAM 2.0 loop-closure performance.
+  SAM 3, Perception Encoder and open-set detection chains are also absent.
+- Executable registry SHA-256:
+  `7156c92556903bcc70a8ac9b0072e2dbb27c5e99020588bb117968288947c4da`. Contract SHA-256:
+  `d56ce753db6f9543b05072a34ee3665ac40b1244f0dd11941e69e009b0496e69`. Dependency-lock
+  SHA-256: `0c1637c560d74c160da07572d77dc5a018565d88617a9a2d93e1e737e373e1ff`.
+- Counted image:
+  adapter-only overlay
+  `sha256:3f8eeb4923eeb559dcaef4074125403411aabaac5f83f4f1ac6f6888966a6d8e`
+  on sealed dependency base
+  `sha256:cd03bacdedd35e39991579d476d278de2db25f926e5ad88cb831ef3b2c18b42c`.
+  Its fresh offline import/licence/security/Blackwell audit passed and is privately frozen at
+  SHA-256 `3b3506010c2f0774efe48d3085bd991291b7c5867faf7afd68e4fcbbf11184c0`.
+  The audit executed the actual VGGT and VGGT-SLAM solver imports, verified Torch
+  `2.13.0+cu132`, CUDA compute capability 12.0, GTSAM SL(4), all exact source/licence/build hashes
+  and zero prohibited optional packages.
+- Image correction boundary: an offline correction rebuild missed its ephemeral dependency cache
+  and stopped at APT before any dependency replay or download. No complete retry is permitted.
+  The counted correction is restricted to an adapter-and-auditor-only overlay on the sealed image.
+  A future complete rebuild first requires a hash-verified private WSL-ext4 wheelhouse consumed via
+  `pip --no-index --find-links` plus persistent imported/exported BuildKit cache evidence; verified
+  wheels must not be downloaded again because an ephemeral cache key was missed.
+- Counted design: resumable serial 4/16/48/165-frame stages with an explicit maximum-stage gate,
+  two fresh full runs only after all smoke gates and their quality reviews,
+  final-frame leave-one-out on full stages, 45-minute per-stage timeout, 14.5 GiB task VRAM,
+  32 GiB RAM, 12 CPUs, 512 PIDs, 16 GiB retained scratch, 500,000 points, GPU 0, seed zero,
+  network none, read-only root, non-root, all capabilities dropped and no-new-privileges. Any
+  failed or over-ceiling stage stops that candidate.
+- Counted result: both candidates passed 4/16/48 validation. Direct VGGT stopped at 48 after using
+  13.826 GB task VRAM, reaching 9.842-degree median orientation disagreement and producing private
+  local heuristic evidence dominated by no recognisable room; its 165-frame and held-out rows are
+  `NOT RUN`. The patched VGGT-SLAM-derived no-loop adapter completed two deterministic 165-frame
+  passes at 10.849 GB task VRAM and about 51 seconds each with identical geometry/camera/held-out
+  hashes, but only 1.6551% held-out coverage and 5.205 dB full-frame PSNR. It is not accepted.
+- Comparison/recommendation: the retained ARKit-prior dense COLMAP proposal remains the control.
+  Direct and hybrid outputs remain quarantined non-commercial proposals with no dimensional,
+  canonical or production authority. SALAD loop closure is `NOT RUN`; no inference is made about
+  upstream VGGT-SLAM 2.0 loop-closure performance. The private viewer HTML is
+  `716c8aef4b24dd7500498b4f080bfeb12e7fcf6425a3cb78347efe84ce24a7cf`; its manifest is
+  `6a3b8909f0935ff89476257d0c4096a70bcefb68cfc8777172c6a3acc6e5eb94`.
+- Final gates: the counted overlay passed its fresh network-disabled import/licence/security/GPU
+  audit; focused VGGT evaluator and package-integrity tests passed 21/21. Final
+  `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed Prettier, 24/24 lint, 24/24 typecheck,
+  45/45 JavaScript unit task groups, 24/24 builds, Ruff, strict MyPy over 131 Python sources and
+  pytest 157 passed / two honest unavailable COLMAP/Open3D capability skips. `git diff --check`
+  is clean for every non-patch file; it reports only whitespace-only upstream context lines in the
+  two exact hash-bound `.patch` build inputs, which are deliberately preserved because normalizing
+  them would invalidate the counted image/audit identity. No migration, OpenAPI/generated client,
+  product route, canonical operation, C8 production path, root manifest or lockfile changed.

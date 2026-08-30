@@ -267,3 +267,39 @@ establishes dimensions or recognisability.
 No C14.10 file enables production dispatch. Camera/depth/point/render outputs remain proposals,
 coordinate segments remain independent, and dimensional and representative accuracy remain
 `NOT RUN`.
+
+### C14.10 private non-commercial VGGT feasibility
+
+The follow-on `c14-10-vggt-nc-research-candidates.json` registry is a separate, explicitly
+non-commercial research quarantine. It pins the original ungated `facebook/VGGT-1B` safetensors,
+the CC BY-NC VGGT_SPARK implementation, and a patched VGGT-SLAM-derived no-loop adapter based on
+the BSD-2-Clause VGGT-SLAM implementation. It neither requests nor permits the gated commercial
+weight. SLAM3R, CUT3R and the other unselected candidates are outside this bounded executable set;
+non-commercial licensing alone does not disqualify private research. Retained DA3 and COLMAP
+controls are not rerun. SALAD-based loop closure is `NOT RUN` because its checkpoint, security and
+dependency path is deliberately excluded, so adapter behaviour makes no claim about upstream
+VGGT-SLAM 2.0 loop-closure performance.
+
+`Dockerfile.vggt-nc` applies only the frozen offline/source-closure and headless no-loop patches,
+then embeds the minimal hash-locked runtime without weights or media. The offline environment audit
+requires exact build-input and licence hashes, GTSAM SL(4), compute capability 12.0, complete Python
+and system-package licence evidence, and absence of every excluded optional package.
+`Dockerfile.vggt-nc-overlay` is the sole correction path after the first rebuild missed its cache:
+it starts from the exact already-audited local image, replaces only the read-only evaluator and
+auditor, and performs no APT, pip or network operation. Another complete build is prohibited until
+a private WSL-ext4 wheelhouse has been populated once from the hash-required lock and proven usable
+with `pip --no-index --find-links`, and a persistent local BuildKit cache has been exported with a
+mode-0600 manifest of its exact wheel and cache identities. Verified wheels must not be downloaded
+again merely because an ephemeral cache key was missed.
+`run_vggt_nc_research.py` runs resumable serial 4/16/48/165-frame scopes through an explicit
+maximum-stage gate, with hard container ceilings, timeout cleanup, an in-process task-VRAM stop,
+and two full passes only after the smaller gates and their quality reviews.
+All mounts and outputs must be private WSL ext4; containers have no network and no canonical or
+production authority. `build_vggt_nc_private_viewer.py` copies hash-verified normalized views into
+a no-network control/direct/hybrid comparison. It does not establish geometry, dimensions,
+representative quality, room correctness, or commercial suitability. Any commercial evaluation
+must be repeated with appropriately licensed weights or a different model.
+`classify_vggt_nc_private_views.py` is a separate local-only qualitative aid. It requires the exact
+cached Apache-2.0 SigLIP 2 revision and file hashes, verifies every inspection-image hash, forces
+offline model loading and writes only heuristic softmax scores to a fresh mode-0600 private file.
+Its output is not representative accuracy and cannot override held-out, geometry or human review.

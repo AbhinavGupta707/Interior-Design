@@ -1,0 +1,68 @@
+diff --git a/vggt/models/aggregator.py b/vggt/models/aggregator.py
+index e5bacd8..6867d40 100644
+--- a/vggt/models/aggregator.py
++++ b/vggt/models/aggregator.py
+@@ -11,7 +11,6 @@
+ from torch.utils.checkpoint import checkpoint
+ import numpy as np
+ from typing import Optional, Tuple, Union, List, Dict, Any
+-from matplotlib import pyplot as plt
+ 
+ from vggt.layers import PatchEmbed
+ from vggt.layers.block import Block
+@@ -21,6 +20,8 @@
+ viz_attention = False
+ 
+ def plot_first_token_cosine_matrix(token1, token2, eps=1e-8):
++    from matplotlib import pyplot as plt
++
+     """
+     token1, token2: np arrays of shape (n, 782, 1024)
+     Uses only token index 0 from each.
+@@ -58,7 +59,6 @@
+ _RESNET_STD = [0.229, 0.224, 0.225]
+ 
+ import torch
+-import matplotlib.pyplot as plt
+ 
+ def mean_top_quarter(arr):
+     # flatten to 1D
+@@ -143,6 +143,8 @@
+     # ---------- plotting & interaction ----------
+ 
+     def show(self):
++        import matplotlib.pyplot as plt
++
+         if not self.layers:
+             print("No layers added.")
+             return
+@@ -159,6 +161,8 @@
+         plt.show()
+ 
+     def _init_figure(self):
++        import matplotlib.pyplot as plt
++
+         layer = self.layers[self.current_layer]
+         B = layer["x_norm"].shape[0]
+ 
+diff --git a/vggt/models/vggt.py b/vggt/models/vggt.py
+index f279c59..89c055b 100644
+--- a/vggt/models/vggt.py
++++ b/vggt/models/vggt.py
+@@ -6,7 +6,6 @@
+ 
+ import torch
+ import torch.nn as nn
+-from huggingface_hub import PyTorchModelHubMixin  # used for model hub
+ 
+ from vggt.models.aggregator import Aggregator
+ from vggt.heads.camera_head import CameraHead
+@@ -14,7 +13,7 @@ from vggt.heads.dpt_head import DPTHead
+ from vggt.heads.track_head import TrackHead
+ 
+ 
+-class VGGT(nn.Module, PyTorchModelHubMixin):
++class VGGT(nn.Module):
+     def __init__(self, img_size=518, patch_size=14, embed_dim=1024,
+                  enable_camera=True, enable_point=True, enable_depth=True, enable_track=True, target_layer=21):
+         super().__init__()

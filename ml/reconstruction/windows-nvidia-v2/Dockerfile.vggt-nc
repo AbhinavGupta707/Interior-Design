@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONNOUSERSITE=1
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates patch python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/c14-10-vggt/venv
+ENV PATH=/opt/c14-10-vggt/venv/bin:/usr/local/bin:/usr/bin:/bin
+COPY ml/reconstruction/windows-nvidia-v2/requirements-vggt-nc.lock /opt/c14-10-vggt/requirements.lock
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --require-hashes \
+      --index-url https://pypi.org/simple \
+      --extra-index-url https://download.pytorch.org/whl/cu132 \
+      --requirement /opt/c14-10-vggt/requirements.lock \
+    && python -m pip check
+COPY --from=vggt_source /vggt /opt/c14-10-vggt/source/vggt/vggt
+COPY --from=vggt_source /LICENSE.txt /opt/c14-10-vggt/source/vggt/LICENSE.txt
+COPY --from=vggt_slam_source /vggt_slam /opt/c14-10-vggt/source/vggt-slam/vggt_slam
+COPY --from=vggt_slam_source /LICENSE /opt/c14-10-vggt/source/vggt-slam/LICENSE
+COPY ml/reconstruction/windows-nvidia-v2/vggt-spark-offline.patch /opt/c14-10-vggt/
+COPY ml/reconstruction/windows-nvidia-v2/vggt-slam-headless-no-loop.patch /opt/c14-10-vggt/
+RUN cd /opt/c14-10-vggt/source/vggt \
+    && patch --batch --forward --fuzz=0 --strip=1 < /opt/c14-10-vggt/vggt-spark-offline.patch \
+    && cd /opt/c14-10-vggt/source/vggt-slam \
+    && patch --batch --forward --fuzz=0 --strip=1 < /opt/c14-10-vggt/vggt-slam-headless-no-loop.patch \
+    && python -m pip freeze --all | LC_ALL=C sort > /opt/c14-10-vggt/python-packages.txt \
+    && sha256sum /opt/c14-10-vggt/requirements.lock /opt/c14-10-vggt/vggt-spark-offline.patch \
+      /opt/c14-10-vggt/vggt-slam-headless-no-loop.patch \
+      > /opt/c14-10-vggt/build-input-hashes.sha256 \
+    && chmod --recursive a=rX /opt/c14-10-vggt/source
+
+FROM nvidia/cuda:13.2.0-runtime-ubuntu24.04@sha256:7fada70c5ed1b85cb3c15b53f51300fdacff1c31466a20e4f2b29ad952fd63a2
+ARG VGGT_SOURCE_COMMIT
+ARG VGGT_SLAM_SOURCE_COMMIT
+LABEL io.interior-design.c14-10.authority="non-commercial-research-only" \
+      io.interior-design.c14-10.vggt-source="${VGGT_SOURCE_COMMIT}" \
+      io.interior-design.c14-10.vggt-slam-source="${VGGT_SLAM_SOURCE_COMMIT}"
+ENV HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 \
+    PATH=/opt/c14-10-vggt/venv/bin:/usr/local/bin:/usr/bin:/bin \
+    PYTHONPATH=/opt/c14-10-vggt/source/vggt-slam:/opt/c14-10-vggt/source/vggt \
+    TORCH_HOME=/nonexistent/torch-cache
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends libgomp1 passwd python3 \
+    && apt-get purge --yes cuda-keyring cuda-libraries-13-2 \
+    && ln --symbolic --force ../libssl3t64/copyright /usr/share/doc/openssl/copyright \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/sbin/groupadd --gid 65532 c14 \
+    && /usr/sbin/useradd --no-create-home --no-log-init --uid 65532 --gid 65532 c14
+COPY --from=builder /opt/c14-10-vggt /opt/c14-10-vggt
+COPY ml/reconstruction/windows-nvidia-v2/audit_vggt_nc_environment.py /opt/c14-10-vggt/audit_vggt_nc_environment.py
+COPY ml/reconstruction/windows-nvidia-v2/vggt_nc_capture.py /opt/c14-10-vggt/vggt_nc_capture.py
+USER 65532:65532
+WORKDIR /c14/work
+ENTRYPOINT ["python", "/opt/c14-10-vggt/vggt_nc_capture.py"]
