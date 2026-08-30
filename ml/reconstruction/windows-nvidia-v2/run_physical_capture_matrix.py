@@ -673,8 +673,9 @@ def gsplat_prepare_command(
     segment_id: str,
     model: Path,
     output: Path,
+    sample_count: int | None,
 ) -> list[str]:
-    return [
+    argv = [
         "unshare",
         "--user",
         "--map-root-user",
@@ -695,9 +696,12 @@ def gsplat_prepare_command(
         str(model),
         "--output",
         str(output),
-        "--steps",
-        "100",
+        "--ordered-image-names",
     ]
+    if sample_count is not None:
+        argv.extend(("--ordered-sample-count", str(sample_count)))
+    argv.extend(("--steps", "100"))
+    return argv
 
 
 def config_sha(candidate: str, plan: dict[str, object]) -> str:
@@ -1421,6 +1425,7 @@ def execute(args: argparse.Namespace) -> None:
                 segment_id=segment_id,
                 model=prior_output / "model-text",
                 output=gsplat_input,
+                sample_count=args.sample_count,
             ),
             logs / "gsplat-prepare.log",
             repository,

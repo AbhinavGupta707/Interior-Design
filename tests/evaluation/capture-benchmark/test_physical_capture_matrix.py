@@ -212,6 +212,7 @@ def test_gsplat_preparation_uses_committed_host_adapter_in_network_namespace(
         segment_id="segment",
         model=tmp_path / "model",
         output=tmp_path / "output",
+        sample_count=None,
     )
     assert command[:6] == [
         "unshare",
@@ -279,3 +280,49 @@ def test_runner_derives_one_private_segment_without_command_line_disclosure() ->
             [{"segmentId": "segment-a"}, {"segmentId": "segment-b"}],
             None,
         )
+
+
+def test_ordered_gsplat_adapter_accepts_exact_matching_model_scope(
+    tmp_path: Path,
+) -> None:
+    capture = load_module(
+        "capture_benchmark_gsplat_ordered",
+        PACKAGE / "capture_benchmark.py",
+    )
+    prepare = load_module(
+        "prepare_gsplat_capture_ordered",
+        PACKAGE / "prepare_gsplat_capture.py",
+    )
+    export_root = make_fixture(tmp_path)
+    selection = tmp_path / "selection.json"
+    capture.write_selection(SimpleNamespace(export_root=str(export_root), output=str(selection)))
+    selected = json.loads(selection.read_bytes())
+    cohort = selected["cohorts"]["inclusive"]
+    segment = cohort["segments"][0]
+    source_frames = segment["frames"]
+    model = tmp_path / "model"
+    capture.write_colmap_prior(
+        SimpleNamespace(
+            cohort="inclusive",
+            database=None,
+            export_root=str(export_root),
+            ordered_image_names=True,
+            ordered_sample_count=4,
+            output=str(model),
+            segment_id=segment["segmentId"],
+            selection=str(selection),
+        )
+    )
+    selected_frames, names_by_sample = prepare.selected_model_frame_names(
+        source_frames,
+        ordered_image_names=True,
+        ordered_sample_count=4,
+    )
+    model_images = prepare.parse_images(model / "images.txt", set(names_by_sample.values()))
+    assert len(selected_frames) == len(model_images) == 4
+    assert [index for index, _ in selected_frames] == [1, 4, 7, 10]
+    assert set(model_images) == set(names_by_sample.values())
+
+    legacy_names = {capture.colmap_image_name(frame) for _, frame in selected_frames}
+    with pytest.raises(ValueError, match="exactly match"):
+        prepare.parse_images(model / "images.txt", legacy_names)
