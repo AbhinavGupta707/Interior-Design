@@ -430,6 +430,7 @@ struct C1ProjectAPIClient: ProjectServing, Sendable {
 
 struct ProjectSelectionView: View {
   @Bindable var repository: ProjectRepository
+  @State private var hasHandledInitialRecovery = false
   let actor: C14_6Actor
   let allowsFixtureFallback: Bool
   let environmentLabel: String
@@ -510,6 +511,8 @@ struct ProjectSelectionView: View {
       }
     }
     .task {
+      guard !hasHandledInitialRecovery else { return }
+      hasHandledInitialRecovery = true
       if repository.state == .idle {
         await repository.load()
       }

@@ -6,7 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -235,3 +235,109 @@ def test_runner_command_keeps_gpu_and_container_isolation(tmp_path: Path) -> Non
     assert command[command.index("--read-only")]
     assert command[command.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
     assert command[command.index("--env") + 1] == "HOME=/tmp"
+
+
+def test_physical_first_pass_deduplicates_identical_complete_cohorts() -> None:
+    runner = load("run_da3_physical_first_pass")
+    segment = {
+        "frames": [{"sampleId": str(index)} for index in range(132)],
+        "segmentId": "private-segment",
+    }
+    selection = {
+        "cohorts": {
+            "inclusive": {"segments": [segment]},
+            "normal": {"segments": [segment]},
+        }
+    }
+    segment_id, segment_key = runner.select_single_normal_segment(selection, 132)
+    assert segment_id == "private-segment"
+    assert segment_key == hashlib.sha256(segment_id.encode()).hexdigest()[:12]
+
+
+def test_physical_first_pass_rejects_nonidentical_or_incomplete_cohorts() -> None:
+    runner = load("run_da3_physical_first_pass")
+    normal = {
+        "frames": [{"sampleId": str(index)} for index in range(132)],
+        "segmentId": "s",
+    }
+    inclusive = json.loads(json.dumps(normal))
+    inclusive["frames"].append({"sampleId": "extra"})
+    selection = {
+        "cohorts": {
+            "inclusive": {"segments": [inclusive]},
+            "normal": {"segments": [normal]},
+        }
+    }
+    with pytest.raises(ValueError, match="byte-identical"):
+        runner.select_single_normal_segment(selection, 132)
+    selection["cohorts"]["inclusive"]["segments"] = [normal]
+    with pytest.raises(ValueError, match="complete declared capture"):
+        runner.select_single_normal_segment(selection, 165)
+
+
+def test_physical_first_pass_plan_closes_second_repeats(tmp_path: Path) -> None:
+    runner = load("run_da3_physical_first_pass")
+    plan_path = PACKAGE / "c14-10-physical-evaluation-plan.json"
+    plan_sha, profile = runner.validate_plan(plan_path, 132)
+    assert len(plan_sha) == 64
+    assert profile["timeoutSeconds"] == 2700
+    plan = json.loads(plan_path.read_bytes())
+    assert plan["lanes"]["da3Small"]["repeats"] == 1
+    assert plan["lanes"]["qualityFullSequentialMobile"]["repeats"] == 2
+    assert (
+        plan["lanes"]["qualityFullSequentialMobile"]["repeat2Decision"]
+        == "not-run-first-pass-sufficient"
+    )
+    assert plan["firstPassStopRule"]["fullQualityRepeat2"] == "not-run"
+    assert plan["lanes"]["da3Small"]["weightSha256"] == runner.WEIGHT_SHA256
+
+    mismatched = json.loads(json.dumps(plan))
+    mismatched["lanes"]["da3Small"]["weightSha256"] = "0" * 64
+    mismatched_path = tmp_path / "mismatched-plan.json"
+    mismatched_path.write_text(json.dumps(mismatched), encoding="utf-8")
+    with pytest.raises(ValueError, match="first-pass stop rule"):
+        runner.validate_plan(mismatched_path, 132)
+
+
+def test_private_side_by_side_viewer_is_complete_and_path_redacted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    viewer = load("build_private_side_by_side_viewer")
+    sources = []
+    for capture in viewer.CAPTURES:
+        for lane in viewer.LANES:
+            key = f"{capture}/{lane}"
+            root = tmp_path / capture / lane
+            root.mkdir(parents=True)
+            artifacts = {}
+            for index, view in enumerate(viewer.VIEWS):
+                image = root / f"{view}.png"
+                Image.new("RGB", (2, 2), (index, 20, 30)).save(image)
+                artifacts[image.name] = sha256(image)
+            (root / "inspection.json").write_text(
+                json.dumps(
+                    {
+                        "artifacts": artifacts,
+                        "inputSha256": "a" * 64,
+                        "renderedPointCount": 2,
+                        "schemaVersion": "c14-10-private-ply-inspection-v1",
+                        "sourceVertexCount": 2,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            sources.append(f"{key}={root}")
+    output = tmp_path / "viewer"
+    output.mkdir()
+    monkeypatch.setattr(viewer, "private_existing", lambda path, _label: path)
+    monkeypatch.setattr(viewer, "private_output", lambda path: path)
+    viewer.build(SimpleNamespace(output=str(output), source=sources))
+    manifest = json.loads((output / "viewer-manifest.json").read_bytes())
+    assert manifest["schemaVersion"] == "c14-10-private-side-by-side-viewer-v1"
+    assert len(manifest["records"]) == 12
+    assert len(list((output / "assets").glob("*.png"))) == 36
+    viewer_html = (output / "index.html").read_text(encoding="utf-8")
+    assert str(tmp_path) not in viewer_html
+    assert "no-dimensional-or-representative-accuracy" in manifest["claims"]
+    with pytest.raises(ValueError, match="every declared capture"):
+        viewer.parse_sources(sources[:-1])

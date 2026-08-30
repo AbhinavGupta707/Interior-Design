@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -15,9 +16,12 @@ from capture_benchmark import (
     colmap_image_name,
     load_selection,
     private_write,
+    selected_colmap_frames,
     sha256_file,
 )
-from PIL import Image  # type: ignore[import-not-found]
+
+MAXIMUM_GSPLAT_MANIFEST_BYTES = 4 * 1024 * 1024
+MAXIMUM_SOURCE_POINTS = 100_000
 
 
 def regular_model_file(root: Path, name: str) -> Path:
@@ -88,6 +92,25 @@ def parse_cameras(path: Path) -> dict[int, tuple[int, int, list[float]]]:
     return cameras
 
 
+def selected_model_frame_names(
+    source_frames: list[dict[str, Any]],
+    *,
+    ordered_image_names: bool,
+    ordered_sample_count: int | None,
+) -> tuple[list[tuple[int, dict[str, Any]]], dict[str, str]]:
+    if ordered_sample_count is not None and not ordered_image_names:
+        raise ValueError("ordered sampling requires ordered COLMAP image names")
+    selected_frames = selected_colmap_frames(source_frames, ordered_sample_count)
+    names_by_sample = {
+        cast("str", frame["sampleId"]): colmap_image_name(
+            frame,
+            capture_index=capture_index if ordered_image_names else None,
+        )
+        for capture_index, frame in selected_frames
+    }
+    return selected_frames, names_by_sample
+
+
 def parse_images(path: Path, expected_names: set[str]) -> dict[str, tuple[int, list[float]]]:
     images: dict[str, tuple[int, list[float]]] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -107,8 +130,10 @@ def parse_images(path: Path, expected_names: set[str]) -> dict[str, tuple[int, l
     return images
 
 
-def parse_points(path: Path) -> list[dict[str, object]]:
-    gaussians: list[dict[str, object]] = []
+def parse_points(path: Path, maximum_initial_gaussians: int) -> tuple[list[dict[str, object]], int]:
+    if not 3 <= maximum_initial_gaussians <= MAXIMUM_SOURCE_POINTS:
+        raise ValueError("maximum initial Gaussian count is invalid")
+    ranked: list[tuple[bytes, dict[str, object]]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#"):
             continue
@@ -119,19 +144,31 @@ def parse_points(path: Path) -> list[dict[str, object]]:
         rgb_values = [int(value) for value in fields[4:7]]
         if any(value < 0 or value > 255 for value in rgb_values):
             raise ValueError("COLMAP point colour is invalid")
-        gaussians.append(
-            {
-                "opacity": 0.5,
-                "rgb": [value / 255 for value in rgb_values],
-                "scale": 0.02,
-                "xyz": xyz,
-            }
+        ranked.append(
+            (
+                hashlib.sha256(line.encode("utf-8")).digest(),
+                {
+                    "opacity": 0.5,
+                    "rgb": [value / 255 for value in rgb_values],
+                    "scale": 0.02,
+                    "xyz": xyz,
+                },
+            )
         )
-        if len(gaussians) == 100_000:
+        if len(ranked) == MAXIMUM_SOURCE_POINTS:
             break
-    if len(gaussians) < 3:
+    if len(ranked) < 3:
         raise ValueError("COLMAP sparse proposal has too few initial points")
-    return gaussians
+    source_count = len(ranked)
+    ranked.sort(key=lambda item: item[0])
+    return [gaussian for _, gaussian in ranked[:maximum_initial_gaussians]], source_count
+
+
+def bounded_manifest_bytes(manifest: dict[str, Any]) -> bytes:
+    payload = canonical_bytes(manifest) + b"\n"
+    if len(payload) > MAXIMUM_GSPLAT_MANIFEST_BYTES:
+        raise ValueError("gsplat input exceeds the pinned manifest byte limit")
+    return payload
 
 
 def main() -> None:
@@ -142,6 +179,9 @@ def main() -> None:
     parser.add_argument("--segment-id", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--ordered-image-names", action="store_true")
+    parser.add_argument("--ordered-sample-count", type=int)
+    parser.add_argument("--maximum-initial-gaussians", required=True, type=int)
     parser.add_argument("--steps", type=int, default=100)
     args = parser.parse_args()
     export_root = Path(args.export_root)
@@ -161,7 +201,13 @@ def main() -> None:
         for raw in cast("list[object]", cohort["segments"])
         if as_object(raw, "segment")["segmentId"] == args.segment_id
     )
-    source_frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
+    all_source_frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
+    selected_frames, names_by_sample = selected_model_frame_names(
+        all_source_frames,
+        ordered_image_names=args.ordered_image_names,
+        ordered_sample_count=args.ordered_sample_count,
+    )
+    source_frames = [frame for _, frame in selected_frames]
     if len(source_frames) < 3:
         raise ValueError("gsplat requires at least three calibrated selected views")
     model_root = Path(args.model)
@@ -169,11 +215,10 @@ def main() -> None:
     model_image_path = regular_model_file(model_root, "images.txt")
     points_path = regular_model_file(model_root, "points3D.txt")
     cameras = parse_cameras(camera_path)
-    names_by_sample = {
-        cast("str", frame["sampleId"]): colmap_image_name(frame) for frame in source_frames
-    }
     model_images = parse_images(model_image_path, set(names_by_sample.values()))
-    gaussians = parse_points(points_path)
+    gaussians, source_gaussian_count = parse_points(points_path, args.maximum_initial_gaussians)
+    from PIL import Image  # type: ignore[import-not-found]
+
     frames: list[dict[str, object]] = []
     target_size: tuple[int, int] | None = None
     for frame in source_frames:
@@ -244,7 +289,8 @@ def main() -> None:
         "steps": args.steps,
         "translationUnit": "arbitrary-units",
     }
-    private_write(output / "appearance-input.json", canonical_bytes(manifest) + b"\n")
+    manifest_bytes = bounded_manifest_bytes(manifest)
+    private_write(output / "appearance-input.json", manifest_bytes)
     model_hashes = {
         "cameras.txt": sha256_file(camera_path),
         "images.txt": sha256_file(model_image_path),
@@ -253,8 +299,22 @@ def main() -> None:
     preparation = {
         "authority": "appearance-only-proposal",
         "cohort": args.cohort,
+        "imageOrder": ("capture-order" if args.ordered_image_names else "sample-id-lexical"),
         "modelFileSha256": model_hashes,
-        "schemaVersion": "c14-9-gsplat-preparation-v2",
+        "sampling": (
+            "full"
+            if args.ordered_sample_count is None
+            else f"ordered-quantile-{args.ordered_sample_count}-v1"
+        ),
+        "initialGaussianSampling": {
+            "manifestByteLimit": MAXIMUM_GSPLAT_MANIFEST_BYTES,
+            "manifestBytes": len(manifest_bytes),
+            "maximumCount": args.maximum_initial_gaussians,
+            "retainedCount": len(gaussians),
+            "rule": "sha256-ranked-colmap-record-v1",
+            "sourceCount": source_gaussian_count,
+        },
+        "schemaVersion": "c14-10-gsplat-preparation-v4",
         "segmentId": args.segment_id,
         "selectionSha256": sha256_file(Path(args.selection)),
         "sourceCoordinateSystem": "same-colmap-text-model-cameras-and-points",
@@ -263,7 +323,13 @@ def main() -> None:
     private_write(output / "capture-preparation.json", canonical_bytes(preparation) + b"\n")
     print(
         json.dumps(
-            {"frameCount": len(frames), "gaussianCount": len(gaussians), "output": str(output)},
+            {
+                "frameCount": len(frames),
+                "gaussianCount": len(gaussians),
+                "manifestBytes": len(manifest_bytes),
+                "output": str(output),
+                "sourceGaussianCount": source_gaussian_count,
+            },
             sort_keys=True,
         )
     )

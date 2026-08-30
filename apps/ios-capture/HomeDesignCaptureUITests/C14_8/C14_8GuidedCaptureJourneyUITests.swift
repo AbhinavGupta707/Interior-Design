@@ -11,14 +11,25 @@ final class C14_8GuidedCaptureJourneyUITests: XCTestCase {
       app.staticTexts[
         "SYNTHETIC SIMULATOR FIXTURE · NOT PHYSICAL CAMERA, ARKIT TRACKING, DEPTH OR ROOMPLAN EVIDENCE"
       ].waitForExistence(timeout: 10))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["c14_10.capture-guidance-overlay"]
+        .waitForExistence(timeout: 10))
+
+    let arm = app.buttons["c14_10.arm-capture"]
+    XCTAssertTrue(arm.waitForExistence(timeout: 10))
+    arm.tap()
+
     let capture = app.buttons["c14_8.capture-keyframe"]
     for _ in 0..<3 where !capture.exists { app.swipeUp() }
     XCTAssertTrue(capture.waitForExistence(timeout: 10))
     capture.tap()
 
-    let review = app.buttons["Review unresolved capture"]
-    for _ in 0..<3 where !review.exists { app.swipeUp() }
+    let review = app.buttons["c14_10.review-live-capture"]
+    for _ in 0..<6 where !review.exists { app.swipeDown() }
     XCTAssertTrue(review.waitForExistence(timeout: 10))
+    XCTAssertEqual(review.label, "Stop capture and review")
+    expectation(for: NSPredicate(format: "isEnabled == true"), evaluatedWith: review)
+    waitForExpectations(timeout: 10)
     review.tap()
 
     let fixtureComplete = app.staticTexts["Fixture journey complete"]

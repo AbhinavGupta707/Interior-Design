@@ -38,6 +38,7 @@ IMAGE_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 MAX_DOWNLOAD_BYTES = 21_474_836_480
+AUTOMATIC_KEYFRAME_INTERVAL_MICROSECONDS = 2_000_000
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -576,21 +577,62 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         "capabilities",
     )
     quality = as_object(envelope["quality"], "quality")
-    exact_keys(
-        quality,
-        {
+    required_quality_fields = {
+        "interruptionCount",
+        "lowLightSampleCount",
+        "missingCoverageCellCount",
+        "motionWarningSampleCount",
+        "occludedCoverageCellCount",
+        "trackingLimitedSampleCount",
+        "unusableBlurSampleCount",
+    }
+    if set(quality) not in {
+        frozenset(required_quality_fields),
+        frozenset(required_quality_fields | {"spatialEvidence"}),
+    }:
+        raise ValueError("quality fields do not match the frozen schema")
+    if any(
+        not integer_in_range(quality.get(key), 0, 10_000)
+        for key in (
             "interruptionCount",
             "lowLightSampleCount",
-            "missingCoverageCellCount",
             "motionWarningSampleCount",
-            "occludedCoverageCellCount",
             "trackingLimitedSampleCount",
             "unusableBlurSampleCount",
-        },
-        "quality",
-    )
-    if any(not integer_in_range(value, 0, 10_000) for value in quality.values()):
+        )
+    ) or any(
+        not integer_in_range(quality.get(key), 0, 1_536)
+        for key in ("missingCoverageCellCount", "occludedCoverageCellCount")
+    ):
         raise ValueError("quality summary counts are invalid")
+    spatial_summary_value = quality.get("spatialEvidence")
+    spatial_summary: dict[str, Any] | None = None
+    if spatial_summary_value is not None:
+        spatial_summary = as_object(spatial_summary_value, "spatial quality summary")
+        exact_keys(
+            spatial_summary,
+            {
+                "automaticallySelectedSampleCount",
+                "connectedSampleCount",
+                "loopClosureSampleCount",
+                "unresolvedRoomCount",
+                "unresolvedZoneCount",
+            },
+            "spatial quality summary",
+        )
+        if (
+            any(
+                not integer_in_range(spatial_summary.get(key), 0, 10_000)
+                for key in (
+                    "automaticallySelectedSampleCount",
+                    "connectedSampleCount",
+                    "loopClosureSampleCount",
+                )
+            )
+            or not integer_in_range(spatial_summary.get("unresolvedRoomCount"), 0, 64)
+            or not integer_in_range(spatial_summary.get("unresolvedZoneCount"), 0, 2_048)
+        ):
+            raise ValueError("spatial quality summary counts are invalid")
     if (
         capabilities.get("schemaVersion") != "capture-capabilities-v1"
         or capabilities.get("runtime") not in {"physical-device", "simulator-fixture"}
@@ -685,6 +727,8 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         )
     room_ids: set[str] = set()
     rooms_by_segment: dict[str, set[str]] = {segment_id: set() for segment_id in segment_ids}
+    room_zones: dict[str, set[str]] = {}
+    rooms_by_id: dict[str, dict[str, Any]] = {}
     for raw in cast("list[object]", arrays["rooms"]):
         room = as_object(raw, "room")
         required_room_fields = {
@@ -695,15 +739,15 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             "semanticDeclarations",
             "sequence",
         }
-        if set(room) not in {
-            frozenset(required_room_fields),
-            frozenset(required_room_fields | {"story"}),
-        }:
+        if not required_room_fields.issubset(room) or not (
+            set(room) - required_room_fields
+        ).issubset({"story", "zones"}):
             raise ValueError("room fields do not match the frozen schema")
         room_id = str(room.get("roomId"))
         if UUID.fullmatch(room_id) is None or room_id in room_ids:
             raise ValueError("room identity is invalid")
         room_ids.add(room_id)
+        rooms_by_id[room_id] = room
         room_segments = room.get("coordinateSegmentIds")
         coverage = room.get("coverage")
         semantics = room.get("semanticDeclarations")
@@ -711,6 +755,11 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             not isinstance(room_segments, list)
             or not isinstance(coverage, list)
             or not isinstance(semantics, list)
+            or not room_segments
+            or len(room_segments) > 256
+            or len(set(room_segments)) != len(room_segments)
+            or not integer_in_range(room.get("sequence"), 1, 64)
+            or ("story" in room and not integer_in_range(room.get("story"), -20, 200))
         ):
             raise ValueError("room evidence collections are invalid")
         for segment_id in room_segments:
@@ -753,12 +802,47 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             semantic_layers.add(layer)
         if len(coverage_keys) != 24 or len(semantic_layers) != 5:
             raise ValueError("room evidence denominators are incomplete")
+        zones = room.get("zones")
+        zone_ids: set[str] = set()
+        if zones is not None:
+            if not isinstance(zones, list) or not 1 <= len(zones) <= 32:
+                raise ValueError("room capture zones are invalid")
+            for raw_zone in zones:
+                zone = as_object(raw_zone, "room capture zone")
+                exact_keys(zone, {"label", "status", "zoneId"}, "room capture zone")
+                zone_id = str(zone.get("zoneId"))
+                label = zone.get("label")
+                if (
+                    UUID.fullmatch(zone_id) is None
+                    or zone_id in zone_ids
+                    or not isinstance(label, str)
+                    or label.strip() != label
+                    or not 1 <= len(label) <= 120
+                    or zone.get("status") not in {"observed", "missing", "occluded", "unknown"}
+                ):
+                    raise ValueError("room capture zone is invalid or repeated")
+                zone_ids.add(zone_id)
+        room_zones[room_id] = zone_ids
     if any(not rooms for rooms in rooms_by_segment.values()):
         raise ValueError("every coordinate segment must belong to a room")
+    spatial_sample_fields = {
+        "connectedToPrevious",
+        "featurePointCount",
+        "loopClosureCandidate",
+        "overlapScoreMillionths",
+        "parallaxScoreMillionths",
+        "retentionMode",
+        "trajectorySpanMicrometres",
+        "trajectoryTravelMicrometres",
+        "translationFromPreviousMicrometres",
+        "zoneId",
+    }
+    camera_samples = [
+        as_object(raw, "camera sample") for raw in cast("list[object]", arrays["cameraSamples"])
+    ]
     sample_ids: set[str] = set()
     timestamps: set[tuple[str, int]] = set()
-    for raw in cast("list[object]", arrays["cameraSamples"]):
-        sample = as_object(raw, "camera sample")
+    for sample in camera_samples:
         required = {
             "blurScoreMillionths",
             "cameraIntrinsicsMicropixels",
@@ -778,12 +862,29 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             "trackingState",
             "translationMicrometres",
         }
-        if set(sample) not in {frozenset(required), frozenset(required | {"ambientIntensity"})}:
+        optional = {
+            "ambientIntensity",
+            "connectedToPrevious",
+            "featurePointCount",
+            "loopClosureCandidate",
+            "overlapScoreMillionths",
+            "parallaxScoreMillionths",
+            "retentionMode",
+            "trajectorySpanMicrometres",
+            "trajectoryTravelMicrometres",
+            "translationFromPreviousMicrometres",
+            "zoneId",
+        }
+        if not required.issubset(sample) or not (set(sample) - required).issubset(optional):
             raise ValueError("camera sample fields do not match the frozen schema")
+        populated_spatial_fields = spatial_sample_fields.intersection(sample)
+        if populated_spatial_fields and populated_spatial_fields != spatial_sample_fields:
+            raise ValueError("spatial camera sample evidence must be complete when present")
         sample_id = str(sample.get("sampleId"))
         segment_id = str(sample.get("segmentId"))
         room_id = str(sample.get("roomId"))
         source_id = str(sample.get("sourceAssetId"))
+        sample_zone_id = sample.get("zoneId")
         timestamp = sample.get("timestampMicroseconds")
         if (
             UUID.fullmatch(sample_id) is None
@@ -800,6 +901,13 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
             or sample.get("quaternionOrder") != "x-y-z-w"
             or sample.get("orientation")
             not in {"portrait", "portrait-upside-down", "landscape-left", "landscape-right"}
+            or (
+                sample_zone_id is not None
+                and (
+                    not isinstance(sample_zone_id, str)
+                    or sample_zone_id not in room_zones.get(room_id, set())
+                )
+            )
         ):
             raise ValueError("camera sample scope or convention is invalid")
         intrinsics = as_object(sample.get("cameraIntrinsicsMicropixels"), "intrinsics")
@@ -831,6 +939,39 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
                     "motionScoreMillionths",
                 )
             )
+            or any(
+                key in sample and not integer_in_range(sample.get(key), 0, 1_000_000)
+                for key in (
+                    "ambientIntensity",
+                    "featurePointCount",
+                    "overlapScoreMillionths",
+                    "parallaxScoreMillionths",
+                )
+            )
+            or any(
+                key in sample and not isinstance(sample.get(key), bool)
+                for key in ("connectedToPrevious", "loopClosureCandidate")
+            )
+            or (
+                "retentionMode" in sample
+                and sample.get("retentionMode") not in {"automatic", "manual"}
+            )
+            or (
+                "trajectorySpanMicrometres" in sample
+                and not integer_in_range(sample.get("trajectorySpanMicrometres"), 0, 2_000_000_000)
+            )
+            or (
+                "trajectoryTravelMicrometres" in sample
+                and not integer_in_range(
+                    sample.get("trajectoryTravelMicrometres"), 0, 10_000_000_000
+                )
+            )
+            or (
+                "translationFromPreviousMicrometres" in sample
+                and not integer_in_range(
+                    sample.get("translationFromPreviousMicrometres"), 0, 2_000_000_000
+                )
+            )
         ):
             raise ValueError("camera sample calibration values are invalid")
         quaternion = sample.get("quaternionNanounits")
@@ -844,6 +985,21 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
         sample_ids.add(sample_id)
         timestamps.add((segment_id, timestamp))
     depth_sample_ids: set[str] = set()
+    automatic_samples_by_segment: dict[str, list[dict[str, Any]]] = {}
+    for sample in camera_samples:
+        if sample.get("retentionMode") == "automatic":
+            automatic_samples_by_segment.setdefault(cast("str", sample["segmentId"]), []).append(
+                sample
+            )
+    for samples in automatic_samples_by_segment.values():
+        ordered = sorted(samples, key=lambda sample: cast("int", sample["timestampMicroseconds"]))
+        if any(
+            cast("int", current["timestampMicroseconds"])
+            - cast("int", previous["timestampMicroseconds"])
+            < AUTOMATIC_KEYFRAME_INTERVAL_MICROSECONDS
+            for previous, current in zip(ordered, ordered[1:], strict=False)
+        ):
+            raise ValueError("automatic retained keyframes violate the bounded selection interval")
     depth_artifact_ids: set[str] = set()
     for raw in cast("list[object]", arrays["depthSources"]):
         source = as_object(raw, "depth source")
@@ -951,13 +1107,110 @@ def validate_envelope_shape(envelope: dict[str, Any]) -> None:
     if (
         quality.get("missingCoverageCellCount") != missing
         or quality.get("occludedCoverageCellCount") != occluded
+        or quality.get("interruptionCount")
+        != sum(
+            as_object(raw, "coordinate segment").get("reason") == "interruption"
+            for raw in cast("list[object]", arrays["coordinateSegments"])
+        )
         or quality.get("trackingLimitedSampleCount")
         != sum(
             as_object(raw, "camera sample").get("trackingState") != "normal"
             for raw in cast("list[object]", arrays["cameraSamples"])
         )
+        or any(
+            cast("int", quality[key]) > len(cast("list[object]", arrays["cameraSamples"]))
+            for key in (
+                "lowLightSampleCount",
+                "motionWarningSampleCount",
+                "unusableBlurSampleCount",
+            )
+        )
     ):
         raise ValueError("quality denominators disagree with immutable evidence")
+
+    spatial_samples = [
+        as_object(raw, "camera sample")
+        for raw in cast("list[object]", arrays["cameraSamples"])
+        if "retentionMode" in as_object(raw, "camera sample")
+    ]
+    if spatial_summary is None:
+        if spatial_samples or any("zones" in room for room in rooms_by_id.values()):
+            raise ValueError("spatial sample or zone evidence requires its quality summary")
+        return
+
+    unresolved_rooms = 0
+    unresolved_zones = 0
+    for room_id, room in rooms_by_id.items():
+        room_samples = [sample for sample in spatial_samples if sample.get("roomId") == room_id]
+        segment_samples: dict[str, list[dict[str, Any]]] = {}
+        for sample in room_samples:
+            segment_samples.setdefault(cast("str", sample["segmentId"]), []).append(sample)
+        segment_readiness: list[bool] = []
+        for unordered_samples in segment_samples.values():
+            samples = sorted(
+                unordered_samples, key=lambda sample: cast("int", sample["timestampMicroseconds"])
+            )
+            edges = samples[1:]
+            connected_edges = sum(sample.get("connectedToPrevious") is True for sample in edges)
+            connected_ratio = 0 if not edges else (connected_edges * 1_000_000) // len(edges)
+            segment_readiness.append(
+                len(samples) >= 8
+                and connected_ratio >= 750_000
+                and samples[0].get("connectedToPrevious") is False
+                and all(cast("int", sample.get("featurePointCount", 0)) >= 60 for sample in samples)
+                and all(
+                    sample.get("connectedToPrevious") is True
+                    and cast("int", sample.get("overlapScoreMillionths", 0)) >= 180_000
+                    and (
+                        sample.get("loopClosureCandidate") is True
+                        or cast("int", sample.get("overlapScoreMillionths", 0)) < 940_000
+                    )
+                    for sample in edges
+                )
+                and max(
+                    (cast("int", sample.get("trajectorySpanMicrometres", 0)) for sample in samples),
+                    default=0,
+                )
+                >= 1_200_000
+                and max(
+                    (
+                        cast("int", sample.get("trajectoryTravelMicrometres", 0))
+                        for sample in samples
+                    ),
+                    default=0,
+                )
+                >= 2_400_000
+                and sum(
+                    cast("int", sample.get("translationFromPreviousMicrometres", 0)) >= 120_000
+                    for sample in samples
+                )
+                >= 3
+                and sum(
+                    cast("int", sample.get("parallaxScoreMillionths", 0)) >= 80_000
+                    for sample in samples
+                )
+                >= 3
+                and any(sample.get("loopClosureCandidate") is True for sample in samples)
+            )
+        room_unresolved_zones = sum(
+            zone.get("status") != "occluded"
+            and sum(sample.get("zoneId") == zone.get("zoneId") for sample in room_samples) < 2
+            for zone in cast("list[dict[str, Any]]", room.get("zones", []))
+        )
+        unresolved_zones += room_unresolved_zones
+        if not segment_readiness or not all(segment_readiness) or room_unresolved_zones != 0:
+            unresolved_rooms += 1
+    if (
+        spatial_summary.get("automaticallySelectedSampleCount")
+        != sum(sample.get("retentionMode") == "automatic" for sample in spatial_samples)
+        or spatial_summary.get("connectedSampleCount")
+        != sum(sample.get("connectedToPrevious") is True for sample in spatial_samples)
+        or spatial_summary.get("loopClosureSampleCount")
+        != sum(sample.get("loopClosureCandidate") is True for sample in spatial_samples)
+        or spatial_summary.get("unresolvedRoomCount") != unresolved_rooms
+        or spatial_summary.get("unresolvedZoneCount") != unresolved_zones
+    ):
+        raise ValueError("spatial quality summary disagrees with immutable evidence")
 
 
 def verify_export(
@@ -1293,9 +1546,7 @@ def load_selection(
     *,
     physical_root_alias: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    manifest, envelope = verify_export(
-        export_root, physical_root_alias=physical_root_alias
-    )
+    manifest, envelope = verify_export(export_root, physical_root_alias=physical_root_alias)
     if selection_path.is_symlink() or not selection_path.is_file():
         raise ValueError("selection must be a regular file")
     selection_bytes = selection_path.read_bytes()
@@ -1325,11 +1576,41 @@ def selected_segment(
     return segment
 
 
-def colmap_image_name(frame: dict[str, Any]) -> str:
+def ordered_frame_indices(frame_count: int, sample_count: int | None) -> tuple[int, ...]:
+    if frame_count < 2:
+        raise ValueError("COLMAP requires at least two selected frames")
+    if sample_count is None:
+        return tuple(range(frame_count))
+    if not 2 <= sample_count <= frame_count:
+        raise ValueError("ordered sample count must be between two and the frame count")
+    denominator = sample_count - 1
+    indices = tuple(
+        (index * (frame_count - 1) + denominator // 2) // denominator
+        for index in range(sample_count)
+    )
+    if len(set(indices)) != sample_count or indices[0] != 0 or indices[-1] != frame_count - 1:
+        raise ValueError("ordered frame sampling did not produce unique endpoints")
+    return indices
+
+
+def selected_colmap_frames(
+    frames: list[dict[str, Any]], sample_count: int | None
+) -> list[tuple[int, dict[str, Any]]]:
+    return [
+        (index + 1, frames[index]) for index in ordered_frame_indices(len(frames), sample_count)
+    ]
+
+
+def colmap_image_name(frame: dict[str, Any], *, capture_index: int | None = None) -> str:
     suffix = PurePosixPath(cast("str", frame["imagePath"])).suffix.lower()
     if suffix not in {".jpg", ".jpeg", ".png"}:
         raise ValueError("COLMAP baseline supports selected JPEG/PNG keyframes only")
-    return cast("str", frame["sampleId"]) + suffix
+    sample_name = cast("str", frame["sampleId"]) + suffix
+    if capture_index is None:
+        return sample_name
+    if not 1 <= capture_index <= 999_999:
+        raise ValueError("capture index is outside the ordered filename range")
+    return f"{capture_index:06d}-{sample_name}"
 
 
 def write_colmap_input(args: argparse.Namespace) -> None:
@@ -1337,33 +1618,49 @@ def write_colmap_input(args: argparse.Namespace) -> None:
     _, _, selection = load_selection(export_root, Path(args.selection))
     segment = selected_segment(selection, args.cohort, args.segment_id)
     frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
-    if len(frames) < 2:
-        raise ValueError("COLMAP requires at least two selected frames")
+    ordered_image_names = bool(getattr(args, "ordered_image_names", False))
+    ordered_sample_count = getattr(args, "ordered_sample_count", None)
+    selected_frames = selected_colmap_frames(frames, ordered_sample_count)
     output = Path(args.output)
     safe_root(output, create=True)
     images = output / "images"
     images.mkdir(mode=0o700)
     records: list[dict[str, object]] = []
-    for frame in frames:
+    for capture_index, frame in selected_frames:
         source = export_root.joinpath(*PurePosixPath(cast("str", frame["imagePath"])).parts)
-        name = colmap_image_name(frame)
+        name = colmap_image_name(
+            frame, capture_index=capture_index if ordered_image_names else None
+        )
         destination = images / name
         private_copy(source, destination)
         if sha256_file(destination) != frame["imageSha256"]:
             raise ValueError("derived COLMAP input copy changed immutable RGB bytes")
         records.append(
-            {"imageName": name, "imageSha256": frame["imageSha256"], "sampleId": frame["sampleId"]}
+            {
+                "captureIndex": capture_index,
+                "imageName": name,
+                "imageSha256": frame["imageSha256"],
+                "sampleId": frame["sampleId"],
+            }
         )
     input_manifest = {
         "authority": "proposal-only-input-copy",
         "cohort": args.cohort,
         "frames": records,
-        "schemaVersion": "c14-9-colmap-input-v1",
+        "imageOrder": "capture-order" if ordered_image_names else "sample-id-lexical",
+        "sampling": (
+            "full"
+            if ordered_sample_count is None
+            else f"ordered-quantile-{ordered_sample_count}-v1"
+        ),
+        "schemaVersion": (
+            "c14-10-ordered-colmap-input-v2" if ordered_image_names else "c14-9-colmap-input-v1"
+        ),
         "segmentId": args.segment_id,
         "selectionSha256": sha256_file(Path(args.selection)),
     }
     private_write(output / "colmap-input.json", canonical_bytes(input_manifest) + b"\n")
-    print(json.dumps({"frameCount": len(frames), "output": str(output)}, sort_keys=True))
+    print(json.dumps({"frameCount": len(selected_frames), "output": str(output)}, sort_keys=True))
 
 
 def rotation_from_quaternion(values: object) -> tuple[tuple[float, float, float], ...]:
@@ -1432,9 +1729,10 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
     export_root = Path(args.export_root)
     _, _, selection = load_selection(export_root, Path(args.selection))
     segment = selected_segment(selection, args.cohort, args.segment_id)
-    frames = cast("list[object]", segment["frames"])
-    if len(frames) < 2:
-        raise ValueError("ARKit-prior COLMAP requires at least two selected frames")
+    frames = [as_object(raw, "frame") for raw in cast("list[object]", segment["frames"])]
+    ordered_image_names = bool(getattr(args, "ordered_image_names", False))
+    ordered_sample_count = getattr(args, "ordered_sample_count", None)
+    selected_frames = selected_colmap_frames(frames, ordered_sample_count)
     database_ids: dict[str, tuple[int, int]] = {}
     if args.database is not None:
         database = Path(args.database)
@@ -1460,10 +1758,11 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
     ]
     transform_records: list[dict[str, object]] = []
     used_ids: set[int] = set()
-    for index, raw in enumerate(frames, start=1):
-        frame = as_object(raw, "frame")
-        image_name = colmap_image_name(frame)
-        image_id, camera_id = database_ids.get(image_name, (index, index))
+    for output_index, (capture_index, frame) in enumerate(selected_frames, start=1):
+        image_name = colmap_image_name(
+            frame, capture_index=capture_index if ordered_image_names else None
+        )
+        image_id, camera_id = database_ids.get(image_name, (output_index, output_index))
         if database_ids and image_name not in database_ids:
             raise ValueError("COLMAP database image names do not match the immutable selection")
         if image_id in used_ids:
@@ -1485,7 +1784,12 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         )
         image_lines.append("")
         transform_records.append(
-            {"imageName": image_name, "sampleId": frame["sampleId"], "worldToCamera": matrix}
+            {
+                "captureIndex": capture_index,
+                "imageName": image_name,
+                "sampleId": frame["sampleId"],
+                "worldToCamera": matrix,
+            }
         )
     private_write(output / "cameras.txt", ("\n".join(camera_lines) + "\n").encode())
     private_write(output / "images.txt", ("\n".join(image_lines) + "\n").encode())
@@ -1496,6 +1800,12 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         "authority": "proposal-only-arkit-prior-diagnostic",
         "cohort": args.cohort,
         "frames": transform_records,
+        "imageOrder": "capture-order" if ordered_image_names else "sample-id-lexical",
+        "sampling": (
+            "full"
+            if ordered_sample_count is None
+            else f"ordered-quantile-{ordered_sample_count}-v1"
+        ),
         "segmentId": args.segment_id,
         "selectionSha256": sha256_file(Path(args.selection)),
         "sourceCoordinateSystem": "arkit-right-handed-y-up-camera-to-world",
@@ -1503,7 +1813,7 @@ def write_colmap_prior(args: argparse.Namespace) -> None:
         "translationUnit": "metres-from-arkit-not-independently-validated",
     }
     private_write(output / "prior-manifest.json", canonical_bytes(prior) + b"\n")
-    print(json.dumps({"frameCount": len(frames), "output": str(output)}, sort_keys=True))
+    print(json.dumps({"frameCount": len(selected_frames), "output": str(output)}, sort_keys=True))
 
 
 def verified_experimental_candidates(root: Path | None) -> tuple[set[str], dict[str, str]]:
@@ -1804,6 +2114,8 @@ def build_parser() -> argparse.ArgumentParser:
     prior.add_argument("--cohort", choices=("normal", "inclusive"), required=True)
     prior.add_argument("--segment-id", required=True)
     prior.add_argument("--database")
+    prior.add_argument("--ordered-image-names", action="store_true")
+    prior.add_argument("--ordered-sample-count", type=int)
     prior.add_argument("--output", required=True)
     prior.set_defaults(function=write_colmap_prior)
     colmap_input = commands.add_parser(
@@ -1813,6 +2125,8 @@ def build_parser() -> argparse.ArgumentParser:
     colmap_input.add_argument("--selection", required=True)
     colmap_input.add_argument("--cohort", choices=("normal", "inclusive"), required=True)
     colmap_input.add_argument("--segment-id", required=True)
+    colmap_input.add_argument("--ordered-image-names", action="store_true")
+    colmap_input.add_argument("--ordered-sample-count", type=int)
     colmap_input.add_argument("--output", required=True)
     colmap_input.set_defaults(function=write_colmap_input)
     policy = commands.add_parser(

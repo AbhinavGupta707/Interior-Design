@@ -4,6 +4,302 @@ import XCTest
 @testable import HomeDesignCapture
 
 final class C14_10SpatialQualityAndFaultTests: XCTestCase {
+  func testSelectionDiagnosticsPersistBoundedAutomaticOutcomes() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent(
+        "c14-10-selection-diagnostics-\(UUID().uuidString)",
+        isDirectory: true
+      )
+    defer { try? FileManager.default.removeItem(at: root) }
+    let store = C14_8ProtectedCaptureStore(root: root)
+    let projectId = UUID()
+    var diagnostics = C14_10SelectionDiagnostics.empty(at: Date(timeIntervalSince1970: 1))
+
+    diagnostics.record(.accepted, at: Date(timeIntervalSince1970: 2))
+    diagnostics.record(
+      .featurePoor,
+      telemetry: telemetry(connected: true, overlap: 220_000, translation: 180_000),
+      context: C14_10SelectionDiagnosticContext(
+        coverageCellId: "north:middle",
+        retainedCountAtStart: 4,
+        segmentId: UUID(uuidString: "14800000-0000-4000-8000-000000000012"),
+        zoneId: UUID(uuidString: "14800000-0000-4000-8000-000000000013")
+      ),
+      at: Date(timeIntervalSince1970: 3)
+    )
+    diagnostics.record(.insufficientOverlap, at: Date(timeIntervalSince1970: 4))
+    try await store.saveSelectionDiagnostics(projectId: projectId, diagnostics: diagnostics)
+
+    let loaded = try await store.loadSelectionDiagnostics(projectId: projectId)
+    let restored = try XCTUnwrap(loaded)
+    XCTAssertEqual(restored.totalAutomaticCandidateCount, 3)
+    XCTAssertEqual(restored.retainedCandidateCount, 1)
+    XCTAssertEqual(restored.skippedCandidateCount, 2)
+    XCTAssertEqual(restored.count(for: .featurePoor), 1)
+    XCTAssertEqual(restored.count(for: .insufficientOverlap), 1)
+    let recent = try XCTUnwrap(restored.recentOutcomes)
+    XCTAssertEqual(recent.count, 1)
+    XCTAssertEqual(recent[0].reason, .featurePoor)
+    XCTAssertEqual(recent[0].featurePointCount, 180)
+    XCTAssertEqual(recent[0].overlapScoreMillionths, 220_000)
+    XCTAssertEqual(recent[0].telemetryTimestampMicroseconds, 3_000_000)
+    XCTAssertEqual(recent[0].translationFromPreviousMicrometres, 180_000)
+    let detailed = try XCTUnwrap(restored.detailedOutcomes)
+    XCTAssertEqual(detailed.count, 1)
+    XCTAssertEqual(detailed[0].candidateSequence, 2)
+    XCTAssertEqual(detailed[0].context.coverageCellId, "north:middle")
+    XCTAssertEqual(detailed[0].context.retainedCountAtStart, 4)
+    XCTAssertEqual(detailed[0].outcome.reason, .featurePoor)
+    XCTAssertTrue(restored.isValid)
+  }
+
+  func testSelectionDiagnosticsPreserveInitialAndLatestBoundedRouteTimeline() {
+    var diagnostics = C14_10SelectionDiagnostics.empty(at: Date(timeIntervalSince1970: 1))
+    for index in 0...C14_10SelectionDiagnostics.maximumDetailedOutcomeCount {
+      diagnostics.record(
+        .featurePoor,
+        telemetry: telemetry(connected: true, overlap: 220_000, translation: 180_000),
+        at: Date(timeIntervalSince1970: Double(index + 2))
+      )
+    }
+
+    let detailed = diagnostics.detailedOutcomes ?? []
+    XCTAssertEqual(detailed.count, C14_10SelectionDiagnostics.maximumDetailedOutcomeCount)
+    XCTAssertEqual(diagnostics.detailedOutcomeDroppedCount, 1)
+    XCTAssertEqual(detailed.first?.candidateSequence, 1)
+    XCTAssertEqual(
+      detailed[C14_10SelectionDiagnostics.preservedInitialDetailedOutcomeCount - 1]
+        .candidateSequence,
+      C14_10SelectionDiagnostics.preservedInitialDetailedOutcomeCount
+    )
+    XCTAssertEqual(
+      detailed[C14_10SelectionDiagnostics.preservedInitialDetailedOutcomeCount]
+        .candidateSequence,
+      C14_10SelectionDiagnostics.preservedInitialDetailedOutcomeCount + 2
+    )
+    XCTAssertEqual(
+      detailed.last?.candidateSequence,
+      C14_10SelectionDiagnostics.maximumDetailedOutcomeCount + 1
+    )
+    XCTAssertTrue(diagnostics.isValid)
+  }
+
+  func testFeatureGuidanceReconnectsToLastRetainedView() {
+    XCTAssertEqual(
+      C14_10KeyframeDecisionReason.featurePoor.homeownerInstruction(hasRetainedView: false),
+      "Aim across a corner, opening or textured object."
+    )
+    XCTAssertTrue(
+      C14_10KeyframeDecisionReason.featurePoor
+        .homeownerInstruction(hasRetainedView: true)
+        .contains("last retained wall or corner")
+    )
+    XCTAssertTrue(
+      C14_10KeyframeDecisionReason.insufficientOverlap
+        .homeownerInstruction(hasRetainedView: true)
+        .contains("small overlapping arcs")
+    )
+  }
+
+  func testCoverageGuidancePrioritizesUpperThenMiddleAndNeverClaimsReadiness() {
+    let segmentId = UUID()
+    var room = C14_8RoomEnvelope.empty(label: "Room", sequence: 1, segmentId: segmentId)
+    for index in room.coverage.indices where room.coverage[index].verticalBand != .upper {
+      room.coverage[index].status = .observed
+    }
+
+    let upper = C14_10CoverageGuidance.instruction(for: room.coverage)
+    XCTAssertTrue(upper?.contains("8 upper directions remain") == true)
+    XCTAssertTrue(upper?.contains("wall/ceiling junctions") == true)
+    XCTAssertFalse(upper?.localizedCaseInsensitiveContains("ready") == true)
+
+    for index in room.coverage.indices where room.coverage[index].verticalBand == .upper {
+      room.coverage[index].status = .occluded
+    }
+    XCTAssertNil(C14_10CoverageGuidance.instruction(for: room.coverage))
+  }
+
+  func testLegacyAggregateDiagnosticsDecodeWithoutRecentOutcomes() throws {
+    let data = Data(
+      """
+      {
+        "outcomeCounts":{"tracking":1},
+        "schemaVersion":"c14-10-selection-diagnostics-v1",
+        "totalAutomaticCandidateCount":1,
+        "updatedAt":0
+      }
+      """.utf8
+    )
+
+    let diagnostics = try JSONDecoder().decode(C14_10SelectionDiagnostics.self, from: data)
+
+    XCTAssertNil(diagnostics.recentOutcomes)
+    XCTAssertNil(diagnostics.detailedOutcomes)
+    XCTAssertNil(diagnostics.detailedOutcomeDroppedCount)
+    XCTAssertEqual(diagnostics.count(for: .tracking), 1)
+    XCTAssertTrue(diagnostics.isValid)
+  }
+
+  func testLegacyRecentOutcomeDecodesWithoutNewPoseOrAnchorMetrics() throws {
+    let data = Data(
+      """
+      {
+        "blurScoreMillionths":900000,
+        "completedAt":0,
+        "featurePointCount":180,
+        "motionScoreMillionths":0,
+        "overlapScoreMillionths":220000,
+        "parallaxScoreMillionths":90000,
+        "reason":"featurePoor",
+        "rotationFromPreviousMicroradians":0,
+        "telemetryTimestampMicroseconds":3000000,
+        "trackingState":"normal",
+        "translationFromPreviousMicrometres":180000
+      }
+      """.utf8
+    )
+
+    let outcome = try JSONDecoder().decode(C14_10RecentSelectionOutcome.self, from: data)
+
+    XCTAssertNil(outcome.cameraPositionMicrometres)
+    XCTAssertNil(outcome.startAnchorDistanceMicrometres)
+    XCTAssertEqual(outcome.reason, .featurePoor)
+    XCTAssertTrue(outcome.isValid)
+  }
+
+  @MainActor
+  func testRejectedFrameDiagnosticsStayProtectedBoundedAndReasonBound() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent(
+        "c14-10-rejected-frame-diagnostics-\(UUID().uuidString)",
+        isDirectory: true
+      )
+    let store = C14_10RejectedFrameDiagnosticStore(root: root)
+    let engine = C14_8FixtureGuidedCaptureEngine()
+    let projectId = UUID()
+    let segmentId = UUID()
+
+    for index in 0..<14 {
+      let capturedAt = Date(timeIntervalSince1970: Double(index + 1))
+      let reason: C14_10KeyframeDecisionReason =
+        index == 13 ? .insufficientOverlap : .featurePoor
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: reason,
+        telemetry: telemetry(
+          connected: true,
+          overlap: index == 13 ? 120_000 : 220_000,
+          parallax: 90_000,
+          translation: 180_000
+        ),
+        completedAt: capturedAt
+      )
+      let thumbnail = try engine.captureRejectedDiagnosticThumbnail(
+        capturedAt: capturedAt,
+        maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
+        telemetryTimestampMicroseconds: 3_000_000
+      )
+
+      _ = try await store.save(
+        projectId: projectId,
+        segmentId: segmentId,
+        thumbnail: thumbnail,
+        outcome: outcome
+      )
+    }
+
+    let loadedLatest = try await store.loadLatest(projectId: projectId)
+    let latest = try XCTUnwrap(loadedLatest)
+    XCTAssertEqual(latest.retainedCount, 7)
+    XCTAssertEqual(latest.record.outcome.reason, .insufficientOverlap)
+    XCTAssertEqual(latest.record.outcome.overlapScoreMillionths, 120_000)
+    XCTAssertEqual(latest.record.outcome.telemetryTimestampMicroseconds, 3_000_000)
+    XCTAssertEqual(latest.record.outcome.translationFromPreviousMicrometres, 180_000)
+    XCTAssertEqual(latest.record.segmentId, segmentId)
+    XCTAssertEqual(latest.jpegData.count, latest.record.imageByteCount)
+    XCTAssertTrue(latest.record.isValid)
+    let projectDirectory = root.appendingPathComponent(
+      projectId.uuidString.lowercased(),
+      isDirectory: true
+    )
+    let storedFiles = try FileManager.default.contentsOfDirectory(
+      at: projectDirectory,
+      includingPropertiesForKeys: nil
+    )
+    XCTAssertEqual(storedFiles.filter { $0.pathExtension == "jpg" }.count, 7)
+    XCTAssertEqual(storedFiles.filter { $0.lastPathComponent == "manifest.json" }.count, 1)
+    let manifestData = try Data(
+      contentsOf: projectDirectory.appendingPathComponent("manifest.json")
+    )
+    let manifest = try JSONDecoder().decode(
+      C14_10RejectedFrameDiagnosticManifestTestView.self,
+      from: manifestData
+    )
+    XCTAssertEqual(
+      manifest.records.map(\.outcome.reason),
+      [
+        .featurePoor, .featurePoor, .featurePoor, .featurePoor, .featurePoor, .featurePoor,
+        .insufficientOverlap,
+      ])
+    let featureDates = manifest.records.filter { $0.outcome.reason == .featurePoor }
+      .map(\.capturedAt)
+    XCTAssertEqual(featureDates.count, 6)
+    XCTAssertEqual(featureDates.first, Date(timeIntervalSince1970: 1))
+    XCTAssertEqual(featureDates.last, Date(timeIntervalSince1970: 13))
+    XCTAssertEqual(featureDates, featureDates.sorted())
+    XCTAssertEqual(
+      manifest.records.last?.capturedAt,
+      Date(timeIntervalSince1970: 14)
+    )
+    XCTAssertEqual(Set(manifest.records.compactMap(\.segmentId)), [segmentId])
+
+    let newestSegmentId = UUID()
+    let newestReasons = C14_10KeyframeDecisionReason.allCases.filter { $0 != .accepted }
+    for index in 0..<(newestReasons.count * 7) {
+      let capturedAt = Date(timeIntervalSince1970: Double(index + 15))
+      let outcome = C14_10RecentSelectionOutcome(
+        reason: newestReasons[index % newestReasons.count],
+        telemetry: telemetry(
+          connected: true,
+          overlap: 220_000,
+          parallax: 90_000,
+          translation: 180_000
+        ),
+        completedAt: capturedAt
+      )
+      let thumbnail = try engine.captureRejectedDiagnosticThumbnail(
+        capturedAt: capturedAt,
+        maximumDimension: C14_10RejectedFrameDiagnosticPolicy.maximumPixelDimension,
+        telemetryTimestampMicroseconds: 3_000_000
+      )
+      _ = try await store.save(
+        projectId: projectId,
+        segmentId: newestSegmentId,
+        thumbnail: thumbnail,
+        outcome: outcome
+      )
+    }
+    let newestManifest = try JSONDecoder().decode(
+      C14_10RejectedFrameDiagnosticManifestTestView.self,
+      from: Data(contentsOf: projectDirectory.appendingPathComponent("manifest.json"))
+    )
+    XCTAssertEqual(
+      newestManifest.records.count,
+      C14_10RejectedFrameDiagnosticPolicy.maximumRetainedCount
+    )
+    XCTAssertEqual(Set(newestManifest.records.compactMap(\.segmentId)), [newestSegmentId])
+    XCTAssertEqual(
+      newestManifest.records.map(\.capturedAt),
+      newestManifest.records.map(\.capturedAt).sorted()
+    )
+
+    try await store.clear(projectId: projectId)
+    let clearedLatest = try await store.loadLatest(projectId: projectId)
+    XCTAssertNil(clearedLatest)
+    if FileManager.default.fileExists(atPath: root.path) {
+      try? FileManager.default.removeItem(at: root)
+    }
+  }
+
   func testDirectionHeightGridCannotCompleteRotateInPlaceCapture() {
     let segmentId = UUID()
     var room = C14_8RoomEnvelope.empty(label: "Rectangular room", sequence: 1, segmentId: segmentId)
@@ -58,6 +354,33 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertTrue(readiness.isReady)
     XCTAssertEqual(readiness.connectedRatioMillionths, 1_000_000)
     XCTAssertEqual(readiness.loopClosureCount, 1)
+  }
+
+  func testConsecutiveLoopClosureViewsCountAsOneEpisode() {
+    let segmentId = UUID()
+    var room = C14_8RoomEnvelope.empty(label: "Living room", sequence: 1, segmentId: segmentId)
+    let zoneId = room.zones![0].zoneId
+    room.zones![0].status = .observed
+    let samples = (0..<12).map {
+      sample(
+        index: $0,
+        segmentId: segmentId,
+        roomId: room.roomId,
+        zoneId: zoneId,
+        connected: $0 > 0,
+        loopClosure: (7...9).contains($0) || $0 == 11,
+        parallax: $0 == 0 ? 0 : 240_000,
+        span: min(1_400_000, Int64($0) * 240_000),
+        travel: Int64($0) * 400_000,
+        translation: $0 == 0 ? 0 : 400_000
+      )
+    }
+
+    let readiness = C14_10SpatialReadinessEvaluator.evaluate(room: room, samples: samples)
+
+    XCTAssertTrue(readiness.isReady)
+    XCTAssertEqual(readiness.loopClosureCount, 2)
+    XCTAssertEqual(samples.filter { $0.loopClosureCandidate == true }.count, 4)
   }
 
   func testIrregularMultiZoneRoomRequiresEvidenceInEveryDeclaredZone() {
@@ -205,13 +528,26 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
   }
 
   func testAutomaticSelectorRequiresConnectedTranslationOverlapAndParallax() {
-    let first = C14_10KeyframeSelector.decision(
+    let unconfirmedAnchor = C14_10KeyframeSelector.decision(
       telemetry: telemetry(),
       retainedCount: 0,
       lastAutomaticTimestampMicroseconds: nil,
       mode: .automatic
     )
-    XCTAssertTrue(first.shouldRetain)
+    XCTAssertEqual(unconfirmedAnchor.reason, .insufficientOverlap)
+
+    let confirmedAnchor = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 600_000,
+        parallax: 200_000,
+        translation: 300_000
+      ),
+      retainedCount: 0,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertTrue(confirmedAnchor.shouldRetain)
 
     let rotateInPlace = C14_10KeyframeSelector.decision(
       telemetry: telemetry(connected: true, overlap: 600_000, parallax: 0, translation: 0),
@@ -233,6 +569,245 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       mode: .automatic
     )
     XCTAssertTrue(useful.shouldRetain)
+  }
+
+  func testAutomaticSelectorAcceptsOnlyConnectedRotationalCornerBridges() {
+    let bridge = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 450_000,
+        parallax: 0,
+        rotation: C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertTrue(bridge.shouldRetain)
+
+    let tooLittleRotation = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: true,
+        overlap: 450_000,
+        parallax: 0,
+        rotation: C14_10SpatialCapturePolicy.minimumConnectedBridgeRotationMicroradians - 1,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertEqual(tooLittleRotation.reason, .insufficientTranslation)
+
+    let disconnectedTurn = C14_10KeyframeSelector.decision(
+      telemetry: telemetry(
+        connected: false,
+        overlap: C14_10SpatialCapturePolicy.minimumOverlapScoreMillionths - 1,
+        parallax: 0,
+        rotation: 500_000,
+        translation: 20_000
+      ),
+      retainedCount: 1,
+      lastAutomaticTimestampMicroseconds: nil,
+      mode: .automatic
+    )
+    XCTAssertEqual(disconnectedTurn.reason, .insufficientOverlap)
+  }
+
+  func testSpatialRotationUsesShortestQuaternionArc() {
+    XCTAssertEqual(
+      C14_10SpatialRotation.microradians(
+        quaternionNanounits: [0, 0, 0, 1_000_000_000],
+        [0, 0, 0, -1_000_000_000]
+      ),
+      0
+    )
+    XCTAssertEqual(
+      C14_10SpatialRotation.microradians(
+        quaternionNanounits: [0, 0, 0, 1_000_000_000],
+        [0, 707_106_781, 0, 707_106_781]
+      ),
+      1_570_796,
+      accuracy: 2
+    )
+  }
+
+  func testLoopClosureUsesDistanceScaledOverlapWithoutAcceptingOppositeFacingPasses() {
+    let intendedReturn = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 164,
+      trajectorySpanMicrometres: 4_318_269,
+      trajectoryTravelMicrometres: 29_735_077,
+      startAnchorDistanceMicrometres: 783_282,
+      startAnchorOverlapScoreMillionths: 230_000,
+      startAnchorRotationMicroradians: 199_840
+    )
+    XCTAssertEqual(intendedReturn.distanceThresholdMicrometres, 1_200_000)
+    XCTAssertEqual(intendedReturn.requiredOverlapScoreMillionths, 221_196)
+    XCTAssertTrue(intendedReturn.isCandidate)
+
+    let weakVisualReturn = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 164,
+      trajectorySpanMicrometres: 4_318_269,
+      trajectoryTravelMicrometres: 29_735_077,
+      startAnchorDistanceMicrometres: 783_282,
+      startAnchorOverlapScoreMillionths: intendedReturn.requiredOverlapScoreMillionths - 1,
+      startAnchorRotationMicroradians: 199_840
+    )
+    XCTAssertFalse(weakVisualReturn.isCandidate)
+
+    let oppositeFacingCoordinatePass = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 55,
+      trajectorySpanMicrometres: 2_500_000,
+      trajectoryTravelMicrometres: 10_000_000,
+      startAnchorDistanceMicrometres: 139_009,
+      startAnchorOverlapScoreMillionths: 600_000,
+      startAnchorRotationMicroradians: 2_379_766
+    )
+    XCTAssertFalse(oppositeFacingCoordinatePass.isCandidate)
+  }
+
+  func testLoopClosureAdaptiveToleranceIsBoundedAndStillRequiresCompleteRoute() {
+    let minimumRoute = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 7,
+      trajectorySpanMicrometres: 1_200_000,
+      trajectoryTravelMicrometres: 2_400_000,
+      startAnchorDistanceMicrometres: 698_000,
+      startAnchorOverlapScoreMillionths: 194_836,
+      startAnchorRotationMicroradians: 100_000
+    )
+    XCTAssertEqual(minimumRoute.distanceThresholdMicrometres, 698_000)
+    XCTAssertEqual(minimumRoute.requiredOverlapScoreMillionths, 194_836)
+    XCTAssertTrue(minimumRoute.isCandidate)
+
+    let outsideMaximum = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 100,
+      trajectorySpanMicrometres: 4_000_000,
+      trajectoryTravelMicrometres: 40_000_000,
+      startAnchorDistanceMicrometres: 1_200_001,
+      startAnchorOverlapScoreMillionths: 1_000_000,
+      startAnchorRotationMicroradians: 0
+    )
+    XCTAssertEqual(outsideMaximum.distanceThresholdMicrometres, 1_200_000)
+    XCTAssertFalse(outsideMaximum.isCandidate)
+
+    let tooShort = C14_10LoopClosureEvaluator.evaluate(
+      retainedObservationCount: 7,
+      trajectorySpanMicrometres: 1_200_000,
+      trajectoryTravelMicrometres: 2_399_999,
+      startAnchorDistanceMicrometres: 100_000,
+      startAnchorOverlapScoreMillionths: 1_000_000,
+      startAnchorRotationMicroradians: 0
+    )
+    XCTAssertFalse(tooShort.isCandidate)
+  }
+
+  func testRetainedEdgeContractAllowsConnectedCornerBridgeButNotSmallOrDisconnectedTurns() {
+    let segmentId = UUID()
+    let roomId = UUID()
+    let zoneId = UUID()
+    let anchor = sample(
+      index: 0,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: false,
+      loopClosure: false,
+      parallax: 0,
+      span: 0,
+      travel: 0,
+      translation: 0
+    )
+    let bridge = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: true,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 87_155_743, 0, 996_194_698],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertTrue(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: bridge))
+
+    let smallTurn = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: true,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 43_619_387, 0, 999_048_222],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertFalse(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: smallTurn))
+
+    let disconnected = sample(
+      index: 1,
+      segmentId: segmentId,
+      roomId: roomId,
+      zoneId: zoneId,
+      connected: false,
+      loopClosure: false,
+      parallax: 0,
+      quaternion: [0, 87_155_743, 0, 996_194_698],
+      span: 0,
+      travel: 20_000,
+      translation: 20_000
+    )
+    XCTAssertFalse(C14_10RetainedEdgeValidator.isValid(previous: anchor, current: disconnected))
+  }
+
+  func testProjectedOverlapSurvivesFeatureIdentifierChurnAndRejectsPointsBehindCamera() {
+    let referencePoints = (-2...2).flatMap { x in
+      (-2...2).map { y in
+        SIMD3<Float>(Float(x) * 0.2, Float(y) * 0.2, -2)
+      }
+    }
+    let viewport = CGSize(width: 100, height: 100)
+    let projection: (SIMD3<Float>) -> CGPoint = { point in
+      CGPoint(
+        x: 50 + CGFloat(point.x * 50),
+        y: 50 - CGFloat(point.y * 50)
+      )
+    }
+
+    XCTAssertEqual(
+      C14_10SpatialOverlap.identifierScore(left: [1, 2], right: [3, 4]),
+      0
+    )
+    XCTAssertEqual(
+      C14_10SpatialOverlap.score(
+        currentFeatureIds: [1, 2],
+        referenceFeatureIds: [3, 4],
+        referenceFeaturePoints: referencePoints,
+        currentCameraTransform: matrix_identity_float4x4,
+        viewportSize: viewport,
+        project: projection
+      ),
+      1_000_000
+    )
+
+    var oppositeCamera = matrix_identity_float4x4
+    oppositeCamera.columns.0.x = -1
+    oppositeCamera.columns.2.z = -1
+    XCTAssertEqual(
+      C14_10SpatialOverlap.score(
+        currentFeatureIds: [1, 2],
+        referenceFeatureIds: [3, 4],
+        referenceFeaturePoints: referencePoints,
+        currentCameraTransform: oppositeCamera,
+        viewportSize: viewport,
+        project: projection
+      ),
+      0
+    )
   }
 
   func testAutomaticSelectorRejectsNearDuplicatesAndEnforcesCooldown() {
@@ -303,6 +878,9 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertEqual(model.draft?.keyframes.count, 0)
+    model.armCapture()
     await waitUntil {
       model.state == .ready
         && model.selectionInstruction?.localizedCaseInsensitiveContains("new position") == true
@@ -310,6 +888,11 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
 
     XCTAssertEqual(model.draft?.keyframes.count, 0)
     XCTAssertEqual(model.draft?.samples.count, 0)
+    model.handleBackgrounding()
+    let finalOutcome = try XCTUnwrap(model.selectionDiagnostics.detailedOutcomes?.last)
+    XCTAssertEqual(finalOutcome.outcome.reason, .nearDuplicate)
+    XCTAssertEqual(finalOutcome.outcome.featurePointCount, 321)
+    XCTAssertEqual(finalOutcome.context.coverageCellId, "south:upper")
   }
 
   @MainActor
@@ -324,6 +907,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
 
     XCTAssertEqual(
@@ -403,6 +987,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil {
       if case .failed = model.state { return true }
       return false
@@ -423,9 +1008,14 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertEqual(model.draft?.samples.count, 0)
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
     model.handleBackgrounding()
     model.recoverAfterInterruption()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 2 && model.state == .ready }
 
     let samples = try XCTUnwrap(model.draft?.samples)
@@ -443,6 +1033,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let projectId = UUID().uuidString
 
     await model.activate(projectId: projectId, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 1 && model.state == .ready }
     let retainedHash = try XCTUnwrap(model.draft?.keyframes.first?.sha256)
     let retainedSegment = try XCTUnwrap(model.draft?.samples.first?.segmentId)
@@ -455,6 +1046,8 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     XCTAssertEqual(model.draft?.segments.count, 1)
 
     model.captureMore()
+    await waitUntil { model.state == .ready && !model.captureArmed }
+    model.armCapture()
     await waitUntil { model.draft?.samples.count == 2 && model.state == .ready }
     XCTAssertEqual(model.draft?.segments.count, 2)
     XCTAssertEqual(model.draft?.segments.last?.reason, .relaunch)
@@ -476,9 +1069,13 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     )
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
     model.automaticCaptureEnabled = false
+    XCTAssertTrue(model.canStopCapture)
     model.finishRoomReview()
+    XCTAssertFalse(model.captureArmed)
+    XCTAssertFalse(model.canStopCapture)
     model.serviceProcessingConsent = true
     model.submit()
     await waitUntil {
@@ -506,6 +1103,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     let model = faultModel(root: root, injector: injector)
 
     await model.activate(projectId: UUID().uuidString, actor: faultActor())
+    model.armCapture()
     await waitUntil { model.draft?.keyframes.count == 1 && model.state == .ready }
     model.automaticCaptureEnabled = false
     model.finishRoomReview()
@@ -523,6 +1121,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     connected: Bool = false,
     overlap: Int = 0,
     parallax: Int = 0,
+    rotation: Int = 0,
     translation: Int64 = 0
   ) -> C14_8LiveTelemetry {
     C14_8LiveTelemetry(
@@ -537,6 +1136,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
         loopClosureCandidate: false,
         overlapScoreMillionths: overlap,
         parallaxScoreMillionths: parallax,
+        rotationFromPreviousMicroradians: rotation,
         telemetryTimestampMicroseconds: 3_000_000,
         trajectorySpanMicrometres: translation,
         trajectoryTravelMicrometres: translation,
@@ -583,13 +1183,16 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
 
   @MainActor
   private func waitUntil(
-    attempts: Int = 1_000,
+    attempts: Int = 500,
+    file: StaticString = #filePath,
+    line: UInt = #line,
     _ condition: @escaping @MainActor () -> Bool
   ) async {
     for _ in 0..<attempts {
       if condition() { return }
-      await Task.yield()
+      try? await Task.sleep(nanoseconds: 10_000_000)
     }
+    XCTFail("Timed out waiting for asynchronous capture state to settle.", file: file, line: line)
   }
 
   private func sample(
@@ -600,6 +1203,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
     connected: Bool,
     loopClosure: Bool,
     parallax: Int,
+    quaternion: [Int64] = [0, 0, 0, 1_000_000_000],
     span: Int64,
     travel: Int64,
     translation: Int64
@@ -626,7 +1230,7 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
       parallaxScoreMillionths: parallax,
       poseTransform: "camera-to-world",
       quaternionOrder: "x-y-z-w",
-      quaternionNanounits: [0, 0, 0, 1_000_000_000],
+      quaternionNanounits: quaternion,
       roomId: roomId,
       sampleId: UUID(),
       segmentId: segmentId,
@@ -680,6 +1284,20 @@ final class C14_10SpatialQualityAndFaultTests: XCTestCase {
   }
 }
 
+private struct C14_10RejectedFrameDiagnosticManifestTestView: Decodable {
+  struct Record: Decodable {
+    struct Outcome: Decodable {
+      let reason: C14_10KeyframeDecisionReason
+    }
+
+    let capturedAt: Date
+    let outcome: Outcome
+    let segmentId: UUID?
+  }
+
+  let records: [Record]
+}
+
 @MainActor
 private final class C14_10RejectingCaptureEngine: C14_8GuidedCaptureServing {
   private let fixture = C14_8FixtureGuidedCaptureEngine()
@@ -709,7 +1327,29 @@ private final class C14_10RejectingCaptureEngine: C14_8GuidedCaptureServing {
     zoneId: UUID
   ) async throws -> C14_8CapturedKeyframe {
     _ = (destination, localIdentifier, roomId, segmentId, captureStartedAt, retentionMode, zoneId)
-    throw C14_8GuidedCaptureEngineError.candidateRejected(.nearDuplicate)
+    throw C14_8GuidedCaptureEngineError.candidateRejected(
+      .nearDuplicate,
+      telemetry: C14_8LiveTelemetry(
+        ambientIntensity: 900,
+        blurScoreMillionths: 900_000,
+        coverageCellId: "south:upper",
+        exposureScoreMillionths: 900_000,
+        motionScoreMillionths: 0,
+        spatialEvidence: C14_10LiveSpatialEvidence(
+          connectedToPrevious: true,
+          featurePointCount: 321,
+          loopClosureCandidate: false,
+          overlapScoreMillionths: 950_000,
+          parallaxScoreMillionths: 200_000,
+          rotationFromPreviousMicroradians: 10_000,
+          telemetryTimestampMicroseconds: 2_200_000,
+          trajectorySpanMicrometres: 1_500_000,
+          trajectoryTravelMicrometres: 2_500_000,
+          translationFromPreviousMicrometres: 200_000
+        ),
+        trackingState: .normal
+      )
+    )
   }
 }
 
