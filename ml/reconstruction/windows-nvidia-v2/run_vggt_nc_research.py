@@ -18,6 +18,7 @@ from capture_benchmark import canonical_bytes, private_write, safe_root, sha256_
 SCHEMA = "c14-10-vggt-nc-research-candidate-registry-v1"
 RESULT_SCHEMA = "c14-10-vggt-nc-result-v1"
 STAGES = (4, 16, 48, 165)
+PRIVATE_ROOT = Path("/home")
 
 
 def stages_through(maximum: int) -> tuple[int, ...]:
@@ -27,24 +28,41 @@ def stages_through(maximum: int) -> tuple[int, ...]:
 
 
 def validate_resumable_record(
-    record: dict[str, Any], image_id: str, registry_sha256: str
+    record: dict[str, Any],
+    image_id: str,
+    registry_sha256: str,
+    candidate_id: str,
+    stage: int,
+    run_index: int,
 ) -> None:
-    if record.get("imageId") != image_id or record.get("registrySha256") != registry_sha256:
+    expected = {
+        "candidateId": candidate_id,
+        "imageId": image_id,
+        "registrySha256": registry_sha256,
+        "runIndex": run_index,
+        "stageFrameCount": stage,
+    }
+    if any(record.get(key) != value for key, value in expected.items()):
         raise ValueError("resumable stage identity differs from the current freeze")
 
 
 def private_existing(path: Path, label: str) -> Path:
-    if (
-        not path.is_absolute()
-        or not str(path).startswith("/home/")
-        or path.is_symlink()
-        or not path.exists()
-    ):
+    if not path.is_absolute() or path.is_symlink() or not path.exists():
         raise ValueError(f"{label} must be a private WSL ext4 path")
-    return path.resolve()
+    resolved = path.resolve()
+    if resolved == PRIVATE_ROOT or not resolved.is_relative_to(PRIVATE_ROOT):
+        raise ValueError(f"{label} must be a private WSL ext4 path")
+    return resolved
 
 
 def resumable_root(path: Path) -> Path:
+    if (
+        not path.is_absolute()
+        or path.is_symlink()
+        or path.resolve(strict=False) == PRIVATE_ROOT
+        or not path.resolve(strict=False).is_relative_to(PRIVATE_ROOT)
+    ):
+        raise ValueError("output root must remain private WSL ext4")
     return safe_root(path) if path.exists() else safe_root(path, create=True)
 
 
@@ -173,6 +191,35 @@ def validate_candidate_result(
         if len(digest) != 64 or sha256_file(path) != digest:
             return False
     return True
+
+
+def validate_resumable_pass(
+    *,
+    record: dict[str, Any],
+    candidate_id: str,
+    candidate: dict[str, Any],
+    stage: int,
+    run_index: int,
+    scope: Path,
+    freeze: dict[str, Any],
+) -> None:
+    result_path = scope / "candidate-result.json"
+    if result_path.is_symlink() or not result_path.is_file():
+        raise ValueError("resumable passing result is missing or invalid")
+    try:
+        result = json.loads(result_path.read_bytes())
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise ValueError("resumable passing result is missing or invalid") from error
+    if record.get("resultSha256") != sha256_file(result_path) or not validate_candidate_result(
+        result=result,
+        candidate_id=candidate_id,
+        candidate=candidate,
+        stage=stage,
+        run_index=run_index,
+        scope=scope,
+        freeze=freeze,
+    ):
+        raise ValueError("resumable passing result differs from its sealed stage")
 
 
 def docker_command(
@@ -305,7 +352,7 @@ def execute(args: argparse.Namespace) -> None:
     model_root = private_existing(Path(args.model), "model")
     environment_audit = private_existing(Path(args.environment_audit), "environment audit")
     output_root = resumable_root(Path(args.output_root))
-    if not str(output_root).startswith("/home/"):
+    if output_root == PRIVATE_ROOT or not output_root.is_relative_to(PRIVATE_ROOT):
         raise ValueError("output root must remain private WSL ext4")
     candidates, freeze = load_registry(registry_path)
     if args.image_id != freeze["imageId"]:
@@ -352,7 +399,24 @@ def execute(args: argparse.Namespace) -> None:
                         raise ValueError("resumable stage record is invalid") from error
                     if not isinstance(prior, dict):
                         raise ValueError("resumable stage record is invalid")
-                    validate_resumable_record(prior, args.image_id, registry_sha256)
+                    validate_resumable_record(
+                        prior,
+                        args.image_id,
+                        registry_sha256,
+                        candidate_id,
+                        stage,
+                        run_index,
+                    )
+                    if prior.get("status") == "pass":
+                        validate_resumable_pass(
+                            record=prior,
+                            candidate_id=candidate_id,
+                            candidate=candidate,
+                            stage=stage,
+                            run_index=run_index,
+                            scope=scope,
+                            freeze=freeze,
+                        )
                     summary["scopes"].append(prior)
                     if prior.get("status") == "pass":
                         continue

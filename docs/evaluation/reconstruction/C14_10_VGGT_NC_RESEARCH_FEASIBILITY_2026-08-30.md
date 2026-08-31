@@ -2,16 +2,16 @@
 
 ## Decision
 
-Execution is frozen for a strictly private, non-commercial research comparison of original
+Execution completed for a strictly private, non-commercial research comparison of original
 `facebook/VGGT-1B` direct reconstruction and a patched VGGT-SLAM-derived no-loop adapter. This
 record does
 not authorise production, commercial use, canonical geometry, C8, joined segments or dimensional
 claims. A future commercial evaluation must repeat the experiment with appropriately licensed
 weights or another commercially permissible model.
 
-Physical results and the final recommendation remain pending until the frozen staged runner
-completes or records an early stop. The retained ARKit-prior dense COLMAP proposal remains the
-control and is not rerun.
+The frozen staged runner recorded a quality-based direct-VGGT early stop at 48 frames and two
+complete 165-frame no-loop-adapter passes. Neither learned proposal is recommended. The retained
+ARKit-prior dense COLMAP proposal remains the control and was not rerun.
 
 ## Scope and retained control
 
@@ -37,9 +37,11 @@ The control is proposal-only and has no dimensional authority.
 
 ## Candidate and licence audit
 
-The exact executable registry is
+The counted executable registry was
 `ml/reconstruction/windows-nvidia-v2/c14-10-vggt-nc-research-candidates.json`, frozen at SHA-256
 `7156c92556903bcc70a8ac9b0072e2dbb27c5e99020588bb117968288947c4da`.
+The reviewed registry adds source-content and measurement metadata without rebinding historical
+results; its SHA-256 is `e01cccbe2f3c40f371b308c51aa06a51c14d89c750acb24a45301896c753cfb3`.
 
 | Candidate                                 | Exact source / weight                                                                                                                                                                                                               | Decision                                                                                                    |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -52,6 +54,15 @@ The exact executable registry is
 | MASt3R / DUSt3R                           | CC BY-NC-SA 4.0 plus checkpoint/training-data chain                                                                                                                                                                                 | Outside bounded scope; complete checkpoint/training-data chain remains unresolved because it was not needed |
 | DA3-LARGE-1.1                             | Current official registry labels the weight CC BY-NC 4.0                                                                                                                                                                            | Existing evidence remains quarantined and outside the bounded execution set                                 |
 | DA3-SMALL                                 | Current official registry labels the weight Apache-2.0                                                                                                                                                                              | Existing 165-frame learned control retained; not rerun after no material improvement                        |
+
+Independent review also content-hashed the exact copied executable trees, not only their mutable
+Docker build-context names and labels. VGGT-SPARK has 41 files at unpatched SHA-256
+`58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a` and patched SHA-256
+`77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88`.
+VGGT-SLAM has 11 files at unpatched SHA-256
+`c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820` and patched SHA-256
+`ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7`.
+The Docker build now verifies both states around zero-fuzz patch application.
 
 The audit used upstream primary sources: the
 [original VGGT model card](https://huggingface.co/facebook/VGGT-1B),
@@ -95,6 +106,17 @@ SHA-256 `3b3506010c2f0774efe48d3085bd991291b7c5867faf7afd68e4fcbbf11184c0`. It:
 - verified GTSAM `SL4`, `PriorFactorSL4` and `BetweenFactorSL4`; and
 - found zero prohibited optional packages.
 
+The exact lock is not a uniform CUDA 13.2 component-stack claim. The container is CUDA 13.2.0 and
+Torch is `2.13.0+cu132`, while the fully hashed resolution also contains
+`cuda-bindings==13.4.0b1`, `nvidia-cublas==13.4.0.1` and
+`nvidia-nvjitlink==13.4.46rc1`. The lock and each distribution's recorded licence evidence are
+authoritative. A supplemental review audit, with auditor SHA-256
+`2efc8a849e7c9410d21bbcd5ad89c704d17ba3d053d7c234ed46acdc01724503`, revalidated the exact
+counted image, both patched source-content manifests, 43 Python distributions, 143 system
+packages, actual imports, GTSAM SL(4), compute capability 12.0 and absence of optional packages.
+Its private mode-0600 record has SHA-256
+`f39f2582ad12e13e95a20560033ce49120f5b77fb1c7ef897e3211771f41fabc`.
+
 The `cuda-toolkit==13.2.1` wheel is accepted only as an exact zero-code metapackage whose complete
 file list is confined to `dist-info`; component packages and the CUDA container have separate
 licence evidence. Current CUDA 13.2 terms were checked against
@@ -119,13 +141,15 @@ before authorising the next one. Two fresh full runs are allowed only after all 
 Each full run separately reconstructs 164 frames for the last-frame held-out projection.
 
 The hard boundary is GPU 0, 12 CPUs, 32 GiB RAM, 512 PIDs, 2 GiB no-exec tmpfs, 16 GiB retained
-scratch, 500,000 retained points, 14.5 GiB task VRAM, seed zero, no network, read-only root,
-non-root UID/GID, all capabilities dropped and no-new-privileges. Stages are resumable and preserve
-typed failures rather than retrying indefinitely.
+scratch, 500,000 retained points, a 14.5 GiB PyTorch allocated-memory ceiling, seed zero, no
+network, read-only root, non-root UID/GID, all capabilities dropped and no-new-privileges. The
+reported `peakTaskVramBytes` is `torch.cuda.max_memory_allocated(0)`; whole-process GPU memory is
+`NOT RUN`, so the evidence does not establish a 14.5 GiB physical-VRAM ceiling. Stages are
+resumable and preserve typed failures rather than retrying indefinitely.
 
 Comparison records registered cameras, camera consistency to the retained ARKit prior, finite
 support, self-normalised occupancy, held-out coverage/PSNR where valid, wall time, host memory,
-task VRAM and retained bytes. ARKit agreement is explicitly not independent accuracy. Shell
+reported GPU-memory fields and retained bytes. ARKit agreement is explicitly not independent accuracy. Shell
 completeness, missing regions, recognisability and room relationships use deterministic private
 renders plus an exact offline local visual classifier; private pixels, paths and identifiers are
 not transmitted or printed. Dimensional and representative accuracy are `NOT RUN`.
@@ -140,16 +164,16 @@ summary hashes are `973a83659e0baa3095d7e9938dc14d15766f29c04a757e5eb03686436756
 (48) and `6a74c7f212b3f7c7498f3c1679acf737073c78ef2a42597cbe276ee0b094b4b4`
 (165 hybrid only).
 
-| Evidence                            | Retained ARKit-prior dense COLMAP control |                Direct VGGT | Patched VGGT-SLAM-derived no-loop adapter |
-| ----------------------------------- | ----------------------------------------: | -------------------------: | ----------------------------------------: |
-| Maximum executed frames             |                              165 retained |              48 early stop |                           165, two passes |
-| Registered cameras                  |                                   165/165 |                      48/48 |                                   165/165 |
-| Retained finite vertices            |                                   947,276 |                    487,778 |                                   497,958 |
-| Task VRAM                           |                                  1.725 GB |                  13.826 GB |                                 10.849 GB |
-| Peak host memory                    |                                 10.484 GB |                  10.789 GB |                         10.788 GB maximum |
-| Candidate wall time                 |                 4,210.980 s dense control |             16.888 s at 48 |                         50.773 / 51.359 s |
-| Retained candidate bytes            |                            25,576,686 PLY |   7,328,778 complete stage |      7,785,074 / 7,785,076 complete stage |
-| Held-out coverage / full-frame PSNR |  `NOT RUN` on compatible learned protocol | `NOT RUN` after early stop |                        1.6551% / 5.205 dB |
+| Evidence                            | Retained ARKit-prior dense COLMAP control |                 Direct VGGT | Patched VGGT-SLAM-derived no-loop adapter |
+| ----------------------------------- | ----------------------------------------: | --------------------------: | ----------------------------------------: |
+| Maximum executed frames             |                              165 retained |               48 early stop |                           165, two passes |
+| Registered cameras                  |                                   165/165 |                       48/48 |                                   165/165 |
+| Retained finite vertices            |                                   947,276 |                     487,778 |                                   497,958 |
+| Peak reported GPU memory            |                  1.725 GB process sampler | 13.826 GB PyTorch allocated |               10.849 GB PyTorch allocated |
+| Peak host memory                    |                                 10.484 GB |                   10.789 GB |                         10.788 GB maximum |
+| Candidate wall time                 |                 4,210.980 s dense control |              16.888 s at 48 |                         50.773 / 51.359 s |
+| Retained candidate bytes            |                            25,576,686 PLY |    7,328,778 complete stage |      7,785,074 / 7,785,076 complete stage |
+| Held-out coverage / full-frame PSNR |  `NOT RUN` on compatible learned protocol |  `NOT RUN` after early stop |                        1.6551% / 5.205 dB |
 
 The learned point counts are capped proposal samples and are not density-equivalent to the control.
 The two full hybrid passes produced identical point, camera and held-out-render hashes; differences
@@ -171,8 +195,10 @@ also shows missing shell regions, a weak desk corner and outliers. An exact offl
 SigLIP 2 heuristic at revision `75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2` and weight SHA-256
 `612923381c76ec5a9bed335d1c48827e3f2e506ac31b044b63b2031fadee6a0b`
 ranked every direct 48-frame view highest for no recognisable indoor room, with two of three also
-highest for unusable geometry. Direct therefore stopped before 165, reinforced by its 13.826 GB
-VRAM at 48. For the full hybrid it found a bedroom signal in one principal view but ranked no
+highest for unusable geometry. Direct therefore stopped before 165 on observed unusable quality.
+Its 13.826 GB PyTorch allocated-memory peak was below the frozen allocator ceiling and is not a
+whole-process VRAM measurement. For the full hybrid the heuristic found a bedroom signal in one
+principal view but ranked no
 recognisable room highest in the other two; two views ranked unusable geometry highest and one
 ranked partly coherent/incomplete highest. The same heuristic also rated two normalized control
 views poorly, so it is supporting evidence only and explicitly not representative accuracy. Its
@@ -194,6 +220,30 @@ VGGT-SLAM 2.0 loop-closure performance: SALAD-based loop closure is `NOT RUN` be
 checkpoint, security and dependency path was deliberately excluded. Any commercial evaluation
 must repeat with appropriately licensed weights or a different commercially permissible model;
 any later loop-closure study needs a separately authorised and fully audited chain.
+
+## Independent PR review reconciliation — 2026-08-31
+
+The accepted counted denominator is eight scopes: six smoke scopes (two candidates at 4, 16 and 48
+frames) plus two full 165-frame no-loop-adapter passes. All eight passed. Direct VGGT's two
+potential 165-frame passes, held-out metrics and comparison rows are `NOT RUN` after the manual
+quality stop; they are not counted as passes, failures or attempted scopes.
+
+Two historical direct 4-frame evaluator attempts failed before the counted denominator: the first
+applied an outer BF16 autocast across a LayerNorm boundary, and the second attempted a NumPy
+conversion from BF16 depth. The no-loop adapter passed during those exploratory attempts. The
+direct evaluator was corrected to respect upstream precision boundaries and convert depth to
+float before the counted matrix began. These failures are preserved as pre-count implementation
+evidence, not hidden quality failures and not counted candidate attempts. The 165-frame matrix was
+not rerun because every counted artifact, result and summary hash reconciled and the review defects
+concerned evidence binding and reporting, not the learned outputs.
+
+Review corrections make Docker builds fail closed on exact pre-/post-patch source content, reject
+private-path traversal after resolution, and require resumable passing stages to match candidate,
+image, registry, stage, run, result and artifact identities before being reused. No private media,
+weights, paths, identifiers, geometry, render, log or unredacted classifier result is published.
+SALAD and upstream loop closure remain unevaluated. These corrections do not create dimensional,
+commercial, canonical, production or representative-accuracy authority and do not alter the
+recommendation.
 
 ## Delivery boundary
 

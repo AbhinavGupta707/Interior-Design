@@ -588,6 +588,28 @@ publishing private pixels, paths or identifiers. Small does not materially impro
 The one-view segment still cannot establish reconstruction connectivity. Dimensional and
 representative accuracy remain `NOT RUN`; production/canonical promotion remains prohibited.
 
+### C14.10-VGGT-NC — Strictly private non-commercial VGGT feasibility follow-on
+
+**Reviewed outcome:** original VGGT direct and a patched VGGT-SLAM-derived no-loop adapter were
+evaluated only against the retained 165-frame Capture Envelope and sealed ARKit-prior dense COLMAP
+control. Exact source commits, Git trees, pre-/post-patch content manifests, original CC BY-NC 4.0
+weight bytes, hash-required dependencies, per-package licence evidence and the counted image were
+reconciled. SALAD and upstream loop closure were deliberately excluded and remain `NOT RUN`.
+
+The honest counted denominator is eight passing scopes: both candidates at 4/16/48 frames and two
+165-frame no-loop-adapter passes. Direct stopped on unusable quality at 48; its two full passes and
+held-out metrics are `NOT RUN`. Two BF16 evaluator failures occurred before counting and remain
+historical implementation evidence. The no-loop adapter's repeatable full runs had only 1.6551%
+held-out coverage and 5.205 dB full-frame PSNR, so neither learned proposal improves the retained
+control. The reported 14.5 GiB boundary is a PyTorch allocated-memory ceiling; whole-process GPU
+memory is `NOT RUN`.
+
+Independent PR review added fail-closed source-content attestation, resolved private-path
+confinement and complete resumable-pass revalidation without rerunning the expensive matrix. All
+private media, weights, geometry, renders, paths, identifiers and detailed logs remain unpublished.
+The result has no dimensional, representative, commercial, canonical or production authority; any
+commercial or loop-closure evaluation requires a separately authorised and fully audited chain.
+
 ### C15 — Walkthrough and design video — 4 lanes
 
 **Outcome:** users can generate collision-checked deterministic camera-path videos and separately labelled AI-enhanced cinematic versions with captions/narration.

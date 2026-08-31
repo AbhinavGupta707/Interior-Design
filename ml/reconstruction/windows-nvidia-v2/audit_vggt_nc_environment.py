@@ -9,6 +9,7 @@ import importlib.metadata
 import json
 import os
 import platform
+import stat
 import subprocess
 from pathlib import Path
 
@@ -33,9 +34,22 @@ EXPECTED_BUILD_INPUTS = {
     ),
 }
 
-CUDA_TOOLKIT_TERMS_URL = (
-    "https://docs.nvidia.com/cuda/archive/13.2.0/eula/index.html"
-)
+CUDA_TOOLKIT_TERMS_URL = "https://docs.nvidia.com/cuda/archive/13.2.0/eula/index.html"
+
+SOURCE_TREES = {
+    "vggt": {
+        "root": "/opt/c14-10-vggt/source/vggt/vggt",
+        "unpatchedSha256": "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a",
+        "patchedSha256": "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88",
+        "fileCount": 41,
+    },
+    "vggt-slam": {
+        "root": "/opt/c14-10-vggt/source/vggt-slam/vggt_slam",
+        "unpatchedSha256": "c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820",
+        "patchedSha256": "ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7",
+        "fileCount": 11,
+    },
+}
 
 
 def sha256_file(path: Path) -> str:
@@ -44,6 +58,43 @@ def sha256_file(path: Path) -> str:
         while chunk := handle.read(1024 * 1024):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def source_tree_sha256(root: Path) -> tuple[str, int]:
+    if not root.is_absolute() or root.is_symlink() or not root.is_dir():
+        raise RuntimeError("source tree root is unsafe")
+    rows: list[dict[str, str]] = []
+    for path in sorted(root.rglob("*")):
+        mode = path.lstat().st_mode
+        if stat.S_ISDIR(mode):
+            continue
+        if not stat.S_ISREG(mode):
+            raise RuntimeError(f"source tree contains a non-regular entry: {path}")
+        rows.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "sha256": sha256_file(path),
+            }
+        )
+    payload = json.dumps(rows, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode()
+    return hashlib.sha256(payload).hexdigest(), len(rows)
+
+
+def verified_source_trees(state: str) -> dict[str, dict[str, str | int]]:
+    if state not in {"unpatched", "patched"}:
+        raise RuntimeError("source tree state is invalid")
+    records: dict[str, dict[str, str | int]] = {}
+    expected_key = f"{state}Sha256"
+    for name, declaration in SOURCE_TREES.items():
+        digest, file_count = source_tree_sha256(Path(str(declaration["root"])))
+        if digest != declaration[expected_key] or file_count != declaration["fileCount"]:
+            raise RuntimeError(f"{name} {state} source tree identity differs")
+        records[name] = {
+            "fileCount": file_count,
+            "sha256": digest,
+            "state": state,
+        }
+    return records
 
 
 def system_packages() -> list[dict[str, str | None]]:
@@ -123,8 +174,10 @@ def metadata_only_licence_exception(
     marker = "meta-package (a package that contains no software"
     files = [path.as_posix() for path in distribution.files or []]
     expected_prefix = "cuda_toolkit-13.2.1.dist-info/"
-    if marker not in description or not files or any(
-        not path.startswith(expected_prefix) for path in files
+    if (
+        marker not in description
+        or not files
+        or any(not path.startswith(expected_prefix) for path in files)
     ):
         raise RuntimeError("cuda-toolkit is not the frozen zero-code metapackage")
     return {
@@ -211,6 +264,7 @@ def execute(output: Path) -> None:
     if capability != (12, 0):
         raise RuntimeError("compute capability differs from the frozen RTX 5080 path")
     payload = {
+        "auditorSha256": sha256_file(Path(__file__)),
         "authority": "private-non-commercial-research-only",
         "buildInputs": verified_build_inputs(),
         "containerLicenceFiles": container_licence_evidence(),
@@ -222,6 +276,7 @@ def execute(output: Path) -> None:
         "packages": packages,
         "python": platform.python_version(),
         "schemaVersion": "c14-10-vggt-nc-environment-audit-v1",
+        "sourceTrees": verified_source_trees("patched"),
         "systemPackages": system_packages(),
         "torch": torch.__version__,
         "vendoredApache20HeaderFiles": vendored_apache_headers(),
@@ -236,8 +291,23 @@ def execute(output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--verify-source-trees", choices=("unpatched", "patched"))
     args = parser.parse_args()
+    if args.verify_source_trees is not None:
+        if args.output is not None:
+            parser.error("--output is not used for a source-tree-only verification")
+        print(
+            json.dumps(
+                verified_source_trees(args.verify_source_trees),
+                ensure_ascii=True,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+        )
+        return
+    if args.output is None:
+        parser.error("--output is required for the complete environment audit")
     execute(args.output)
 
 

@@ -281,9 +281,12 @@ dependency path is deliberately excluded, so adapter behaviour makes no claim ab
 VGGT-SLAM 2.0 loop-closure performance.
 
 `Dockerfile.vggt-nc` applies only the frozen offline/source-closure and headless no-loop patches,
-then embeds the minimal hash-locked runtime without weights or media. The offline environment audit
-requires exact build-input and licence hashes, GTSAM SL(4), compute capability 12.0, complete Python
-and system-package licence evidence, and absence of every excluded optional package.
+verifying exact content-only manifests for both executable source trees before and after zero-fuzz
+patch application, then embeds the minimal hash-locked runtime without weights or media. The
+offline environment audit requires exact source-content, build-input and licence hashes, GTSAM
+SL(4), compute capability 12.0, complete Python and system-package licence evidence, and absence of
+every excluded optional package. The lock is authoritative for its mixed CUDA component versions;
+the CUDA 13.2 container and `cu132` Torch label are not a uniform component-stack claim.
 `Dockerfile.vggt-nc-overlay` is the sole correction path after the first rebuild missed its cache:
 it starts from the exact already-audited local image, replaces only the read-only evaluator and
 auditor, and performs no APT, pip or network operation. Another complete build is prohibited until
@@ -292,10 +295,12 @@ with `pip --no-index --find-links`, and a persistent local BuildKit cache has be
 mode-0600 manifest of its exact wheel and cache identities. Verified wheels must not be downloaded
 again merely because an ephemeral cache key was missed.
 `run_vggt_nc_research.py` runs resumable serial 4/16/48/165-frame scopes through an explicit
-maximum-stage gate, with hard container ceilings, timeout cleanup, an in-process task-VRAM stop,
-and two full passes only after the smaller gates and their quality reviews.
-All mounts and outputs must be private WSL ext4; containers have no network and no canonical or
-production authority. `build_vggt_nc_private_viewer.py` copies hash-verified normalized views into
+maximum-stage gate, with hard container ceilings, timeout cleanup, a PyTorch allocated-memory stop,
+and two full passes only after the smaller gates and their quality reviews. Passing resume records
+are revalidated against candidate/image/registry/stage/run identity plus result and artifact hashes.
+The GPU metric is `torch.cuda.max_memory_allocated(0)` and does not establish whole-process VRAM.
+All resolved mounts and outputs must remain under private WSL ext4; containers have no network and
+no canonical or production authority. `build_vggt_nc_private_viewer.py` copies hash-verified normalized views into
 a no-network control/direct/hybrid comparison. It does not establish geometry, dimensions,
 representative quality, room correctness, or commercial suitability. Any commercial evaluation
 must be repeated with appropriately licensed weights or a different model.

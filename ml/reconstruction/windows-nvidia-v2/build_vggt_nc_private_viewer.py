@@ -15,21 +15,17 @@ VIEWS = ("principal-a", "principal-b", "elevated")
 LABELS = {
     "retained-control": "Retained ARKit-prior dense COLMAP control",
     "vggt-direct": "VGGT-1B direct proposal (48-frame early stop)",
-    "vggt-slam-hybrid": (
-        "Patched VGGT-SLAM-derived no-loop adapter proposal (165 frames)"
-    ),
+    "vggt-slam-hybrid": ("Patched VGGT-SLAM-derived no-loop adapter proposal (165 frames)"),
 }
 
 
 def private_existing(path: Path, label: str) -> Path:
-    if (
-        not path.is_absolute()
-        or not str(path).startswith("/home/")
-        or path.is_symlink()
-        or not path.exists()
-    ):
+    if not path.is_absolute() or path.is_symlink() or not path.exists():
         raise ValueError(f"{label} must be a private WSL ext4 path")
-    return path.resolve()
+    resolved = path.resolve()
+    if resolved == Path("/home") or not resolved.is_relative_to(Path("/home")):
+        raise ValueError(f"{label} must be a private WSL ext4 path")
+    return resolved
 
 
 def sources(values: list[str]) -> dict[str, Path]:
@@ -123,7 +119,7 @@ buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));show('p
 def build(args: argparse.Namespace) -> None:
     source_map = sources(args.source)
     output = safe_root(Path(args.output))
-    if not str(output).startswith("/home/"):
+    if output == Path("/home") or not output.is_relative_to(Path("/home")):
         raise ValueError("viewer output must stay on private WSL ext4")
     assets = output / "assets"
     if assets.exists() or assets.is_symlink():

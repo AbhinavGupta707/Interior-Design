@@ -18,12 +18,15 @@ COPY --from=vggt_source /vggt /opt/c14-10-vggt/source/vggt/vggt
 COPY --from=vggt_source /LICENSE.txt /opt/c14-10-vggt/source/vggt/LICENSE.txt
 COPY --from=vggt_slam_source /vggt_slam /opt/c14-10-vggt/source/vggt-slam/vggt_slam
 COPY --from=vggt_slam_source /LICENSE /opt/c14-10-vggt/source/vggt-slam/LICENSE
+COPY ml/reconstruction/windows-nvidia-v2/audit_vggt_nc_environment.py /opt/c14-10-vggt/audit_vggt_nc_environment.py
 COPY ml/reconstruction/windows-nvidia-v2/vggt-spark-offline.patch /opt/c14-10-vggt/
 COPY ml/reconstruction/windows-nvidia-v2/vggt-slam-headless-no-loop.patch /opt/c14-10-vggt/
-RUN cd /opt/c14-10-vggt/source/vggt \
+RUN python /opt/c14-10-vggt/audit_vggt_nc_environment.py --verify-source-trees unpatched \
+    && cd /opt/c14-10-vggt/source/vggt \
     && patch --batch --forward --fuzz=0 --strip=1 < /opt/c14-10-vggt/vggt-spark-offline.patch \
     && cd /opt/c14-10-vggt/source/vggt-slam \
     && patch --batch --forward --fuzz=0 --strip=1 < /opt/c14-10-vggt/vggt-slam-headless-no-loop.patch \
+    && python /opt/c14-10-vggt/audit_vggt_nc_environment.py --verify-source-trees patched \
     && python -m pip freeze --all | LC_ALL=C sort > /opt/c14-10-vggt/python-packages.txt \
     && sha256sum /opt/c14-10-vggt/requirements.lock /opt/c14-10-vggt/vggt-spark-offline.patch \
       /opt/c14-10-vggt/vggt-slam-headless-no-loop.patch \

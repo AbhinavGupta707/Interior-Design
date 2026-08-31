@@ -10,6 +10,13 @@
   of the original ungated `facebook/VGGT-1B` checkpoint under CC BY-NC 4.0.
 - Delivery: one non-draft pull request targeting `main`, left unmerged.
 
+The execution-authority bullets above describe the frozen physical run. For independent PR #18
+review, the user separately authorised one bounded, read-only `gpt-5.6-terra` / `high` reviewer for
+licence, contract and evidence reconciliation. The `gpt-5.6-sol` / `high` primary retained all
+materiality, correction, final-verification, merge and cleanup authority; no task or worktree was
+created. This review authority supersedes the earlier unmerged-delivery stop only after all four
+named GitHub checks pass on the exact corrected head.
+
 All model bytes, private inputs, geometry, renders, logs, package evidence and conclusions stay on
 private WSL ext4. They cannot enter production routing, commercial acceptance, canonical geometry,
 C8 production, a commercially deployable dependency path or dimensional truth. Future commercial
@@ -46,10 +53,16 @@ The complete machine-readable freeze is
   offline patch removes only the unused Hugging Face Hub mixin and makes debugging-only
   Matplotlib imports lazy; its SHA-256 is
   `59fa19e16050c117e1866bbd38fa6aa4ac92ef14a87683662ce0b1a059f37b38`.
+  Independent review binds its 41-file executable content at SHA-256
+  `58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a` before and
+  `77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88` after the patch.
 - Patched VGGT-SLAM-derived no-loop adapter: `MIT-SPARK/VGGT-SLAM` commit
   `35327ac28b7d193df9ccc39ba6346052bb6f1207`, BSD-2-Clause, patched only to make
   its declared no-loop mode genuinely headless and to remove eager optional dependencies. The
   patch SHA-256 is `2b2dcfc2cb9b6ad9783cfafd26f1110c662d110c12af36b7bc7c3a9735ab7805`.
+  Independent review binds its 11-file executable content at SHA-256
+  `c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820` before and
+  `ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7` after the patch.
 - SALAD, SAM 3, Perception Encoder, open-set object detection, Hugging Face Hub, Matplotlib,
   OpenCV, Gradio, Viser and Open3D are absent from the runtime. The hybrid retains sequential
   overlapping VGGT submaps, scale alignment and bounded GTSAM SL(4) optimisation; loop closure is
@@ -92,6 +105,16 @@ through an exact fail-closed metadata check and the separately hashed NVIDIA CUD
 licence; unnecessary runtime CUDA repository/metapackages were removed, and Ubuntu's broken
 OpenSSL copyright symlink was repaired to its installed `libssl3t64` evidence.
 
+The exact dependency evidence is mixed-version rather than a uniform CUDA 13.2 component claim:
+the container is CUDA 13.2.0 and Torch is `2.13.0+cu132`, while the frozen hash-required lock also
+contains `cuda-bindings==13.4.0b1`, `nvidia-cublas==13.4.0.1` and
+`nvidia-nvjitlink==13.4.46rc1`. The full lock and per-distribution licence records are
+authoritative. A supplemental mode-0600 review audit with auditor SHA-256
+`2efc8a849e7c9410d21bbcd5ad89c704d17ba3d053d7c234ed46acdc01724503` and record SHA-256
+`f39f2582ad12e13e95a20560033ce49120f5b77fb1c7ef897e3211771f41fabc` reverified both patched
+source manifests, all 43 Python distributions and 143 system packages, actual imports, GTSAM
+SL(4), compute capability 12.0 and absence of optional packages inside the exact counted image.
+
 ### Image-build recovery freeze
 
 The first adapter-correction rebuild missed its BuildKit dependency cache and, because it was
@@ -115,12 +138,15 @@ install rehearsal. The overlay path does not invoke APT, pip, a package index or
 ## Staged execution and stop rules
 
 Each candidate runs serially at 4, 16, 48 and at most 165 frames. Every stage has a fresh private
-output, immutable identity validation and a resumable sealed stage record. The runner is invoked
-through one explicit maximum stage at a time so 4, 16 and 48-frame evidence can be reviewed before
-the next gate. A failure, 45-minute timeout, invalid camera/point output, more than 14.5 GiB task
-VRAM, another frozen ceiling or clearly unusable quality stops that candidate. The 165-frame stage
-runs twice only if all smoke stages pass; each counted full run also performs a separate 164-frame
-reconstruction for the frozen last-frame held-out projection.
+output, immutable identity validation and a resumable sealed stage record. Reuse of a passing
+record requires exact candidate, image, registry, stage, run, result and artifact identities. The
+runner is invoked through one explicit maximum stage at a time so 4, 16 and 48-frame evidence can
+be reviewed before the next gate. A failure, 45-minute timeout, invalid camera/point output, more
+than 14.5 GiB of PyTorch allocated memory, another frozen ceiling or clearly unusable quality stops
+that candidate. `peakTaskVramBytes` is `torch.cuda.max_memory_allocated(0)`, not whole-process GPU
+memory; whole-process GPU memory is `NOT RUN`. The 165-frame stage runs twice only if all smoke
+stages pass; each counted full run also performs a separate 164-frame reconstruction for the
+frozen last-frame held-out projection.
 
 Each container is network-disabled, read-only-root, non-root, all capabilities dropped,
 no-new-privileges, GPU 0, 12 CPUs, 32 GiB memory, 512 PIDs, 2 GiB no-exec tmpfs, 16 GiB retained
@@ -131,8 +157,8 @@ and successful environment-audit hash are frozen in the ledger before the first 
 
 Direct and hybrid outputs are proposals. Comparison against the retained control records camera
 count and consistency, finite support, recognisability, room relationships, shell completeness,
-missing regions, leave-one-out coverage/PSNR where valid, runtime, host memory, task VRAM and
-retained bytes. A simple no-network private interactive comparison uses only private derived
+missing regions, leave-one-out coverage/PSNR where valid, runtime, host memory, reported GPU-memory
+fields and retained bytes. A simple no-network private interactive comparison uses only private derived
 assets. Qualitative findings are redacted before Git.
 
 Dimensional accuracy and representative accuracy are `NOT RUN`. No independent ground-truth
@@ -140,3 +166,20 @@ geometry exists. No segment join, canonical mutation, production routing, C8 sta
 promotion is permitted. Acceptance requires an honest stop/recommendation, focused regression
 coverage, proportionate repository and GPU verification, exact submitted commit evidence and one
 non-draft unmerged PR.
+
+## Independent review denominator and correction
+
+The counted denominator is eight passing scopes: direct and no-loop adapter at 4, 16 and 48 frames,
+plus two no-loop-adapter 165-frame passes. Direct 165-frame run 1/run 2 and its held-out result are
+`NOT RUN` after a manual unusable-quality stop at 48; the 13,825,697,280-byte allocator peak was
+below the frozen limit and did not itself cause the stop. Two earlier direct 4-frame evaluator
+attempts failed on BF16 LayerNorm and BF16-to-NumPy implementation boundaries before the counted
+matrix. They remain preserved pre-count implementation failures and are not candidate-quality
+failures or counted scopes.
+
+Independent review corrected source-context attestation, post-resolution private-path confinement
+and resumable-pass validation with focused regression coverage. It found no mismatch in the
+retained input, weight, source commits/trees, counted result/artifact hashes, two 165-frame passes,
+held-out metrics, control artifact, viewer or private qualitative record. No expensive matrix rerun
+is warranted. SALAD and upstream loop closure remain `NOT RUN`; no private artifact is published,
+and no dimensional, commercial, canonical, production or representative claim is introduced.

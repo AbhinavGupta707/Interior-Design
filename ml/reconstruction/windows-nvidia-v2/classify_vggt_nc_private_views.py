@@ -20,9 +20,7 @@ MODEL_FILES = {
     ),
     "tokenizer.json": "cb9140fae3ac5122c972d37adf83e1248471a38147ad76f8215c8872c6fd8322",
     "tokenizer.model": "61a7b147390c64585d6c3543dd6fc636906c9af3865a5548f27f31aee1d4c8e2",
-    "tokenizer_config.json": (
-        "14afe629fe4959b9e0d51e1852b8d9f7ad074f90a1a7125a4fcdd17f06e78fc8"
-    ),
+    "tokenizer_config.json": ("14afe629fe4959b9e0d51e1852b8d9f7ad074f90a1a7125a4fcdd17f06e78fc8"),
 }
 VIEWS = ("principal-a", "principal-b", "elevated")
 QUALITY_PROMPTS = (
@@ -47,10 +45,10 @@ def sha256_file(path: Path) -> str:
 
 
 def private_existing(path: Path, label: str) -> Path:
-    if not path.is_absolute() or not str(path).startswith("/home/") or not path.exists():
+    if not path.is_absolute() or path.is_symlink() or not path.exists():
         raise ValueError(f"{label} must exist on private WSL ext4")
     resolved = path.resolve()
-    if not str(resolved).startswith("/home/"):
+    if resolved == Path("/home") or not resolved.is_relative_to(Path("/home")):
         raise ValueError(f"{label} resolves outside private WSL ext4")
     return resolved
 
@@ -61,9 +59,9 @@ def model_root(path: Path) -> Path:
         raise ValueError("classifier model revision differs")
     for name, expected in MODEL_FILES.items():
         candidate = root / name
-        if not candidate.is_file() or sha256_file(candidate) != expected:
+        if candidate.is_symlink() or not candidate.is_file() or sha256_file(candidate) != expected:
             raise ValueError(f"classifier model file differs: {name}")
-        if not str(candidate.resolve()).startswith("/home/"):
+        if not candidate.resolve().is_relative_to(Path("/home")):
             raise ValueError("classifier model file resolves outside private WSL ext4")
     return root
 
@@ -131,9 +129,11 @@ def execute(args: argparse.Namespace) -> None:
     if output.parent.resolve() != parent or output.exists() or output.is_symlink():
         raise ValueError("output must be a fresh private file")
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
-    model = AutoModel.from_pretrained(
-        model_path, local_files_only=True, torch_dtype=torch.float16
-    ).to("cuda:0").eval()
+    model = (
+        AutoModel.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float16)
+        .to("cuda:0")
+        .eval()
+    )
     records: dict[str, Any] = {}
     for label, path in lanes(args.input).items():
         manifest, images = inspection(path)

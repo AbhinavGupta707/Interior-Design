@@ -2017,16 +2017,18 @@
   wheels must not be downloaded again because an ephemeral cache key was missed.
 - Counted design: resumable serial 4/16/48/165-frame stages with an explicit maximum-stage gate,
   two fresh full runs only after all smoke gates and their quality reviews,
-  final-frame leave-one-out on full stages, 45-minute per-stage timeout, 14.5 GiB task VRAM,
-  32 GiB RAM, 12 CPUs, 512 PIDs, 16 GiB retained scratch, 500,000 points, GPU 0, seed zero,
-  network none, read-only root, non-root, all capabilities dropped and no-new-privileges. Any
-  failed or over-ceiling stage stops that candidate.
+  final-frame leave-one-out on full stages, 45-minute per-stage timeout, 14.5 GiB PyTorch
+  allocated-memory ceiling (original field name `taskVram`; whole-process GPU memory was not
+  measured), 32 GiB RAM, 12 CPUs, 512 PIDs, 16 GiB retained scratch, 500,000 points, GPU 0, seed
+  zero, network none, read-only root, non-root, all capabilities dropped and no-new-privileges.
+  Any failed or over-ceiling stage stops that candidate.
 - Counted result: both candidates passed 4/16/48 validation. Direct VGGT stopped at 48 after using
-  13.826 GB task VRAM, reaching 9.842-degree median orientation disagreement and producing private
-  local heuristic evidence dominated by no recognisable room; its 165-frame and held-out rows are
-  `NOT RUN`. The patched VGGT-SLAM-derived no-loop adapter completed two deterministic 165-frame
-  passes at 10.849 GB task VRAM and about 51 seconds each with identical geometry/camera/held-out
-  hashes, but only 1.6551% held-out coverage and 5.205 dB full-frame PSNR. It is not accepted.
+  13.826 GB of PyTorch allocated memory, reaching 9.842-degree median orientation disagreement and
+  producing private local heuristic evidence dominated by no recognisable room; its 165-frame and
+  held-out rows are `NOT RUN`. The patched VGGT-SLAM-derived no-loop adapter completed two
+  deterministic 165-frame passes at 10.849 GB of PyTorch allocated memory and about 51 seconds
+  each with identical geometry/camera/held-out hashes, but only 1.6551% held-out coverage and 5.205
+  dB full-frame PSNR. It is not accepted.
 - Comparison/recommendation: the retained ARKit-prior dense COLMAP proposal remains the control.
   Direct and hybrid outputs remain quarantined non-commercial proposals with no dimensional,
   canonical or production authority. SALAD loop closure is `NOT RUN`; no inference is made about
@@ -2042,3 +2044,54 @@
   two exact hash-bound `.patch` build inputs, which are deliberately preserved because normalizing
   them would invalidate the counted image/audit identity. No migration, OpenAPI/generated client,
   product route, canonical operation, C8 production path, root manifest or lockfile changed.
+
+### Independent PR #18 review correction — 2026-08-31
+
+- Authority and state: one `gpt-5.6-sol` / `high` primary reviewed exact submitted head
+  `99ee61029ea30e0bfd06757ba7b57d1570b75b63` against exact base
+  `8c99e782eeea2265a9de892064737ac0a00d4b47` in the single authoritative checkout. Per the
+  user's review instruction, one bounded read-only `gpt-5.6-terra` / `high` reviewer reconciled
+  licence, contract and evidence. No separate task or worktree was created; Sol retained all
+  materiality, correction, verification, merge and cleanup authority.
+- Exact-chain correction: source commit/tree labels alone did not prove the files copied by mutable
+  Docker contexts. The reviewed build now verifies zero-fuzz pre-/post-patch content manifests:
+  VGGT-SPARK 41 files at `58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a`
+  / `77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88`, and VGGT-SLAM 11 files
+  at `c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820` /
+  `ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7`. A supplemental
+  mode-0600 exact-image audit reverified those patched trees, 43 Python distributions, 143 system
+  packages, actual imports, GTSAM SL(4), compute capability 12.0 and the empty prohibited-package
+  set; auditor SHA-256 is `2efc8a849e7c9410d21bbcd5ad89c704d17ba3d053d7c234ed46acdc01724503`
+  and private record SHA-256 is
+  `f39f2582ad12e13e95a20560033ce49120f5b77fb1c7ef897e3211771f41fabc`.
+  The counted registry remains bound at
+  `7156c92556903bcc70a8ac9b0072e2dbb27c5e99020588bb117968288947c4da`; the reviewed metadata
+  registry is `e01cccbe2f3c40f371b308c51aa06a51c14d89c750acb24a45301896c753cfb3`, and the reviewed
+  contract is `dea622fe5262806f176bbbb3d8c6ee8013f0134d6aa49b87ce8cfa8b1866322f`.
+- Dependency truth: the hash-required 42-entry lock produced 43 installed distributions including
+  pip. The CUDA 13.2.0 container and Torch `2.13.0+cu132` coexist with exact mixed entries including
+  `cuda-bindings==13.4.0b1`, `nvidia-cublas==13.4.0.1` and
+  `nvidia-nvjitlink==13.4.46rc1`; the exact lock and per-distribution licence records are
+  authoritative, not a uniform CUDA 13.2 component claim.
+- Denominator and failures: the counted denominator is 8/8 passing scopes—both candidates at
+  4/16/48 plus two 165-frame no-loop-adapter passes. Direct's two full runs and held-out row are
+  `NOT RUN` after an unusable-quality stop at 48. Two earlier direct 4-frame attempts failed on
+  BF16 evaluator boundaries before counting and remain preserved historical implementation
+  failures. The 13,825,697,280-byte direct and 10,848,740,864-byte hybrid peaks are PyTorch
+  allocated-memory observations; whole-process GPU memory is `NOT RUN`, and direct did not exceed
+  the 14.5 GiB allocator limit.
+- Evidence reconciliation: the input manifest, exact weight/model-card/config files, sealed
+  control PLY, four matrix summaries, both hybrid full result/artifact sets, held-out metrics,
+  viewer and local-classifier record all rehashed to their documented identities. The retained
+  recommendation is supported; no expensive 165-frame rerun is warranted. SALAD and upstream
+  loop closure were not evaluated. No private pixel, weight, path, identifier, geometry, render,
+  log or unredacted result is published, and no dimensional, commercial, canonical, production or
+  representative claim is introduced.
+- Runtime corrections: private inputs are confined after path resolution; new output roots are
+  confined before creation; and resumable passing records now revalidate candidate, image,
+  registry, stage, run, result and artifact identity. The exact sealed-image regression passed
+  19/19, package-manifest integrity passed 4/4, and the supplemental source/runtime audit passed.
+  Complete `UV_CACHE_DIR=.cache/uv corepack pnpm verify` passed Prettier, 24/24 lint, 24/24
+  typecheck, 45/45 JavaScript unit task groups, 24/24 builds, Ruff, strict mypy over 131 Python
+  sources and pytest 157 passed / two honest unavailable COLMAP/Open3D capability skips. All four
+  named GitHub checks remain required on the exact corrected PR head before normal merge.

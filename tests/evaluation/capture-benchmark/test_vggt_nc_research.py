@@ -32,6 +32,15 @@ def load_runner(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     return module
 
 
+def load_package_module(name: str, monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    monkeypatch.syspath_prepend(str(PACKAGE))
+    spec = importlib.util.spec_from_file_location(name, PACKAGE / f"{name}.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_registry_freezes_only_two_noncommercial_executables() -> None:
     value = json.loads((PACKAGE / "c14-10-vggt-nc-research-candidates.json").read_bytes())
     executable = {
@@ -61,13 +70,9 @@ def test_registry_freezes_only_two_noncommercial_executables() -> None:
         )
         assert candidate["executionState"] == "outside-bounded-scope"
         assert candidate["unresolvedConditions"]
-    da3_large = next(
-        item for item in value["candidates"] if item["candidateId"] == "da3-large-1.1"
-    )
+    da3_large = next(item for item in value["candidates"] if item["candidateId"] == "da3-large-1.1")
     assert da3_large["executionState"].startswith("outside-bounded-scope")
-    omega = next(
-        item for item in value["candidates"] if item["candidateId"] == "vggt-omega-1.4b"
-    )
+    omega = next(item for item in value["candidates"] if item["candidateId"] == "vggt-omega-1.4b")
     assert omega["executionState"] == "abstained"
     assert "LICENCE_USE_IMPLIES_UNAUTHORISED_TERMS_ACCEPTANCE" in omega["blockedReasons"]
     hybrid = next(
@@ -79,6 +84,12 @@ def test_registry_freezes_only_two_noncommercial_executables() -> None:
         item for item in value["candidates"] if item["candidateId"] == "vggt-1b-nc-direct"
     )
     assert direct["code"]["tree"] == "09959d2ea242d7a52ab37e1d1ad79dce9b7248a6"
+    assert direct["code"]["sourceContentSha256"] == (
+        "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a"
+    )
+    assert direct["code"]["patchedSourceContentSha256"] == (
+        "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88"
+    )
     assert direct["weight"]["licenceId"] == "CC-BY-NC-4.0"
     assert value["dependencyChain"]["auditResult"].startswith("PASS_OFFLINE_IMAGE")
     assert value["executionFreeze"]["imageId"] == (
@@ -149,10 +160,31 @@ def test_environment_audit_limits_cuda_metapackage_exception() -> None:
     assert 'distribution.version != "13.2.1"' in source
     assert 'expected_prefix = "cuda_toolkit-13.2.1.dist-info/"' in source
     assert "zero-code-metapackage" in source
-    assert (
-        '"/opt/c14-10-vggt/vggt_nc_capture.py"' in source
-    )
+    assert '"/opt/c14-10-vggt/vggt_nc_capture.py"' in source
     assert "a81ded95615441e2bde6e7a01a09e3267b8a97d939ae142ca6ee1af10c4b06ec" in source
+    assert '"auditorSha256": sha256_file(Path(__file__))' in source
+
+
+def test_environment_audit_verifies_source_content_before_and_after_patch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = load_package_module("audit_vggt_nc_environment", monkeypatch)
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "alpha.py").write_bytes(b"alpha\n")
+    (tmp_path / "nested" / "beta.py").write_bytes(b"beta\n")
+    first = module.source_tree_sha256(tmp_path)
+    assert first[1] == 2
+    assert module.source_tree_sha256(tmp_path) == first
+    (tmp_path / "nested" / "beta.py").write_bytes(b"changed\n")
+    assert module.source_tree_sha256(tmp_path)[0] != first[0]
+    (tmp_path / "unsafe").symlink_to(tmp_path / "alpha.py")
+    with pytest.raises(RuntimeError, match="non-regular"):
+        module.source_tree_sha256(tmp_path)
+
+    dockerfile = (PACKAGE / "Dockerfile.vggt-nc").read_text()
+    assert "--verify-source-trees unpatched" in dockerfile
+    assert "--verify-source-trees patched" in dockerfile
+    assert "patch --batch --forward --fuzz=0" in dockerfile
 
 
 def test_private_classifier_is_exact_offline_and_non_authoritative() -> None:
@@ -291,21 +323,52 @@ def test_runner_refuses_stage_records_from_another_freeze(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     module = load_runner(monkeypatch)
-    matching = {"imageId": "sha256:image", "registrySha256": "registry"}
-    module.validate_resumable_record(matching, "sha256:image", "registry")
-    with pytest.raises(ValueError, match="identity differs"):
-        module.validate_resumable_record(matching, "sha256:other", "registry")
-    with pytest.raises(ValueError, match="identity differs"):
-        module.validate_resumable_record(matching, "sha256:image", "other")
+    matching = {
+        "candidateId": "candidate",
+        "imageId": "sha256:image",
+        "registrySha256": "registry",
+        "runIndex": 1,
+        "stageFrameCount": 48,
+    }
+    arguments = ("sha256:image", "registry", "candidate", 48, 1)
+    module.validate_resumable_record(matching, *arguments)
+    for index, replacement in enumerate(("sha256:other", "other", "other-candidate", 16, 2)):
+        changed = list(arguments)
+        changed[index] = replacement
+        with pytest.raises(ValueError, match="identity differs"):
+            module.validate_resumable_record(matching, *changed)
+
+
+def test_private_tool_paths_reject_lexical_traversal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "run_vggt_nc_research",
+        "build_vggt_nc_private_viewer",
+        "classify_vggt_nc_private_views",
+    ):
+        module = load_package_module(name, monkeypatch)
+        for unsafe in (Path("/home"), Path("/home/../tmp")):
+            with pytest.raises(ValueError, match="private WSL ext4|outside private WSL ext4"):
+                module.private_existing(unsafe, "proof")
+    runner = load_runner(monkeypatch)
+    for unsafe in (Path("/home"), Path("/home/../tmp")):
+        with pytest.raises(ValueError, match="private WSL ext4"):
+            runner.resumable_root(unsafe)
 
 
 def test_runner_reopens_the_same_safe_root_for_later_gates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     module = load_runner(monkeypatch)
-    existing = module.resumable_root(tmp_path)
-    assert existing == tmp_path
-    fresh = module.resumable_root(tmp_path / "fresh")
+    private_root = tmp_path / "home"
+    private_root.mkdir()
+    existing_root = private_root / "existing"
+    existing_root.mkdir()
+    monkeypatch.setattr(module, "PRIVATE_ROOT", private_root)
+    existing = module.resumable_root(existing_root)
+    assert existing == existing_root
+    fresh = module.resumable_root(private_root / "fresh")
     assert fresh.is_dir()
     assert module.resumable_root(fresh) == fresh
 
@@ -365,6 +428,19 @@ def test_runner_independently_validates_candidate_result_artifacts(
         },
     }
     assert module.validate_candidate_result(**arguments)
+    result_path = tmp_path / "candidate-result.json"
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+    record = {"resultSha256": module.sha256_file(result_path)}
+    resume_arguments = {key: value for key, value in arguments.items() if key != "result"}
+    module.validate_resumable_pass(record=record, **resume_arguments)
+
+    result["candidateId"] = "different-candidate"
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+    record["resultSha256"] = module.sha256_file(result_path)
+    with pytest.raises(ValueError, match="differs from its sealed stage"):
+        module.validate_resumable_pass(record=record, **resume_arguments)
+    result["candidateId"] = "vggt-1b-nc-direct"
+
     result["cameraConsistency"] = {"positionRmse": float("nan")}
     assert not module.validate_candidate_result(**arguments)
     del result["cameraConsistency"]

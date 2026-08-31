@@ -7,7 +7,10 @@
         "licenceId": "CC-BY-NC-4.0",
         "licenceSha256": "1d8ca66080a2701508a70be4ddad4be28c509bcc3397a682fb8edf767fdd7a00",
         "offlinePatchSha256": "59fa19e16050c117e1866bbd38fa6aa4ac92ef14a87683662ce0b1a059f37b38",
+        "patchedSourceContentSha256": "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88",
         "repository": "https://github.com/MIT-SPARK/VGGT_SPARK.git",
+        "sourceContentSha256": "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a",
+        "sourceFileCount": 41,
         "tree": "09959d2ea242d7a52ab37e1d1ad79dce9b7248a6"
       },
       "executionState": "viable-non-commercial-research-only",
@@ -30,14 +33,20 @@
         "licenceId": "BSD-2-Clause",
         "licenceSha256": "dc493d7ac51f587fd71184315999c792ead523bf46da0f0cbf3e26a577b1a580",
         "headlessPatchSha256": "2b2dcfc2cb9b6ad9783cfafd26f1110c662d110c12af36b7bc7c3a9735ab7805",
+        "patchedSourceContentSha256": "ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7",
         "repository": "https://github.com/MIT-SPARK/VGGT-SLAM.git",
+        "sourceContentSha256": "c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820",
+        "sourceFileCount": 11,
         "tree": "3c489c4015bccd08d2e03e2e5b9c6c3bca383301",
         "vggtFork": {
           "commit": "6e6e16107b88e8e76c751826af10d4295d87ecd2",
           "licenceId": "CC-BY-NC-4.0",
           "licenceSha256": "1d8ca66080a2701508a70be4ddad4be28c509bcc3397a682fb8edf767fdd7a00",
           "offlinePatchSha256": "59fa19e16050c117e1866bbd38fa6aa4ac92ef14a87683662ce0b1a059f37b38",
+          "patchedSourceContentSha256": "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88",
           "repository": "https://github.com/MIT-SPARK/VGGT_SPARK.git",
+          "sourceContentSha256": "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a",
+          "sourceFileCount": 41,
           "tree": "09959d2ea242d7a52ab37e1d1ad79dce9b7248a6"
         }
       },
@@ -175,6 +184,17 @@
   ],
   "dependencyChain": {
     "auditResult": "PASS_OFFLINE_IMAGE_IMPORT_LICENCE_SECURITY_AND_BLACKWELL_AUDIT",
+    "cudaComponentReality": {
+      "container": "nvidia/cuda:13.2.0-runtime-ubuntu24.04",
+      "exactMixedLockEntries": [
+        "cuda-bindings==13.4.0b1",
+        "nvidia-cublas==13.4.0.1",
+        "nvidia-nvjitlink==13.4.46rc1"
+      ],
+      "statement": "the exact hash-required lock and per-distribution licence evidence are authoritative; this is not a uniform CUDA 13.2 component stack claim",
+      "torch": "2.13.0+cu132"
+    },
+    "environmentDistributionCount": 43,
     "knownVulnerabilityCount": 0,
     "lockSha256": "0c1637c560d74c160da07572d77dc5a018565d88617a9a2d93e1e737e373e1ff",
     "packageCount": 42,
@@ -207,13 +227,17 @@
     "memoryLimitBytes": 34359738368,
     "network": "none",
     "pidLimit": 512,
+    "reviewAuditorSha256": "2efc8a849e7c9410d21bbcd5ad89c704d17ba3d053d7c234ed46acdc01724503",
+    "reviewSourceAuditSha256": "f39f2582ad12e13e95a20560033ce49120f5b77fb1c7ef897e3211771f41fabc",
     "runCount": 2,
     "scratchLimitBytes": 17179869184,
     "segmentId": "fbb6cd55-bd85-4628-ab9e-12171d7ddb1d",
     "selectionSha256": "5e90939980de540ef01b45918b06058b10ecf1b57320d6d1b60ba409df183ae3",
     "stageTimeoutSeconds": 2700,
     "submapSize": 16,
-    "taskVramLimitBytes": 15569256448
+    "taskVramLimitBytes": 15569256448,
+    "taskVramMeasurementBasis": "torch.cuda.max_memory_allocated(0)-allocated-bytes-not-whole-process-gpu-memory",
+    "wholeProcessGpuMemory": "NOT RUN"
   },
   "quarantine": {
     "canonicalGeometry": "prohibited",
