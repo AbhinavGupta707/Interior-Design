@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1.7
+ARG SEALED_BASE_IMAGE=c14-10-vggt-nc:research-20260830
+FROM ${SEALED_BASE_IMAGE}
+
+ARG SEALED_BASE_IMAGE_ID
+ARG ADAPTER_SHA256
+LABEL io.interior-design.c14-10.overlay-base-image="${SEALED_BASE_IMAGE_ID}" \
+      io.interior-design.c14-10.overlay-adapter-sha256="${ADAPTER_SHA256}"
+
+USER 0:0
+COPY --chmod=0444 ml/reconstruction/windows-nvidia-v2/audit_vggt_nc_environment.py \
+    /opt/c14-10-vggt/audit_vggt_nc_environment.py
+COPY --chmod=0444 ml/reconstruction/windows-nvidia-v2/vggt_nc_capture.py \
+    /opt/c14-10-vggt/vggt_nc_capture.py
+USER 65532:65532
+WORKDIR /c14/work
+ENTRYPOINT ["python", "/opt/c14-10-vggt/vggt_nc_capture.py"]

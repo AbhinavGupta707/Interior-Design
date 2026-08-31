@@ -1,0 +1,156 @@
+diff --git a/vggt_slam/graph.py b/vggt_slam/graph.py
+index 2a7cd67..6a962c9 100644
+--- a/vggt_slam/graph.py
++++ b/vggt_slam/graph.py
+@@ -1,10 +1,6 @@
+ import gtsam
+ import numpy as np
+-import matplotlib.pyplot as plt
+-import matplotlib.cm as cm
+-import matplotlib.colors as mcolors
+ import numpy as np
+-from mpl_toolkits.mplot3d import Axes3D
+ from gtsam import NonlinearFactorGraph, Values, noiseModel
+ from gtsam import SL4, PriorFactorSL4, BetweenFactorSL4
+ from gtsam.symbol_shorthand import X
+diff --git a/vggt_slam/map.py b/vggt_slam/map.py
+index f0fdf85..c99a7f1 100644
+--- a/vggt_slam/map.py
++++ b/vggt_slam/map.py
+@@ -1,9 +1,7 @@
+ import os
+ import numpy as np
+ import torch
+-import open3d as o3d
+ from scipy.spatial.transform import Rotation as R
+-import matplotlib.pyplot as plt
+ from vggt_slam.slam_utils import decompose_camera, cosine_similarity
+ 
+ class GraphMap:
+diff --git a/vggt_slam/scale_solver.py b/vggt_slam/scale_solver.py
+index 78cf539..bef5b6e 100644
+--- a/vggt_slam/scale_solver.py
++++ b/vggt_slam/scale_solver.py
+@@ -1,7 +1,7 @@
+ import numpy as np
+-import open3d as o3d
+ 
+ def debug_visualize(pcd1_points, pcd2_points):
++    import open3d as o3d
+     pcd1 = o3d.geometry.PointCloud()
+     pcd1.points = o3d.utility.Vector3dVector(pcd1_points)
+     pcd1.paint_uniform_color([1, 0, 0])  # red
+diff --git a/vggt_slam/slam_utils.py b/vggt_slam/slam_utils.py
+index 90a1a36..0de5b55 100644
+--- a/vggt_slam/slam_utils.py
++++ b/vggt_slam/slam_utils.py
+@@ -1,11 +1,9 @@
+ import os
+ import re
+ import numpy as np
+-import matplotlib
+ import scipy
+ import time
+ from PIL import Image
+-from torchvision import transforms as TF
+ import torch
+ 
+ 
+@@ -176,6 +174,7 @@ def compute_obb_from_points(points: np.ndarray):
+     return center_world, extent, rotation
+ 
+ def overlay_masks(image, masks):
++    import matplotlib
+     image = image.convert("RGBA")
+ 
+     # masks: (N, 1, H, W) or (N, H, W)
+diff --git a/vggt_slam/solver.py b/vggt_slam/solver.py
+index f5cb070..5d8cd87 100644
+--- a/vggt_slam/solver.py
++++ b/vggt_slam/solver.py
+@@ -1,25 +1,17 @@
+ import numpy as np
+-import cv2
+-import gtsam
+-import matplotlib.pyplot as plt
+ import torch
+ import time
+-import open3d as o3d
+ from termcolor import colored
+-from scipy.linalg import rq
+ 
+ from vggt.utils.geometry import closed_form_inverse_se3, unproject_depth_map_to_point_map
+ from vggt.utils.pose_enc import pose_encoding_to_extri_intri
+ from vggt.utils.load_fn import load_and_preprocess_images
+ 
+ from vggt_slam.slam_utils import compute_image_embeddings, Accumulator
+-from vggt_slam.loop_closure import ImageRetrieval
+-from vggt_slam.frame_overlap import FrameTracker
+ from vggt_slam.map import GraphMap
+ from vggt_slam.submap import Submap
+ from vggt_slam.graph import PoseGraph
+ from vggt_slam.scale_solver import estimate_scale_pairwise
+-from vggt_slam.viewer import Viewer
+ 
+ DEBUG = False
+ 
+@@ -45,13 +37,11 @@ class Solver:
+         self.vis_voxel_size = vis_voxel_size
+         self.vis_imgs = vis_imgs
+ 
+-        self.viewer = Viewer()
+-
+-        self.flow_tracker = FrameTracker()
++        self.viewer = None
+         self.map = GraphMap()
+         self.graph = PoseGraph()
+ 
+-        self.image_retrieval = ImageRetrieval()
++        self.image_retrieval = None
+         self.current_working_submap = None
+ 
+         self.lc_thres = lc_thres
+@@ -62,6 +52,8 @@ class Solver:
+         self.clip_timer = Accumulator()
+ 
+     def set_point_cloud(self, points_in_world_frame, points_colors, name, point_size):
++        if self.viewer is None:
++            raise RuntimeError("viewer is disabled in the bounded research adapter")
+         if self.vis_voxel_size is not None:
+             pcd = o3d.geometry.PointCloud()
+             pcd.points = o3d.utility.Vector3dVector(points_in_world_frame.astype(np.float64))
+@@ -320,7 +312,8 @@ class Solver:
+         new_submap.add_all_frames(images)
+         new_submap.set_frame_ids(image_names)
+         new_submap.set_last_non_loop_frame_index(images.shape[0] - 1)
+-        new_submap.set_all_retrieval_vectors(self.image_retrieval.get_all_submap_embeddings(new_submap))
++        if max_loops != 0:
++            raise ValueError("the bounded research adapter requires max_loops=0")
+         new_submap.set_img_names(image_names)
+ 
+         with self.clip_timer:
+@@ -339,8 +332,7 @@ class Solver:
+ 
+         # Check for loop closures and add retrieval vectors from new submap to the database
+         predictions_lc = None
+-        with self.loop_closure_timer:
+-            detected_loops = self.image_retrieval.find_loop_closures(self.map, new_submap, max_loop_closures=max_loops, max_similarity_thres=self.lc_thres)
++        detected_loops = []
+         loop_closure_frame_names = []
+         if len(detected_loops) > 0:
+             print(colored("detected_loops", "yellow"), detected_loops)
+diff --git a/vggt_slam/submap.py b/vggt_slam/submap.py
+index 9989c89..37b2507 100644
+--- a/vggt_slam/submap.py
++++ b/vggt_slam/submap.py
+@@ -1,10 +1,7 @@
+ import re
+ import os
+-import cv2
+ import torch
+ import numpy as np
+-import scipy
+-import open3d as o3d
+ from vggt_slam.slam_utils import decompose_camera
+ 
+ class Submap:

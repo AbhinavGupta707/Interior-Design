@@ -1,0 +1,250 @@
+{
+  "candidates": [
+    {
+      "candidateId": "vggt-1b-nc-direct",
+      "code": {
+        "commit": "6e6e16107b88e8e76c751826af10d4295d87ecd2",
+        "licenceId": "CC-BY-NC-4.0",
+        "licenceSha256": "1d8ca66080a2701508a70be4ddad4be28c509bcc3397a682fb8edf767fdd7a00",
+        "offlinePatchSha256": "59fa19e16050c117e1866bbd38fa6aa4ac92ef14a87683662ce0b1a059f37b38",
+        "patchedSourceContentSha256": "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88",
+        "repository": "https://github.com/MIT-SPARK/VGGT_SPARK.git",
+        "sourceContentSha256": "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a",
+        "sourceFileCount": 41,
+        "tree": "09959d2ea242d7a52ab37e1d1ad79dce9b7248a6"
+      },
+      "executionState": "viable-non-commercial-research-only",
+      "role": "direct-proposal-only-cameras-depth-point-cloud",
+      "weight": {
+        "file": "model.safetensors",
+        "licenceId": "CC-BY-NC-4.0",
+        "modelCardSha256": "d666ecaba89db88cb66bf06db6daddfdc2400e13f2a39e39c84e888b27fbc615",
+        "modelConfigSha256": "a73e929a168b900546a84fe88cd70dfaaf2f8e39cf77355b12984eaa686f3855",
+        "repository": "facebook/VGGT-1B",
+        "revision": "860abec7937da0a4c03c41d3c269c366e82abdf9",
+        "sha256": "f164acf60724910d8fe1578bb499d800850c7bb0948db7555c413f9fbe60467e",
+        "sizeBytes": 5026367224
+      }
+    },
+    {
+      "candidateId": "vggt-slam-2-nc-no-loop",
+      "code": {
+        "commit": "35327ac28b7d193df9ccc39ba6346052bb6f1207",
+        "licenceId": "BSD-2-Clause",
+        "licenceSha256": "dc493d7ac51f587fd71184315999c792ead523bf46da0f0cbf3e26a577b1a580",
+        "headlessPatchSha256": "2b2dcfc2cb9b6ad9783cfafd26f1110c662d110c12af36b7bc7c3a9735ab7805",
+        "patchedSourceContentSha256": "ef078b9e30e5e744a6b0fc2c2af0d96672654ca87201400ace811f9fb6ddffb7",
+        "repository": "https://github.com/MIT-SPARK/VGGT-SLAM.git",
+        "sourceContentSha256": "c8fc9cf37a097f8c78d68a398fe383943f7acaf9daf83e6ba880c2d49ee62820",
+        "sourceFileCount": 11,
+        "tree": "3c489c4015bccd08d2e03e2e5b9c6c3bca383301",
+        "vggtFork": {
+          "commit": "6e6e16107b88e8e76c751826af10d4295d87ecd2",
+          "licenceId": "CC-BY-NC-4.0",
+          "licenceSha256": "1d8ca66080a2701508a70be4ddad4be28c509bcc3397a682fb8edf767fdd7a00",
+          "offlinePatchSha256": "59fa19e16050c117e1866bbd38fa6aa4ac92ef14a87683662ce0b1a059f37b38",
+          "patchedSourceContentSha256": "77abed7ccbef4d47a79026f98e9a8f26a951939bafada26ea0ddb6d916018b88",
+          "repository": "https://github.com/MIT-SPARK/VGGT_SPARK.git",
+          "sourceContentSha256": "58553c36591da1db87c1def2125c65f615193a86da2ce4f31bcbda8ec6d0434a",
+          "sourceFileCount": 41,
+          "tree": "09959d2ea242d7a52ab37e1d1ad79dce9b7248a6"
+        }
+      },
+      "executionState": "viable-non-commercial-research-only",
+      "excludedOptionalChains": [
+        "SALAD",
+        "SAM-3",
+        "Perception-Encoder",
+        "open-set-object-detection"
+      ],
+      "loopClosureEvaluation": "NOT RUN: SALAD checkpoint/security/dependency chain deliberately excluded",
+      "role": "patched-vggt-slam-derived-no-loop-adapter-with-sequential-vggt-submaps-plus-bounded-gtsam-sl4-optimisation",
+      "upstreamPerformanceClaim": "none: this does not evaluate upstream VGGT-SLAM 2.0 loop-closure performance",
+      "weightRef": "vggt-1b-nc-direct"
+    },
+    {
+      "candidateId": "vggt-omega-1.4b",
+      "code": {
+        "commit": "282ec70363edeff59424bf43731658092fba3d37",
+        "licenceId": "FAIR-Noncommercial-Research-License-v1",
+        "licenceSha256": "27696e51930daf5d24222e2d9d65339f529153e853de0e2eb457133a1a6f5239",
+        "repository": "https://github.com/facebookresearch/vggt-omega.git"
+      },
+      "executionState": "abstained",
+      "blockedReasons": [
+        "GATED_WEIGHT_ACCESS",
+        "LICENCE_USE_IMPLIES_UNAUTHORISED_TERMS_ACCEPTANCE",
+        "BOUND_TWO_CANDIDATE_CHECKPOINT"
+      ],
+      "termsReauditedOn": "2026-08-30"
+    },
+    {
+      "candidateId": "mast3r-vitlarge-512",
+      "code": {
+        "commit": "f5209afc300cec36239a7ac992263f36847bbba0",
+        "licenceId": "CC-BY-NC-SA-4.0",
+        "licenceSha256": "949b1a3b437ed0b38ce51dae24babcca3395c9adae55163311ba84d44766b8ec",
+        "repository": "https://github.com/naver/mast3r.git",
+        "submodules": { "dust3r": "3cc8c88c413bb9e34c41db0e0eef99c2ee010b12" }
+      },
+      "executionState": "outside-bounded-scope",
+      "scopeReasons": ["BOUND_TWO_CANDIDATE_CHECKPOINT"],
+      "unresolvedConditions": ["TRAINING_DATASET_TERMS_REQUIRE_SEPARATE_CHAIN_REVIEW"],
+      "termsReauditedOn": "2026-08-30"
+    },
+    {
+      "candidateId": "dust3r-vitlarge-512",
+      "code": {
+        "commit": "4c24a6ebf04809f2cfe59915e51779c8984aaa40",
+        "licenceId": "CC-BY-NC-SA-4.0",
+        "licenceSha256": "f06b394a6b4804e68c4f8ff4298aec5cc981fba8934fc56525c91cc64a7d1d58",
+        "repository": "https://github.com/naver/dust3r.git"
+      },
+      "executionState": "outside-bounded-scope",
+      "scopeReasons": ["BOUND_TWO_CANDIDATE_CHECKPOINT"],
+      "unresolvedConditions": [
+        "TRAINING_DATASET_AND_BASE_CHECKPOINT_TERMS_REQUIRE_SEPARATE_CHAIN_REVIEW"
+      ],
+      "termsReauditedOn": "2026-08-30"
+    },
+    {
+      "candidateId": "da3-large-1.1",
+      "code": {
+        "commit": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+        "licenceId": "Apache-2.0-code-CC-BY-NC-4.0-weight",
+        "licenceSha256": "78446e29c48900cda82620a8df183cca61f0a595e05a49d0401a5fd604dd1870",
+        "repository": "https://github.com/ByteDance-Seed/Depth-Anything-3.git"
+      },
+      "executionState": "outside-bounded-scope-existing-quarantined-evidence-only",
+      "scopeReasons": [
+        "PREVIOUS_OUTPUT_NOT_ACCEPTED_AFTER_METADATA_CONFLICT",
+        "BOUND_TWO_CANDIDATE_CHECKPOINT"
+      ],
+      "termsFinding": "CURRENT_OFFICIAL_REGISTRY_CONFIRMS_CC_BY_NC_WEIGHT; NONCOMMERCIAL_STATUS_ALONE_DOES_NOT_BLOCK_PRIVATE_RESEARCH",
+      "termsReauditedOn": "2026-08-30",
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "depth-anything/DA3-LARGE-1.1",
+        "revision": "0e109ae307c5982f319a67cf6f9f99ccdc0ec97c",
+        "sha256": "739905c423cf0d6ccaf9e61a8401d82ba1ac32d7f4d3ee6dca8f92b377633f64",
+        "sizeBytes": 1643843860
+      }
+    },
+    {
+      "candidateId": "da3-small",
+      "code": {
+        "commit": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+        "licenceId": "Apache-2.0",
+        "licenceSha256": "78446e29c48900cda82620a8df183cca61f0a595e05a49d0401a5fd604dd1870",
+        "repository": "https://github.com/ByteDance-Seed/Depth-Anything-3.git"
+      },
+      "executionState": "retained-learned-control-not-rerun",
+      "blockedReasons": [
+        "ALREADY_EVALUATED_ON_RETAINED_165_FRAME_INPUT",
+        "NO_MATERIAL_IMPROVEMENT"
+      ],
+      "termsReauditedOn": "2026-08-30",
+      "weight": {
+        "file": "model.safetensors",
+        "repository": "depth-anything/DA3-SMALL",
+        "revision": "e08cab65ca0ec38e7826075418411ab90cab4da3",
+        "sha256": "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf",
+        "sizeBytes": 137248940
+      }
+    },
+    {
+      "candidateId": "cut3r",
+      "code": {
+        "commit": "8bc15dc92a6d7fd92920b4ec81540d3dec7d3ecf",
+        "licenceId": "CC-BY-NC-SA-4.0",
+        "licenceSha256": "53d192987577d0e455a15ea2562195d0fce05b29fa0e4a7a347b1c2b4dc4cd52",
+        "repository": "https://github.com/CUT3R/CUT3R.git"
+      },
+      "executionState": "outside-bounded-scope",
+      "scopeReasons": ["BOUND_TWO_CANDIDATE_CHECKPOINT", "REDUNDANT_CONTINUOUS_VIDEO_ROLE"],
+      "termsReauditedOn": "2026-08-30"
+    },
+    {
+      "candidateId": "slam3r",
+      "code": {
+        "commit": "f531d841ab743217a4464344119a350eb0556d17",
+        "licenceId": "CC-BY-NC-SA-4.0",
+        "licenceSha256": "e0130dc1bf7451593ac645d9e58697d27278035791c644c162e874dc90edc8c7",
+        "repository": "https://github.com/PKU-VCL-3DV/SLAM3R.git"
+      },
+      "executionState": "outside-bounded-scope",
+      "scopeReasons": ["BOUND_TWO_CANDIDATE_CHECKPOINT", "REDUNDANT_CONTINUOUS_VIDEO_ROLE"],
+      "termsReauditedOn": "2026-08-30"
+    },
+    {
+      "candidateId": "vggt-1b-commercial",
+      "executionState": "prohibited-by-checkpoint",
+      "blockedReasons": ["GATED_WEIGHT", "CONTACT_OR_TERMS_ACTION_PROHIBITED"]
+    }
+  ],
+  "dependencyChain": {
+    "auditResult": "PASS_OFFLINE_IMAGE_IMPORT_LICENCE_SECURITY_AND_BLACKWELL_AUDIT",
+    "cudaComponentReality": {
+      "container": "nvidia/cuda:13.2.0-runtime-ubuntu24.04",
+      "exactMixedLockEntries": [
+        "cuda-bindings==13.4.0b1",
+        "nvidia-cublas==13.4.0.1",
+        "nvidia-nvjitlink==13.4.46rc1"
+      ],
+      "statement": "the exact hash-required lock and per-distribution licence evidence are authoritative; this is not a uniform CUDA 13.2 component stack claim",
+      "torch": "2.13.0+cu132"
+    },
+    "environmentDistributionCount": 43,
+    "knownVulnerabilityCount": 0,
+    "lockSha256": "0c1637c560d74c160da07572d77dc5a018565d88617a9a2d93e1e737e373e1ff",
+    "packageCount": 42,
+    "pypiAuditExceptions": ["torch==2.13.0+cu132", "torchvision==0.28.0+cu132"],
+    "requirements": "requirements-vggt-nc.lock"
+  },
+  "auditedButNotUsedSource": {
+    "commit": "a288dd0f14786c93483e45524328726ab7b1b4ce",
+    "licenceId": "VGGT-License-v1",
+    "licenceSha256": "b94e46746792d1adfa0ebdbccada5d4576d244ae230be9de8a46b5868fff001b",
+    "reason": "frozen-original-vggt-implementation-selected-without-expanding-the-source-chain",
+    "repository": "https://github.com/facebookresearch/vggt.git"
+  },
+  "executionFreeze": {
+    "buildRecovery": {
+      "completeRebuildState": "PROHIBITED_UNTIL_PRIVATE_WHEELHOUSE_AND_PERSISTENT_BUILDKIT_CACHE_PASS_OFFLINE_REHEARSAL",
+      "countedCorrection": "OFFLINE_ADAPTER_AND_AUDITOR_ONLY_OVERLAY_ON_EXACT_SEALED_BASE",
+      "repeatedVerifiedWheelDownloads": "PROHIBITED",
+      "wheelhouseInstallMode": "pip --no-index --find-links"
+    },
+    "cpuLimit": 12,
+    "directStageFrames": [4, 16, 48, 165],
+    "environmentAuditSha256": "3b3506010c2f0774efe48d3085bd991291b7c5867faf7afd68e4fcbbf11184c0",
+    "gpu": 0,
+    "heldOutPolicy": "last-frame-leave-one-out-after-full-pass",
+    "hybridStageFrames": [4, 16, 48, 165],
+    "imageId": "sha256:3f8eeb4923eeb559dcaef4074125403411aabaac5f83f4f1ac6f6888966a6d8e",
+    "inputManifestSha256": "04e6b1b0802508e5019c5b500d0d2f49fa331a6c6804ee686e1ecbee929ca46e",
+    "maxPoints": 500000,
+    "memoryLimitBytes": 34359738368,
+    "network": "none",
+    "pidLimit": 512,
+    "reviewAuditorSha256": "2efc8a849e7c9410d21bbcd5ad89c704d17ba3d053d7c234ed46acdc01724503",
+    "reviewSourceAuditSha256": "f39f2582ad12e13e95a20560033ce49120f5b77fb1c7ef897e3211771f41fabc",
+    "runCount": 2,
+    "scratchLimitBytes": 17179869184,
+    "segmentId": "fbb6cd55-bd85-4628-ab9e-12171d7ddb1d",
+    "selectionSha256": "5e90939980de540ef01b45918b06058b10ecf1b57320d6d1b60ba409df183ae3",
+    "stageTimeoutSeconds": 2700,
+    "submapSize": 16,
+    "taskVramLimitBytes": 15569256448,
+    "taskVramMeasurementBasis": "torch.cuda.max_memory_allocated(0)-allocated-bytes-not-whole-process-gpu-memory",
+    "wholeProcessGpuMemory": "NOT RUN"
+  },
+  "quarantine": {
+    "canonicalGeometry": "prohibited",
+    "commercialUse": "prohibited",
+    "futureCommercialEvaluation": "must-repeat-with-appropriately-licensed-weights-or-another-commercially-permissible-model",
+    "productionRouting": "prohibited",
+    "storage": "private-wsl-ext4-only"
+  },
+  "schemaVersion": "c14-10-vggt-nc-research-candidate-registry-v1"
+}
